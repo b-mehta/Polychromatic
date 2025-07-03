@@ -1,8 +1,8 @@
 name: Lean Action CI
 
 on:
-  push:
-  pull_request:
+  push: main
+  pull_request: main
   workflow_dispatch:
 
 jobs:
@@ -12,3 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: leanprover/lean-action@v1
+        - with: 
+          - mk_all-check: true
+          - lake-package-directory: Lean
