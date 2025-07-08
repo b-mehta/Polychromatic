@@ -373,4 +373,21 @@ lemma polychromNumber_zmod_le {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
     tauto
   rw [this, polychromNumber_vadd]
 
+lemma canonical_form {K : Type*}
+    (h : ∀ a b c : ℤ, 0 < a → a < b → b < c → Finset.gcd {a, b, c} id = 1 →
+      HasPolychromColouring K {0, a, b, c}) :
+    ∀ S : Set ℤ, S.ncard = 4 → HasPolychromColouring K S := by
+  intro S hS
+  obtain ⟨d, hd⟩ : ∃ i, Minimal (· ∈ S) i := by
+    apply Set.Finite.exists_minimal
+    · apply Set.finite_of_ncard_ne_zero (by omega)
+    · apply Set.nonempty_of_ncard_ne_zero (by omega)
+  wlog hd₀ : d = 0 generalizing S d
+  · suffices HasPolychromColouring K (-d +ᵥ S) by simpa
+    apply this ((-d) +ᵥ S) (by simpa) 0 _ rfl
+    simpa [Minimal, Set.mem_vadd_set, neg_add_eq_sub, sub_eq_zero] using hd
+  cases hd₀
+  sorry
+
+
 end Int
