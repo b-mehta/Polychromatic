@@ -18,10 +18,6 @@ jobs:
         with:
           mk_all-check: true
           lake-package-directory: Lean
-      - name: Build Verso subpackage
-        uses: leanprover/lean-action@main
-        with:
-          lake-package-directory: Verso
       - name: Run Verso
         run: |
           cd Verso
