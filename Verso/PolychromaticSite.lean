@@ -26,7 +26,7 @@ set_option verso.exampleProject "../Lean"
 -- `(module := ...)` argument to most elements that show code.
 set_option verso.exampleModule "Polychromatic"
 
-#doc (Page) "Verbose Lean" =>
+#doc (Page) "Title" =>
 
 # Overview
 

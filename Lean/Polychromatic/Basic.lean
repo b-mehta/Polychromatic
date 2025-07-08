@@ -10,7 +10,7 @@ variable {S : Set G} {χ : G → K}
 
 -- ANCHOR: IsPolychrom
 def IsPolychrom (S : Set G) (χ : G → K) : Prop :=
-  ∀ n : G, ∀ k, ∃ i ∈ n +ᵥ S, χ i = k
+  ∀ n : G, ∀ k : K, ∃ i ∈ n +ᵥ S, χ i = k
 -- ANCHOR_END: IsPolychrom
 
 lemma isPolychrom_iff_surjOn :

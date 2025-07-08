@@ -6,8 +6,8 @@ Author: Bhavik Mehta
 
 import Std.Data.HashMap
 import Berso.BersoBlog
-import VerboseManual
-import VerboseManual.TestPage
+import PolychromaticSite.Main
+import PolychromaticSite
 
 open Verso Doc
 open Verso.Genre Blog Site Syntax
@@ -31,9 +31,7 @@ def theme : Theme := { Theme.default with
   }
   |>.override #[] ⟨do return {{<div class="frontpage"><h1>{{← param "title"}}</h1> {{← param "content"}}</div>}}, id⟩
 
-def mySite : Site := site VerboseManual /
-  "test" VerboseManual.TestPage
+def mySite : Site := site PolychromaticSite /
+  "test" PolychromaticSite.Main
 
 def main := blogMain theme mySite (options := ["--output", "../site"])
-
-#eval main
