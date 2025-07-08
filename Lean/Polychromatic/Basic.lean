@@ -1,4 +1,5 @@
 import Mathlib
+import Polychromatic.ForMathlib.Misc
 
 open Pointwise
 
@@ -289,14 +290,6 @@ private lemma polychromNumber_pair_aux [IsAddTorsionFree G] {x : G} (hx : x ≠ 
   have := polychromNumber_pair_aux (x := y - x) (by simpa [sub_eq_zero, eq_comm] using hxy)
   rwa [← polychromNumber_vadd (n := x), Set.vadd_set_insert, Set.vadd_set_singleton, vadd_eq_add,
     add_zero, vadd_eq_add, add_sub_cancel] at this
-
-example {α : Type*} (s : Set α) : Nat.card s = s.ncard := rfl
-
-open Finset in
-lemma Finset.card_le_one_iff_subsingleton {α : Type*} {S : Finset α} :
-    #S ≤ 1 ↔ S.toSet.Subsingleton := by
-  rw [Finset.card_le_one_iff_subsingleton_coe, ← Set.subsingleton_coe]
-  rfl
 
 lemma polychromNumber_eq_natCard_of_natCard_le_two [IsAddTorsionFree G] {S : Set G}
     (hS' : S.Finite)

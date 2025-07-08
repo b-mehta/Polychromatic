@@ -38,8 +38,7 @@ jobs:
           cache-version: 0 # Increment this number if you need to re-download cached gems
           working-directory: site
       - name: Build with Jekyll
-        # Outputs to the './_site' directory by default
-        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        run: bundle exec jekyll build --destination ../_site --baseurl "${{ steps.pages.outputs.base_path }}"
         working-directory: site
         env:
           JEKYLL_ENV: production
