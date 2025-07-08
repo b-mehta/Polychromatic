@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2025 Patrick Massot. All rights reserved.
+Copyright (c) 2025 Bhavik Mehta. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Author: Patrick Massot
+Author: Bhavik Mehta
 -/
 
 import Berso.BersoBlog
