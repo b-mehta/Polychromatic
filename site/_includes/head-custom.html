@@ -21,6 +21,9 @@
 {% if page.useverso %}
 <!-- Verso things -->
 <link rel="stylesheet" href="{{ 'static/highlighting.css' | relative_url }}">
+<script>
+  var __versoSiteRoot = "{{ site_url }}";
+</script>
 <script src="{{ 'static/highlighting.js' | relative_url }}"></script>
 <script src="{{ '-verso-js/popper.js' | relative_url }}"></script>
 <script src="{{ '-verso-js/tippy.js' | relative_url }}"></script>

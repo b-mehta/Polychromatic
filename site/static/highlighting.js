@@ -64,8 +64,8 @@ window.onload = () => {
         }
     }
     // Add hovers
-    // let siteRoot = typeof __versoSiteRoot !== 'undefined' ? __versoSiteRoot : "/";
-    let docsJson = "https://b-mehta.github.io/Polychromatic/-verso-docs.json";
+    let siteRoot = typeof __versoSiteRoot !== 'undefined' ? __versoSiteRoot : "/";
+    let docsJson = siteRoot + "-verso-docs.json";
     fetch(docsJson).then((resp) => resp.json()).then((versoDocData) => {
 
       function hideParentTooltips(element) {
