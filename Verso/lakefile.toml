@@ -1,4 +1,4 @@
-name = "polychromatic_docs"
+name = "verbose_manual"
 defaultTargets = ["docs"]
 
 [[require]]
@@ -7,8 +7,11 @@ git = "https://github.com/leanprover/verso"
 rev = "nightly-testing"
 
 [[lean_lib]]
-name = "PolychromaticDocs"
+name = "VerboseManual"
+
+[[lean_lib]]
+name = "Berso"
 
 [[lean_exe]]
 name = "docs"
-root = "PolychromaticDocsMain"
+root = "VerboseManualMain"

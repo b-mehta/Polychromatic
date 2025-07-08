@@ -1,3 +1,13 @@
-/.lake
+# Lean things
+*/.lake
+# Python things
 .python-version
+# MacOS things
 .DS_Store
+# Jeykll things
+*/_site
+*/.sass-cache
+*/.jekyll-cache
+*/.jekyll-metadata
+*/vendor
+Gemfile.lock

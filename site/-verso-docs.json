@@ -1,0 +1,12 @@
+{"8": "<code>K</code>",
+ "7": "<code>G</code>",
+ "6":
+ "<code class=\"docstring\">The universe of propositions. `Prop ≡ Sort 0`.\n\nEvery proposition is propositionally equal to either `True` or `False`. </code>",
+ "5": "<code>Type u_2</code>",
+ "4": "<code>G → K</code>",
+ "3": "<code>Type u_1</code>",
+ "2":
+ "<code>Set.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">A set is a collection of elements of some type `α`.\n\nAlthough `Set` is defined as `α → Prop`, this is an implementation detail which should not be\nrelied on. Instead, `setOf` and membership of a set (`∈`) should be used to convert between sets\nand predicates.\n</code>",
+ "1": "<code>Set G</code>",
+ "0":
+ "<code>IsPolychrom.{u_1, u_2} {G : Type u_1} [AddCommGroup G] {K : Type u_2} (S : Set G) (χ : G → K) : Prop</code>"}

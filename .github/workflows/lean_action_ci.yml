@@ -13,7 +13,35 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: leanprover/lean-action@main
+      - name: Build Lean files
+        uses: leanprover/lean-action@main
         with:
           mk_all-check: true
           lake-package-directory: Lean
+      - name: Build Verso subpackage
+        uses: leanprover/lean-action@main
+        with:
+          lake-package-directory: Verso
+      - name: Run Verso
+        run: |
+          cd Verso
+          lake exe docs
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Run Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: site
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+

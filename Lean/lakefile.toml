@@ -17,3 +17,8 @@ scope = "leanprover-community"
 
 [[lean_lib]]
 name = "Polychromatic"
+
+[[require]]
+name = "subverso"
+git = "https://github.com/leanprover/subverso"
+rev = "main"
