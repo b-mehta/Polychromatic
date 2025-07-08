@@ -40,7 +40,7 @@ culpa qui officia deserunt mollit anim id est laborum.
 
 ```anchor IsPolychrom (module := Polychromatic.Basic)
 def IsPolychrom (S : Set G) (χ : G → K) : Prop :=
-  ∀ n : G, ∀ k, ∃ i ∈ n +ᵥ S, χ i = k
+  ∀ n : G, ∀ k : K, ∃ i ∈ n +ᵥ S, χ i = k
 ```
 
 Here is a term
