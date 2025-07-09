@@ -1,5 +1,3 @@
 import Polychromatic.Basic
-import Polychromatic.Basic2
-import Polychromatic.DiscreteProbability
 import Polychromatic.ForMathlib.Misc
 import Polychromatic.Main
