@@ -373,10 +373,12 @@ lemma polychromNumber_zmod_le {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
     tauto
   rw [this, polychromNumber_vadd]
 
+-- ANCHOR: wlog_translate_gcd
 lemma canonical_form {K : Type*}
     (h : ∀ a b c : ℤ, 0 < a → a < b → b < c → Finset.gcd {a, b, c} id = 1 →
       HasPolychromColouring K {0, a, b, c}) :
     ∀ S : Set ℤ, S.ncard = 4 → HasPolychromColouring K S := by
+-- ANCHOR_END: wlog_translate_gcd
   intro S hS
   obtain ⟨d, hd⟩ : ∃ i, Minimal (· ∈ S) i := by
     apply Set.Finite.exists_minimal

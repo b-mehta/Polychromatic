@@ -9,7 +9,7 @@ A primary target is to show that for any set `S` of size 4, there is an `S`-poly
 in 3 colours.
 
 The repository structure is as follows:
-- `Generation`: Contains C++, Python and Z3 code which generates explicit colourings for given sets
-- `Lean`: Contains Lean formal proofs of the results
-- `Verso`: Contains Lean code to generate the website
-- `site`: Contains a template Jekyll website, which is filled in by `Verso`-enabled code in CI
+- `Generation`: C++, Python and Z3 code which generates explicit colourings for certain sets
+- `Lean`: Lean formal proofs of the results
+- `Verso`: Lean code to generate the website
+- `site`: A partial Jekyll website, which completed by the code in `Verso`

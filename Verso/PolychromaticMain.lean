@@ -18,15 +18,13 @@ open Output Html Template Theme in
 def theme : Theme := { Theme.default with
   primaryTemplate := do
     return {{
-      <html>
-        <body>
-          <div class="main" role="main">
-            <div class="wrap">
-              {{ (← param "content") }}
-            </div>
+      <body>
+        <div class="main" role="main">
+          <div class="wrap">
+            {{ (← param "content") }}
           </div>
-        </body>
-      </html>
+        </div>
+      </body>
     }}
   }
   |>.override #[] ⟨do return {{<div class="frontpage"><h1>{{← param "title"}}</h1> {{← param "content"}}</div>}}, id⟩
@@ -34,4 +32,9 @@ def theme : Theme := { Theme.default with
 def mySite : Site := site PolychromaticSite /
   "test" PolychromaticSite.Main
 
-def main := blogMain theme mySite (options := ["--output", "../site"])
+def main : IO UInt32 := blogMain theme mySite (options := ["--output", "../site"])
+
+run_meta
+  let opt ← Lean.getOptions
+  if Lean.Elab.inServer.get opt then
+    _ ← main
