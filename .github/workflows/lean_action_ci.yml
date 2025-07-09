@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -53,6 +53,7 @@ jobs:
           echo "Annotation removal complete."
           rm -rf Verso
           rm -rf site
+          rm -rf _site
 
       # Commit and push changes
       - name: Commit and Push to release branch
