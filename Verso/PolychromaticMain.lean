@@ -32,7 +32,7 @@ def theme : Theme := { Theme.default with
 def mySite : Site := site PolychromaticSite /
   "test" PolychromaticSite.Main
 
-def main : IO UInt32 := blogMain theme mySite (options := ["--output", "../site"])
+def main : IO UInt32 := blogMain theme mySite (options := ["--output", "../site/_pages"])
 
 run_meta
   let opt ← Lean.getOptions

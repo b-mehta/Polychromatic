@@ -17,12 +17,16 @@
 title: Polychromatic Colourings in Lean
 description: >- # this means to ignore newlines until "baseurl:"
   A formalisation of polychromatic colourings of integers in the Lean theorem prover
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "http://b-mehta.github.io/Polychromatic"
+baseurl: "/Polychromatic" # the subpath of your site, e.g. /blog
+url: "http://b-mehta.github.io"
   # the base hostname & protocol for your site, e.g. http://example.com
 repository: b-mehta/Polychromatic
-twitter_username: jekyllrb
-github_username:  jekyll
+github_username: b-mehta
+
+collections:
+  pages:
+    output: true
+    permalink: /:path
 
 # Build settings
 remote_theme: pages-themes/dinky@v0.2.0

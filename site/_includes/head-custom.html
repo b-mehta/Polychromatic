@@ -22,8 +22,10 @@
 <!-- Verso things -->
 <link rel="stylesheet" href="{{ '-verso-css/highlighting.css' | relative_url }}">
 <script>
-  var __versoSiteRoot = "{{ site_url }}";
+  var __versoSiteRoot = "{{ '' | absolute_url }}";
   // TODO: Tell DTC about this ^
+  // {{ site.url }}
+  // {{ site.url }}/_pages
 </script>
 <script src="{{ '-verso-js/highlighting.js' | relative_url }}"></script>
 <script src="{{ '-verso-js/popper.js' | relative_url }}"></script>

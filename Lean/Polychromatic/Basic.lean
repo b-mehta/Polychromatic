@@ -309,7 +309,7 @@ end
 
 section Int
 
-example : polychromNumber ({0, 1, 5} : Set ℤ) = 3 := by
+example : polychromNumber (G := ℤ) {0, 1, 5} = 3 := by
   set S : Set ℤ := {0, 1, 5}
   refine le_antisymm ?easy ?hard
   case easy =>
@@ -327,7 +327,7 @@ example : polychromNumber ({0, 1, 5} : Set ℤ) = 3 := by
     simp_rw [Set.image_vadd_distrib, this]
     simp
 
-example : polychromNumber ({0, 1, 3} : Set ℤ) = 2 := by
+example : polychromNumber (G := ℤ) {0, 1, 3} = 2 := by
   set S : Set ℤ := {0, 1, 3}
   set S' : Finset ℤ := {0, 1, 3}
   have hS' : S' = S := by simp [S, S']
@@ -373,12 +373,9 @@ lemma polychromNumber_zmod_le {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
     tauto
   rw [this, polychromNumber_vadd]
 
--- ANCHOR: wlog_translate_gcd
-lemma canonical_form {K : Type*}
-    (h : ∀ a b c : ℤ, 0 < a → a < b → b < c → Finset.gcd {a, b, c} id = 1 →
-      HasPolychromColouring K {0, a, b, c}) :
+lemma canonical_min_zero {K : Type*}
+    (h : ∀ S : Set ℤ, S.ncard = 4 → Minimal (· ∈ S) 0 → HasPolychromColouring K S) :
     ∀ S : Set ℤ, S.ncard = 4 → HasPolychromColouring K S := by
--- ANCHOR_END: wlog_translate_gcd
   intro S hS
   obtain ⟨d, hd⟩ : ∃ i, Minimal (· ∈ S) i := by
     apply Set.Finite.exists_minimal
@@ -389,7 +386,6 @@ lemma canonical_form {K : Type*}
     apply this ((-d) +ᵥ S) (by simpa) 0 _ rfl
     simpa [Minimal, Set.mem_vadd_set, neg_add_eq_sub, sub_eq_zero] using hd
   cases hd₀
-  sorry
-
+  exact h S hS hd
 
 end Int

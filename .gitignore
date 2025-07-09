@@ -10,4 +10,6 @@
 */.jekyll-cache
 */.jekyll-metadata
 */vendor
+*/_pages
+# Ruby things
 Gemfile.lock

@@ -22,18 +22,19 @@ set_option verso.exampleProject "../Lean"
 
 -- This is the module that will be consulted for example code. It can be overridden using the
 -- `(module := ...)` argument to most elements that show code.
-set_option verso.exampleModule "Polychromatic.Basic"
+set_option verso.exampleModule "Polychromatic.Main"
 
 #doc (Page) "Polychromatic Colourings" =>
 
 # Overview
 
 This repository aims to formalise results related to polychromatic colourings of integers. Given a
-finite set $`S` of integers, a colouring of the integers is called `S`-polychromatic if every
-translate of $`S` contains an element of each colour class.
-A primary target is to show that for any set {anchorTerm wlog_translate_gcd}`S` of size 4, there is
-an {anchorTerm wlog_translate_gcd}`S`-polychromatic colouring
-in 3 colours.
+finite set {anchorTerm final}`S` of integers, a colouring of the integers is called
+{anchorTerm final}`S`-polychromatic if every
+translate of {anchorTerm final}`S` contains an element of each colour class.
+
+A primary target is to show that for any set {anchorTerm final}`S` of size {anchorTerm final}`4`,
+there is an {anchorTerm final}`S`-polychromatic colouring in {anchorTerm final}`3` colours.
 
 The repository structure is as follows:
 : `Generation`

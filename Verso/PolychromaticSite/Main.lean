@@ -28,4 +28,21 @@ set_option verso.exampleModule "Polychromatic"
 
 # Overview
 
+Here is a term
+```anchorTerm my_IsPolychrom (module := Polychromatic.Basic)
+n +ᵥ S
+```
+
+```leanInit demo
+-- This block initializes a Lean context
+```
+
+and here is another test
+```lean demo
+example := if True then 1 else 0
+example : True := by
+  simp
+```
+
+
 asdfsdf

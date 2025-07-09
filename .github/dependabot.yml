@@ -7,3 +7,4 @@ updates:
     schedule:
       # Check for updates to GitHub Actions every day
       interval: "daily"
+    target-branch: "main"
