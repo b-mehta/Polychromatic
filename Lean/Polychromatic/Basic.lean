@@ -9,10 +9,10 @@ variable {G : Type*} [AddCommGroup G]
 variable {K : Type*}
 variable {S : Set G} {χ : G → K}
 
--- ANCHOR: IsPolychrom
+-- ANCHOR: my_IsPolychrom
 def IsPolychrom (S : Set G) (χ : G → K) : Prop :=
   ∀ n : G, ∀ k : K, ∃ i ∈ n +ᵥ S, χ i = k
--- ANCHOR_END: IsPolychrom
+-- ANCHOR_END: my_IsPolychrom
 
 lemma isPolychrom_iff_surjOn :
     IsPolychrom S χ ↔ ∀ n : G, Set.SurjOn χ (n +ᵥ S) Set.univ := by

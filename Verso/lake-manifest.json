@@ -31,5 +31,5 @@
    "inputRev": "main",
    "inherited": true,
    "configFile": "lakefile.lean"}],
- "name": "verbose_manual",
+ "name": "polychromatic_docs",
  "lakeDir": ".lake"}

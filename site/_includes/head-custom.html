@@ -20,11 +20,12 @@
 
 {% if page.useverso %}
 <!-- Verso things -->
-<link rel="stylesheet" href="{{ 'static/highlighting.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '-verso-css/highlighting.css' | relative_url }}">
 <script>
   var __versoSiteRoot = "{{ site_url }}";
+  // TODO: Tell DTC about this ^
 </script>
-<script src="{{ 'static/highlighting.js' | relative_url }}"></script>
+<script src="{{ '-verso-js/highlighting.js' | relative_url }}"></script>
 <script src="{{ '-verso-js/popper.js' | relative_url }}"></script>
 <script src="{{ '-verso-js/tippy.js' | relative_url }}"></script>
 <link rel="stylesheet" href="{{ '-verso-css/tippy-border.css' | relative_url }}">

@@ -6,10 +6,8 @@ Author: Bhavik Mehta
 
 import Berso.BersoBlog
 
--- import VerboseManual.TacticReference
-
--- This gets access to most of the manual genre
-open Verso.Genre Blog
+-- This gets access to most of the blog genre
+open Verso Genre Blog
 
 -- This gets access to Lean code that's in code blocks, elaborated in the same process and
 -- environment as Verso
@@ -26,27 +24,39 @@ set_option verso.exampleProject "../Lean"
 -- `(module := ...)` argument to most elements that show code.
 set_option verso.exampleModule "Polychromatic"
 
-#doc (Page) "Title" =>
+#doc (Page) "Polychromatic Colourings" =>
 
 # Overview
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+This repository aims to formalise results related to polychromatic colourings of integers. Given a
+finite set $`S` of integers, a colouring of the integers is called `S`-polychromatic if every
+translate of `S` contains an element of each colour class.
+A primary target is to show that for any set `S` of size 4, there is an `S`-polychromatic colouring
+in 3 colours.
+
+The repository structure is as follows:
+- `Generation`: Contains C++, Python and Z3 code which generates explicit colourings for given sets
+- `Lean`: Contains Lean formal proofs of the results
+- `Verso`: Contains Lean code to generate the website
+- `site`: Contains a template Jekyll website, which is filled in by `Verso`-enabled code in CI
 
 # Examples
 
-```anchor IsPolychrom (module := Polychromatic.Basic)
+```anchor my_IsPolychrom (module := Polychromatic.Basic)
 def IsPolychrom (S : Set G) (χ : G → K) : Prop :=
   ∀ n : G, ∀ k : K, ∃ i ∈ n +ᵥ S, χ i = k
 ```
 
 Here is a term
-
-```anchorTerm IsPolychrom (module := Polychromatic.Basic)
+```anchorTerm my_IsPolychrom (module := Polychromatic.Basic)
 n +ᵥ S
 ```
 
-and then the end
+```leanInit demo
+-- This block initializes a Lean context
+```
+
+and here is another test
+```lean demo
+example := if True then 1 else 0
+```

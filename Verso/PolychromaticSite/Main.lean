@@ -6,16 +6,12 @@ Author: Bhavik Mehta
 
 import Berso.BersoBlog
 
--- import VerboseManual.TacticReference
-
 -- This gets access to most of the blog genre
 open Verso.Genre Blog
 
 -- This gets access to Lean code that's in code blocks, elaborated in the same process and
 -- environment as Verso
 open Verso.Code.External
-
--- open VerboseManual
 
 set_option pp.rawOnError true
 
