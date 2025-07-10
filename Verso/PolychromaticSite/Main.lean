@@ -18,7 +18,7 @@ set_option pp.rawOnError true
 -- This is the source of code examples to be shown in the document. It should be relative to the
 -- current Lake workspace. One good way to set up the files is in a Git repository that contains one
 -- Lake package for example code and another for the docs, as sibling directories.
-set_option verso.exampleProject "../lean"
+set_option verso.exampleProject "../Lean"
 
 -- This is the module that will be consulted for example code. It can be overridden using the
 -- `(module := ...)` argument to most elements that show code.
