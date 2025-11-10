@@ -1,0 +1,151 @@
+import Mathlib
+import Polychromatic.ForMathlib.Misc
+
+open Pointwise
+
+section
+
+variable {G : Type*} [AddCommGroup G]
+  [DecidableEq G]
+variable {K : Type*}
+variable {S : Finset G} {χ : G → K}
+
+open Finset
+
+-- ANCHOR: IsPolychrom
+def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
+  ∀ n : G, ∀ k : K, ∃ i ∈ n +ᵥ S, χ i = k
+-- ANCHOR_END: IsPolychrom
+
+set_option linter.unusedSimpArgs false in
+lemma isPolychrom_iff_surjOn :
+    IsPolychrom S χ ↔ ∀ n : G, Set.SurjOn χ (n +ᵥ S) Set.univ := by
+  simp [IsPolychrom, Set.SurjOn, Set.subset_def, ← Finset.coe_vadd_finset]
+
+alias ⟨IsPolychrom.surjOn, _⟩ := isPolychrom_iff_surjOn
+
+lemma isPolychrom_iff_mem_image [DecidableEq K] :
+    IsPolychrom S χ ↔ ∀ n : G, ∀ k, k ∈ (n +ᵥ S).image χ := by
+  simp [IsPolychrom]
+
+alias ⟨IsPolychrom.mem_image, _⟩ := isPolychrom_iff_mem_image
+
+-- ANCHOR IsPolychrom.nonempty
+lemma IsPolychrom.nonempty (h : IsPolychrom S χ) :
+    S.Nonempty := by
+  obtain ⟨i, hi, hi'⟩ := h 0 (χ 0)
+  use i
+  simpa using hi
+-- ANCHOR_END IsPolychrom.nonempty
+
+lemma isPolychrom_subsingleton [Subsingleton K] (hS : S.Nonempty) :
+    IsPolychrom S χ := by
+  intro n k
+  obtain ⟨i, hi⟩ : (n +ᵥ S).Nonempty := by simpa
+  exact ⟨_, hi, Subsingleton.elim _ _⟩
+
+def IsPolychrom.fintype [DecidableEq K] (hχ : IsPolychrom S χ) :
+    Fintype K where
+  elems := S.image χ
+  complete := by simpa using hχ.mem_image 0
+
+lemma IsPolychrom.finite (hχ : IsPolychrom S χ) :
+    Finite K := by
+  classical exact hχ.fintype.finite
+
+lemma IsPolychrom.card_le [Fintype K] (hχ : IsPolychrom S χ) :
+    Fintype.card K ≤ #S :=
+  card_le_card_of_surjOn χ (by simpa using hχ.surjOn 0)
+
+lemma IsPolychrom.subset {S' : Finset G} (hχ : IsPolychrom S' χ) (hS : S' ⊆ S) :
+    IsPolychrom S χ :=
+  isPolychrom_iff_surjOn.2 fun n ↦ (hχ.surjOn n).trans (by gcongr)
+
+lemma IsPolychrom.vadd (n : G) (h : IsPolychrom S χ) : IsPolychrom (n +ᵥ S) χ :=
+  (vadd_vadd · n S ▸ h _)
+
+@[simp] lemma isPolychrom_vadd {n : G} : IsPolychrom (n +ᵥ S) χ ↔ IsPolychrom S χ :=
+  ⟨fun h ↦ by simpa using h.vadd (-n), fun h ↦ h.vadd n⟩
+
+
+def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
+  ∃ χ : G → K, IsPolychrom S χ
+
+lemma HasPolychromColouring.nonempty_set (h : HasPolychromColouring K S) : S.Nonempty := by
+  obtain ⟨χ, hχ⟩ := h
+  exact hχ.nonempty
+
+lemma HasPolychromColouring.nonempty_colours (h : HasPolychromColouring K S) : Nonempty K := by
+  obtain ⟨χ, hχ⟩ := h
+  exact ⟨χ 0⟩
+
+@[simp] lemma not_hasPolychromColouring_empty : ¬ HasPolychromColouring K (∅ : Finset G) := by
+  intro h
+  simpa using h.nonempty_set
+
+lemma hasPolychromColouring_subsingleton [Nonempty K] [Subsingleton K] (hS : S.Nonempty) :
+    HasPolychromColouring K S := by
+  inhabit K
+  exact ⟨fun _ ↦ default, isPolychrom_subsingleton hS⟩
+
+lemma HasPolychromColouring.card_le [Fintype K] (h : HasPolychromColouring K S) :
+    Fintype.card K ≤ #S :=
+  have ⟨_, hχ⟩ := h; hχ.card_le
+
+lemma HasPolychromColouring.finite (h : HasPolychromColouring K S) :
+    Finite K :=
+  have ⟨_, hχ⟩ := h; hχ.finite
+
+lemma HasPolychromColouring.subset {S' : Finset G} (h : HasPolychromColouring K S') (hS : S' ⊆ S) :
+    HasPolychromColouring K S :=
+  have ⟨χ, hχ⟩ := h; ⟨χ, hχ.subset hS⟩
+
+lemma HasPolychromColouring.of_surjective {K₁ K₂ : Type*}
+    (h₁ : HasPolychromColouring K₁ S) {f : K₁ → K₂} (hf : f.Surjective) :
+    HasPolychromColouring K₂ S :=
+  have ⟨χ₁, hχ₁⟩ := h₁
+  ⟨f ∘ χ₁, isPolychrom_iff_surjOn.2 fun n ↦ (hf.surjOn _).comp (hχ₁.surjOn n)⟩
+
+lemma HasPolychromColouring.of_injective {K₁ K₂ : Type*} [Nonempty K₁]
+    (h₁ : HasPolychromColouring K₂ S) {f : K₁ → K₂} (hf : f.Injective) :
+    HasPolychromColouring K₁ S := by
+  have ⟨χ₁, hχ₁⟩ := h₁
+  refine ⟨f.invFun ∘ χ₁, ?_⟩
+  rw [isPolychrom_iff_surjOn]
+  intro n
+  exact ((Function.invFun_surjective hf).surjOn _).comp (hχ₁.surjOn n)
+
+@[simp] lemma hasPolychromColouring_vadd {n : G} :
+    HasPolychromColouring K (n +ᵥ S) ↔ HasPolychromColouring K S := by
+  simp [HasPolychromColouring]
+
+alias ⟨_, HasPolychromColouring.vadd⟩ := hasPolychromColouring_vadd
+
+lemma HasPolychromColouring.of_image {H : Type*} [DecidableEq H] [AddCommGroup H]
+    {F : Type*} [FunLike F G H] [AddHomClass F G H] (φ : F)
+    (h : HasPolychromColouring K (S.image φ)) :
+    HasPolychromColouring K S := by
+  obtain ⟨χ', hχ'⟩ := h
+  let χ (g : G) : K := χ' (φ g)
+  suffices IsPolychrom S χ from ⟨_, this⟩
+  intro g k
+  obtain ⟨i, hi, hi'⟩ := hχ' (φ g) k
+  rw [← Finset.image_vadd_distrib] at hi
+  aesop
+
+lemma canonical_min_zero {n : ℕ} (hn : n ≠ 0)
+    (h : ∀ S : Finset ℤ, #S = n → Minimal (· ∈ S) 0 → HasPolychromColouring K S) :
+    ∀ S : Finset ℤ, #S = n → HasPolychromColouring K S := by
+  intro S hS
+  obtain ⟨d, hd⟩ : ∃ i, Minimal (· ∈ S) i := by
+    apply Finset.exists_minimal
+    rw [← Finset.card_pos]
+    simp [hS, pos_iff_ne_zero, hn]
+  wlog hd₀ : d = 0 generalizing S d
+  · suffices HasPolychromColouring K (-d +ᵥ S) by simpa
+    apply this ((-d) +ᵥ S) (by simpa) 0 _ rfl
+    simpa [Minimal, Finset.mem_vadd_finset, neg_add_eq_sub, sub_eq_zero] using hd
+  cases hd₀
+  exact h S hS hd
+
+end
