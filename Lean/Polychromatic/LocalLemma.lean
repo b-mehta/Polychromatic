@@ -74,7 +74,7 @@ lemma lopsidedCondition.real [IsProbabilityMeasure P]
   exact h _ _ hiS hS
 
 def standardCondition (P : Measure Ω) (A : ι → Set Ω) (N : ι → Finset ι) : Prop :=
-  ∀ i : ι, IndepFrom P (A i) (A '' ((insert i (N i))ᶜ))
+  ∀ i : ι, IndepFrom P (A i) (A '' (insert i (N i))ᶜ)
 
 lemma lopsidedCondition_of_standardCondition [IsProbabilityMeasure P]
     (h : standardCondition P A N) :
@@ -217,8 +217,8 @@ theorem symmetricLocalLemma [Fintype ι] [IsProbabilityMeasure P] (hA : ∀ i, M
   let x (i : ι) : ℝ := (d + 1)⁻¹
   have hx₀ (i : ι) : 0 ≤ x i := by positivity
   have hx₁ (i : ι) : x i < 1 := inv_lt_one_of_one_lt₀ (by simp [hd, pos_iff_ne_zero])
-  suffices hx : ∀ i, P.real (A i) ≤ x i * ∏ j ∈ N i, (1 - x j) by
-    exact (localLemma hA hx₀ (fun i ↦ (hx₁ i).le) h hx).trans_lt' (prod_pos (by simp [hx₁]))
+  suffices hx : ∀ i, P.real (A i) ≤ x i * ∏ j ∈ N i, (1 - x j) from
+    (localLemma hA hx₀ (fun i ↦ (hx₁ i).le) h hx).trans_lt' (prod_pos (by simp [hx₁]))
   intro i
   calc
     P.real (A i) ≤ p := hAp _
@@ -226,17 +226,15 @@ theorem symmetricLocalLemma [Fintype ι] [IsProbabilityMeasure P] (hA : ∀ i, M
       rw [← mul_inv, ← one_div, le_div_iff₀]
       · linear_combination hpd
       · positivity
-    _ ≤ (d + 1 : ℝ)⁻¹ * ((1 + (↑d)⁻¹) ^ d)⁻¹ := by
-      gcongr
-      exact add_one_inv_pow_le_exp
+    _ ≤ (d + 1 : ℝ)⁻¹ * (1 + (↑d)⁻¹)⁻¹ ^ d := by
+      grw [inv_pow, add_one_inv_pow_le_exp]
     _ = (d + 1 : ℝ)⁻¹ * (1 - (d + 1 : ℝ)⁻¹) ^ d := by
-      rw [← inv_pow]
       congr! 2
-      sorry
+      simp [field]
     _ ≤ (d + 1 : ℝ)⁻¹ * ∏ j ∈ N i, (1 - (d + 1 : ℝ)⁻¹) := by
-      simp only [prod_const, one_div, Nat.cast_add_one]
+      simp only [prod_const]
       gcongr _ * ?_
       apply pow_le_pow_of_le_one _ _ (by grind)
       · simpa using (hx₁ i).le
-      · simp; positivity
+      · simpa [x] using hx₀ i
     _ = x i * ∏ j ∈ N i, (1 - x j) := rfl

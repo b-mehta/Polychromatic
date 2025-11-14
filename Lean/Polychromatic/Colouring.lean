@@ -104,16 +104,12 @@ lemma HasPolychromColouring.of_surjective {K₁ K₂ : Type*}
     (h₁ : HasPolychromColouring K₁ S) {f : K₁ → K₂} (hf : f.Surjective) :
     HasPolychromColouring K₂ S :=
   have ⟨χ₁, hχ₁⟩ := h₁
-  ⟨f ∘ χ₁, isPolychrom_iff_surjOn.2 fun n ↦ (hf.surjOn _).comp (hχ₁.surjOn n)⟩
+  ⟨f ∘ χ₁, isPolychrom_iff_surjOn.2 fun n ↦ hf.surjOn.comp (hχ₁.surjOn n)⟩
 
 lemma HasPolychromColouring.of_injective {K₁ K₂ : Type*} [Nonempty K₁]
     (h₁ : HasPolychromColouring K₂ S) {f : K₁ → K₂} (hf : f.Injective) :
-    HasPolychromColouring K₁ S := by
-  have ⟨χ₁, hχ₁⟩ := h₁
-  refine ⟨f.invFun ∘ χ₁, ?_⟩
-  rw [isPolychrom_iff_surjOn]
-  intro n
-  exact ((Function.invFun_surjective hf).surjOn _).comp (hχ₁.surjOn n)
+    HasPolychromColouring K₁ S :=
+  h₁.of_surjective (Function.invFun_surjective hf)
 
 @[simp] lemma hasPolychromColouring_vadd {n : G} :
     HasPolychromColouring K (n +ᵥ S) ↔ HasPolychromColouring K S := by

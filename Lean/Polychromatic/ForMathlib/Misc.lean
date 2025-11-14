@@ -3,7 +3,7 @@ import Mathlib
 open Finset
 
 lemma Finset.card_le_one_iff_subsingleton {α : Type*} {S : Finset α} :
-    #S ≤ 1 ↔ S.toSet.Subsingleton := by
+    #S ≤ 1 ↔ (S : Set α).Subsingleton := by
   rw [Finset.card_le_one_iff_subsingleton_coe, ← Set.subsingleton_coe]
   rfl
 
@@ -19,6 +19,41 @@ lemma StrictMono.exists_le_lt {f : ℕ → ℕ} (hf : StrictMono f) (hf₀ : f 0
     ∃ m, f m ≤ n ∧ n < f (m + 1) :=
   hf.tendsto_atTop.exists_le_lt _ (by simp [hf₀])
 
+section
+
+open MeasureTheory Measure ProbabilityTheory
+
+lemma uniformOn_apply_finset' {Ω : Type*} [DecidableEq Ω] [MeasurableSpace Ω] {s t : Finset Ω}
+    (hs : MeasurableSet (s : Set Ω)) (ht : MeasurableSet (t : Set Ω)) :
+    uniformOn (s : Set Ω) (t : Set Ω) = #(s ∩ t) / #s := by
+  rw [uniformOn, cond_apply hs, count_apply_finset' hs, ← coe_inter, count_apply_finset']
+  · rw [div_eq_mul_inv, mul_comm]
+  rw [coe_inter]
+  exact hs.inter ht
+
+lemma uniformOn_apply_finset {Ω : Type*} [DecidableEq Ω] [MeasurableSpace Ω]
+    [MeasurableSingletonClass Ω] {s t : Finset Ω} :
+    uniformOn (s : Set Ω) (t : Set Ω) = #(s ∩ t) / #s :=
+  uniformOn_apply_finset' s.measurableSet t.measurableSet
+
+end
+
+lemma Fintype.piFinset_inter {ι α : Type*} [DecidableEq ι] [Fintype ι] [DecidableEq α]
+    {s t : ι → Finset α} :
+    Fintype.piFinset s ∩ Fintype.piFinset t = Fintype.piFinset (fun i ↦ s i ∩ t i) := by
+  ext j
+  simp only [mem_inter, mem_piFinset]
+  grind
+
+lemma ENNReal.prod_div_distrib {ι : Type*} [DecidableEq ι] {f g : ι → ENNReal}
+    (s : Finset ι) (h : ∀ i ∈ s, g i ≠ ⊤) :
+    (∏ i ∈ s, f i / g i) = (∏ i ∈ s, f i) / (∏ i ∈ s, g i) := by
+  induction s using Finset.cons_induction_on with
+  | empty => simp
+  | cons a s has ih =>
+    simp only [cons_eq_insert, mem_insert, ne_eq, forall_eq_or_imp] at h
+    simp only [cons_eq_insert, has, not_false_eq_true, prod_insert]
+    rw [ENNReal.mul_div_mul_comm (Or.inr (prod_ne_top h.2)) (Or.inl h.1), ih h.2]
 namespace Finpartition
 
 def equiEndpoint (n k i : ℕ) : ℕ :=
@@ -83,8 +118,7 @@ theorem equipartitionToIco_nonempty {a b k i : ℕ} (hk₀ : k ≠ 0) (hk : k �
   simp only [nonempty_Ico, add_lt_add_iff_left]
   exact equiEndpoint_strictMono hk₀ hk (Nat.lt_succ_self i)
 
-def equipartitionToIco (a b k : ℕ) :
-    Finpartition (Finset.Ico a b) :=
+def equipartitionToIco (a b k : ℕ) : Finpartition (Finset.Ico a b) :=
   if h : k ≠ 0 ∧ k ≤ b - a then {
     parts := (range k).image fun i ↦
       Finset.Ico (a + equiEndpoint (b - a) k i) (a + equiEndpoint (b - a) k (i + 1))
@@ -115,30 +149,40 @@ lemma card_equipartitionToIco_parts {a b k : ℕ} (hk : k ≠ 0) (hkn : k ≤ b 
     equipartitionToIco_nonempty hk hkn
   simp [h''] at this
 
+lemma card_of_mem_equipartitionToIco_parts_aux {n k i : ℕ} :
+    equiEndpoint n k (i + 1) - equiEndpoint n k i = if i < n % k then n / k + 1 else n / k := by
+  grind [equiEndpoint]
 
+theorem card_of_mem_equipartitionToIco_parts
+    {a b k : ℕ} (hk : k ≠ 0) (hkn : k ≤ b - a)
+    (i : Finset ℕ) (hi : i ∈ (equipartitionToIco a b k).parts) :
+    #i = (b - a) / k ∨ #i = (b - a) / k + 1 := by
+  simp only [equipartitionToIco, ne_eq, hk, not_false_eq_true, hkn, and_self, ↓reduceDIte,
+    mem_image, mem_range] at hi
+  obtain ⟨i, hi, rfl⟩ := hi
+  simp only [Nat.card_Ico]
+  have := card_of_mem_equipartitionToIco_parts_aux (n := b - a) (k := k) (i := i)
+  grind
 
-  -- simp only [Finpartition.parts, coe_image, coe_range, card_image, mem_range]
-  -- exact Nat.card_range k
-
-#exit
+lemma isEquipartition_equipartitionToIco {a b k : ℕ} (hk : k ≠ 0) (hkn : k ≤ b - a) :
+    (equipartitionToIco a b k).IsEquipartition := by
+  rw [isEquipartition_iff_card_parts_eq_average]
+  intro i hi
+  simp only [Nat.card_Ico, card_equipartitionToIco_parts hk hkn]
+  simp only [equipartitionToIco, ne_eq, hk, not_false_eq_true, hkn, and_self, ↓reduceDIte,
+    mem_image, mem_range] at hi
+  obtain ⟨i, hi, rfl⟩ := hi
+  simp only [Nat.card_Ico]
+  have := card_of_mem_equipartitionToIco_parts_aux (n := b - a) (k := k) (i := i)
+  grind
 
 lemma exists_equipartition_Ico {a b k : ℕ} (hk : k ≠ 0) (hkn : k ≤ b - a) :
     ∃ P : Finpartition (Finset.Ico a b),
       P.IsEquipartition ∧ #P.parts = k ∧ ∀ i ∈ P.parts, ∃ c d, i = Finset.Ico c d := by
-  set n := b - a
-  set parts : Finset (Finset ℕ) := (Finset.range k).image fun i ↦
-    Finset.Ico (a + equiEndpoint n k i) (a + equiEndpoint n k (i + 1))
-  refine ⟨⟨parts, ?_, ?_, ?_⟩, ?_, ?_, ?_⟩
-  · rw [supIndep_iff_pairwiseDisjoint]
-    simp_rw [parts, coe_image, coe_range]
-    apply Set.Pairwise.image
-    intro i hi j hj h
-    simp only [Function.onFun, ← Finset.disjoint_coe, id_eq, coe_Ico]
-    wlog hij : i ≤ j generalizing i j
-    · exact (this hj hi h.symm (by order)).symm
-    have : equiEndpoint n k (i + 1) ≤ equiEndpoint n k j := equiEndpoint_monotone (by omega)
-    simp [this]
-
-
+  refine ⟨equipartitionToIco _ _ k, isEquipartition_equipartitionToIco hk hkn,
+    card_equipartitionToIco_parts hk hkn, ?_⟩
+  intro i hi
+  simp [equipartitionToIco, hk, hkn] at hi
+  grind
 
 end Finpartition
