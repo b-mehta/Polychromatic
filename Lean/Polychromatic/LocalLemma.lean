@@ -316,5 +316,26 @@ lemma standardCondition_of {α β : Type*} [MeasurableSpace β]
   simp only [Set.exists_subset_image_iff, Set.sInter_image,
     Set.subset_compl_iff_disjoint_right, Set.disjoint_insert_right] at hX₂
   obtain ⟨J, hJ, rfl⟩ := hX₂
-  -- TODO: finish
+  classical
+  -- J must be finite (subset of ι)
+  by_cases hJ_fin : J.Finite
+  swap; · exfalso; sorry -- J from finset operations
+  lift J to Finset ι using hJ_fin
+  -- For j ∈ J, we have j ∉ insert i (N i), so D j ⊥ D i
+  have hDisj : ∀ j ∈ J, Disjoint (D j) (D i) := by
+    intro j hj
+    apply (hND j i _).symm
+    intro h; cases h with
+    | inl h => rw [h] at hj; exact hJ.1 (Set.mem_singleton _) (by simpa using hj)
+    | inr h => exact hJ.2 (by simpa using hj) h
+  -- Therefore D i ⊥ ⋃ j ∈ J, D j
+  have hD_disj : Disjoint (D i : Set α) (J.biUnion D : Set α) := by
+    rw [Finset.disjoint_biUnion_right]; exact fun j hj ↦ hDisj j hj
+  -- From iIndepFun, restrictions to disjoint sets are independent
+  have hIndep := hI'.indepFun_finset (D i) (J.biUnion D) (by simpa using hD_disj) (by fun_prop)
+  -- Extract the measurable set representations
+  obtain ⟨S_i, hS_i, hD_i, hAi⟩ := hA i
+  obtain ⟨T_i, hT_eq⟩ := dependsOn_iff_exists_comp.1 hD_i
+  -- The key step: express everything as preimages of restrictions
+  -- and use hIndep.measure_inter_preimage_eq_mul
   sorry
