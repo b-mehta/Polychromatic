@@ -102,11 +102,38 @@ lemma indepFun_restrict_restrict_pi {s t : Set ι} (hi : Disjoint s t) :
   have := this.indepFun_finset s t hi (by fun_prop)
   exact this
 
-lemma pi_inter_eq (s t : Set ι) (hi : Disjoint s t)
+lemma pi_restrict_inter_restrict_eq (s t : Set ι) (hi : Disjoint s t)
     (A : Set (s → Ω)) (B : Set (t → Ω)) (hA : MeasurableSet A) (hB : MeasurableSet B) :
     Measure.pi P (s.restrict ⁻¹' A ∩ t.restrict ⁻¹' B) =
       Measure.pi P (s.restrict ⁻¹' A) * Measure.pi P (t.restrict ⁻¹' B) :=
   (indepFun_restrict_restrict_pi hi (P := P)).measure_inter_preimage_eq_mul A B hA hB
+
+lemma MeasurableSet.of_restrict_preimage {ι β : Type*} [MeasurableSpace β]
+    {s : Set ι} {T : Set (s → β)} (hT : (s.restrict ⁻¹' T : Set (ι → β)).Nonempty)
+    (h : MeasurableSet (s.restrict ⁻¹' T : Set (ι → β))) :
+    MeasurableSet T := by
+  obtain ⟨x, -⟩ := hT
+  classical
+  let g (f : s → β) (y : ι) : β := if hy : y ∈ s then f ⟨y, hy⟩ else x y
+  have hg : Measurable (fun f y ↦ if hy : y ∈ s then f ⟨y, hy⟩ else x y : (s → β) → _) :=
+    measurable_pi_lambda _ (fun i ↦ by split <;> fun_prop)
+  convert h.preimage hg
+  ext i
+  simp [g]
+
+lemma pi_inter_eq [∀ i, IsProbabilityMeasure (P i)] (s t : Set ι) (hst : Disjoint s t)
+    (A B : Set (ι → Ω)) (hs : DependsOn (· ∈ A) s) (ht : DependsOn (· ∈ B) t)
+    (hA : MeasurableSet A) (hB : MeasurableSet B) :
+    Measure.pi P (A ∩ B) = Measure.pi P A * Measure.pi P B := by
+  obtain rfl | hAne := A.eq_empty_or_nonempty
+  · simp
+  obtain rfl | hBne := B.eq_empty_or_nonempty
+  · simp
+  obtain ⟨A', rfl⟩ : ∃ A', A = s.restrict ⁻¹' A' := dependsOn_iff_exists_comp.1 hs
+  obtain ⟨B', rfl⟩ : ∃ B', B = t.restrict ⁻¹' B' := dependsOn_iff_exists_comp.1 ht
+  rw [pi_restrict_inter_restrict_eq hst]
+  · exact hA.of_restrict_preimage hAne
+  · exact hB.of_restrict_preimage hBne
 
 end
 

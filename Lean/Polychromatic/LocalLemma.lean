@@ -1,4 +1,5 @@
 import Mathlib
+import Polychromatic.ForMathlib.Misc
 
 open MeasureTheory ProbabilityTheory Measure
 
@@ -251,20 +252,6 @@ theorem symmetricLocalLemma [Fintype ι] [IsProbabilityMeasure P] (hA : ∀ i, M
       · simpa [x] using hx₀ i
     _ = x i * ∏ j ∈ N i, (1 - x j) := rfl
 
--- lemma measurable_restrict_iff {ι β : Type*} [MeasurableSpace β] {s : Set ι} {T : Set (s → β)} :
---     MeasurableSet (s.restrict ⁻¹' T : Set (ι → β)) ↔ MeasurableSet T := by
---   refine ⟨?_, ?_⟩
---   -- obtain hβ | hβ := isEmpty_or_nonempty β
---   -- ·
---   intro hT
---   have : (s.restrict '' (s.restrict ⁻¹' T : Set (ι → β)) : Set (s → β)) = T := by
---     rw [Set.image_preimage_eq_inter_range]
---     sorry
-
-
-
--- #exit
-
 lemma eq_sInter_of_mem_generatePiSystem {Ω : Type*} {t : Set (Set Ω)} {A : Set Ω}
     (hA : A ∈ generatePiSystem t) :
     ∃ S : Set (Set Ω), S ⊆ t ∧ A = ⋂₀ S := by
@@ -284,7 +271,7 @@ lemma standardCondition_of {α β : Type*} [MeasurableSpace β]
     (hI : ∀ a : α, Measurable (I a))
     (hI' : iIndepFun I P)
     (hA : ∀ i, ∃ S : Set (α → β), MeasurableSet S ∧
-      DependsOn (· ∈ S) (D i) ∧ A i = {ω | (I · ω) ∈ S}) :
+      DependsOn (· ∈ S) (D i) ∧ A i = (fun ω a ↦ I a ω) ⁻¹' S) :
     standardCondition P A N := by
   rw [standardCondition]
   have hA' : ∀ i, MeasurableSet (A i) := by
@@ -303,10 +290,8 @@ lemma standardCondition_of {α β : Type*} [MeasurableSpace β]
   intro i
   rw [IndepFrom]
   rw [← generateFrom_generatePiSystem_eq (g := _ '' _)]
-  refine ProbabilityTheory.IndepSets.indep' ?_ ?_ (.singleton _)
+  refine ProbabilityTheory.IndepSets.indep' (by simpa using hA' i) ?_ (.singleton _)
     (isPiSystem_generatePiSystem _) ?_
-  · simp only [Set.mem_singleton_iff, forall_eq]
-    exact hA' i
   · apply generatePiSystem_measurableSet
     grind
   rw [ProbabilityTheory.IndepSets_iff]
@@ -315,6 +300,8 @@ lemma standardCondition_of {α β : Type*} [MeasurableSpace β]
   replace hX₂ := eq_sInter_of_mem_generatePiSystem hX₂
   simp only [Set.exists_subset_image_iff, Set.sInter_image,
     Set.subset_compl_iff_disjoint_right, Set.disjoint_insert_right] at hX₂
-  obtain ⟨J, hJ, rfl⟩ := hX₂
+  obtain ⟨J, ⟨hiJ, hJ⟩, rfl⟩ := hX₂
   -- TODO: finish
+  obtain ⟨Si, hSi, hSDi, hAi⟩ := hA i
+
   sorry
