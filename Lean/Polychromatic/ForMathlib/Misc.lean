@@ -98,11 +98,11 @@ lemma indepFun_restrict_restrict_pi {s t : Set ι} (hi : Disjoint s t) :
   lift s to Finset ι using s.toFinite
   lift t to Finset ι using t.toFinite
   simp only [disjoint_coe] at hi
-  have : iIndepFun (· |> ·) (Measure.pi P) := iIndepFun_pi (X := fun i x ↦ x) (by fun_prop)
+  have : iIndepFun (fun x y ↦ y x) (Measure.pi P) := iIndepFun_pi (X := fun i x ↦ x) (by fun_prop)
   have := this.indepFun_finset s t hi (by fun_prop)
   exact this
 
-lemma pi_restrict_inter_restrict_eq (s t : Set ι) (hi : Disjoint s t)
+lemma pi_restrict_inter_restrict_eq {s t : Set ι} (hi : Disjoint s t)
     (A : Set (s → Ω)) (B : Set (t → Ω)) (hA : MeasurableSet A) (hB : MeasurableSet B) :
     Measure.pi P (s.restrict ⁻¹' A ∩ t.restrict ⁻¹' B) =
       Measure.pi P (s.restrict ⁻¹' A) * Measure.pi P (t.restrict ⁻¹' B) :=
@@ -119,9 +119,9 @@ lemma MeasurableSet.of_restrict_preimage {ι β : Type*} [MeasurableSpace β]
     measurable_pi_lambda _ (fun i ↦ by split <;> fun_prop)
   convert h.preimage hg
   ext i
-  simp [g]
+  simp
 
-lemma pi_inter_eq [∀ i, IsProbabilityMeasure (P i)] (s t : Set ι) (hst : Disjoint s t)
+lemma pi_inter_eq (s t : Set ι) (hst : Disjoint s t)
     (A B : Set (ι → Ω)) (hs : DependsOn (· ∈ A) s) (ht : DependsOn (· ∈ B) t)
     (hA : MeasurableSet A) (hB : MeasurableSet B) :
     Measure.pi P (A ∩ B) = Measure.pi P A * Measure.pi P B := by

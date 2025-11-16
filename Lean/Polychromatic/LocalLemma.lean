@@ -263,10 +263,12 @@ lemma eq_sInter_of_mem_generatePiSystem {Ω : Type*} {t : Set (Set Ω)} {A : Set
     obtain ⟨S₂, hS₂, rfl⟩ := hs₂
     refine ⟨S₁ ∪ S₂, Set.union_subset hS₁ hS₂, by simp [Set.sInter_union]⟩
 
-lemma standardCondition_of {α β : Type*} [MeasurableSpace β]
-    [IsProbabilityMeasure P]
-    {I : α → Ω → β} {A : ι → Set Ω} {N : ι → Finset ι}
-    {D : ι → Finset α}
+lemma dependsOn_mem_iff_exists_preimage {α β : Type*} {t : Set α} {A : Set (α → β)} :
+    DependsOn (· ∈ A) t ↔ ∃ B : Set (t → β), A = t.restrict ⁻¹' B :=
+  dependsOn_iff_exists_comp
+
+lemma standardCondition_of {α β : Type*} [Fintype ι] [MeasurableSpace β] [IsProbabilityMeasure P]
+    (I : α → Ω → β) {A : ι → Set Ω} {N : ι → Finset ι} (D : ι → Finset α)
     (hND : ∀ i j, i ∉ N j → Disjoint (D i) (D j))
     (hI : ∀ a : α, Measurable (I a))
     (hI' : iIndepFun I P)
@@ -274,34 +276,44 @@ lemma standardCondition_of {α β : Type*} [MeasurableSpace β]
       DependsOn (· ∈ S) (D i) ∧ A i = (fun ω a ↦ I a ω) ⁻¹' S) :
     standardCondition P A N := by
   rw [standardCondition]
-  have hA' : ∀ i, MeasurableSet (A i) := by
-    intro i
+  have hA' (i : ι) : MeasurableSet (A i) := by
     obtain ⟨S, hS, -, h⟩ := hA i
     rw [h]
-    apply MeasurableSet.preimage hS _
-    rw [measurable_pi_iff]
-    exact hI
-  -- replace hA : ∀ i, ∃ S : Set (D i → β), A i = (fun ω ↦ (D i).restrict (I · ω)) ⁻¹' S := by
-  --   intro i
-  --   obtain ⟨S, hS, hD, h⟩ := hA i
-  --   obtain ⟨S', rfl⟩ : ∃ S' : Set (D i → β), S = (D i).restrict ⁻¹' S' :=
-  --     dependsOn_iff_exists_comp.1 hD
-  --   exact ⟨S', h⟩
+    exact MeasurableSet.preimage hS (by fun_prop)
   intro i
-  rw [IndepFrom]
-  rw [← generateFrom_generatePiSystem_eq (g := _ '' _)]
-  refine ProbabilityTheory.IndepSets.indep' (by simpa using hA' i) ?_ (.singleton _)
-    (isPiSystem_generatePiSystem _) ?_
-  · apply generatePiSystem_measurableSet
-    grind
-  rw [ProbabilityTheory.IndepSets_iff]
+  rw [indepFrom_iff_indepSets (hA' _) (by grind), IndepSets_iff]
   intro X₁ X₂ hX₁ hX₂
   cases hX₁
   replace hX₂ := eq_sInter_of_mem_generatePiSystem hX₂
   simp only [Set.exists_subset_image_iff, Set.sInter_image,
     Set.subset_compl_iff_disjoint_right, Set.disjoint_insert_right] at hX₂
   obtain ⟨J, ⟨hiJ, hJ⟩, rfl⟩ := hX₂
-  -- TODO: finish
   obtain ⟨Si, hSi, hSDi, hAi⟩ := hA i
-
-  sorry
+  have hAj' : MeasurableSet (⋂ j ∈ J, A j) := by
+    apply MeasurableSet.biInter (Set.to_countable _)
+    simp [hA']
+  lift J to Finset ι using Set.toFinite _
+  simp only [SetLike.mem_coe, disjoint_coe] at hiJ hJ hAj' ⊢
+  classical
+  obtain ⟨Sj, hSj, hSDj, hAj⟩ :
+      ∃ Sj : Set (α → β), MeasurableSet Sj ∧ DependsOn (· ∈ Sj) (J.biUnion D) ∧
+        (⋂ j ∈ J, A j) = (fun ω a ↦ I a ω) ⁻¹' Sj := by
+    choose S hSm hSd hSA using hA
+    refine ⟨⋂ j ∈ J, S j, MeasurableSet.biInter (Set.to_countable _) (by simp [hSm]), ?_, ?_⟩
+    · simp [DependsOn] at hSd ⊢
+      grind
+    · simp [Set.preimage_iInter₂, hSA]
+  rw [hAi, hAj]
+  obtain rfl | hi := Si.eq_empty_or_nonempty
+  · simp
+  obtain rfl | hj := Sj.eq_empty_or_nonempty
+  · simp
+  obtain ⟨Si, rfl⟩ := dependsOn_mem_iff_exists_preimage.1 hSDi
+  obtain ⟨Sj, rfl⟩ := dependsOn_mem_iff_exists_preimage.1 hSDj
+  clear hSDi hSDj
+  rw [← Set.preimage_comp, ← Set.preimage_comp]
+  refine IndepFun.measure_inter_preimage_eq_mul (hI'.indepFun_finset _ _ ?_ hI) _ _
+    (.of_restrict_preimage hi hSi) (.of_restrict_preimage hj hSj)
+  rw [Finset.disjoint_biUnion_right]
+  intro j hj
+  exact (hND _ _ (hJ.notMem_of_mem_left_finset hj)).symm

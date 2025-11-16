@@ -1,3 +1,8 @@
 import Polychromatic.Basic
+import Polychromatic.Colouring
+import Polychromatic.DiscreteProbability
+import Polychromatic.Existence
 import Polychromatic.ForMathlib.Misc
+import Polychromatic.LocalLemma
+import Polychromatic.LovaszFunction
 import Polychromatic.Main

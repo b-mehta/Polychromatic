@@ -10,68 +10,40 @@ variable {G : Type*} [AddCommGroup G] [DecidableEq G]
 -- tendsto_rpow_mul_exp_neg_mul_atTop_nhds_zero
 open MeasureTheory ProbabilityTheory
 
-section
-
-variable {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω] {P : ι → Measure Ω}
-
-lemma uniformOn_pi [Fintype Ω] [MeasurableSingletonClass Ω] {f : ι → Set Ω} :
-    uniformOn (Set.univ.pi f) = Measure.pi fun i ↦ uniformOn (f i) := by
-  refine (MeasureTheory.Measure.pi_eq fun t ht ↦ ?_).symm
-  lift f to ι → Finset Ω
-  · simp [Set.toFinite]
-  lift t to ι → Finset Ω
-  · simp [Set.toFinite]
-  classical
-  simp [← Fintype.coe_piFinset, uniformOn_apply_finset, Fintype.piFinset_inter,
-    ENNReal.prod_div_distrib]
-
-variable [∀ i, IsProbabilityMeasure (P i)] {s : Set ι}
-
-open Classical in
-lemma map_pi_restrict (i₁ : Set ι)  :
-    (Measure.pi P).map i₁.restrict = Measure.pi (fun i : i₁ ↦ P i) := by
-  apply (Measure.pi_eq _).symm
-  intro t hs
-  rw [Measure.map_apply i₁.measurable_restrict (.pi Set.countable_univ (by simp [hs]))]
-  have : (i₁.restrict ⁻¹' (Set.univ : Set i₁).pi t : Set (ι → Ω)) =
-      Set.univ.pi fun i ↦ if h : i ∈ i₁ then t ⟨_, h⟩ else Set.univ := by grind
-  calc
-    Measure.pi P (i₁.restrict ⁻¹' Set.univ.pi t)
-      = ∏ i, P i (if h : i ∈ i₁ then t ⟨i, h⟩ else Set.univ) := by rw [this, Measure.pi_pi]
-    _ = ∏ i, if h : i ∈ i₁ then P i (t ⟨i, h⟩) else 1 := by simp [apply_dite (P _)]
-    _ = _ := (Finset.prod_bij_ne_one (fun i _ _ ↦ i.1) (by simp) (by simp) (by simp) (by simp)).symm
-
-lemma indepFun_restrict_restrict_pi {s t : Set ι} (hi : Disjoint s t) :
-    IndepFun s.restrict t.restrict (Measure.pi P) := by
-  lift s to Finset ι using s.toFinite
-  lift t to Finset ι using t.toFinite
-  simp only [disjoint_coe] at hi
-  have : iIndepFun (· |> ·) (Measure.pi P) := iIndepFun_pi (X := fun i x ↦ x) (by fun_prop)
-  have := this.indepFun_finset s t hi (by fun_prop)
-  exact this
-
-lemma pi_inter_eq (s t : Set ι) (hi : Disjoint s t)
-    (A : Set (s → Ω)) (B : Set (t → Ω)) (hA : MeasurableSet A) (hB : MeasurableSet B) :
-    Measure.pi P (s.restrict ⁻¹' A ∩ t.restrict ⁻¹' B) =
-      Measure.pi P (s.restrict ⁻¹' A) * Measure.pi P (t.restrict ⁻¹' B) :=
-  (indepFun_restrict_restrict_pi hi (P := P)).measure_inter_preimage_eq_mul A B hA hB
-
-end
-
--- ∀ k : K, ∃ i ∈ n +ᵥ S, χ i = k
-
-lemma exists_of {k m : ℕ} {S X : Finset G} (hm : #S = m) :
+lemma exists_of {k m : ℕ} {S X : Finset G} (hm : #S = m) (hm : 2 ≤ m) (hk : k ≠ 0) :
     ∃ χ : G → Fin k, ∀ x ∈ X, ∀ c : Fin k, ∃ i ∈ x +ᵥ S, χ i = c := by
   let Y : Finset G := X + S
   let Ω := Y → Fin k
-  let A (x : X) : Set Ω := {χ | ∀ c, ∃ i h, χ ⟨x + i, add_mem_add x.2 h⟩ = c}
-  let N : X → Finset X := fun x ↦ sorry
-  have hPAN : lopsidedCondition (uniformOn Set.univ) A N := by
-    intro i T hiT hNT
-    sorry
+  have : Nonempty (Fin k) := Fin.pos_iff_nonempty.1 (by omega)
+  let add : X → S → Y := fun x s ↦ ⟨x + s, add_mem_add x.2 s.2⟩
+  let A (x : X) : Set Ω := {χ | ∃ c, ∀ s, χ (add x s) ≠ c}
+  let D : X → Finset Y := fun x ↦ S.attach.image (fun s ↦ add x s)
+  let N : X → Finset X := fun x ↦ X.attach.filter (fun i ↦ x.1 - i.1 ∈ S - S)
+  have : IsProbabilityMeasure (uniformOn Set.univ : Measure (Fin k)) :=
+    uniformOn_isProbabilityMeasure Set.finite_univ Set.univ_nonempty
+  have : IsProbabilityMeasure (uniformOn Set.univ : Measure (Y → Fin k)) :=
+    uniformOn_isProbabilityMeasure Set.finite_univ Set.univ_nonempty
+  have hPAN : standardCondition (Measure.pi (fun _ ↦ uniformOn Set.univ)) A N := by
+    refine standardCondition_of _ D ?_ (by fun_prop)
+      (iIndepFun_pi (X := fun i x ↦ x) (by fun_prop)) ?_
+    · simp only [mem_sub, mem_filter, mem_attach, true_and, not_exists, not_and, disjoint_left,
+        mem_image, Subtype.exists, forall_exists_index, Subtype.forall, mem_add, Subtype.mk.injEq,
+        and_imp, N, Y, D, add]
+      rintro x₁ hx₁ x₂ hx₂ hS _ x₃ hx₃ s₁ hs₁ rfl s₂ hs₂ h s₃ hs₃ h'
+      exact hS s₂ hs₂ s₃ hs₃ (by grind)
+    · rintro x
+      refine ⟨A x, MeasurableSet.of_discrete, ?_, rfl⟩
+      simp only [DependsOn, coe_image, coe_attach, Set.image_univ, Set.mem_range, Subtype.exists,
+        forall_exists_index, Subtype.forall, Subtype.mk.injEq, Set.mem_setOf_eq, eq_iff_iff, D,
+        add, A, Ω]
+      intro χ₁ χ₂ h
+      peel with c s hs
+      rw [h _ _ _ hs rfl]
+  rw [← uniformOn_pi, Set.pi_univ] at hPAN
+  let p : ℝ := k * (1 - (k : ℝ)⁻¹) ^ m
+  have := symmetricLocalLemma (fun i ↦ .of_discrete) (by simp; grind) (p := p) (d := m * (m - 1))
+    (lopsidedCondition_of_standardCondition hPAN)
   sorry
-
-#exit
 
 theorem exists_prime_aux (S : Finset ℕ) :
     ∃ p : ℕ, p.Prime ∧ Set.InjOn (fun i : ℕ ↦ (i : ZMod p)) (S : Set ℕ) := by
