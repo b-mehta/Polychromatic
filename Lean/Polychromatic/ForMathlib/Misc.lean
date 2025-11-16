@@ -15,6 +15,21 @@ lemma Filter.Tendsto.exists_le_lt {α : Type*} [LinearOrder α] [NoMaxOrder α] 
   | m + 1 => have : n < f m.succ := hm ▸ Nat.find_spec h
              refine ⟨m, le_of_not_gt <| Nat.find_min h <| m.lt_succ_self.trans_eq hm.symm, this⟩
 
+open Pointwise in
+lemma card_sub_erase_zero_le {G : Type*} [DecidableEq G] [AddGroup G] {S : Finset G} :
+    #((S - S).erase 0) ≤ #S * (#S - 1) := by
+  calc
+    #((S - S).erase 0) = #((Finset.image₂ (· - ·) S S).erase 0) := rfl
+    _ = #((S.biUnion fun x ↦ S.image (x - ·)).erase 0) := by rw [← biUnion_image_left]
+    _ ≤ #(S.biUnion fun x ↦ (S.erase x).image (x - ·)) := by
+      apply card_le_card
+      simp only [subset_iff, mem_erase, ne_eq, mem_biUnion, mem_image, and_imp, forall_exists_index]
+      intro _ ne x hx y hy rfl
+      exact ⟨x, hx, y, ⟨by rintro rfl; simp at ne, hy⟩, rfl⟩
+    _ ≤ ∑ x ∈ S, #((S.erase x).image (x - ·)) := card_biUnion_le
+    _ ≤ ∑ x ∈ S, #(S.erase x) := sum_le_sum fun i hi ↦ card_image_le
+    _ = _ := by simp +contextual [card_erase_of_mem]
+
 lemma StrictMono.exists_le_lt {f : ℕ → ℕ} (hf : StrictMono f) (hf₀ : f 0 = 0) (n : ℕ) :
     ∃ m, f m ≤ n ∧ n < f (m + 1) :=
   hf.tendsto_atTop.exists_le_lt _ (by simp [hf₀])
@@ -63,6 +78,17 @@ lemma uniformOn_apply_finset {Ω : Type*} [DecidableEq Ω] [MeasurableSpace Ω]
     [MeasurableSingletonClass Ω] {s t : Finset Ω} :
     uniformOn (s : Set Ω) (t : Set Ω) = #(s ∩ t) / #s :=
   uniformOn_apply_finset' s.measurableSet t.measurableSet
+
+theorem uniformOn_isProbabilityMeasure' {Ω : Type*} [MeasurableSpace Ω]
+    {s : Set Ω} (hs : s.Finite) (hs' : s.Nonempty) (hsm : MeasurableSet s) :
+    IsProbabilityMeasure (uniformOn s) := by
+  apply cond_isProbabilityMeasure_of_finite
+  · rwa [Measure.count_ne_zero_iff]
+  · exact ((Measure.count_apply_lt_top' hsm).2 hs).ne
+
+instance {α : Type*} [Nonempty α] [Finite α] [MeasurableSpace α] :
+    IsProbabilityMeasure (uniformOn (Set.univ : Set α)) :=
+  uniformOn_isProbabilityMeasure' Set.finite_univ Set.univ_nonempty MeasurableSet.univ
 
 variable {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω] {P : ι → Measure Ω}
 

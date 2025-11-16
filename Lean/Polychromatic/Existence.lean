@@ -10,17 +10,6 @@ variable {G : Type*} [AddCommGroup G] [DecidableEq G]
 -- tendsto_rpow_mul_exp_neg_mul_atTop_nhds_zero
 open MeasureTheory ProbabilityTheory
 
-theorem uniformOn_isProbabilityMeasure' {Ω : Type*} [MeasurableSpace Ω]
-    {s : Set Ω} (hs : s.Finite) (hs' : s.Nonempty) (hsm : MeasurableSet s) :
-    IsProbabilityMeasure (uniformOn s) := by
-  apply cond_isProbabilityMeasure_of_finite
-  · rwa [Measure.count_ne_zero_iff]
-  · exact ((Measure.count_apply_lt_top' hsm).2 hs).ne
-
-instance {α : Type*} [Nonempty α] [Finite α] [MeasurableSpace α] :
-    IsProbabilityMeasure (uniformOn (Set.univ : Set α)) := by
-  apply uniformOn_isProbabilityMeasure' Set.finite_univ Set.univ_nonempty MeasurableSet.univ
-
 lemma standardCondition_lovasz {k : ℕ} {S X : Finset G} (hk : k ≠ 0) :
     standardCondition
       (Measure.pi (fun _ ↦ uniformOn Set.univ))
@@ -81,19 +70,6 @@ lemma prob_bad_event {k m : ℕ} {S X : Finset G} {x : X} (hm : #S = m) (hk : k 
         simp [Function.Injective, add]
     _ = k * (1 - (k : ℝ)⁻¹) ^ m := by simp [sub_div, field, hk, hm]
 
-lemma card_sub_erase_zero_le {S : Finset G} : #((S - S).erase 0) ≤ #S * (#S - 1) := by
-  calc
-    #((S - S).erase 0) = #((Finset.image₂ (· - ·) S S).erase 0) := rfl
-    _ = #((S.biUnion fun x ↦ S.image (x - ·)).erase 0) := by rw [← biUnion_image_left]
-    _ ≤ #(S.biUnion fun x ↦ (S.erase x).image (x - ·)) := by
-      apply card_le_card
-      simp only [subset_iff, mem_erase, ne_eq, mem_biUnion, mem_image, and_imp, forall_exists_index]
-      intro _ ne x hx y hy rfl
-      exact ⟨x, hx, y, ⟨by grind, hy⟩, rfl⟩
-    _ ≤ ∑ x ∈ S, #((S.erase x).image (x - ·)) := card_biUnion_le
-    _ ≤ ∑ x ∈ S, #(S.erase x) := sum_le_sum fun i hi ↦ card_image_le
-    _ = _ := by simp +contextual [card_erase_of_mem]
-
 lemma card_neighbour {m : ℕ} {S X : Finset G} (hm : #S = m) {x : X} :
     #(X.attach.filter (fun i ↦ x.1 - i.1 ∈ (S - S).erase 0)) ≤ m * (m - 1) := by
   calc
@@ -108,6 +84,23 @@ lemma card_neighbour {m : ℕ} {S X : Finset G} (hm : #S = m) {x : X} :
     _ ≤ #((S - S).erase 0) := card_image_le
     _ ≤ #S * (#S - 1) := card_sub_erase_zero_le
     _ = m * (m - 1) := by simp [hm]
+
+lemma exists_of_uniformOn_apply_pos' {Ω : Type*} [MeasurableSpace Ω] {s t : Set Ω}
+    (h : 0 < uniformOn s t) (hs : MeasurableSet s) :
+    (s ∩ t).Nonempty := by
+  have hs_fin : s.Finite := finite_of_uniformOn_ne_zero h.ne'
+  rw [uniformOn, cond_apply hs] at h
+  have : Measure.count (s ∩ t) ≠ 0 := by
+    intro h'
+    simp [h'] at h
+  rwa [Measure.count_ne_zero_iff] at this
+
+lemma exists_of_uniformOn_apply_pos {Ω : Type*} [MeasurableSpace Ω]
+    [MeasurableSingletonClass Ω] {s t : Set Ω}
+    (h : 0 < uniformOn s t) :
+    (s ∩ t).Nonempty := by
+  have hs_fin : s.Finite := finite_of_uniformOn_ne_zero h.ne'
+  exact exists_of_uniformOn_apply_pos' h (Set.Finite.measurableSet hs_fin)
 
 lemma exists_of {k m : ℕ} {S X : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (hk : k ≠ 0)
     (hkm : Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1) :
@@ -135,11 +128,14 @@ lemma exists_of {k m : ℕ} {S X : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (hk
       (d := m * (m - 1)) (lopsidedCondition_of_standardCondition hPAN) hp
       (fun i ↦ card_neighbour hm)
     calc
-      Real.exp 1 * p * ((m * (m - 1) : ℕ) + 1) ≤ Real.exp 1 * p * (m * (m - 1) + 1) := by
-          sorry
-      _ ≤ _ := sorry
+      Real.exp 1 * p * ((m * (m - 1) : ℕ) + 1) = Real.exp 1 * p * (m * (m - 1) + 1) := by
+          have : 1 ≤ m := by grind
+          simp [this]
+      _ = _ := by simp only [p]; ring
       _ ≤ _ := hkm
-  sorry
+  rw [hP, Measure.real_def, uniformOn_univ] at this
+
+#exit
 
 theorem exists_prime_aux (S : Finset ℕ) :
     ∃ p : ℕ, p.Prime ∧ Set.InjOn (fun i : ℕ ↦ (i : ZMod p)) (S : Set ℕ) := by
