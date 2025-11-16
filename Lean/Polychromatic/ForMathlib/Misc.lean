@@ -80,6 +80,14 @@ lemma uniformOn_pi [Fintype Ω] [MeasurableSingletonClass Ω] {f : ι → Set Ω
 variable [∀ i, IsProbabilityMeasure (P i)] {s : Set ι}
 
 open Classical in
+lemma pi_pi' {f : ι → Set Ω} {s : Finset ι} :
+    (Measure.pi P) ((s : Set ι).pi f) = ∏ i ∈ s, P i (f i) := by
+  have : (s : Set ι).pi f = Set.univ.pi (fun i ↦ if i ∈ s then f i else Set.univ) := by
+    ext x
+    simp
+  simp [this, Measure.pi_pi, apply_ite]
+
+open Classical in
 lemma map_pi_restrict (i₁ : Set ι)  :
     (Measure.pi P).map i₁.restrict = Measure.pi (fun i : i₁ ↦ P i) := by
   apply (Measure.pi_eq _).symm
