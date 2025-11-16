@@ -41,21 +41,6 @@ lemma map_pi_restrict (i₁ : Set ι)  :
     _ = ∏ i, if h : i ∈ i₁ then P i (t ⟨i, h⟩) else 1 := by simp [apply_dite (P _)]
     _ = _ := (Finset.prod_bij_ne_one (fun i _ _ ↦ i.1) (by simp) (by simp) (by simp) (by simp)).symm
 
-open Classical in
-example (s t : Set ι) (hi : Disjoint s t) :
-    (((Measure.pi P).map (s ∪ t).restrict)).map
-        ((MeasurableEquiv.piCongrLeft _ (Equiv.Set.union hi)).trans
-          (MeasurableEquiv.sumPiEquivProdPi (fun _ ↦ Ω))) =
-      ((Measure.pi P).map s.restrict).prod ((Measure.pi P).map t.restrict)
-       := by
-  rw [Measure.map_map]
-  apply Measure.ext_of_lintegral
-  intro f hf
-  rw [lintegral_map]
-  rw [lintegral_pi]
-
-  sorry
-
 lemma indepFun_restrict_restrict_pi {s t : Set ι} (hi : Disjoint s t) :
     IndepFun s.restrict t.restrict (Measure.pi P) := by
   lift s to Finset ι using s.toFinite
@@ -70,14 +55,6 @@ lemma pi_inter_eq (s t : Set ι) (hi : Disjoint s t)
     Measure.pi P (s.restrict ⁻¹' A ∩ t.restrict ⁻¹' B) =
       Measure.pi P (s.restrict ⁻¹' A) * Measure.pi P (t.restrict ⁻¹' B) :=
   (indepFun_restrict_restrict_pi hi (P := P)).measure_inter_preimage_eq_mul A B hA hB
-
--- example {ι Ω : Type*} [MeasurableSpace Ω] (s : Set ι) :
---     MeasurableEmbedding (s.restrict : (ι → Ω) → _) := by
---   sorry
-
--- lemma nonempty_of {P : Measure Ω} [IsProbabilityMeasure P] :
---     Nonempty Ω := by
---   sorry
 
 end
 

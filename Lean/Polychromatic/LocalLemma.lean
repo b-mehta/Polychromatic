@@ -10,10 +10,22 @@ open MeasurableSpace Measure
 
 variable {s : Set Ω} {t t' : Set (Set Ω)}
 
-def IndepFrom (P : Measure Ω) (s : Set Ω) (t : Set (Set Ω)) : Prop :=
+def IndepFrom (s : Set Ω) (t : Set (Set Ω)) (P : Measure Ω) : Prop :=
   Indep (generateFrom {s}) (generateFrom t) P
 
-lemma IndepFrom.prob_inter_iInter [Countable ι] (h : IndepFrom P s t) {A : ι → Set Ω}
+lemma indepFrom_iff_indepSets {P : Measure Ω} [IsZeroOrProbabilityMeasure P]
+    {s : Set Ω} {t : Set (Set Ω)} (hs : MeasurableSet s) (ht : ∀ i ∈ t, MeasurableSet i):
+    IndepFrom s t P ↔ IndepSets {s} (generatePiSystem t) P := by
+  rw [IndepFrom, ← generateFrom_generatePiSystem_eq (g := t)]
+  constructor
+  · intro h
+    exact h.indepSets
+  · intro h
+    apply h.indep' _ _ (.singleton s) (isPiSystem_generatePiSystem _)
+    · simpa
+    · exact generatePiSystem_measurableSet ht
+
+lemma IndepFrom.prob_inter_iInter [Countable ι] (h : IndepFrom s t P) {A : ι → Set Ω}
     (ht : ∀ i, A i ∈ t ∨ (A i)ᶜ ∈ t) : P (s ∩ ⋂ i, A i) = P s * P (⋂ i, A i) := by
   rw [IndepFrom, Indep_iff] at h
   rw [h]
@@ -24,34 +36,34 @@ lemma IndepFrom.prob_inter_iInter [Countable ι] (h : IndepFrom P s t) {A : ι �
   · exact .basic _ h
   · exact .of_compl (.basic _ h)
 
-lemma IndepFrom.prob_inter_biInter (h : IndepFrom P s t) {C : Set ι} {A : ι → Set Ω}
+lemma IndepFrom.prob_inter_biInter (h : IndepFrom s t P) {C : Set ι} {A : ι → Set Ω}
     (hC : C.Countable) (ht : ∀ i ∈ C, A i ∈ t ∨ (A i)ᶜ ∈ t) :
     P (s ∩ ⋂ i ∈ C, A i) = P s * P (⋂ i ∈ C, A i) := by
   have : Countable C := by simpa
   simpa using h.prob_inter_iInter (ι := C) (A := A ∘ Subtype.val) (by simpa)
 
-lemma IndepFrom.prob_inter_sInter (h : IndepFrom P s t) (ht' : t'.Countable)
+lemma IndepFrom.prob_inter_sInter (h : IndepFrom s t P) (ht' : t'.Countable)
     (ht : ∀ i ∈ t', i ∈ t ∨ iᶜ ∈ t) : P (s ∩ ⋂₀ t') = P s * P (⋂₀ t') := by
   rw [Set.sInter_eq_biInter]
   exact h.prob_inter_biInter ht' ht
 
 variable [IsProbabilityMeasure P]
 
-lemma IndepFrom.cond_iInter [Countable ι] (h : IndepFrom P s t)
+lemma IndepFrom.cond_iInter [Countable ι] (h : IndepFrom s t P)
     {A : ι → Set Ω} (hs : MeasurableSet s) (ht : ∀ i, A i ∈ t ∨ (A i)ᶜ ∈ t)
     (ht₀ : P (⋂ i, A i) ≠ 0) :
     P[s | ⋂ i, A i] = P s := by
   rw [cond_apply' hs, Set.inter_comm, h.prob_inter_iInter ht, mul_left_comm,
     ENNReal.inv_mul_cancel ht₀ (by simp), mul_one]
 
-lemma IndepFrom.cond_biInter (h : IndepFrom P s t) {C : Set ι}
+lemma IndepFrom.cond_biInter (h : IndepFrom s t P) {C : Set ι}
     {A : ι → Set Ω} (hC : C.Countable) (hs : MeasurableSet s) (ht : ∀ i ∈ C, A i ∈ t ∨ (A i)ᶜ ∈ t)
     (ht₀ : P (⋂ i ∈ C, A i) ≠ 0) :
     P[s | ⋂ i ∈ C, A i] = P s := by
   have : Countable C := by simpa
   simpa using h.cond_iInter (ι := C) (A := A ∘ Subtype.val) hs (by simpa) (by simpa)
 
-lemma IndepFrom.cond_sInter (h : IndepFrom P s t) (hs : MeasurableSet s)
+lemma IndepFrom.cond_sInter (h : IndepFrom s t P) (hs : MeasurableSet s)
     (ht' : t'.Countable) (ht : ∀ i ∈ t', i ∈ t ∨ iᶜ ∈ t) (ht₀ : P (⋂₀ t') ≠ 0) :
     P[s | ⋂₀ t'] = P s := by
   rw [Set.sInter_eq_biInter] at ht₀ ⊢
@@ -74,7 +86,7 @@ lemma lopsidedCondition.real [IsProbabilityMeasure P]
   exact h _ _ hiS hS
 
 def standardCondition (P : Measure Ω) (A : ι → Set Ω) (N : ι → Finset ι) : Prop :=
-  ∀ i : ι, IndepFrom P (A i) (A '' (insert i (N i))ᶜ)
+  ∀ i : ι, IndepFrom (A i) (A '' (insert i (N i))ᶜ) P
 
 lemma lopsidedCondition_of_standardCondition [IsProbabilityMeasure P]
     (h : standardCondition P A N) :
@@ -238,3 +250,71 @@ theorem symmetricLocalLemma [Fintype ι] [IsProbabilityMeasure P] (hA : ∀ i, M
       · simpa using (hx₁ i).le
       · simpa [x] using hx₀ i
     _ = x i * ∏ j ∈ N i, (1 - x j) := rfl
+
+-- lemma measurable_restrict_iff {ι β : Type*} [MeasurableSpace β] {s : Set ι} {T : Set (s → β)} :
+--     MeasurableSet (s.restrict ⁻¹' T : Set (ι → β)) ↔ MeasurableSet T := by
+--   refine ⟨?_, ?_⟩
+--   -- obtain hβ | hβ := isEmpty_or_nonempty β
+--   -- ·
+--   intro hT
+--   have : (s.restrict '' (s.restrict ⁻¹' T : Set (ι → β)) : Set (s → β)) = T := by
+--     rw [Set.image_preimage_eq_inter_range]
+--     sorry
+
+
+
+-- #exit
+
+lemma eq_sInter_of_mem_generatePiSystem {Ω : Type*} {t : Set (Set Ω)} {A : Set Ω}
+    (hA : A ∈ generatePiSystem t) :
+    ∃ S : Set (Set Ω), S ⊆ t ∧ A = ⋂₀ S := by
+  induction hA with
+  | @base s hs =>
+    refine ⟨{s}, by simpa, by simp⟩
+  | @inter s₁ s₂ _ _ h hs₁ hs₂ =>
+    obtain ⟨S₁, hS₁, rfl⟩ := hs₁
+    obtain ⟨S₂, hS₂, rfl⟩ := hs₂
+    refine ⟨S₁ ∪ S₂, Set.union_subset hS₁ hS₂, by simp [Set.sInter_union]⟩
+
+lemma standardCondition_of {α β : Type*} [MeasurableSpace β]
+    [IsProbabilityMeasure P]
+    {I : α → Ω → β} {A : ι → Set Ω} {N : ι → Finset ι}
+    {D : ι → Finset α}
+    (hND : ∀ i j, i ∉ N j → Disjoint (D i) (D j))
+    (hI : ∀ a : α, Measurable (I a))
+    (hI' : iIndepFun I P)
+    (hA : ∀ i, ∃ S : Set (α → β), MeasurableSet S ∧
+      DependsOn (· ∈ S) (D i) ∧ A i = {ω | (I · ω) ∈ S}) :
+    standardCondition P A N := by
+  rw [standardCondition]
+  have hA' : ∀ i, MeasurableSet (A i) := by
+    intro i
+    obtain ⟨S, hS, -, h⟩ := hA i
+    rw [h]
+    apply MeasurableSet.preimage hS _
+    rw [measurable_pi_iff]
+    exact hI
+  -- replace hA : ∀ i, ∃ S : Set (D i → β), A i = (fun ω ↦ (D i).restrict (I · ω)) ⁻¹' S := by
+  --   intro i
+  --   obtain ⟨S, hS, hD, h⟩ := hA i
+  --   obtain ⟨S', rfl⟩ : ∃ S' : Set (D i → β), S = (D i).restrict ⁻¹' S' :=
+  --     dependsOn_iff_exists_comp.1 hD
+  --   exact ⟨S', h⟩
+  intro i
+  rw [IndepFrom]
+  rw [← generateFrom_generatePiSystem_eq (g := _ '' _)]
+  refine ProbabilityTheory.IndepSets.indep' ?_ ?_ (.singleton _)
+    (isPiSystem_generatePiSystem _) ?_
+  · simp only [Set.mem_singleton_iff, forall_eq]
+    exact hA' i
+  · apply generatePiSystem_measurableSet
+    grind
+  rw [ProbabilityTheory.IndepSets_iff]
+  intro X₁ X₂ hX₁ hX₂
+  cases hX₁
+  replace hX₂ := eq_sInter_of_mem_generatePiSystem hX₂
+  simp only [Set.exists_subset_image_iff, Set.sInter_image,
+    Set.subset_compl_iff_disjoint_right, Set.disjoint_insert_right] at hX₂
+  obtain ⟨J, hJ, rfl⟩ := hX₂
+  -- TODO: finish
+  sorry
