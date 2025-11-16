@@ -216,7 +216,7 @@ example : polychromNumber (G := ℤ) {0, 1, 3} = 2 := by
       decide
     obtain ⟨n, hn⟩ : ∃ n : ℤ, ¬ Set.InjOn χ (n +ᵥ S) := by
       obtain ⟨i, hi, hi2⟩ := h1
-      obtain ⟨n, hn, hin, h2n⟩ := h2 i (by simpa [← Finset.mem_coe])
+      obtain ⟨n, hn, hin, h2n⟩ := h2 i (by simpa)
       use n
       simp only [Set.InjOn, not_forall, exists_prop]
       exact ⟨i, hin, 2, h2n, hi2, by fin_cases hi <;> decide⟩

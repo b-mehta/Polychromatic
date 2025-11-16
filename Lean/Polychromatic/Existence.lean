@@ -18,7 +18,7 @@ lemma exists_of {k m : ℕ} {S X : Finset G} (hm : #S = m) (hm : 2 ≤ m) (hk : 
   let add : X → S → Y := fun x s ↦ ⟨x + s, add_mem_add x.2 s.2⟩
   let A (x : X) : Set Ω := {χ | ∃ c, ∀ s, χ (add x s) ≠ c}
   let D : X → Finset Y := fun x ↦ S.attach.image (fun s ↦ add x s)
-  let N : X → Finset X := fun x ↦ X.attach.filter (fun i ↦ x.1 - i.1 ∈ S - S)
+  let N : X → Finset X := fun x ↦ X.attach.filter (fun i ↦ x.1 - i.1 ∈ (S - S).erase 0)
   have : IsProbabilityMeasure (uniformOn Set.univ : Measure (Fin k)) :=
     uniformOn_isProbabilityMeasure Set.finite_univ Set.univ_nonempty
   have : IsProbabilityMeasure (uniformOn Set.univ : Measure (Y → Fin k)) :=
@@ -26,11 +26,11 @@ lemma exists_of {k m : ℕ} {S X : Finset G} (hm : #S = m) (hm : 2 ≤ m) (hk : 
   have hPAN : standardCondition (Measure.pi (fun _ ↦ uniformOn Set.univ)) A N := by
     refine standardCondition_of _ D ?_ (by fun_prop)
       (iIndepFun_pi (X := fun i x ↦ x) (by fun_prop)) ?_
-    · simp only [mem_sub, mem_filter, mem_attach, true_and, not_exists, not_and, disjoint_left,
-        mem_image, Subtype.exists, forall_exists_index, Subtype.forall, mem_add, Subtype.mk.injEq,
-        and_imp, N, Y, D, add]
-      rintro x₁ hx₁ x₂ hx₂ hS _ x₃ hx₃ s₁ hs₁ rfl s₂ hs₂ h s₃ hs₃ h'
-      exact hS s₂ hs₂ s₃ hs₃ (by grind)
+    · simp only [ne_eq, mem_erase, mem_sub, mem_filter, mem_attach, true_and, not_and, not_exists,
+        disjoint_left, mem_image, Subtype.exists, forall_exists_index, Subtype.forall, mem_add,
+        Subtype.mk.injEq, and_imp, N, Y, D, add]
+      rintro x₁ hx₁ x₂ hx₂ hne hS _ x₃ hx₃ s₁ hs₁ rfl s₂ hs₂ h s₃ hs₃ h'
+      exact hS (by grind) s₂ hs₂ s₃ hs₃ (by grind)
     · rintro x
       refine ⟨A x, MeasurableSet.of_discrete, ?_, rfl⟩
       simp only [DependsOn, coe_image, coe_attach, Set.image_univ, Set.mem_range, Subtype.exists,
@@ -41,8 +41,11 @@ lemma exists_of {k m : ℕ} {S X : Finset G} (hm : #S = m) (hm : 2 ≤ m) (hk : 
       rw [h _ _ _ hs rfl]
   rw [← uniformOn_pi, Set.pi_univ] at hPAN
   let p : ℝ := k * (1 - (k : ℝ)⁻¹) ^ m
-  have := symmetricLocalLemma (fun i ↦ .of_discrete) (by simp; grind) (p := p) (d := m * (m - 1))
-    (lopsidedCondition_of_standardCondition hPAN)
+  have hm : m * (m - 1) - 1 ≠ 0 := by
+    have : 1 < m * (m - 1) := one_lt_mul_of_lt_of_le' (by grind) (by grind)
+    grind
+  have := symmetricLocalLemma (fun i ↦ .of_discrete) hm (p := p)
+    (d := m * (m - 1) - 1) (lopsidedCondition_of_standardCondition hPAN)
   sorry
 
 theorem exists_prime_aux (S : Finset ℕ) :

@@ -269,7 +269,7 @@ lemma dependsOn_mem_iff_exists_preimage {α β : Type*} {t : Set α} {A : Set (�
 
 lemma standardCondition_of {α β : Type*} [Fintype ι] [MeasurableSpace β] [IsProbabilityMeasure P]
     (I : α → Ω → β) {A : ι → Set Ω} {N : ι → Finset ι} (D : ι → Finset α)
-    (hND : ∀ i j, i ∉ N j → Disjoint (D i) (D j))
+    (hND : ∀ i j, i ≠ j → i ∉ N j → Disjoint (D i) (D j))
     (hI : ∀ a : α, Measurable (I a))
     (hI' : iIndepFun I P)
     (hA : ∀ i, ∃ S : Set (α → β), MeasurableSet S ∧
@@ -316,4 +316,4 @@ lemma standardCondition_of {α β : Type*} [Fintype ι] [MeasurableSpace β] [Is
     (.of_restrict_preimage hi hSi) (.of_restrict_preimage hj hSj)
   rw [Finset.disjoint_biUnion_right]
   intro j hj
-  exact (hND _ _ (hJ.notMem_of_mem_left_finset hj)).symm
+  exact (hND _ _ (by grind) (hJ.notMem_of_mem_left_finset hj)).symm
