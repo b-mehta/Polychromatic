@@ -19,6 +19,34 @@ lemma StrictMono.exists_le_lt {f : ℕ → ℕ} (hf : StrictMono f) (hf₀ : f 0
     ∃ m, f m ≤ n ∧ n < f (m + 1) :=
   hf.tendsto_atTop.exists_le_lt _ (by simp [hf₀])
 
+lemma Fintype.piFinset_inter {ι α : Type*} [DecidableEq ι] [Fintype ι] [DecidableEq α]
+    {s t : ι → Finset α} :
+    Fintype.piFinset s ∩ Fintype.piFinset t = Fintype.piFinset (fun i ↦ s i ∩ t i) := by
+  ext j
+  simp only [mem_inter, mem_piFinset]
+  grind
+
+lemma ENNReal.prod_div_distrib {ι : Type*} [DecidableEq ι] {f g : ι → ENNReal}
+    (s : Finset ι) (h : ∀ i ∈ s, g i ≠ ⊤) :
+    (∏ i ∈ s, f i / g i) = (∏ i ∈ s, f i) / (∏ i ∈ s, g i) := by
+  induction s using Finset.cons_induction_on with
+  | empty => simp
+  | cons a s has ih =>
+    simp only [cons_eq_insert, mem_insert, ne_eq, forall_eq_or_imp] at h
+    simp only [cons_eq_insert, has, not_false_eq_true, prod_insert]
+    rw [ENNReal.mul_div_mul_comm (Or.inr (prod_ne_top h.2)) (Or.inl h.1), ih h.2]
+
+lemma ENNReal.prod_div_distrib' {ι : Type*} [DecidableEq ι] {f g : ι → ENNReal}
+    (s : Finset ι) (h : ∀ i ∈ s, g i ≠ 0) :
+    (∏ i ∈ s, f i / g i) = (∏ i ∈ s, f i) / (∏ i ∈ s, g i) := by
+  induction s using Finset.cons_induction_on with
+  | empty => simp
+  | cons a s has ih =>
+    simp only [cons_eq_insert, mem_insert, ne_eq, forall_eq_or_imp] at h
+    simp only [cons_eq_insert, has, not_false_eq_true, prod_insert]
+    rw [ENNReal.mul_div_mul_comm (Or.inl h.1)
+      (Or.inr (by simpa [prod_eq_zero_iff] using h.2)), ih h.2]
+
 section
 
 open MeasureTheory Measure ProbabilityTheory
@@ -36,24 +64,54 @@ lemma uniformOn_apply_finset {Ω : Type*} [DecidableEq Ω] [MeasurableSpace Ω]
     uniformOn (s : Set Ω) (t : Set Ω) = #(s ∩ t) / #s :=
   uniformOn_apply_finset' s.measurableSet t.measurableSet
 
+variable {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω] {P : ι → Measure Ω}
+
+lemma uniformOn_pi [Fintype Ω] [MeasurableSingletonClass Ω] {f : ι → Set Ω} :
+    uniformOn (Set.univ.pi f) = Measure.pi fun i ↦ uniformOn (f i) := by
+  refine (MeasureTheory.Measure.pi_eq fun t ht ↦ ?_).symm
+  lift f to ι → Finset Ω
+  · simp [Set.toFinite]
+  lift t to ι → Finset Ω
+  · simp [Set.toFinite]
+  classical
+  simp [← Fintype.coe_piFinset, uniformOn_apply_finset, Fintype.piFinset_inter,
+    ENNReal.prod_div_distrib]
+
+variable [∀ i, IsProbabilityMeasure (P i)] {s : Set ι}
+
+open Classical in
+lemma map_pi_restrict (i₁ : Set ι)  :
+    (Measure.pi P).map i₁.restrict = Measure.pi (fun i : i₁ ↦ P i) := by
+  apply (Measure.pi_eq _).symm
+  intro t hs
+  rw [Measure.map_apply i₁.measurable_restrict (.pi Set.countable_univ (by simp [hs]))]
+  have : (i₁.restrict ⁻¹' (Set.univ : Set i₁).pi t : Set (ι → Ω)) =
+      Set.univ.pi fun i ↦ if h : i ∈ i₁ then t ⟨_, h⟩ else Set.univ := by grind
+  calc
+    Measure.pi P (i₁.restrict ⁻¹' Set.univ.pi t)
+      = ∏ i, P i (if h : i ∈ i₁ then t ⟨i, h⟩ else Set.univ) := by rw [this, Measure.pi_pi]
+    _ = ∏ i, if h : i ∈ i₁ then P i (t ⟨i, h⟩) else 1 := by simp [apply_dite (P _)]
+    _ = _ := (Finset.prod_bij_ne_one (fun i _ _ ↦ i.1) (by simp) (by simp) (by simp) (by simp)).symm
+
+lemma indepFun_restrict_restrict_pi {s t : Set ι} (hi : Disjoint s t) :
+    IndepFun s.restrict t.restrict (Measure.pi P) := by
+  lift s to Finset ι using s.toFinite
+  lift t to Finset ι using t.toFinite
+  simp only [disjoint_coe] at hi
+  have : iIndepFun (· |> ·) (Measure.pi P) := iIndepFun_pi (X := fun i x ↦ x) (by fun_prop)
+  have := this.indepFun_finset s t hi (by fun_prop)
+  exact this
+
+lemma pi_inter_eq (s t : Set ι) (hi : Disjoint s t)
+    (A : Set (s → Ω)) (B : Set (t → Ω)) (hA : MeasurableSet A) (hB : MeasurableSet B) :
+    Measure.pi P (s.restrict ⁻¹' A ∩ t.restrict ⁻¹' B) =
+      Measure.pi P (s.restrict ⁻¹' A) * Measure.pi P (t.restrict ⁻¹' B) :=
+  (indepFun_restrict_restrict_pi hi (P := P)).measure_inter_preimage_eq_mul A B hA hB
+
 end
 
-lemma Fintype.piFinset_inter {ι α : Type*} [DecidableEq ι] [Fintype ι] [DecidableEq α]
-    {s t : ι → Finset α} :
-    Fintype.piFinset s ∩ Fintype.piFinset t = Fintype.piFinset (fun i ↦ s i ∩ t i) := by
-  ext j
-  simp only [mem_inter, mem_piFinset]
-  grind
 
-lemma ENNReal.prod_div_distrib {ι : Type*} [DecidableEq ι] {f g : ι → ENNReal}
-    (s : Finset ι) (h : ∀ i ∈ s, g i ≠ ⊤) :
-    (∏ i ∈ s, f i / g i) = (∏ i ∈ s, f i) / (∏ i ∈ s, g i) := by
-  induction s using Finset.cons_induction_on with
-  | empty => simp
-  | cons a s has ih =>
-    simp only [cons_eq_insert, mem_insert, ne_eq, forall_eq_or_imp] at h
-    simp only [cons_eq_insert, has, not_false_eq_true, prod_insert]
-    rw [ENNReal.mul_div_mul_comm (Or.inr (prod_ne_top h.2)) (Or.inl h.1), ih h.2]
+
 namespace Finpartition
 
 def equiEndpoint (n k i : ℕ) : ℕ :=
