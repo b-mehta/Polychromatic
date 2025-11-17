@@ -85,28 +85,25 @@ lemma card_neighbour {m : ℕ} {S X : Finset G} (hm : #S = m) {x : X} :
     _ ≤ #S * (#S - 1) := card_sub_erase_zero_le
     _ = m * (m - 1) := by simp [hm]
 
-lemma exists_of_uniformOn_apply_pos' {Ω : Type*} [MeasurableSpace Ω] {s t : Set Ω}
+lemma nonempty_of_uniformOn_apply_pos' {Ω : Type*} [MeasurableSpace Ω] {s t : Set Ω}
     (h : 0 < uniformOn s t) (hs : MeasurableSet s) :
     (s ∩ t).Nonempty := by
-  have hs_fin : s.Finite := finite_of_uniformOn_ne_zero h.ne'
   rw [uniformOn, cond_apply hs] at h
-  have : Measure.count (s ∩ t) ≠ 0 := by
-    intro h'
-    simp [h'] at h
+  have : Measure.count (s ∩ t) ≠ 0 := by contrapose! h; simp [h]
   rwa [Measure.count_ne_zero_iff] at this
 
-lemma exists_of_uniformOn_apply_pos {Ω : Type*} [MeasurableSpace Ω]
-    [MeasurableSingletonClass Ω] {s t : Set Ω}
-    (h : 0 < uniformOn s t) :
+lemma nonempty_of_uniformOn_apply_pos {Ω : Type*} [MeasurableSpace Ω]
+    [MeasurableSingletonClass Ω] {s t : Set Ω} (h : 0 < uniformOn s t) :
     (s ∩ t).Nonempty := by
   have hs_fin : s.Finite := finite_of_uniformOn_ne_zero h.ne'
-  exact exists_of_uniformOn_apply_pos' h (Set.Finite.measurableSet hs_fin)
+  exact nonempty_of_uniformOn_apply_pos' h (hs_fin.measurableSet)
 
-lemma exists_of {k m : ℕ} {S X : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (hk : k ≠ 0)
+lemma exists_finite_of_le {k m : ℕ} (X : Finset G) {S : Finset G} (hm : #S = m)
+    (hm₂ : 2 ≤ m) (hk : k ≠ 0)
     (hkm : Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1) :
     ∃ χ : G → Fin k, ∀ x ∈ X, ∀ c : Fin k, ∃ i ∈ x +ᵥ S, χ i = c := by
   let Y : Finset G := X + S
-  have : Nonempty (Fin k) := Fin.pos_iff_nonempty.1 (by omega)
+  have : NeZero k := ⟨hk⟩
   let add : X → S → Y := fun x s ↦ ⟨x + s, add_mem_add x.2 s.2⟩
   let A (x : X) : Set (Y → Fin k) := {χ | ∃ c, ∀ s, χ (add x s) ≠ c}
   let D : X → Finset Y := fun x ↦ S.attach.image (fun s ↦ add x s)
@@ -119,50 +116,80 @@ lemma exists_of {k m : ℕ} {S X : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (hk
   have hp₀ : 0 ≤ p := by
     apply mul_nonneg (by positivity) (pow_nonneg _ _)
     simp only [sub_nonneg]
-    apply inv_le_one_of_one_le₀ (by simp; grind)
+    apply inv_le_one_of_one_le₀ (by simp; cutsat)
   have hm₀ : m * (m - 1) ≠ 0 := by
     have : 0 < m * (m - 1) := mul_pos (by grind) (by grind)
-    grind
+    exact this.ne'
   have :  0 < P.real (⋂ i, (A i)ᶜ) := by
     apply symmetricLocalLemma (fun i ↦ .of_discrete) hm₀ (p := p)
       (d := m * (m - 1)) (lopsidedCondition_of_standardCondition hPAN) hp
       (fun i ↦ card_neighbour hm)
     calc
       Real.exp 1 * p * ((m * (m - 1) : ℕ) + 1) = Real.exp 1 * p * (m * (m - 1) + 1) := by
-          have : 1 ≤ m := by grind
+          have : 1 ≤ m := by cutsat
           simp [this]
       _ = _ := by simp only [p]; ring
       _ ≤ _ := hkm
-  rw [hP, Measure.real_def, uniformOn_univ] at this
+  have : (⋂ i, (A i)ᶜ).Nonempty := by
+    rw [hP, Measure.real_def, ENNReal.toReal_pos_iff] at this
+    simpa using nonempty_of_uniformOn_apply_pos this.1
+  obtain ⟨χ, hχ⟩ := this
+  refine ⟨fun g ↦ if hg : g ∈ Y then χ ⟨g, hg⟩ else 0, ?_⟩
+  intro x hx c
+  simp only [ne_eq, Subtype.forall, Set.mem_iInter, Set.mem_compl_iff, Set.mem_setOf_eq, not_exists,
+    not_forall, Decidable.not_not, A, add] at hχ
+  obtain ⟨s, hs, hc⟩ := hχ x hx c
+  refine ⟨x + s, ?_⟩
+  simp [add_mem_add, hx, hs, Y, hc]
 
-#exit
-
-theorem exists_prime_aux (S : Finset ℕ) :
-    ∃ p : ℕ, p.Prime ∧ Set.InjOn (fun i : ℕ ↦ (i : ZMod p)) (S : Set ℕ) := by
-  obtain ⟨m, hm⟩ := S.bddAbove
-  obtain ⟨p, hp : m < p, hp'⟩ := Nat.exists_infinite_primes (m + 1)
-  use p, hp'
-  intro i hi j hj h
-  simp only at h
-  apply_fun ZMod.val at h
-  rwa [ZMod.val_natCast_of_lt, ZMod.val_natCast_of_lt] at h
-  · exact (hm hj).trans_lt hp
-  · exact (hm hi).trans_lt hp
-
-theorem exists_prime {S : Finset ℤ} :
-    ∃ p : ℕ, p.Prime ∧ Set.InjOn (fun i : ℤ ↦ (i : ZMod p)) (S : Set ℤ) := by
-  obtain ⟨m, hm⟩ := S.bddBelow
-  generalize hS' : (-m) +ᵥ S = S'
-  have hS : S = m +ᵥ S' := by simp [← hS']
-  have hS'' : ∀ x ∈ S', 0 ≤ x := by
-    simp only [← hS', mem_vadd_finset, vadd_eq_add, forall_exists_index, and_imp,
-      forall_apply_eq_imp_iff₂]
-    intro i hi
-    have := hm hi
-    omega
-  lift S' to Finset ℕ using hS''
-  simpa [Set.InjOn, hS, mem_vadd_finset, mem_image, - coe_vadd_finset] using exists_prime_aux S'
-
-theorem exists_colouring {k : ℕ} {S : Finset ℤ} (hm : 4 * k ^ 2 ≤ #S) :
-    HasPolychromColouring (Fin k) S := by
+theorem rado_choice' {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
+    (g : (s : Finset α) → (a : α) → β a) :
+    ∃ χ : (a : α) → β a, ∀ s : Finset α, ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x := by
   sorry
+
+lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (hk : k ≠ 0)
+    (hkm : Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1) :
+    HasPolychromColouring (Fin k) S := by
+  have (X : Finset G) : ∃ χ : G → Fin k, ∀ x ∈ X, ∀ (c : Fin k), ∃ i ∈ x +ᵥ S, χ i = c :=
+    exists_finite_of_le X hm hm₂ hk hkm
+  choose g hg using this
+  obtain ⟨χ, hχ⟩ := rado_choice' (α := G) (β := fun _ ↦ Fin k) g
+  refine ⟨χ, fun x c ↦ ?_⟩
+  obtain ⟨X, hxX, hX⟩ := hχ (x +ᵥ insert 0 S)
+  obtain ⟨i, hi, hi'⟩ := hg X x (hxX (mem_vadd_finset.2 ⟨0, by simp⟩)) c
+  refine ⟨i, hi, ?_⟩
+  rw [hX _ _, hi']
+  apply vadd_finset_subset_vadd_finset _ hi
+  simp
+
+
+
+-- theorem exists_prime_aux (S : Finset ℕ) :
+--     ∃ p : ℕ, p.Prime ∧ Set.InjOn (fun i : ℕ ↦ (i : ZMod p)) (S : Set ℕ) := by
+--   obtain ⟨m, hm⟩ := S.bddAbove
+--   obtain ⟨p, hp : m < p, hp'⟩ := Nat.exists_infinite_primes (m + 1)
+--   use p, hp'
+--   intro i hi j hj h
+--   simp only at h
+--   apply_fun ZMod.val at h
+--   rwa [ZMod.val_natCast_of_lt, ZMod.val_natCast_of_lt] at h
+--   · exact (hm hj).trans_lt hp
+--   · exact (hm hi).trans_lt hp
+
+-- theorem exists_prime {S : Finset ℤ} :
+--     ∃ p : ℕ, p.Prime ∧ Set.InjOn (fun i : ℤ ↦ (i : ZMod p)) (S : Set ℤ) := by
+--   obtain ⟨m, hm⟩ := S.bddBelow
+--   generalize hS' : (-m) +ᵥ S = S'
+--   have hS : S = m +ᵥ S' := by simp [← hS']
+--   have hS'' : ∀ x ∈ S', 0 ≤ x := by
+--     simp only [← hS', mem_vadd_finset, vadd_eq_add, forall_exists_index, and_imp,
+--       forall_apply_eq_imp_iff₂]
+--     intro i hi
+--     have := hm hi
+--     omega
+--   lift S' to Finset ℕ using hS''
+--   simpa [Set.InjOn, hS, mem_vadd_finset, mem_image, - coe_vadd_finset] using exists_prime_aux S'
+
+-- theorem exists_colouring {k : ℕ} {S : Finset ℤ} (hm : 4 * k ^ 2 ≤ #S) :
+--     HasPolychromColouring (Fin k) S := by
+--   sorry
