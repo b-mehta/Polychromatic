@@ -1,12 +1,7 @@
-import Mathlib
+import Mathlib.Combinatorics.SimpleGraph.Coloring
+import Mathlib.Topology.Compactness.Compact
 
-lemma test {ι X : Type*} [TopologicalSpace X] [CompactSpace X] {f : ι → Set X}
-    (hs : ∀ i, IsClosed (f i))
-    (h : ∀ s : Finset ι, (⋂ i ∈ s, f i).Nonempty) :
-    (⋂ i, f i).Nonempty := by
-  simpa using IsCompact.inter_iInter_nonempty isCompact_univ f hs (by simpa using h)
-
-theorem rado_choice' {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
+theorem Finset.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
     (g : (s : Finset α) → (a : α) → β a) :
     ∃ χ : (a : α) → β a, ∀ s : Finset α, ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x := by
   classical
@@ -24,9 +19,9 @@ theorem rado_choice' {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
     simp only [Set.mem_iInter, Set.mem_setOf_eq, e]
     intro i hi
     exact ⟨_, Finset.subset_biUnion_of_mem id hi, by simp⟩
-  simpa using test he' he''
+  simpa using CompactSpace.iInter_nonempty he' he''
 
-theorem rado_choice {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
+theorem Finset.rado_selection_subtype {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
     (g : (s : Finset α) → (a : s) → β a) :
     ∃ χ : (a : α) → β a, ∀ s : Finset α,
       ∃ (t : Finset α) (hst : s ⊆ t), ∀ x : s, χ x = g t (Set.inclusion hst x) := by
@@ -34,26 +29,26 @@ theorem rado_choice {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
   have (a : α) : Nonempty (β a) := ⟨g {a} ⟨a, by simp⟩⟩
   let g' (s) (a : α) : β a := if ha : a ∈ s then g s ⟨a, ha⟩ else Classical.arbitrary (β a)
   have hg (s : Finset α) (x : s) : g s x = g' s x := by simp [g']
-  simpa [hg] using rado_choice' g'
+  simpa [hg] using Finset.rado_selection g'
 
-theorem rado_choice''' {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
+theorem Set.Finite.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
+    (g : (s : Set α) → s.Finite → (a : α) → β a) :
+    ∃ χ : (a : α) → β a, ∀ s : Set α, s.Finite →
+      ∃ (t : Set α) (ht : t.Finite), s ⊆ t ∧ ∀ x ∈ s, χ x = g t ht x := by
+  obtain ⟨χ, hχ⟩ := Finset.rado_selection (fun s ↦ g s s.finite_toSet)
+  refine ⟨χ, fun s hs ↦ ?_⟩
+  obtain ⟨t, ht, ht'⟩ := hχ hs.toFinset
+  exact ⟨t, by simp_all⟩
+
+theorem Set.Finite.rado_selection_subtype {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
     (g : (s : Set α) → s.Finite → (a : s) → β a) :
     ∃ χ : (a : α) → β a, ∀ s : Set α, s.Finite →
       ∃ (t : Set α) (ht : t.Finite) (hst : s ⊆ t), ∀ x : s, χ x = g t ht (Set.inclusion hst x) := by
   classical
-  obtain ⟨χ, hχ⟩ := rado_choice (β := β) (fun s ↦ g s s.finite_toSet)
+  obtain ⟨χ, hχ⟩ := Finset.rado_selection_subtype (β := β) (fun s ↦ g s s.finite_toSet)
   refine ⟨χ, fun s hs ↦ ?_⟩
   obtain ⟨t, ht, hst⟩ := hχ hs.toFinset
   simp only [Set.Finite.toFinset_subset] at ht
-  exact ⟨t, by simp_all⟩
-
-theorem rado_choice'' {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
-    (g : (s : Set α) → s.Finite → (a : α) → β a) :
-    ∃ χ : (a : α) → β a, ∀ s : Set α, s.Finite →
-      ∃ (t : Set α) (ht : t.Finite), s ⊆ t ∧ ∀ x ∈ s, χ x = g t ht x := by
-  obtain ⟨χ, hχ⟩ := rado_choice' (fun s ↦ g s s.finite_toSet)
-  refine ⟨χ, fun s hs ↦ ?_⟩
-  obtain ⟨t, ht, ht'⟩ := hχ hs.toFinset
   exact ⟨t, by simp_all⟩
 
 theorem nonempty_hom_of_forall_finite_subgraph_hom {V W : Type*} [Finite W]
@@ -61,7 +56,7 @@ theorem nonempty_hom_of_forall_finite_subgraph_hom {V W : Type*} [Finite W]
     (h : ∀ G' : G.Subgraph, G'.verts.Finite → G'.coe →g F) : Nonempty (G →g F) := by
   have := G.toSubgraph
   let g : (s : Set V) → s.Finite → s → W := fun s hs ↦ h (SimpleGraph.Subgraph.induce ⊤ s) hs
-  obtain ⟨χ, hχ⟩ := rado_choice''' (β := fun _ ↦ W) g
+  obtain ⟨χ, hχ⟩ := Set.Finite.rado_selection_subtype (β := fun _ ↦ W) g
   refine ⟨⟨χ, ?_⟩⟩
   intro a b hab
   let a' : (G.subgraphOfAdj hab).verts := ⟨a, by simp⟩
@@ -72,7 +67,8 @@ theorem nonempty_hom_of_forall_finite_subgraph_hom {V W : Type*} [Finite W]
   rw [hHeq, hHeq]
   simp only [SimpleGraph.subgraphOfAdj_verts, SimpleGraph.Subgraph.induce_verts, g]
   apply (h ((⊤ : G.Subgraph).induce H) hHfin).map_adj
-  simp only [SimpleGraph.subgraphOfAdj_verts, Set.insert_subset_iff, Set.singleton_subset_iff] at hHsub
+  simp only [SimpleGraph.subgraphOfAdj_verts, Set.insert_subset_iff,
+    Set.singleton_subset_iff] at hHsub
   simp_all [a', b']
 
 theorem deBruijn_erdos {α β : Type*} (G : SimpleGraph α) [Finite β]

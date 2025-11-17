@@ -1,5 +1,6 @@
 import Polychromatic.Colouring
 import Polychromatic.LocalLemma
+import Polychromatic.Compactness
 
 open Finset
 
@@ -142,18 +143,13 @@ lemma exists_finite_of_le {k m : ℕ} (X : Finset G) {S : Finset G} (hm : #S = m
   refine ⟨x + s, ?_⟩
   simp [add_mem_add, hx, hs, Y, hc]
 
-theorem rado_choice' {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
-    (g : (s : Finset α) → (a : α) → β a) :
-    ∃ χ : (a : α) → β a, ∀ s : Finset α, ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x := by
-  sorry
-
 lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (hk : k ≠ 0)
     (hkm : Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1) :
     HasPolychromColouring (Fin k) S := by
   have (X : Finset G) : ∃ χ : G → Fin k, ∀ x ∈ X, ∀ (c : Fin k), ∃ i ∈ x +ᵥ S, χ i = c :=
     exists_finite_of_le X hm hm₂ hk hkm
   choose g hg using this
-  obtain ⟨χ, hχ⟩ := rado_choice' (α := G) (β := fun _ ↦ Fin k) g
+  obtain ⟨χ, hχ⟩ := Finset.rado_selection (α := G) (β := fun _ ↦ Fin k) g
   refine ⟨χ, fun x c ↦ ?_⟩
   obtain ⟨X, hxX, hX⟩ := hχ (x +ᵥ insert 0 S)
   obtain ⟨i, hi, hi'⟩ := hg X x (hxX (mem_vadd_finset.2 ⟨0, by simp⟩)) c
@@ -162,6 +158,42 @@ lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (h
   apply vadd_finset_subset_vadd_finset _ hi
   simp
 
+lemma condition_of_mul_exp_le {k m : ℕ} (hk : k ≠ 0) (hm : m ≠ 0)
+    (hm : m ^ 2 * k * Real.exp (- m / k + 1) ≤ 1) :
+    Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1 := by
+  have : 0 ≤ 1 - (k : ℝ)⁻¹ := by
+    simp only [sub_nonneg]
+    apply inv_le_one_of_one_le₀ (by simp; cutsat)
+  calc
+    _ ≤ Real.exp 1 * m ^ 2 * k * (1 - (k : ℝ)⁻¹) ^ m := by
+      gcongr
+      have : (1 : ℝ) ≤ m := by simp; cutsat
+      linear_combination this
+    _ = Real.exp 1 * m ^ 2 * k * ((-k : ℝ)⁻¹ + 1) ^ m := by ring
+    _ ≤ Real.exp 1 * m ^ 2 * k * Real.exp ((- k : ℝ)⁻¹) ^ m := by
+      gcongr
+      · simpa
+      exact Real.add_one_le_exp _
+    _ = m ^ 2 * k * (Real.exp 1 * Real.exp (- m / k)) := by
+      rw [← Real.exp_nat_mul]
+      ring_nf
+    _ = m ^ 2 * k * Real.exp (- m / k + 1) := by
+      grind [Real.exp_add]
+    _ ≤ 1 := hm
+
+-- the function m^2 * k * (1-1/k)^m is decreasing in m for m ≥ -2 / ln(1 - 1/k) ≈ 2 k
+
+lemma condition_of_mul_sq {k m : ℕ} (hk : k ≠ 0) (hm : 3 * k ^ 2 ≤ m) :
+    Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1 := by
+  have hm₀ : m ≠ 0 := ne_of_gt (hm.trans_lt' (by positivity))
+  obtain rfl | rfl | hk : k = 1 ∨ k = 2 ∨ 3 ≤ k := by omega
+  · simp [hm₀]
+  · simp only [Nat.reducePow, Nat.reduceMul] at hm
+    norm_num
+    simp
+    sorry
+  apply condition_of_mul_exp_le ‹_› hm₀
+  sorry
 
 
 -- theorem exists_prime_aux (S : Finset ℕ) :
