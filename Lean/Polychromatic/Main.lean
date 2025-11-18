@@ -1,4 +1,5 @@
-import Polychromatic.Basic
+import Polychromatic.Existence
+import Polychromatic.PolychromNumber
 
 -- ANCHOR: final
 theorem final_result (S : Finset ℤ) (hS : S.card = 4) :

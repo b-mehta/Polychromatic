@@ -152,13 +152,17 @@ lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (h
     exists_finite_of_le X hm hm₂ hk hkm
   choose g hg using this
   obtain ⟨χ, hχ⟩ := Finset.rado_selection (α := G) (β := fun _ ↦ Fin k) g
-  refine ⟨χ, fun x c ↦ ?_⟩
+  refine ⟨χ, ?_⟩
+  rw [isPolychrom_iff]
+  intro x c
   obtain ⟨X, hxX, hX⟩ := hχ (x +ᵥ insert 0 S)
   obtain ⟨i, hi, hi'⟩ := hg X x (hxX (mem_vadd_finset.2 ⟨0, by simp⟩)) c
   refine ⟨i, hi, ?_⟩
   rw [hX _ _, hi']
   apply vadd_finset_subset_vadd_finset _ hi
   simp
+
+open Real
 
 lemma condition_of_mul_exp_le {k m : ℕ} (hk : k ≠ 0) (hm : m ≠ 0)
     (hm : m ^ 2 * k * Real.exp (- m / k + 1) ≤ 1) :
@@ -216,14 +220,6 @@ lemma polychromColouringBound_two_of_ge {m : ℕ} (hm : 9 ≤ m) : polychromColo
   grw [polychromColouringBound, Real.exp_one_lt_d9]
   norm_num
 
--- lemma strictMonoOn {k : ℕ} :
---     StrictMonoOn (fun m : ℝ ↦ m ^ 2 * k * Real.exp (- m / k + 1)) (Set.Ici (2 * k)) := by
---   sorry
-
--- #exit
-
--- the function m^2 * k * (1-1/k)^m is decreasing in m for m ≥ -2 / ln(1 - 1/k) ≈ 2 k
-
 lemma condition_of_mul_sq {k m : ℕ} (hm : 3 * k ^ 2 ≤ m) :
     polychromColouringBound k m := by
   obtain rfl | rfl | rfl | hk : k = 0 ∨ k = 1 ∨ k = 2 ∨ 3 ≤ k := by omega
@@ -235,51 +231,179 @@ lemma condition_of_mul_sq {k m : ℕ} (hm : 3 * k ^ 2 ≤ m) :
   · linear_combination (3 * k + 7) * hk
   apply condition_of_mul_exp_le (by cutsat) (ne_of_gt <| by linear_combination ((3 * k + 9) * hk))
   have hk₀ : k ≠ 0 := by omega
-  suffices 9 * k ^ 5 * Real.exp (- (3 * k) + 1) ≤ 1 by
+  let g (k : ℕ) : ℝ := k ^ 5 * Real.exp (-(3 * k) + 1)
+  suffices 9 * g k ≤ 1 by
     simp only [Nat.cast_mul, Nat.cast_ofNat, Nat.cast_pow, ge_iff_le]
     field_simp
     linear_combination this
-  sorry
+  have : 9 * g 3 ≤ 1 := by
+    suffices 2187 * Real.exp (-1) ^ 8 ≤ 1 by
+      rw [← Real.exp_nat_mul] at this
+      norm_num [g, ← mul_assoc]
+      norm_num at this
+      exact this
+    grw [Real.exp_neg_one_lt_d9]
+    norm_num
+  suffices AntitoneOn g {x | 3 ≤ x} by
+    grw [this (by simp) hk hk]
+    assumption
+  apply antitoneOn_nat_Ici_of_succ_le
+  intro n hn
+  simp only [g]
+  suffices (1 / n + 1) ^ 5 ≤ Real.exp 3 by
+    simp only [Nat.cast_add_one, mul_add_one, neg_add_rev, Real.exp_add, ← mul_assoc, Real.exp_neg]
+    gcongr ?_ * _ * _
+    grw [← this]
+    rw [← inv_pow, ← mul_pow]
+    gcongr
+    simp [field, add_comm]
+  grw [Real.add_one_le_exp, ← Real.exp_nat_mul, hn]
+  gcongr
+  norm_num
 
--- 3 k log k + 2 k log log k + 16 e k
+theorem exists_colouring_of_sq_le {S : Finset G} {k : ℕ} (hk : k ≠ 0) (hm : 3 * k ^ 2 ≤ #S) :
+    HasPolychromColouring (Fin k) S := by
+  refine exists_of_le rfl ?_ hk (condition_of_mul_sq hm)
+  have : 1 ≤ k := by cutsat
+  grw [← hm, ← this]
+  simp
 
-  -- have hm₀ : m ≠ 0 := ne_of_gt (hm.trans_lt' (by positivity))
-  -- obtain rfl | rfl | hk : k = 1 ∨ k = 2 ∨ 3 ≤ k := by omega
-  -- · simp [hm₀]
-  -- · simp only [Nat.reducePow, Nat.reduceMul] at hm
-  --   norm_num
-  --   simp
-  --   sorry
-  -- apply condition_of_mul_exp_le ‹_› hm₀
-  -- sorry
+noncomputable def mBound (k : ℕ) : ℕ :=
+  ⌈k * (3 * log k + (2 * log (log k) + 5.2))⌉₊
 
+private lemma mBound_pos_aux {k : ℕ} : 0 < 2 * log (log k) + 4.2 := by
+  obtain rfl | rfl | hk : k = 0 ∨ k = 1 ∨ 2 ≤ k := by grind
+  · norm_num
+  · norm_num
+  suffices -2 ≤ log (log k) by linear_combination 2 * this
+  grw [le_log_iff_exp_le (log_pos (by simpa)), exp_neg, ← exp_one_rpow, ← hk, Nat.cast_ofNat,
+    ← exp_one_gt_d9, ← log_two_gt_d9]
+  norm_num
 
--- theorem exists_prime_aux (S : Finset ℕ) :
---     ∃ p : ℕ, p.Prime ∧ Set.InjOn (fun i : ℕ ↦ (i : ZMod p)) (S : Set ℕ) := by
---   obtain ⟨m, hm⟩ := S.bddAbove
---   obtain ⟨p, hp : m < p, hp'⟩ := Nat.exists_infinite_primes (m + 1)
---   use p, hp'
---   intro i hi j hj h
---   simp only at h
---   apply_fun ZMod.val at h
---   rwa [ZMod.val_natCast_of_lt, ZMod.val_natCast_of_lt] at h
---   · exact (hm hj).trans_lt hp
---   · exact (hm hi).trans_lt hp
+@[simp] lemma mBound_zero : mBound 0 = 0 := by simp [mBound]
+@[simp] lemma mBound_one : mBound 1 = 6 := by norm_num [mBound]
 
--- theorem exists_prime {S : Finset ℤ} :
---     ∃ p : ℕ, p.Prime ∧ Set.InjOn (fun i : ℤ ↦ (i : ZMod p)) (S : Set ℤ) := by
---   obtain ⟨m, hm⟩ := S.bddBelow
---   generalize hS' : (-m) +ᵥ S = S'
---   have hS : S = m +ᵥ S' := by simp [← hS']
---   have hS'' : ∀ x ∈ S', 0 ≤ x := by
---     simp only [← hS', mem_vadd_finset, vadd_eq_add, forall_exists_index, and_imp,
---       forall_apply_eq_imp_iff₂]
---     intro i hi
---     have := hm hi
---     omega
---   lift S' to Finset ℕ using hS''
---   simpa [Set.InjOn, hS, mem_vadd_finset, mem_image, - coe_vadd_finset] using exists_prime_aux S'
+lemma le_mBound {k : ℕ} : 3 * k * log k ≤ mBound k := by
+  grw [mBound, ← Nat.le_ceil]
+  have : (0 : ℝ) ≤ k := by positivity
+  linear_combination mBound_pos_aux * (k : ℝ) + this
 
--- theorem exists_colouring {k : ℕ} {S : Finset ℤ} (hm : 4 * k ^ 2 ≤ #S) :
---     HasPolychromColouring (Fin k) S := by
---   sorry
+lemma linear_le_mBound {k : ℕ} : 2 * k ≤ mBound k := by
+  obtain rfl | rfl | hk : k = 0 ∨ k = 1 ∨ 2 ≤ k := by grind
+  · simp
+  · simp
+  rify
+  grw [← le_mBound]
+  have : 2 / 3 ≤ log k := by grw [← hk, Nat.cast_two, ← log_two_gt_d9]; norm_num
+  linear_combination 3 * k * this
+
+@[simp] lemma mBound_pos {k : ℕ} (hk : k ≠ 0) : 0 < mBound k := by
+  grw [← linear_le_mBound]; positivity
+@[simp] lemma mBound_ne_zero {k : ℕ} (hk : k ≠ 0) : mBound k ≠ 0 := by
+  grind [mBound_pos]
+
+lemma ceil_nat_mul_le {k : ℕ} {x : ℝ} : ⌈k * x⌉₊ ≤ k * ⌈x⌉₊ := by
+  grw [Nat.ceil_le, Nat.cast_mul, ← Nat.le_ceil x]
+
+lemma mBound_le_helper {k : ℕ} :
+    mBound k ≤ k * (3 * log k + (2 * log (log k) + 6.2)) := by
+  obtain rfl | rfl | hk : k = 0 ∨ k = 1 ∨ 2 ≤ k := by grind
+  · simp
+  · norm_num
+  grw [mBound, ceil_nat_mul_le, Nat.cast_mul, Nat.ceil_lt_add_one _]
+  · linear_combination
+  apply add_nonneg
+  · positivity
+  linear_combination mBound_pos_aux
+
+lemma mBound_le_weak {k : ℕ} (hk : 4 ≤ k) : mBound k ≤ 8 * k * log k := by
+  suffices 2 * log (log k) + 6.2 ≤ 5 * log k by
+    linear_combination mBound_le_helper (k := k) + (k : ℝ) * this
+  suffices ∀ x, 1.37 < x → 2 * log x + 6.2 ≤ 5 * x by
+    apply this (log k)
+    have : 1.37 < (2 : ℕ) * log 2 := by linear_combination 2 * log_two_gt_d9
+    refine this.trans_le ?_
+    grw [← hk, ← log_pow]
+    norm_num
+  intro x hx
+  suffices StrictMonoOn (fun x ↦ x * 5 - 2 * log x) (Set.Ici 1.37) by
+    have h₁ : log 1.37 ≤ 13 / 40 := by
+      rw [log_le_iff_le_exp (by norm_num)]
+      grw [← quadratic_le_exp_of_nonneg (by norm_num)]
+      norm_num
+    have h₂ := this (by simp) (by simp [hx.le]) hx
+    linear_combination 2 * h₁ + h₂
+  apply strictMonoOn_of_hasDerivWithinAt_pos (f' := fun x ↦ 5 - 2 * x⁻¹) (convex_Ici _)
+  · apply ContinuousOn.sub (by fun_prop) (ContinuousOn.mul (by fun_prop) _)
+    apply ContinuousOn.log (by fun_prop)
+    simp only [Set.mem_Ici, ne_eq]
+    intro x hx
+    positivity
+  · simp only [Set.nonempty_Iio, interior_Ici', Set.mem_Ioi]
+    intro x hx
+    apply HasDerivWithinAt.sub
+    · apply (hasDerivAt_mul_const _).hasDerivWithinAt
+    apply HasDerivWithinAt.const_mul
+    apply (hasDerivAt_log (by positivity)).hasDerivWithinAt
+  · simp only [Set.nonempty_Iio, interior_Ici', Set.mem_Ioi, sub_pos]
+    intro y hy
+    grw [← hy]
+    norm_num
+
+open Asymptotics Filter Topology
+
+lemma mBound_isLittleO :
+    ∃ f : ℕ → ℝ, f =o[atTop] (fun _ ↦ 1 : ℕ → ℝ) ∧ ∀ k ≥ 2, mBound k ≤ (3 + f k) * k * log k := by
+  refine ⟨fun k ↦ (2 * log (log k) + 6.2) / log k, ?_, ?_⟩
+  · rw [isLittleO_one_iff]
+    suffices Tendsto (fun x : ℝ ↦ (2 * log x + 6.2) / x) atTop (𝓝 0) from
+      this.comp (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+    have : Tendsto (fun x ↦ log x / x) atTop (𝓝 0) := by
+      simpa using tendsto_pow_log_div_mul_add_atTop 1 0 1 (by simp)
+    simp only [add_div, mul_div_assoc, div_eq_mul_inv (6.2 : ℝ)]
+    simpa using (this.const_mul 2).add (tendsto_inv_atTop_zero.const_mul 6.2)
+  intro k hk
+  have hk' : 0 < log k := log_pos (by simp; cutsat)
+  calc
+    (mBound k : ℝ) ≤ k * (3 * log k + (2 * log (log k) + 6.2)) := mBound_le_helper
+    _ = (3 + (2 * log (log k) + 6.2) / log k) * k * log k := by simp [field]
+
+lemma polychromColouringBound_mBound {k : ℕ} (hk : 4 ≤ k) :
+    polychromColouringBound k (mBound k) := by
+  have hk' : k ≠ 0 := by omega
+  have hk'' : 0 < log k := log_pos (by simp; cutsat)
+  apply condition_of_mul_exp_le hk' (mBound_ne_zero hk')
+  calc
+    mBound k ^ 2 * k * exp (- mBound k / k + 1) ≤
+        (8 * k * log k) ^ 2 * k * exp (- mBound k / k + 1) := by
+      gcongr
+      exact mBound_le_weak hk
+    _ ≤ (8 * k * log k) ^ 2 * k * exp (- (3 * log k + (2 * log (log k) + 5.2)) + 1) := by
+      grw [mBound, ← Nat.le_ceil, neg_div, mul_div_cancel_left₀ _ (by positivity)]
+    _ = 2 ^ 6 * k ^ 3 * log k ^ 2 * exp (log k * (-3) + log (log k) * (-2) + - 4.2) := by
+      ring_nf
+    _ = 2 ^ 6 * exp (-4.2) := by
+      rw [exp_add, exp_add, ← rpow_def_of_pos (by positivity),
+        ← rpow_def_of_pos (by positivity)]
+      simp only [rpow_neg_ofNat, Int.reduceNeg, zpow_neg, zpow_ofNat]
+      simp [field]
+    _ ≤ 1 := by
+      grw [← log_le_log_iff (by positivity) (by positivity),
+        log_mul (by positivity) (by positivity), log_exp, log_one, log_pow, log_two_lt_d9]
+      norm_num
+
+theorem exists_colouring_asymptotic {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ k : ℕ in atTop, ∀ S : Finset G, (3 + ε) * k * log k ≤ #S →
+      HasPolychromColouring (Fin k) S := by
+  obtain ⟨f, hf₁, hf₂⟩ := mBound_isLittleO
+  rw [isLittleO_one_iff] at hf₁
+  filter_upwards [hf₁.eventually_le_const hε, eventually_ge_atTop 4] with k hk hk4 S hS
+  have h2S : (2 : ℝ) ≤ #S := by
+    have hk2 : 2 ≤ k := by omega
+    grw [← hS, ← hk2, ← hε, Nat.cast_two, ← log_two_gt_d9]
+    norm_num
+  apply exists_of_le rfl (mod_cast h2S) (by omega)
+  apply polychromColouringBound_mono (by cutsat) _ _ (polychromColouringBound_mBound hk4)
+  · linear_combination linear_le_mBound (k := k)
+  rify
+  grw [hf₂ k (by cutsat), hk, hS]
