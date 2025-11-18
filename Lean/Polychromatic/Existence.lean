@@ -99,9 +99,11 @@ lemma nonempty_of_uniformOn_apply_pos {Ω : Type*} [MeasurableSpace Ω]
   have hs_fin : s.Finite := finite_of_uniformOn_ne_zero h.ne'
   exact nonempty_of_uniformOn_apply_pos' h (hs_fin.measurableSet)
 
+def polychromColouringBound (k m : ℕ) : Prop :=
+  Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1
+
 lemma exists_finite_of_le {k m : ℕ} (X : Finset G) {S : Finset G} (hm : #S = m)
-    (hm₂ : 2 ≤ m) (hk : k ≠ 0)
-    (hkm : Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1) :
+    (hm₂ : 2 ≤ m) (hk : k ≠ 0) (hkm : polychromColouringBound k m) :
     ∃ χ : G → Fin k, ∀ x ∈ X, ∀ c : Fin k, ∃ i ∈ x +ᵥ S, χ i = c := by
   let Y : Finset G := X + S
   have : NeZero k := ⟨hk⟩
@@ -144,7 +146,7 @@ lemma exists_finite_of_le {k m : ℕ} (X : Finset G) {S : Finset G} (hm : #S = m
   simp [add_mem_add, hx, hs, Y, hc]
 
 lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (hk : k ≠ 0)
-    (hkm : Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1) :
+    (hkm : polychromColouringBound k m) :
     HasPolychromColouring (Fin k) S := by
   have (X : Finset G) : ∃ χ : G → Fin k, ∀ x ∈ X, ∀ (c : Fin k), ∃ i ∈ x +ᵥ S, χ i = c :=
     exists_finite_of_le X hm hm₂ hk hkm
@@ -160,7 +162,7 @@ lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (h
 
 lemma condition_of_mul_exp_le {k m : ℕ} (hk : k ≠ 0) (hm : m ≠ 0)
     (hm : m ^ 2 * k * Real.exp (- m / k + 1) ≤ 1) :
-    Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1 := by
+    polychromColouringBound k m := by
   have : 0 ≤ 1 - (k : ℝ)⁻¹ := by
     simp only [sub_nonneg]
     apply inv_le_one_of_one_le₀ (by simp; cutsat)
@@ -181,19 +183,75 @@ lemma condition_of_mul_exp_le {k m : ℕ} (hk : k ≠ 0) (hm : m ≠ 0)
       grind [Real.exp_add]
     _ ≤ 1 := hm
 
+lemma polychromColouringBound_succ {k m : ℕ} (hk : k ≠ 0) (h : 2 * k ≤ m + 1)
+    (hkm : polychromColouringBound k m) :
+    polychromColouringBound k (m + 1) := by
+  have : 0 ≤ 1 - (k : ℝ)⁻¹ := by
+    simp only [sub_nonneg]
+    apply inv_le_one_of_one_le₀ (by simp; cutsat)
+  rw [polychromColouringBound, mul_right_comm _ _ (k : ℝ), mul_assoc (_ * _)] at hkm ⊢
+  refine hkm.trans' ?_
+  rw [pow_succ', ← mul_assoc (_ + 1 : ℝ), Nat.cast_add_one]
+  gcongr _ * (?_ * _)
+  simp only [add_sub_cancel_right, fieldLe]
+  rify at h
+  linear_combination (m : ℝ) * h
+
+lemma polychromColouringBound_mono {k m m' : ℕ} (hk : k ≠ 0) (h : 2 * k ≤ m + 1)
+    (hm' : m ≤ m') (hkm : polychromColouringBound k m) :
+    polychromColouringBound k m' := by
+  have : MonotoneOn (polychromColouringBound k) {m | 2 * k - 1 ≤ m} :=
+    monotoneOn_nat_Ici_of_le_succ fun x hx ↦ polychromColouringBound_succ hk (by cutsat)
+  exact this (by grind) (by grind) hm' hkm
+
+lemma polychromColouringBound_zero {m : ℕ} : polychromColouringBound 0 m := by
+  simp [polychromColouringBound]
+
+lemma polychromColouringBound_one {m : ℕ} (hm : m ≠ 0) : polychromColouringBound 1 m := by
+  simp [polychromColouringBound, hm]
+
+-- 9 is optimal for the LLL bound, but likely not optimal for polychromatic colourings
+lemma polychromColouringBound_two_of_ge {m : ℕ} (hm : 9 ≤ m) : polychromColouringBound 2 m := by
+  apply polychromColouringBound_mono (by norm_num) (by norm_num) hm
+  grw [polychromColouringBound, Real.exp_one_lt_d9]
+  norm_num
+
+-- lemma strictMonoOn {k : ℕ} :
+--     StrictMonoOn (fun m : ℝ ↦ m ^ 2 * k * Real.exp (- m / k + 1)) (Set.Ici (2 * k)) := by
+--   sorry
+
+-- #exit
+
 -- the function m^2 * k * (1-1/k)^m is decreasing in m for m ≥ -2 / ln(1 - 1/k) ≈ 2 k
 
-lemma condition_of_mul_sq {k m : ℕ} (hk : k ≠ 0) (hm : 3 * k ^ 2 ≤ m) :
-    Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1 := by
-  have hm₀ : m ≠ 0 := ne_of_gt (hm.trans_lt' (by positivity))
-  obtain rfl | rfl | hk : k = 1 ∨ k = 2 ∨ 3 ≤ k := by omega
-  · simp [hm₀]
-  · simp only [Nat.reducePow, Nat.reduceMul] at hm
-    norm_num
-    simp
-    sorry
-  apply condition_of_mul_exp_le ‹_› hm₀
+lemma condition_of_mul_sq {k m : ℕ} (hm : 3 * k ^ 2 ≤ m) :
+    polychromColouringBound k m := by
+  obtain rfl | rfl | rfl | hk : k = 0 ∨ k = 1 ∨ k = 2 ∨ 3 ≤ k := by omega
+  · exact polychromColouringBound_zero
+  · exact polychromColouringBound_one (by cutsat)
+  · exact polychromColouringBound_two_of_ge (by cutsat)
+  apply polychromColouringBound_mono (by cutsat) _ hm
+  swap
+  · linear_combination (3 * k + 7) * hk
+  apply condition_of_mul_exp_le (by cutsat) (ne_of_gt <| by linear_combination ((3 * k + 9) * hk))
+  have hk₀ : k ≠ 0 := by omega
+  suffices 9 * k ^ 5 * Real.exp (- (3 * k) + 1) ≤ 1 by
+    simp only [Nat.cast_mul, Nat.cast_ofNat, Nat.cast_pow, ge_iff_le]
+    field_simp
+    linear_combination this
   sorry
+
+-- 3 k log k + 2 k log log k + 16 e k
+
+  -- have hm₀ : m ≠ 0 := ne_of_gt (hm.trans_lt' (by positivity))
+  -- obtain rfl | rfl | hk : k = 1 ∨ k = 2 ∨ 3 ≤ k := by omega
+  -- · simp [hm₀]
+  -- · simp only [Nat.reducePow, Nat.reduceMul] at hm
+  --   norm_num
+  --   simp
+  --   sorry
+  -- apply condition_of_mul_exp_le ‹_› hm₀
+  -- sorry
 
 
 -- theorem exists_prime_aux (S : Finset ℕ) :
