@@ -4,5 +4,6 @@ import Polychromatic.DiscreteProbability
 import Polychromatic.Existence
 import Polychromatic.ForMathlib.Misc
 import Polychromatic.LocalLemma
+import Polychromatic.LovaszFunction
 import Polychromatic.Main
 import Polychromatic.PolychromNumber
