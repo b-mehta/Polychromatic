@@ -392,18 +392,21 @@ lemma polychromColouringBound_mBound {k : ℕ} (hk : 4 ≤ k) :
         log_mul (by positivity) (by positivity), log_exp, log_one, log_pow, log_two_lt_d9]
       norm_num
 
+lemma hasPolychromColouring_mBound {S : Finset G} {k : ℕ} (hk : 4 ≤ k) (hS : mBound k ≤ #S):
+    HasPolychromColouring (Fin k) S := by
+  have h2S : 2 ≤ #S := by
+    grw [← hS, ← linear_le_mBound, ← hk]
+    norm_num
+  apply exists_of_le rfl (mod_cast h2S) (by omega)
+  apply polychromColouringBound_mono (by cutsat) _ hS (polychromColouringBound_mBound hk)
+  · linear_combination linear_le_mBound (k := k)
+
 theorem exists_colouring_asymptotic {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ k : ℕ in atTop, ∀ S : Finset G, (3 + ε) * k * log k ≤ #S →
       HasPolychromColouring (Fin k) S := by
   obtain ⟨f, hf₁, hf₂⟩ := mBound_isLittleO
   rw [isLittleO_one_iff] at hf₁
   filter_upwards [hf₁.eventually_le_const hε, eventually_ge_atTop 4] with k hk hk4 S hS
-  have h2S : (2 : ℝ) ≤ #S := by
-    have hk2 : 2 ≤ k := by omega
-    grw [← hS, ← hk2, ← hε, Nat.cast_two, ← log_two_gt_d9]
-    norm_num
-  apply exists_of_le rfl (mod_cast h2S) (by omega)
-  apply polychromColouringBound_mono (by cutsat) _ _ (polychromColouringBound_mBound hk4)
-  · linear_combination linear_le_mBound (k := k)
+  apply hasPolychromColouring_mBound hk4
   rify
   grw [hf₂ k (by cutsat), hk, hS]

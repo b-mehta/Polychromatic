@@ -138,11 +138,11 @@ bool is_interesting_pattern(int *distances)
     if (distances[1]%divisor == 0 &&  distances[2]%divisor == 0  && distances[3]%divisor == 0) return false;
   }
 
-  // Block coloring cases
-  // Means coloring like  1111 2222 3333 ..... will always work
-  if (x <= y && z <= y && y <= x+z) return false;
-  if (x <= z && y <= z && z <= x+y) return false;
-  if (y <= x && z <= x && x <= y+z) return false;
+  // // Block coloring cases
+  // // Means coloring like  1111 2222 3333 ..... will always work
+  // if (x <= y && z <= y && y <= x+z) return false;
+  // if (x <= z && y <= z && z <= x+y) return false;
+  // if (y <= x && z <= x && x <= y+z) return false;
 
   return true;
 }
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
     cerr << "c = " << c << " max_period_found_c was " << max_period_found_c << " total max is " <<  max_period_found << endl;
   }
 
-  cout << "Done" << endl;
+  // cout << "Done" << endl;
 
 
   return 0;
