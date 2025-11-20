@@ -81,6 +81,12 @@ lemma polychromNumber_eq_card_of_subsingleton (hS : (S : Set G).Subsingleton) :
   simp only [coe_eq_singleton] at hS
   simp [hS]
 
+@[simp] lemma polychromNumber_univ [Fintype G] :
+    polychromNumber (univ : Finset G) = Fintype.card G := by
+  apply le_antisymm
+  · exact polychromNumber_le_card
+  · exact card_le_polychromNumber hasPolychromColouring_univ
+
 -- Lemma 9
 lemma polychromNumber_image {H : Type*} [DecidableEq H] [AddCommGroup H]
     {F : Type*} [FunLike F G H] [AddHomClass F G H] (φ : F) {S : Finset G} :
@@ -151,9 +157,13 @@ lemma polychromNumber_image_injective {H : Type*} [DecidableEq H] [AddCommGroup 
   rfl
 
 -- Lemma 12(i)
-lemma polychromNumber_smul [DecidableEq G] [IsAddTorsionFree G] {k : ℕ} (hk : k ≠ 0) :
+lemma polychromNumber_nsmul [DecidableEq G] [IsAddTorsionFree G] {k : ℕ} (hk : k ≠ 0) :
     polychromNumber (S.image (k • ·)) = polychromNumber S :=
   polychromNumber_image_injective (nsmulAddMonoidHom k : G →+ G) (nsmul_right_injective hk)
+
+lemma polychromNumber_zsmul [DecidableEq G] [IsAddTorsionFree G] {k : ℤ} (hk : k ≠ 0) :
+    polychromNumber (S.image (k • ·)) = polychromNumber S :=
+  polychromNumber_image_injective (zsmulAddGroupHom k : G →+ G) (zsmul_right_injective hk)
 
 private lemma polychromNumber_pair_aux_ℤ :
     polychromNumber ({0, 1} : Finset ℤ) = 2 := by

@@ -1,5 +1,8 @@
 import Polychromatic.Existence
 import Polychromatic.PolychromNumber
+import Polychromatic.FourThree
+
+#check allC_289
 
 -- ANCHOR: final
 theorem final_result (S : Finset ℤ) (hS : S.card = 4) :

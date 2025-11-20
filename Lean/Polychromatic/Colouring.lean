@@ -78,6 +78,17 @@ lemma IsPolychrom.vadd [DecidableEq G] (n : G) (h : IsPolychrom S χ) : IsPolych
 @[simp] lemma isPolychrom_vadd [DecidableEq G] {n : G} : IsPolychrom (n +ᵥ S) χ ↔ IsPolychrom S χ :=
   ⟨fun h ↦ by simpa using h.vadd (-n), fun h ↦ h.vadd n⟩
 
+lemma IsPolychrom.neg [DecidableEq G] (h : IsPolychrom S χ) :
+    IsPolychrom (-S) (fun g ↦ χ (-g)) := by
+  intro n g
+  obtain ⟨a, ha, hg⟩ := h (-n) g
+  refine ⟨-a, by simpa, ?_⟩
+  simpa only [neg_add, neg_neg]
+
+lemma isPolychrom_univ_id [Fintype G] :
+    IsPolychrom univ (id : G → G) := by
+  classical simp [isPolychrom_iff]
+
 instance [Fintype G] [Fintype K] [DecidableEq G] [DecidableEq K] : Decidable (IsPolychrom S χ) :=
   inferInstanceAs (Decidable (∀ _, _))
 
@@ -129,6 +140,19 @@ lemma HasPolychromColouring.of_injective {K₁ K₂ : Type*} [Nonempty K₁]
   simp [HasPolychromColouring]
 
 alias ⟨_, HasPolychromColouring.vadd⟩ := hasPolychromColouring_vadd
+
+lemma HasPolychromColouring.neg [DecidableEq G] (h : HasPolychromColouring K S) :
+    HasPolychromColouring K (-S) := by
+  obtain ⟨χ, hχ⟩ := h
+  exact ⟨fun g ↦ χ (-g), hχ.neg⟩
+
+@[simp] lemma hasPolychromColouring_neg [DecidableEq G] :
+    HasPolychromColouring K (-S) ↔ HasPolychromColouring K S :=
+  ⟨fun h ↦ by simpa using h.neg, fun h ↦ h.neg⟩
+
+@[simp] lemma hasPolychromColouring_univ [Fintype G] :
+    HasPolychromColouring G (Finset.univ : Finset G) :=
+  ⟨id, isPolychrom_univ_id⟩
 
 lemma HasPolychromColouring.of_image {H : Type*} [DecidableEq H] [AddCommGroup H]
     {F : Type*} [FunLike F G H] [AddHomClass F G H] (φ : F)
