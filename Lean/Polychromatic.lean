@@ -1,9 +1,12 @@
 import Polychromatic.Colouring
 import Polychromatic.Compactness
+import Polychromatic.Compute
 import Polychromatic.DiscreteProbability
 import Polychromatic.Existence
 import Polychromatic.ForMathlib.Misc
+import Polychromatic.FourThree
 import Polychromatic.LocalLemma
 import Polychromatic.LovaszFunction
 import Polychromatic.Main
 import Polychromatic.PolychromNumber
+import Polychromatic.Test
