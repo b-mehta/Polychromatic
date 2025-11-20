@@ -1,6 +1,6 @@
 import Polychromatic.Existence
 import Polychromatic.PolychromNumber
-import Polychromatic.FourThree
+import Polychromatic.Compute
 
 #check allC_289
 
