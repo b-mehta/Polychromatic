@@ -34,7 +34,7 @@ jobs:
           git rm --cached -r Verso site
           git commit -m "Deploy: Sync clean code from main branch" --allow-empty
           git push -f origin HEAD:refs/heads/release
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
       - name: Build Lean files
         uses: leanprover/lean-action@main
@@ -48,7 +48,7 @@ jobs:
           path: |
             Lean/docbuild/.lake/build/doc
           key: Docs-${{ hashFiles('Lean/lake-manifest.json') }}
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
       - name: Build Documentation
         run: |
@@ -56,7 +56,7 @@ jobs:
           ../scripts/build_docs.sh
           sudo chown -R runner ../site
           cp -r docbuild/.lake/build/doc ../site/docs
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
       - name: Upload docs
         uses: actions/upload-artifact@v4
@@ -64,7 +64,7 @@ jobs:
           name: docs
           path: site/docs
           overwrite: true
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
   run-verso:
     runs-on: ubuntu-latest
@@ -101,7 +101,7 @@ jobs:
           name: verso-site
           path: site
           overwrite: true
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
   assemble:
     runs-on: ubuntu-latest
@@ -119,19 +119,19 @@ jobs:
         with:
           name: verso-site
           path: site
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
       - name: Download docs
         uses: actions/download-artifact@v4
         with:
           name: docs
           path: site/docs
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
       - name: Setup Ruby
         # https://github.com/ruby/setup-ruby/releases/tag/v1.207.0
@@ -141,23 +141,23 @@ jobs:
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           cache-version: 0 # Increment this number if you need to re-download cached gems
           working-directory: site
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
       - name: Build Jekyll
         run: bundle exec jekyll build --destination ../_site --baseurl "${{ steps.pages.outputs.base_path }}"
         working-directory: site
         env:
           JEKYLL_ENV: production
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
 
   deploy:
     runs-on: ubuntu-latest
     needs: assemble
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     permissions:
       pages: write
       id-token: write
