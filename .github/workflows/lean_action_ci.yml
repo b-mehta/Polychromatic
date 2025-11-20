@@ -5,80 +5,162 @@ on:
     branches: main
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  make-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - uses: actions/checkout@v5
-      - name: Build Lean files
-        uses: leanprover/lean-action@main
-        with:
-          mk_all-check: true
-          lake-package-directory: Lean
-      - name: Run Verso
-        working-directory: Verso
-        run: lake exe docs
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v5
-      - name: Setup Ruby
-        # https://github.com/ruby/setup-ruby/releases/tag/v1.207.0
-        uses: ruby/setup-ruby@8aeb6ff8030dd539317f8e1769a044873b56ea71
-        with:
-          ruby-version: '3.1' # Not needed with a .ruby-version file
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-          cache-version: 0 # Increment this number if you need to re-download cached gems
-          working-directory: site
-      - name: Build with Jekyll
-        run: bundle exec jekyll build --destination ../_site --baseurl "${{ steps.pages.outputs.base_path }}"
-        working-directory: site
-        env:
-          JEKYLL_ENV: production
-      - name: Upload artifact
-        if: github.event_name == 'push'
-        uses: actions/upload-pages-artifact@v4
+      - name: Checkout project
+        uses: actions/checkout@v4
 
-      # Run cleaning script
       - name: Remove annotations
-        if: github.event_name == 'push'
         run: |
           find . -type f -name "*.lean" -print0 | while IFS= read -r -d $'\0' file; do
               sed -i '/^-- ANCHOR:/d;/^-- ANCHOR_END:/d' "$file"
           done
           echo "Annotation removal complete."
-          rm -rf Verso site _site
 
-      # Commit and push changes
-      - name: Commit and Push to release branch
-        if: github.event_name == 'push'
+      - name: Push clean release
         run: |
-          # Configure git user for the commit
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Add all modified files to the staging area
-          git add .
-
-          # Commit the cleaned files
+          git add Lean/Polychromatic
+          git rm --cached -r Verso site
           git commit -m "Deploy: Sync clean code from main branch" --allow-empty
-
-          # Force-push the most recent commit to the 'release' branch.
           git push -f origin HEAD:refs/heads/release
+        if: github.ref == 'refs/heads/master'
+
+      - name: Build Lean files
+        uses: leanprover/lean-action@main
+        with:
+          mk_all-check: true
+          lake-package-directory: Lean
+
+      - name: Cache Mathlib Docs
+        uses: actions/cache@v4
+        with:
+          path: |
+            Lean/docbuild/.lake/build/doc
+          key: Docs-${{ hashFiles('Lean/lake-manifest.json') }}
+        if: github.ref == 'refs/heads/master'
+
+      - name: Build Documentation
+        run: |
+          cd Lean
+          ../scripts/build_docs.sh
+          sudo chown -R runner ../site
+          cp -r docbuild/.lake/build/doc ../site/docs
+        if: github.ref == 'refs/heads/master'
+
+      - name: Upload docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: site/docs
+          overwrite: true
+        if: github.ref == 'refs/heads/master'
+
+  run-verso:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Build Lean files
+        uses: leanprover/lean-action@main
+        with:
+          mk_all-check: true
+          lake-package-directory: Lean
+          use-github-cache: false
+
+      - name: Highlight Lean files
+        working-directory: Lean
+        run: lake build :highlighted
+
+      - name: Upload Verso artifacts
+        uses : actions/upload-artifact@v4
+        with:
+          name: verso-artifacts
+          path: Lean/.lake/build/highlighted
+          overwrite: true
+
+      - name: Run Verso
+        working-directory: Verso
+        run: lake exe docs
+
+      - name: Upload Verso site
+        uses: actions/upload-artifact@v4
+        with:
+          name: verso-site
+          path: site
+          overwrite: true
+        if: github.ref == 'refs/heads/master'
+
+  assemble:
+    runs-on: ubuntu-latest
+    needs: [make-docs, run-verso]
+    permissions:
+      contents: read
+      pages: write
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Download Verso site
+        uses: actions/download-artifact@v4
+        with:
+          name: verso-site
+          path: site
+        if: github.ref == 'refs/heads/master'
+
+      - name: Download docs
+        uses: actions/download-artifact@v4
+        with:
+          name: docs
+          path: site/docs
+        if: github.ref == 'refs/heads/master'
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+        if: github.ref == 'refs/heads/master'
+
+      - name: Setup Ruby
+        # https://github.com/ruby/setup-ruby/releases/tag/v1.207.0
+        uses: ruby/setup-ruby@a4effe49ee8ee5b8b5091268c473a4628afb5651
+        with:
+          ruby-version: '3.2' # Not needed with a .ruby-version file
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          cache-version: 0 # Increment this number if you need to re-download cached gems
+          working-directory: site
+        if: github.ref == 'refs/heads/master'
+
+      - name: Build Jekyll
+        run: bundle exec jekyll build --destination ../_site --baseurl "${{ steps.pages.outputs.base_path }}"
+        working-directory: site
+        env:
+          JEKYLL_ENV: production
+        if: github.ref == 'refs/heads/master'
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/master'
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push'
+    needs: assemble
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
@@ -86,4 +168,3 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
