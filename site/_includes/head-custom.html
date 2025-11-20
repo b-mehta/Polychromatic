@@ -2,37 +2,20 @@
 
 <!-- Check if the current page requires MathJax support -->
 {% if page.usemathjax %}
-  <!-- MathJax configuration script -->
-  <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-      TeX: {
-        equationNumbers: {
-          autoNumber: "AMS"  <!-- Automatically number equations using AMS style -->
-        }
-      }
-    });
-  </script>
-  <!-- Load MathJax library asynchronously from the CDN -->
-  <script type="text/javascript" async
-    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  <script defer src="{{ '-verso-js/mathjax.js' | relative_url }}"></script>
+
+  <script defer id="MathJax-script"
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
   </script>
 {% endif %}
 
 {% if page.useverso %}
 <!-- Verso things -->
+<script>var __versoSiteRoot = "{{ '/' | absolute_url }}";</script>
+{% include_relative index-head.html %}
+
 <link rel="stylesheet" href="{{ '-verso-css/highlighting.css' | relative_url }}">
-<script>
-  var __versoSiteRoot = "{{ '/' | absolute_url }}";
-  // TODO: Tell DTC about this ^
-  // {{ site.url }}
-  // {{ site.url }}/_pages
-</script>
-<script src="{{ '-verso-js/highlighting.js' | relative_url }}"></script>
-<script src="{{ '-verso-js/popper.js' | relative_url }}"></script>
-<script src="{{ '-verso-js/tippy.js' | relative_url }}"></script>
-<link rel="stylesheet" href="{{ '-verso-css/tippy-border.css' | relative_url }}">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
-<script defer="defer" src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js" integrity="sha384-zbcZAIxlvJtNE3Dp5nxLXdXtXyxwOdnILY1TDPVmKFhl4r4nSUG1r8bcFXGVa4Te" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="{{ '-verso-css/footnotes.css' | relative_url }}">
+<script src="{{ '-verso-js/footnotes.js' | relative_url }}"></script>
 <!-- End verso things -->
 {% endif %}

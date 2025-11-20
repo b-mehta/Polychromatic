@@ -2,15 +2,20 @@ name = "polychromaticSite"
 defaultTargets = ["docs"]
 
 [[require]]
+name = "subverso"
+git = "https://github.com/leanprover/subverso"
+rev = "7347ddaca36e59238bf1fc210a6bf71dd0bccdd6"
+
+[[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "nightly-testing"
-
-[[lean_lib]]
-name = "PolychromaticSite"
+rev = "main"
 
 [[lean_lib]]
 name = "Berso"
+
+[[lean_lib]]
+name = "PolychromaticSite"
 
 [[lean_exe]]
 name = "docs"

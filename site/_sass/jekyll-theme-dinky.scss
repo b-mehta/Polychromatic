@@ -43,8 +43,12 @@ h1, h2, h3, h4, h5, h6 {
   margin:36px 0 10px;
 }
 
+p, details {
+  margin:11px 0 11px;
+}
+
 p {
-  margin:0 0 22px;
+  transition: background-color 1.5s ease;
 }
 
 ul, ol, table, dl {
@@ -57,7 +61,7 @@ h1, h2, h3 {
 	font-weight: normal;
 }
 
-h1,h2, h3 {
+h1, h2, h3 {
 	display: block;
 	border-bottom: 1px solid #ccc;
 	padding-bottom: 5px;
@@ -80,9 +84,9 @@ h4, h5, h6 {
 	font-weight: 700;
 }
 
-a {
+.content a {
   color:#C30000;
-  font-weight:200;
+  // font-weight:200;
   text-decoration:none;
 }
 
@@ -150,7 +154,7 @@ hr {
 img {
   position: relative;
   margin: 0 auto;
-  max-width: 550px;
+  max-width: 650px;
   padding: 5px;
   margin: 10px 0 32px 0;
   border: 1px solid #ccc;
@@ -170,17 +174,14 @@ p img, .emoji {
 code, pre {
 	font-family: Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
   color:#000;
-  font-size:14px;
+  font-size: 90%;
 }
 
 pre {
 	padding: 4px 12px;
-  background: #FDFEFB;
-  border-radius:4px;
-  border:1px solid #D7D8C8;
   overflow: auto;
   overflow-y: hidden;
-	margin-bottom: 32px;
+	margin-bottom: 12px;
 }
 
 
@@ -222,7 +223,7 @@ td {
 header {
 	background-color: #171717;
 	color: #FDFDFB;
-  width:270px;
+  width:170px;
   float:left;
   position:fixed;
 	border: 1px solid #000;
@@ -253,6 +254,10 @@ h1.header {
 
 h1.header, a.header, a.name, header a{
 	color: #fff;
+}
+
+header h1 a {
+	text-decoration: none;
 }
 
 a.header {
@@ -321,23 +326,49 @@ a.buttons:hover {
 }
 
 
-/* Section - for main page content */
+/* For main page content */
 
-section {
-  width:550px;
-  float:right;
-  padding-bottom:50px;
+.content {
+  width: 650px;
+  float: right;
+  padding-bottom: 50px;
 }
 
 
 /* Footer */
 
 footer {
-  width:270px;
+  width:170px;
   float:left;
   position:fixed;
   bottom:10px;
 	padding-left: 50px;
+}
+
+details > summary {
+  font-weight: bold;
+}
+
+details {
+  background-color: #f6f1f1;
+  padding: 0.5em 1em;
+  border: 1px solid #555;
+  border-radius: 8px;
+}
+
+body {
+  /* 1. Create a counter named 'exercise-counter' */
+  counter-reset: exercise-counter;
+}
+
+details.auto-number {
+  counter-increment: exercise-counter;
+
+  // Nested selector
+  > summary::before {
+    content: "Exercise " counter(exercise-counter);
+    font-weight: bold;
+  }
 }
 
 @media print, screen and (max-width: 960px) {
@@ -347,7 +378,7 @@ footer {
     margin:0;
   }
 
-  header, section, footer {
+  header, .content, footer {
     float:none;
     position:static;
     width:auto;
@@ -363,7 +394,7 @@ footer {
     padding-right:320px;
   }
 
-  section {
+  .content {
     padding:20px 84px 20px 50px;
     margin:0 0 20px;
   }
@@ -389,7 +420,7 @@ footer {
 		margin-right: 0;
   }
 
-	section {
+	.content {
     padding:10px 0 10px 20px;
     margin:0 0 30px;
   }
@@ -426,3 +457,4 @@ footer {
     color:#444;
   }
 }
+

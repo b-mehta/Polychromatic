@@ -16,7 +16,7 @@
   <body>
     <div class="wrapper">
       <header>
-        <h1 class="header">{{ site.title | default: site.github.repository_name }}</h1>
+        <h1 class="header"><a href="{{ site.baseurl }}/">{{ site.title | default: site.github.repository_name }}</a></h1>
         <p class="header">{{ site.description | default: site.github.project_tagline }}</p>
 
         <ul>
@@ -32,9 +32,10 @@
         {% endif %}
       </header>
 
-      <section>
+      <div class="content">
         {{ content }}
-      </section>
+        <div id="footnotes-container"></div>
+      </div>
     </div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
   </body>

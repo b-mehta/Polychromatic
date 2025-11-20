@@ -1,0 +1,41 @@
+/* Style for the footnote reference links in the text (e.g., [1]) */
+sup a {
+    text-decoration: none;
+}
+
+sup a:hover {
+    text-decoration: underline;
+}
+
+/* The list of footnotes at the bottom */
+#footnotes-container {
+    margin-top: 3rem;
+    padding-top: 1rem;
+}
+
+/* Style for the back-to-text link in the footnotes list */
+.footnote-item a {
+    text-decoration: none;
+}
+
+.footnote-item a:hover {
+    text-decoration: underline;
+}
+
+sup {
+    font-size: smaller;
+    vertical-align: baseline;
+    position: relative;
+    top: -0.5em;
+    line-height: 0;
+}
+
+@keyframes fade-highlight {
+  from { background-color: #fffbe5; }
+  to { background-color: transparent; }
+}
+
+.footnote-highlight {
+  /* Apply the animation */
+  animation: fade-highlight 2.5s ease-out;
+}
