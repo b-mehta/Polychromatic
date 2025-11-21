@@ -418,5 +418,3 @@ theorem exists_colouring_asymptotic {ε : ℝ} (hε : 0 < ε) :
   apply hasPolychromColouring_mBound hk4
   rify
   grw [hf₂ k (by cutsat), hk, hS]
-
-#min_imports
