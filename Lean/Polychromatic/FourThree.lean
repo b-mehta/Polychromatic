@@ -506,5 +506,3 @@ elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaTactic fun g ↦ do
   | _ => throwError "not an allC goal"
 
 end
-
-#min_imports
