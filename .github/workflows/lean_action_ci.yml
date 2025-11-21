@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Remove annotations
         run: |
@@ -71,7 +71,7 @@ jobs:
 
     steps:
       - name: Checkout project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Lean files
         uses: leanprover/lean-action@main
@@ -112,7 +112,7 @@ jobs:
 
     steps:
       - name: Checkout project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download Verso site
         uses: actions/download-artifact@v6
