@@ -5,8 +5,8 @@ Author: Bhavik Mehta
 -/
 
 import Std.Data.HashMap
-import Berso.BersoBlog
-import PolychromaticSite.Main
+import Berso.Main
+-- import PolychromaticSite.Main
 import PolychromaticSite
 
 open Verso Doc
@@ -29,10 +29,20 @@ def theme : Theme := { Theme.default with
   }
   |>.override #[] ⟨do return {{<div class="frontpage"><h1>{{← param "title"}}</h1> {{← param "content"}}</div>}}, id⟩
 
-def mySite : Site := site PolychromaticSite /
-  "test" PolychromaticSite.Main
+def jekyllHeader : String :=
+"---
+layout: default
+useverso: true
+---"
 
-def main : IO UInt32 := blogMain theme mySite (options := ["--output", "../site/_pages"])
+
+def mySite : Site := site PolychromaticSite -- /
+  -- "test" PolychromaticSite.Main
+
+def main : IO UInt32 :=
+  Berso.blogMain theme mySite
+    (options := ["--output", "../site/_pages"])
+    (header := jekyllHeader)
 
 run_meta
   let opt ← Lean.getOptions
