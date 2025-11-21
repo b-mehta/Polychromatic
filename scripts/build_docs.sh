@@ -34,4 +34,4 @@ cd docbuild
 MATHLIB_NO_CACHE_ON_UPDATE=1 ~/.elan/bin/lake update doc-gen4
 
 # Build the docs
-DISABLE_EQUATIONS=1 ~/.elan/bin/lake build Cubes:docs
+DISABLE_EQUATIONS=1 ~/.elan/bin/lake build Polychromatic:docs
