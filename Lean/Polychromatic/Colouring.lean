@@ -13,10 +13,8 @@ variable {S : Finset G} {χ : G → K}
 
 open Finset
 
--- ANCHOR: IsPolychrom
 def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
   ∀ n : G, ∀ k : K, ∃ a ∈ S, χ (n + a) = k
--- ANCHOR_END: IsPolychrom
 
 -- ANCHOR IsPolychrom.nonempty
 lemma IsPolychrom.nonempty (h : IsPolychrom S χ) :
