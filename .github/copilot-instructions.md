@@ -303,7 +303,7 @@ cd Lean && lake exe cache get && lake build
 cd Lean && lake build
 
 # Build single module
-cd Lean && lake build Polychromatic.Basic
+cd Lean && lake build Polychromatic.Colouring
 
 # Generate documentation
 cd Verso && lake exe docs

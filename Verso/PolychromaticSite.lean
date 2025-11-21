@@ -53,14 +53,14 @@ The repository structure is as follows:
 
 # Examples
 
-```anchor my_IsPolychrom (module := Polychromatic.Basic)
+```anchor my_IsPolychrom (module := Polychromatic.Colouring)
 def IsPolychrom (S : Set G) (χ : G → K) : Prop :=
   ∀ n : G, ∀ k : K, ∃ i ∈ n +ᵥ S, χ i = k
 ```
 
 
 Here is a term
-```anchorTerm my_IsPolychrom (module := Polychromatic.Basic)
+```anchorTerm my_IsPolychrom (module := Polychromatic.Colouring)
 n +ᵥ S
 ```
 
