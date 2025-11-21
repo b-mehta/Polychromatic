@@ -78,7 +78,6 @@ jobs:
         with:
           mk_all-check: true
           lake-package-directory: Lean
-          use-github-cache: false
 
       - name: Highlight Lean files
         working-directory: Lean
