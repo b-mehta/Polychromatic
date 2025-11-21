@@ -29,7 +29,7 @@ set_option verso.exampleModule "Polychromatic"
 # Overview
 
 Here is a term
-```anchorTerm my_IsPolychrom (module := Polychromatic.Colouring)
+```anchorTerm IsPolychrom (module := Polychromatic.Colouring)
 n +ᵥ S
 ```
 
