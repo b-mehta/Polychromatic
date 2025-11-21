@@ -129,9 +129,11 @@ def blogMain (theme : Theme) (site : Site) (relativizeUrls := true) (linkTargets
   }
   let (((), st), _) ← Berso.Site.generate theme site initGenCtx .empty {}
   IO.FS.writeFile (cfg.destination.join "-verso-docs.json") (toString st.dedup.docJson)
-  for (name, content) in xref.jsFiles do
+  for (name, content, sourceMap?) in xref.jsFiles do
     FS.ensureDir (cfg.destination.join "-verso-js")
     IO.FS.writeFile (cfg.destination.join "-verso-js" |>.join name) content
+    if let some (name, content) := sourceMap? then
+      IO.FS.writeFile (cfg.destination.join "-verso-js" |>.join name) content
   for (name, content) in xref.cssFiles do
     FS.ensureDir (cfg.destination.join "-verso-css")
     IO.FS.writeFile (cfg.destination.join "-verso-css" |>.join name) content
