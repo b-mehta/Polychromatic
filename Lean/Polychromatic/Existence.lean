@@ -1,6 +1,14 @@
+import Mathlib.Algebra.EuclideanDomain.Basic
+import Mathlib.Algebra.EuclideanDomain.Field
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.Data.NNRat.Floor
+import Mathlib.Tactic.Rify
 import Polychromatic.Colouring
-import Polychromatic.LocalLemma
 import Polychromatic.Compactness
+import Polychromatic.LocalLemma
 
 open Finset
 
@@ -410,3 +418,5 @@ theorem exists_colouring_asymptotic {ε : ℝ} (hε : 0 < ε) :
   apply hasPolychromColouring_mBound hk4
   rify
   grw [hf₂ k (by cutsat), hk, hS]
+
+#min_imports

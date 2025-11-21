@@ -1,3 +1,11 @@
+import Mathlib.Algebra.Field.ZMod
+import Mathlib.Algebra.GCDMonoid.Finset
+import Mathlib.Algebra.GCDMonoid.Nat
+import Mathlib.Algebra.Lie.Basic
+import Mathlib.Algebra.Lie.Subalgebra
+import Mathlib.Algebra.Lie.Submodule
+import Mathlib.Algebra.Algebra.Subalgebra.Basic
+
 import Polychromatic.PolychromNumber
 
 open Finset
@@ -498,3 +506,5 @@ elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaTactic fun g ↦ do
   | _ => throwError "not an allC goal"
 
 end
+
+#min_imports
