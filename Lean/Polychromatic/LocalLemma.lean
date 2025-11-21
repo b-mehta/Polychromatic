@@ -1,4 +1,6 @@
-import Mathlib
+import Mathlib.Analysis.Complex.Exponential
+import Mathlib.Analysis.RCLike.Basic
+import Mathlib.MeasureTheory.Measure.Real
 import Polychromatic.ForMathlib.Misc
 
 open MeasureTheory ProbabilityTheory Measure

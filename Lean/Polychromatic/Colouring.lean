@@ -1,4 +1,6 @@
-import Mathlib
+import Mathlib.Algebra.Group.Action.Pointwise.Finset
+import Mathlib.Analysis.Normed.Group.AddTorsor
+import Mathlib.Analysis.Normed.Ring.Lemmas
 import Polychromatic.ForMathlib.Misc
 
 open Pointwise

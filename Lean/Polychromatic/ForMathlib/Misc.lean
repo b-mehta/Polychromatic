@@ -1,4 +1,6 @@
-import Mathlib
+import Mathlib.Order.Partition.Equipartition
+import Mathlib.Probability.Independence.Basic
+import Mathlib.Probability.UniformOn
 
 open Finset
 
