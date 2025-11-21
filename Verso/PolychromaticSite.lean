@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Author: Bhavik Mehta
 -/
 
-import Berso.BersoBlog
+import Berso.Main
 
 -- This gets access to most of the blog genre
 open Verso Genre Blog
