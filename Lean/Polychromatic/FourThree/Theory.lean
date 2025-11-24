@@ -140,7 +140,8 @@ lemma allC_one : allC 1 := by grind [allC, allB]
 lemma allC_two : allC 2 := by grind [allC, allB, allA]
 lemma allC_three : allC 3 := by grind [allC, allB, allA]
 
-lemma allC_succ (C : ℕ) (hb : allB C C) (hC : allC C) : allC (C + 1) := by
+lemma allC_succ (C C' : ℕ) (hC' : C'.beq C.succ) (hb : allB C C) (hC : allC C) : allC C' := by
+  simp only [Nat.succ_eq_add_one, Nat.beq_eq] at hC'
   intro c hc
   obtain hc | rfl : c < C ∨ c = C := by grind
   · exact hC c hc
@@ -150,14 +151,18 @@ lemma allB_zero (c : ℕ) : allB 0 c := by grind [allB]
 lemma allB_one (c : ℕ) : allB 1 c := by grind [allB, allA]
 lemma allB_two (c : ℕ) : allB 2 c := by grind [allB, allA]
 
-lemma allB_succ (B c : ℕ) (ha : allA B B c) (hB : allB B c) : allB (B + 1) c := by
+lemma allB_succ (B B' c : ℕ) (hB' : B'.beq B.succ) (ha : allA B B c) (hB : allB B c) :
+    allB B' c := by
+  simp only [Nat.succ_eq_add_one, Nat.beq_eq] at hB'
   intro b hbB hbc
   obtain hbB | rfl : b < B ∨ b = B := by grind
   · exact hB _ hbB hbc
   · exact ha
 
-lemma allB_succ' (A B c : ℕ) (hc : c.blt (A.add B)) (ha : allA A B c) (hB : allB B c) :
-    allB (B + 1) c := by
+lemma allB_succ' (A B B' c : ℕ) (hB' : B'.beq B.succ) (hc : c.blt (A.add B)) (ha : allA A B c)
+    (hB : allB B c) :
+    allB B' c := by
+  simp only [Nat.succ_eq_add_one, Nat.beq_eq] at hB'
   simp only [Nat.add_eq, Nat.blt_eq] at hc
   intro b hbB hbc
   obtain hbB | rfl : b < B ∨ b = B := by grind
@@ -219,8 +224,18 @@ def toBitVector (a b c : ℕ) : ℕ :=
 @[simp] lemma Nat.lor_eq {x y : ℕ} : x.lor y = x ||| y := rfl
 @[simp] lemma Nat.land_eq {x y : ℕ} : x.land y = x &&& y := rfl
 
+def toBitVectorK (a b c : ℕ) : ℕ :=
+  Nat.lor (Nat.lor (Nat.lor 1 (Nat.shiftLeft 1 a)) (Nat.shiftLeft 1 b)) (Nat.shiftLeft 1 c)
+
 def toDoubleBitVector (q a b c : ℕ) : ℕ :=
   toBitVector a b c ||| (toBitVector a b c <<< q)
+
+def toDoubleBitVectorK (q a b c : ℕ) : ℕ :=
+  Nat.lor (toBitVectorK a b c) (Nat.shiftLeft (toBitVectorK a b c) q)
+
+lemma toBitVectorK_eq (a b c : ℕ) : toBitVectorK a b c = toBitVector a b c := rfl
+@[simp] lemma toDoubleBitVectorK_eq (q a b c : ℕ) :
+    toDoubleBitVectorK q a b c = toDoubleBitVector q a b c := rfl
 
 lemma testBit_toBitVector (a b c i : ℕ) :
     Nat.testBit (toBitVector a b c) i = true ↔ i = 0 ∨ i = a ∨ i = b ∨ i = c := by
@@ -304,15 +319,16 @@ lemma or_lt_two_pow_iff {x y n : Nat} : x ||| y < 2 ^ n ↔ x < 2 ^ n ∧ y < 2 
     exact Nat.or_lt_two_pow hx hy
 
 lemma mainProof {q a b c v x y z : ℕ}
-    (hv : v.beq (toDoubleBitVector q a b c))
+    (hv : v.beq (toDoubleBitVectorK q a b c))
     (hq : Nat.blt 0 q)
     (hxy : Nat.beq (x.land y) 0)
     (hxz : Nat.beq (x.land z) 0)
     (hyz : Nat.beq (y.land z) 0)
-    (hxyz : ((x.lor y).lor z).blt (Nat.pow 2 q))
+    (hxyz : ((x.lor y).lor z).blt (Nat.shiftLeft 1 q))
     (hvalid : checkValid q v x y z) :
     ModAccept q a b c := by
-  simp only [Nat.beq_eq, Nat.blt_eq, Nat.land_eq, Nat.lor_eq, Nat.pow_eq] at hv hq hxy hxz hyz hxyz
+  simp only [toDoubleBitVectorK_eq, Nat.beq_eq, Nat.blt_eq, Nat.land_eq, Nat.lor_eq,
+    Nat.shiftLeft_eq', Nat.one_shiftLeft] at hv hq hxy hxz hyz hxyz
   have : NeZero q := ⟨by omega⟩
   intro aq bq cq haq hbq hcq
   rw [Accept]

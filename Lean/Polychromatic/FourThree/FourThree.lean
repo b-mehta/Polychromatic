@@ -105,12 +105,13 @@ def mkTable (tot : ℕ) : MetaM (Std.HashMap (ℕ × ℕ × ℕ × ℕ) Lean.Nam
     let χ : Expr := toExpr fn
     let nm : Name := .mkSimple s!"accept_{q}_{a%q}_{b%q}_{c%q}"
     let pf := mkApp8 (mkConst ``mainProof)
-      (mkNatLit q) (mkNatLit a) (mkNatLit b) (mkNatLit c)
-      (mkNatLit v) (mkNatLit x) (mkNatLit y) (mkNatLit z)
+      (mkRawNatLit q) (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c)
+      (mkNatLit v) (mkRawNatLit x) (mkRawNatLit y) (mkRawNatLit z)
     let pf := mkApp7 pf reflBoolTrue reflBoolTrue reflBoolTrue reflBoolTrue reflBoolTrue
       reflBoolTrue reflBoolTrue
     let pf ← mkAuxLemma []
-      (mkApp4 (mkConst ``ModAccept) (mkNatLit q) (mkNatLit a) (mkNatLit b) (mkNatLit c)) pf
+      (mkApp4 (mkConst ``ModAccept)
+        (mkRawNatLit q) (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c)) pf
       (some nm)
     table := table.insert (q, a, b, c) pf
   trace[debug] "size of table is {table.size}"
@@ -184,13 +185,14 @@ def prove_allB (B c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name)
     if B ≤ c - B + 1 then
       let pf_b ← prove_allB B c table entries
       let pf_a ← prove_allA B B c table entries
-      let pf := mkApp4 (mkConst ``allB_succ) (mkNatLit B) (mkNatLit c) pf_a pf_b
+      let pf := mkApp6 (mkConst ``allB_succ) (mkNatLit B) (mkNatLit (B + 1)) (mkNatLit c)
+        reflBoolTrue pf_a pf_b
       return pf
     else
       let pf_b ← prove_allB B c table entries
       let pf_a ← prove_allA (c - B + 1) B c table entries
-      let pf := mkApp6 (mkConst ``allB_succ') (mkNatLit (c - B + 1)) (mkNatLit B)
-        (mkNatLit c) reflBoolTrue pf_a pf_b
+      let pf := mkApp8 (mkConst ``allB_succ') (mkNatLit (c - B + 1)) (mkNatLit B) (mkNatLit (B + 1))
+        (mkNatLit c) reflBoolTrue reflBoolTrue pf_a pf_b
       return pf
 
 def prove_allC (C : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
@@ -203,7 +205,7 @@ def prove_allC (C : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (
   | C + 1 => do
     let pf_c ← prove_allC C table entries
     let pf_b ← prove_allB C C table entries
-    let pf := mkApp3 (mkConst ``allC_succ) (mkNatLit C) pf_b pf_c
+    let pf := mkApp5 (mkConst ``allC_succ) (mkNatLit C) (mkNatLit (C + 1)) reflBoolTrue pf_b pf_c
     return pf
 
 elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaFinishingTactic fun g ↦ do
@@ -217,3 +219,8 @@ elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaFinishingTactic fun g
   | _ => throwError "not an allC goal"
 
 end
+
+-- set_option diagnostics true
+
+-- lemma allC_289 : allC 10 := by
+--   prove_allC 90
