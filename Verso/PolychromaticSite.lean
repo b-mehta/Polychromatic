@@ -33,6 +33,9 @@ finite set {anchorTerm final}`S` of integers, a colouring of the integers is cal
 {anchorTerm final}`S`-polychromatic if every
 translate of {anchorTerm final}`S` contains an element of each colour class.
 
+Then, we define the polychromatic number of {anchorTerm final}`S` to be the maximum number of
+colours possible in an {anchorTerm final}`S`-polychromatic colouring.
+
 A primary target is to show that for any set {anchorTerm final}`S` of size {anchorTerm final}`4`,
 there is an {anchorTerm final}`S`-polychromatic colouring in {anchorTerm final}`3` colours.
 
@@ -54,23 +57,8 @@ The repository structure is as follows:
 # Examples
 
 ```anchor IsPolychrom (module := Polychromatic.Colouring)
-def IsPolychrom (S : Set G) (χ : G → K) : Prop :=
-  ∀ n : G, ∀ k : K, ∃ i ∈ n +ᵥ S, χ i = k
+def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
+  ∀ n : G, ∀ k : K, ∃ a ∈ S, χ (n + a) = k
 ```
 
-
-Here is a term
-```anchorTerm IsPolychrom (module := Polychromatic.Colouring)
-n +ᵥ S
-```
-
-```leanInit demo
--- This block initializes a Lean context
-```
-
-and here is another test
-```lean demo
-example := if True then 1 else 0
-example : True := by
-  simp
-```
+asdf

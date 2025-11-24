@@ -1,6 +1,8 @@
 import Mathlib.Order.Partition.Equipartition
 import Mathlib.Probability.Independence.Basic
 import Mathlib.Probability.UniformOn
+import Mathlib.Algebra.GCDMonoid.Finset
+import Mathlib.Algebra.GCDMonoid.Nat
 
 open Finset
 
@@ -35,6 +37,22 @@ lemma card_sub_erase_zero_le {G : Type*} [DecidableEq G] [AddGroup G] {S : Finse
 lemma StrictMono.exists_le_lt {f : ℕ → ℕ} (hf : StrictMono f) (hf₀ : f 0 = 0) (n : ℕ) :
     ∃ m, f m ≤ n ∧ n < f (m + 1) :=
   hf.tendsto_atTop.exists_le_lt _ (by simp [hf₀])
+
+theorem Minimal.le {α : Type*} [LinearOrder α] {P : α → Prop} {x : α} (y : α)
+    (hx : Minimal P x) (hy : P y) : x ≤ y := by
+  simpa using not_lt_iff_le_imp_ge.2 (hx.2 hy)
+
+lemma gcd_pos {ι : Type*} {f : ι → ℤ} {s : Finset ι} (hf : ∃ i ∈ s, f i ≠ 0) : 0 < s.gcd f := by
+  induction s using Finset.cons_induction_on with
+  | empty => simp at hf
+  | cons a s has ih =>
+    classical
+    rw [cons_eq_insert, gcd_insert, ← Int.coe_gcd, Int.natCast_pos]
+    simp only [Int.gcd_pos_iff, ne_eq]
+    simp only [cons_eq_insert, mem_insert, ne_eq, exists_eq_or_imp] at hf
+    grind
+
+@[simp] lemma Nat.mod_eq' {a b : ℕ} : a.mod b = a % b := rfl
 
 lemma Fintype.piFinset_inter {ι α : Type*} [DecidableEq ι] [Fintype ι] [DecidableEq α]
     {s t : ι → Finset α} :
