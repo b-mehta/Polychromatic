@@ -2,7 +2,7 @@ import Polychromatic.Existence
 import Polychromatic.PolychromNumber
 import Polychromatic.FourThree.Compute
 
-example : ∀ (a b c : ℤ), 0 < a → a < b → b < c → c < 30 →
+example : ∀ (a b c : ℤ), 0 < a → a < b → b < c → c < 289 →
     HasPolychromColouring (Fin 3) {0, a, b, c} :=
   suffices_flip _ (suffices_gcd _ (suffices_nat _ (allC_289)))
 
