@@ -193,8 +193,12 @@ lemma allA_succ_of_gcd (A A' b c g ga gb gc : ℕ) (hga : A.beq (ga.mul g)) (hgb
   have := Nat.eq_one_of_mul_eq_one_left h
   omega
 
-lemma allA_succ_of_accept (A b c : ℕ) (h : Accept A b c) (hA : allA A b c) :
-    allA A.succ b c := allA_succ A b c (Or.inl h) hA
+lemma allA_succ_of_accept (A A' b c : ℕ) (hA' : A'.beq A.succ)
+    (h : Accept A b c) (hA : allA A b c) :
+    allA A' b c := by
+  simp only [Nat.succ_eq_add_one, Nat.beq_eq] at hA'
+  rw [hA']
+  exact allA_succ A b c (Or.inl h) hA
 
 abbrev ModAccept (q aq bq cq : ℕ) : Prop :=
   ∀ a b c : ℕ, (a.mod q).beq aq → (b.mod q).beq bq → (c.mod q).beq cq → Accept a b c

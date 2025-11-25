@@ -81,11 +81,13 @@ open Lean Expr Meta
 def mkColourVector (l : Array (Fin 3)) (x : Fin 3) : Nat :=
   l.foldr (init := 0) fun k i ↦ Nat.bit (k == x) i
 
-def mkTable (tot : ℕ) : MetaM (Std.HashMap (ℕ × ℕ × ℕ × ℕ) Lean.Name × Array ℕ) := do
-  let mut table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Lean.Name := {}
-  let mut entries : Array ℕ := #[]
+def mkTable (tot : ℕ) : MetaM (Std.HashMap (ℕ × ℕ × ℕ × ℕ) Lean.Name × Array ℕ) :=
+  withTraceNode `allC (fun _ ↦ return "mkTable") do
   let i ← IO.FS.lines "../Generation/full-colors.log"
   let i := i.take tot
+  withTraceNode `allC (fun _ ↦ return "loop") do
+  let mut entries : Array ℕ := #[]
+  let mut table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Lean.Name := {}
   for j in i do
     let [abc, q, l] := j.splitOn ";" | throwError "no ;"
     let q := q.toNat!
@@ -171,8 +173,8 @@ def prove_allA (A b c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Nam
       return pf
     else
       let pf_a ← proveAccept A b c table entries
-      let pf := mkApp5 (mkConst ``allA_succ_of_accept)
-        (mkNatLit A) (mkNatLit b) (mkNatLit c) pf_a pf_rec
+      let pf := mkApp7 (mkConst ``allA_succ_of_accept)
+        (mkNatLit A) (mkNatLit (A + 1)) (mkNatLit b) (mkNatLit c) reflBoolTrue pf_a pf_rec
       return pf
 
 def prove_allB (B c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
@@ -214,6 +216,7 @@ elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaFinishingTactic fun g
   | allC C => do
     let some C := C.nat? | throwError "no"
     let (table, entries) ← mkTable (i.elim 0 TSyntax.getNat)
+    withTraceNode `allC (fun _ ↦ return "thing") do
     let e ← (prove_allC C table entries).eval 0
     let nm ← mkAuxLemma [] (mkApp (mkConst ``allC) (mkNatLit C)) e
     g.assign (mkConst nm)
@@ -224,7 +227,8 @@ end
 -- set_option diagnostics true
 
 -- set_option trace.profiler.useHeartbeats true
--- set_option trace.profiler true
+set_option trace.profiler true
+-- set_option trace.profiler.threshold 2
 
--- lemma allC_289 : allC 10 := by
---   prove_allC 90
+lemma allC_10 : allC 10 := by
+  prove_allC 900
