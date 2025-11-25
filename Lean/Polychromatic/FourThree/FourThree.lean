@@ -179,15 +179,15 @@ def prove_allA (A b c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Nam
     let pf_rec ← prove_allA A b c table entries
     let g : ℕ := A.gcd (b.gcd c)
     if g ≠ 1 then
-      let pf := mkAppN (mkConst ``allA_succ_of_gcd) #[mkRawNatLit A, mkRawNatLit (A + 1), mkRawNatLit b,
+      let pf := mkAppN (mkConst ``allA_succ_of_gcd) #[mkRawNatLit A, mkRawNatLit b,
         mkRawNatLit c,
         mkRawNatLit g, mkRawNatLit (A / g), mkRawNatLit (b / g), mkRawNatLit (c / g),
-        reflBoolTrue, reflBoolTrue, reflBoolTrue, reflBoolTrue, reflBoolTrue, pf_rec]
+        reflBoolTrue, reflBoolTrue, reflBoolTrue, reflBoolTrue, pf_rec]
       return pf
     else
       let pf_a ← proveAccept A b c table entries
-      let pf := mkApp7 (mkConst ``allA_succ_of_accept)
-        (mkRawNatLit A) (mkRawNatLit (A + 1)) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue pf_a pf_rec
+      let pf := mkApp5 (mkConst ``allA_succ_of_accept)
+        (mkRawNatLit A) (mkRawNatLit b) (mkRawNatLit c) pf_a pf_rec
       return pf
 
 def prove_allB (B c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
@@ -200,14 +200,14 @@ def prove_allB (B c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name)
     if B ≤ c - B + 1 then
       let pf_b ← prove_allB B c table entries
       let pf_a ← prove_allA B B c table entries
-      let pf := mkApp6 (mkConst ``allB_succ) (mkRawNatLit B) (mkRawNatLit (B + 1)) (mkRawNatLit c)
-        reflBoolTrue pf_a pf_b
+      let pf := mkApp4 (mkConst ``allB_succ) (mkRawNatLit B) (mkRawNatLit c)
+        pf_a pf_b
       return pf
     else
       let pf_b ← prove_allB B c table entries
       let pf_a ← prove_allA (c - B + 1) B c table entries
-      let pf := mkApp8 (mkConst ``allB_succ') (mkRawNatLit (c - B + 1)) (mkRawNatLit B) (mkRawNatLit (B + 1))
-        (mkRawNatLit c) reflBoolTrue reflBoolTrue pf_a pf_b
+      let pf := mkApp6 (mkConst ``allB_succ') (mkRawNatLit (c - B + 1)) (mkRawNatLit B)
+        (mkRawNatLit c) reflBoolTrue pf_a pf_b
       return pf
 
 def prove_allC (C : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
@@ -220,7 +220,7 @@ def prove_allC (C : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (
   | C + 1 => do
     let pf_c ← prove_allC C table entries
     let pf_b ← prove_allB C C table entries
-    let pf := mkApp5 (mkConst ``allC_succ) (mkRawNatLit C) (mkRawNatLit (C + 1)) reflBoolTrue pf_b pf_c
+    let pf := mkApp3 (mkConst ``allC_succ) (mkRawNatLit C) pf_b pf_c
     return pf
 
 elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaFinishingTactic fun g ↦ do
@@ -239,11 +239,11 @@ end
 
 set_option diagnostics true
 
--- set_option trace.profiler.useHeartbeats true
+set_option trace.profiler.useHeartbeats true
 -- set_option trace.profiler true
 -- set_option trace.profiler.threshold 2
 
-lemma allC_10 : allC 8 := by
-  prove_allC 90
+-- lemma allC_10 : allC 8 := by
+--   prove_allC 90
 
 -- #print allC_10._proof_1_75

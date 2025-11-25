@@ -140,8 +140,7 @@ lemma allC_one : allC (nat_lit 1) := by grind [allC, allB]
 lemma allC_two : allC (nat_lit 2) := by grind [allC, allB, allA]
 lemma allC_three : allC (nat_lit 3) := by grind [allC, allB, allA]
 
-lemma allC_succ (C C' : ℕ) (hC' : C'.beq C.succ) (hb : allB C C) (hC : allC C) : allC C' := by
-  simp only [Nat.succ_eq_add_one, Nat.beq_eq] at hC'
+lemma allC_succ (C : ℕ) (hb : allB C C) (hC : allC C) : allC C.succ := by
   intro c hc
   obtain hc | rfl : c < C ∨ c = C := by grind
   · exact hC c hc
@@ -151,18 +150,16 @@ lemma allB_zero (c : ℕ) : allB (nat_lit 0) c := by grind [allB]
 lemma allB_one (c : ℕ) : allB (nat_lit 1) c := by grind [allB, allA]
 lemma allB_two (c : ℕ) : allB (nat_lit 2) c := by grind [allB, allA]
 
-lemma allB_succ (B B' c : ℕ) (hB' : B'.beq B.succ) (ha : allA B B c) (hB : allB B c) :
-    allB B' c := by
-  simp only [Nat.succ_eq_add_one, Nat.beq_eq] at hB'
+lemma allB_succ (B c : ℕ) (ha : allA B B c) (hB : allB B c) :
+    allB B.succ c := by
   intro b hbB hbc
   obtain hbB | rfl : b < B ∨ b = B := by grind
   · exact hB _ hbB hbc
   · exact ha
 
-lemma allB_succ' (A B B' c : ℕ) (hB' : B'.beq B.succ) (hc : c.succ.ble (A.add B)) (ha : allA A B c)
+lemma allB_succ' (A B c : ℕ) (hc : c.succ.ble (A.add B)) (ha : allA A B c)
     (hB : allB B c) :
-    allB B' c := by
-  simp only [Nat.succ_eq_add_one, Nat.beq_eq] at hB'
+    allB B.succ c := by
   simp only [Nat.add_eq, Nat.ble_eq] at hc
   intro b hbB hbc
   obtain hbB | rfl : b < B ∨ b = B := by grind
@@ -180,12 +177,12 @@ lemma allA_succ (A b c : ℕ) (h : Accept A b c ∨ A.gcd (b.gcd c) ≠ 1) (hA :
   · exact hA a ha0 hab haA habc hgcd
   grind
 
-lemma allA_succ_of_gcd (A A' b c g ga gb gc : ℕ) (hga : A.beq (ga.mul g)) (hgb : b.beq (gb.mul g))
+lemma allA_succ_of_gcd (A b c g ga gb gc : ℕ) (hga : A.beq (ga.mul g)) (hgb : b.beq (gb.mul g))
     (hg : Nat.ble (nat_lit 2) g)
-    (hgc : c.beq (gc.mul g)) (hA' : A'.beq A.succ) (hA : allA A b c) :
-    allA A' b c := by
-  simp only [Nat.mul_eq, Nat.beq_eq, Nat.succ_eq_add_one, Nat.ble_eq] at hga hgb hgc hA' hg
-  substs hga hgb hgc hA'
+    (hgc : c.beq (gc.mul g)) (hA : allA A b c) :
+    allA A.succ b c := by
+  simp only [Nat.mul_eq, Nat.beq_eq, Nat.ble_eq] at hga hgb hgc hg
+  substs hga hgb hgc
   apply allA_succ _ _ _ _ hA
   right
   rw [Nat.gcd_mul_right, Nat.gcd_mul_right]
@@ -193,11 +190,9 @@ lemma allA_succ_of_gcd (A A' b c g ga gb gc : ℕ) (hga : A.beq (ga.mul g)) (hgb
   have := Nat.eq_one_of_mul_eq_one_left h
   omega
 
-lemma allA_succ_of_accept (A A' b c : ℕ) (hA' : A'.beq A.succ)
+lemma allA_succ_of_accept (A b c : ℕ)
     (h : Accept A b c) (hA : allA A b c) :
-    allA A' b c := by
-  simp only [Nat.succ_eq_add_one, Nat.beq_eq] at hA'
-  rw [hA']
+    allA A.succ b c := by
   exact allA_succ A b c (Or.inl h) hA
 
 abbrev ModAccept (q aq bq cq : ℕ) : Prop :=
