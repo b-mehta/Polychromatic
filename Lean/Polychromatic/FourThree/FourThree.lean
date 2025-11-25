@@ -11,34 +11,47 @@ import Polychromatic.FourThree.Theory
 
 open Finset
 
-lemma accept_3_0 (a b c : ℕ) (hb : (b.mod 3).beq 1) (hc : (c.mod 3).beq 2) : Accept a b c :=
+lemma accept_3_0 (a b c : ℕ)
+    (hb : (b.mod (nat_lit 3)).beq (nat_lit 1)) (hc : (c.mod (nat_lit 3)).beq (nat_lit 2)) :
+    Accept a b c :=
   accept_of_three (by simp [helper hb, helper hc])
 
-lemma accept_3_1 (a b c : ℕ) (hb : (b.mod 3).beq 2) (hc : (c.mod 3).beq 1) : Accept a b c :=
+lemma accept_3_1 (a b c : ℕ)
+    (hb : (b.mod (nat_lit 3)).beq (nat_lit 2)) (hc : (c.mod (nat_lit 3)).beq (nat_lit 1)) :
+    Accept a b c :=
   accept_of_three (by simp [helper hb, helper hc, Finset.insert_subset_iff])
 
-lemma accept_3_2 (a b c : ℕ) (ha : (a.mod 3).beq 1) (hc : (c.mod 3).beq 2) : Accept a b c :=
+lemma accept_3_2 (a b c : ℕ)
+    (ha : (a.mod (nat_lit 3)).beq (nat_lit 1)) (hc : (c.mod (nat_lit 3)).beq (nat_lit 2)) :
+    Accept a b c :=
   accept_of_three (by simp [helper ha, helper hc, Finset.insert_subset_iff])
 
-lemma accept_3_3 (a b c : ℕ) (ha : (a.mod 3).beq 2) (hc : (c.mod 3).beq 1) : Accept a b c :=
+lemma accept_3_3 (a b c : ℕ)
+    (ha : (a.mod (nat_lit 3)).beq (nat_lit 2)) (hc : (c.mod (nat_lit 3)).beq (nat_lit 1)) :
+    Accept a b c :=
   accept_of_three (by simp [helper ha, helper hc, Finset.insert_subset_iff])
 
-lemma accept_3_4 (a b c : ℕ) (ha : (a.mod 3).beq 1) (hb : (b.mod 3).beq 2) : Accept a b c :=
+lemma accept_3_4 (a b c : ℕ)
+    (ha : (a.mod (nat_lit 3)).beq (nat_lit 1)) (hb : (b.mod (nat_lit 3)).beq (nat_lit 2)) :
+    Accept a b c :=
   accept_of_three (by simp [helper ha, helper hb, Finset.insert_subset_iff])
 
-lemma accept_3_5 (a b c : ℕ) (ha : (a.mod 3).beq 2) (hb : (b.mod 3).beq 1) : Accept a b c :=
+lemma accept_3_5 (a b c : ℕ)
+    (ha : (a.mod (nat_lit 3)).beq (nat_lit 2)) (hb : (b.mod (nat_lit 3)).beq (nat_lit 1)) :
+    Accept a b c :=
   accept_of_three (by simp [helper ha, helper hb, Finset.insert_subset_iff])
 
-lemma allA_of_3_0 (A b c : ℕ) (hb : (b.mod 3).beq 1) (hc : (c.mod 3).beq 2) : allA A b c := by
+lemma allA_of_3_0 (A b c : ℕ)
+    (hb : (b.mod (nat_lit 3)).beq (nat_lit 1)) (hc : (c.mod (nat_lit 3)).beq (nat_lit 2)) :
+    allA A b c := by
   intro a _ _ _ _ _
   apply accept_3_0 a b c hb hc
 
-lemma allA_of_3_1 (A b c : ℕ) (hb : (b.mod 3).beq 2) (hc : (c.mod 3).beq 1) : allA A b c := by
+lemma allA_of_3_1 (A b c : ℕ)
+    (hb : (b.mod (nat_lit 3)).beq (nat_lit 2)) (hc : (c.mod (nat_lit 3)).beq (nat_lit 1)) :
+    allA A b c := by
   intro a _ _ _ _ _
   apply accept_3_1 a b c hb hc
-
-abbrev myOtherType (q aq bq cq : ℕ) (χ : ZMod q → Fin 3) : Prop :=
-  IsPolychrom ({0, ↑aq, ↑bq, ↑cq} : Finset (ZMod q)) χ
 
 -- 0,1,3,4;6;1,2,1,2,3,3,
 -- 0,2,3,5;4;1,2,1,3,
@@ -123,22 +136,22 @@ def proveAccept (a b c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Na
     StateT ℕ MetaM Expr := do
   if b % 3 = 1 ∧ c % 3 = 2 then
     return mkApp5 (mkConst ``accept_3_0)
-      (mkNatLit a) (mkNatLit b) (mkNatLit c) reflBoolTrue reflBoolTrue
+      (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue reflBoolTrue
   if b % 3 = 2 ∧ c % 3 = 1 then
     return mkApp5 (mkConst ``accept_3_1)
-      (mkNatLit a) (mkNatLit b) (mkNatLit c) reflBoolTrue reflBoolTrue
+      (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue reflBoolTrue
   if a % 3 = 1 ∧ c % 3 = 2 then
     return mkApp5 (mkConst ``accept_3_2)
-      (mkNatLit a) (mkNatLit b) (mkNatLit c) reflBoolTrue reflBoolTrue
+      (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue reflBoolTrue
   if a % 3 = 2 ∧ c % 3 = 1 then
     return mkApp5 (mkConst ``accept_3_3)
-      (mkNatLit a) (mkNatLit b) (mkNatLit c) reflBoolTrue reflBoolTrue
+      (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue reflBoolTrue
   if a % 3 = 1 ∧ b % 3 = 2 then
     return mkApp5 (mkConst ``accept_3_4)
-      (mkNatLit a) (mkNatLit b) (mkNatLit c) reflBoolTrue reflBoolTrue
+      (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue reflBoolTrue
   if a % 3 = 2 ∧ b % 3 = 1 then
     return mkApp5 (mkConst ``accept_3_5)
-      (mkNatLit a) (mkNatLit b) (mkNatLit c) reflBoolTrue reflBoolTrue
+      (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue reflBoolTrue
 
   let ind ← get
   let some q := entries[ind]?
@@ -147,54 +160,54 @@ def proveAccept (a b c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Na
   let (aq, bq, cq) := (a % q, b % q, c % q)
   let some nm := table.get? (q, aq, bq, cq)
     | throwError "no entry for {q} {aq} {bq} {cq}"
-  let pf := mkApp6 (mkConst nm) (mkNatLit a) (mkNatLit b) (mkNatLit c)
+  let pf := mkApp6 (mkConst nm) (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c)
     reflBoolTrue reflBoolTrue reflBoolTrue
   return pf
 
 def prove_allA (A b c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
     StateT ℕ MetaM Expr :=
   match A with
-  | 0 => return mkApp2 (mkConst ``allA_zero) (mkNatLit b) (mkNatLit c)
-  | 1 => return mkApp2 (mkConst ``allA_one) (mkNatLit b) (mkNatLit c)
+  | 0 => return mkApp2 (mkConst ``allA_zero) (mkRawNatLit b) (mkRawNatLit c)
+  | 1 => return mkApp2 (mkConst ``allA_one) (mkRawNatLit b) (mkRawNatLit c)
   | A + 1 => do
     if b % 3 = 1 ∧ c % 3 = 2 then
       return mkApp5 (mkConst ``allA_of_3_0)
-        (mkNatLit (A + 1)) (mkNatLit b) (mkNatLit c) reflBoolTrue reflBoolTrue
+        (mkRawNatLit (A + 1)) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue reflBoolTrue
     if b % 3 = 2 ∧ c % 3 = 1 then
       return mkApp5 (mkConst ``allA_of_3_1)
-        (mkNatLit (A + 1)) (mkNatLit b) (mkNatLit c) reflBoolTrue reflBoolTrue
+        (mkRawNatLit (A + 1)) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue reflBoolTrue
     let pf_rec ← prove_allA A b c table entries
     let g : ℕ := A.gcd (b.gcd c)
     if g ≠ 1 then
-      let pf := mkAppN (mkConst ``allA_succ_of_gcd) #[mkNatLit A, mkNatLit (A + 1), mkNatLit b,
-        mkNatLit c,
-        mkNatLit g, mkNatLit (A / g), mkNatLit (b / g), mkNatLit (c / g),
+      let pf := mkAppN (mkConst ``allA_succ_of_gcd) #[mkRawNatLit A, mkRawNatLit (A + 1), mkRawNatLit b,
+        mkRawNatLit c,
+        mkRawNatLit g, mkRawNatLit (A / g), mkRawNatLit (b / g), mkRawNatLit (c / g),
         reflBoolTrue, reflBoolTrue, reflBoolTrue, reflBoolTrue, reflBoolTrue, pf_rec]
       return pf
     else
       let pf_a ← proveAccept A b c table entries
       let pf := mkApp7 (mkConst ``allA_succ_of_accept)
-        (mkNatLit A) (mkNatLit (A + 1)) (mkNatLit b) (mkNatLit c) reflBoolTrue pf_a pf_rec
+        (mkRawNatLit A) (mkRawNatLit (A + 1)) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue pf_a pf_rec
       return pf
 
 def prove_allB (B c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
     StateT ℕ MetaM Expr :=
   match B with
-  | 0 => return mkApp (mkConst ``allB_zero) (mkNatLit c)
-  | 1 => return mkApp (mkConst ``allB_one) (mkNatLit c)
-  | 2 => return mkApp (mkConst ``allB_two) (mkNatLit c)
+  | 0 => return mkApp (mkConst ``allB_zero) (mkRawNatLit c)
+  | 1 => return mkApp (mkConst ``allB_one) (mkRawNatLit c)
+  | 2 => return mkApp (mkConst ``allB_two) (mkRawNatLit c)
   | B + 1 => do
     if B ≤ c - B + 1 then
       let pf_b ← prove_allB B c table entries
       let pf_a ← prove_allA B B c table entries
-      let pf := mkApp6 (mkConst ``allB_succ) (mkNatLit B) (mkNatLit (B + 1)) (mkNatLit c)
+      let pf := mkApp6 (mkConst ``allB_succ) (mkRawNatLit B) (mkRawNatLit (B + 1)) (mkRawNatLit c)
         reflBoolTrue pf_a pf_b
       return pf
     else
       let pf_b ← prove_allB B c table entries
       let pf_a ← prove_allA (c - B + 1) B c table entries
-      let pf := mkApp8 (mkConst ``allB_succ') (mkNatLit (c - B + 1)) (mkNatLit B) (mkNatLit (B + 1))
-        (mkNatLit c) reflBoolTrue reflBoolTrue pf_a pf_b
+      let pf := mkApp8 (mkConst ``allB_succ') (mkRawNatLit (c - B + 1)) (mkRawNatLit B) (mkRawNatLit (B + 1))
+        (mkRawNatLit c) reflBoolTrue reflBoolTrue pf_a pf_b
       return pf
 
 def prove_allC (C : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
@@ -207,7 +220,7 @@ def prove_allC (C : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (
   | C + 1 => do
     let pf_c ← prove_allC C table entries
     let pf_b ← prove_allB C C table entries
-    let pf := mkApp5 (mkConst ``allC_succ) (mkNatLit C) (mkNatLit (C + 1)) reflBoolTrue pf_b pf_c
+    let pf := mkApp5 (mkConst ``allC_succ) (mkRawNatLit C) (mkRawNatLit (C + 1)) reflBoolTrue pf_b pf_c
     return pf
 
 elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaFinishingTactic fun g ↦ do
@@ -218,17 +231,19 @@ elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaFinishingTactic fun g
     let (table, entries) ← mkTable (i.elim 0 TSyntax.getNat)
     withTraceNode `allC (fun _ ↦ return "thing") do
     let e ← (prove_allC C table entries).eval 0
-    let nm ← mkAuxLemma [] (mkApp (mkConst ``allC) (mkNatLit C)) e
+    let nm ← mkAuxLemma [] (mkApp (mkConst ``allC) (mkRawNatLit C)) e
     g.assign (mkConst nm)
   | _ => throwError "not an allC goal"
 
 end
 
--- set_option diagnostics true
+set_option diagnostics true
 
 -- set_option trace.profiler.useHeartbeats true
-set_option trace.profiler true
+-- set_option trace.profiler true
 -- set_option trace.profiler.threshold 2
 
-lemma allC_10 : allC 10 := by
-  prove_allC 900
+lemma allC_10 : allC 8 := by
+  prove_allC 90
+
+-- #print allC_10._proof_1_75

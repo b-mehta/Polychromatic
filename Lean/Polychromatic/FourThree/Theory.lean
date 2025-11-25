@@ -135,10 +135,10 @@ lemma suffices_nat (C : ℕ) (h : allC C) :
 
 end
 
-lemma allC_zero : allC 0 := by grind [allC]
-lemma allC_one : allC 1 := by grind [allC, allB]
-lemma allC_two : allC 2 := by grind [allC, allB, allA]
-lemma allC_three : allC 3 := by grind [allC, allB, allA]
+lemma allC_zero : allC (nat_lit 0) := by grind [allC]
+lemma allC_one : allC (nat_lit 1) := by grind [allC, allB]
+lemma allC_two : allC (nat_lit 2) := by grind [allC, allB, allA]
+lemma allC_three : allC (nat_lit 3) := by grind [allC, allB, allA]
 
 lemma allC_succ (C C' : ℕ) (hC' : C'.beq C.succ) (hb : allB C C) (hC : allC C) : allC C' := by
   simp only [Nat.succ_eq_add_one, Nat.beq_eq] at hC'
@@ -147,9 +147,9 @@ lemma allC_succ (C C' : ℕ) (hC' : C'.beq C.succ) (hb : allB C C) (hC : allC C)
   · exact hC c hc
   · exact hb
 
-lemma allB_zero (c : ℕ) : allB 0 c := by grind [allB]
-lemma allB_one (c : ℕ) : allB 1 c := by grind [allB, allA]
-lemma allB_two (c : ℕ) : allB 2 c := by grind [allB, allA]
+lemma allB_zero (c : ℕ) : allB (nat_lit 0) c := by grind [allB]
+lemma allB_one (c : ℕ) : allB (nat_lit 1) c := by grind [allB, allA]
+lemma allB_two (c : ℕ) : allB (nat_lit 2) c := by grind [allB, allA]
 
 lemma allB_succ (B B' c : ℕ) (hB' : B'.beq B.succ) (ha : allA B B c) (hB : allB B c) :
     allB B' c := by
@@ -170,8 +170,8 @@ lemma allB_succ' (A B B' c : ℕ) (hB' : B'.beq B.succ) (hc : c.succ.ble (A.add 
   · rintro a ha0 hab - habc hgcd
     exact ha a ha0 hab (by cutsat) habc hgcd
 
-lemma allA_zero (b c : ℕ) : allA 0 b c := by grind [allA]
-lemma allA_one (b c : ℕ) : allA 1 b c := by grind [allA]
+lemma allA_zero (b c : ℕ) : allA (nat_lit 0) b c := by grind [allA]
+lemma allA_one (b c : ℕ) : allA (nat_lit 1) b c := by grind [allA]
 
 lemma allA_succ (A b c : ℕ) (h : Accept A b c ∨ A.gcd (b.gcd c) ≠ 1) (hA : allA A b c) :
     allA (A + 1) b c := by
@@ -181,7 +181,7 @@ lemma allA_succ (A b c : ℕ) (h : Accept A b c ∨ A.gcd (b.gcd c) ≠ 1) (hA :
   grind
 
 lemma allA_succ_of_gcd (A A' b c g ga gb gc : ℕ) (hga : A.beq (ga.mul g)) (hgb : b.beq (gb.mul g))
-    (hg : Nat.ble 2 g)
+    (hg : Nat.ble (nat_lit 2) g)
     (hgc : c.beq (gc.mul g)) (hA' : A'.beq A.succ) (hA : allA A b c) :
     allA A' b c := by
   simp only [Nat.mul_eq, Nat.beq_eq, Nat.succ_eq_add_one, Nat.ble_eq] at hga hgb hgc hA' hg
@@ -230,7 +230,7 @@ def toBitVector (a b c : ℕ) : ℕ :=
 @[simp] lemma Nat.land_eq {x y : ℕ} : x.land y = x &&& y := rfl
 
 def toBitVectorK (a b c : ℕ) : ℕ :=
-  Nat.lor (Nat.lor (Nat.lor 1 (Nat.shiftLeft 1 a)) (Nat.shiftLeft 1 b)) (Nat.shiftLeft 1 c)
+  Nat.lor (Nat.lor (Nat.lor (nat_lit 1) (Nat.shiftLeft (nat_lit 1) a)) (Nat.shiftLeft (nat_lit 1) b)) (Nat.shiftLeft (nat_lit 1) c)
 
 def toDoubleBitVector (q a b c : ℕ) : ℕ :=
   toBitVector a b c ||| (toBitVector a b c <<< q)
@@ -289,7 +289,7 @@ lemma testBit_shiftRight_toDoubleBitVector {q a b c k z : ℕ} (hkq : k ≤ q) (
 noncomputable def checkValid (q v x y z : ℕ) : Bool :=
   q.rec true fun i acc ↦
     let v' := v.shiftRight (q.sub i)
-    ((Nat.ble 1 (v'.land x)).and' ((Nat.ble 1 (v'.land y)).and' (Nat.ble 1 (v'.land z)))).and' acc
+    ((Nat.ble (nat_lit 1) (v'.land x)).and' ((Nat.ble (nat_lit 1) (v'.land y)).and' (Nat.ble (nat_lit 1) (v'.land z)))).and' acc
 
 lemma rec_and {q : ℕ} (P : ℕ → Bool) :
     Nat.rec true (fun i acc ↦ (P i).and' acc) q = true ↔ ∀ i < q, P i := by
@@ -326,11 +326,11 @@ lemma or_lt_two_pow_iff {x y n : Nat} : x ||| y < 2 ^ n ↔ x < 2 ^ n ∧ y < 2 
 lemma mainProof {q a b c v v' x y z : ℕ}
     (hv' : v'.beq (toBitVectorK a b c))
     (hv : v.beq (v'.lor (v'.shiftLeft q)))
-    (hq : Nat.ble 1 q)
-    (hxy : Nat.beq (x.land y) 0)
-    (hxz : Nat.beq (x.land z) 0)
-    (hyz : Nat.beq (y.land z) 0)
-    (hxyz : ((x.lor y).lor z).succ.ble (Nat.shiftLeft 1 q))
+    (hq : Nat.ble (nat_lit 1) q)
+    (hxy : Nat.beq (x.land y) (nat_lit 0))
+    (hxz : Nat.beq (x.land z) (nat_lit 0))
+    (hyz : Nat.beq (y.land z) (nat_lit 0))
+    (hxyz : ((x.lor y).lor z).succ.ble (Nat.shiftLeft (nat_lit 1) q))
     (hvalid : checkValid q v x y z) :
     ModAccept q a b c := by
   simp only [Nat.shiftLeft_eq', Nat.lor_eq, Nat.beq_eq, Nat.ble_eq, Nat.land_eq,
