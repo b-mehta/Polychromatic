@@ -99,16 +99,16 @@ def mkTable (tot : ℕ) : MetaM (Std.HashMap (ℕ × ℕ × ℕ × ℕ) Lean.Nam
     let x := mkColourVector l 0
     let y := mkColourVector l 1
     let z := mkColourVector l 2
-    let v : ℕ := toDoubleBitVector q a b c
-
+    let v' : ℕ := toBitVector a b c
+    let v : ℕ := v' ||| (v' <<< q)
     let fn : Fin l.size → Fin 3 := fun i ↦ l[i]
     let χ : Expr := toExpr fn
     let nm : Name := .mkSimple s!"accept_{q}_{a%q}_{b%q}_{c%q}"
-    let pf := mkApp8 (mkConst ``mainProof)
+    let pf := mkApp9 (mkConst ``mainProof)
       (mkRawNatLit q) (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c)
-      (mkNatLit v) (mkRawNatLit x) (mkRawNatLit y) (mkRawNatLit z)
-    let pf := mkApp7 pf reflBoolTrue reflBoolTrue reflBoolTrue reflBoolTrue reflBoolTrue
-      reflBoolTrue reflBoolTrue
+      (mkRawNatLit v) (mkRawNatLit v') (mkRawNatLit x) (mkRawNatLit y) (mkRawNatLit z)
+    let pf := mkApp8 pf reflBoolTrue reflBoolTrue reflBoolTrue reflBoolTrue reflBoolTrue
+      reflBoolTrue reflBoolTrue reflBoolTrue
     let pf ← mkAuxLemma []
       (mkApp4 (mkConst ``ModAccept)
         (mkRawNatLit q) (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c)) pf
@@ -220,7 +220,7 @@ elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaFinishingTactic fun g
 
 end
 
--- set_option diagnostics true
+set_option diagnostics true
 
--- lemma allC_289 : allC 10 := by
---   prove_allC 90
+lemma allC_289 : allC 10 := by
+  prove_allC 90

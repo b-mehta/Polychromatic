@@ -159,11 +159,11 @@ lemma allB_succ (B B' c : ℕ) (hB' : B'.beq B.succ) (ha : allA B B c) (hB : all
   · exact hB _ hbB hbc
   · exact ha
 
-lemma allB_succ' (A B B' c : ℕ) (hB' : B'.beq B.succ) (hc : c.blt (A.add B)) (ha : allA A B c)
+lemma allB_succ' (A B B' c : ℕ) (hB' : B'.beq B.succ) (hc : c.succ.ble (A.add B)) (ha : allA A B c)
     (hB : allB B c) :
     allB B' c := by
   simp only [Nat.succ_eq_add_one, Nat.beq_eq] at hB'
-  simp only [Nat.add_eq, Nat.blt_eq] at hc
+  simp only [Nat.add_eq, Nat.ble_eq] at hc
   intro b hbB hbc
   obtain hbB | rfl : b < B ∨ b = B := by grind
   · exact hB _ hbB hbc
@@ -181,16 +181,17 @@ lemma allA_succ (A b c : ℕ) (h : Accept A b c ∨ A.gcd (b.gcd c) ≠ 1) (hA :
   grind
 
 lemma allA_succ_of_gcd (A A' b c g ga gb gc : ℕ) (hga : A.beq (ga.mul g)) (hgb : b.beq (gb.mul g))
-    (hg : Nat.blt 1 g)
+    (hg : Nat.ble 2 g)
     (hgc : c.beq (gc.mul g)) (hA' : A'.beq A.succ) (hA : allA A b c) :
     allA A' b c := by
-  simp only [Nat.mul_eq, Nat.beq_eq, Nat.succ_eq_add_one, Nat.blt_eq] at hga hgb hgc hA' hg
+  simp only [Nat.mul_eq, Nat.beq_eq, Nat.succ_eq_add_one, Nat.ble_eq] at hga hgb hgc hA' hg
   substs hga hgb hgc hA'
   apply allA_succ _ _ _ _ hA
   right
   rw [Nat.gcd_mul_right, Nat.gcd_mul_right]
   intro h
-  exact hg.ne' (Nat.eq_one_of_mul_eq_one_left h)
+  have := Nat.eq_one_of_mul_eq_one_left h
+  omega
 
 lemma allA_succ_of_accept (A b c : ℕ) (h : Accept A b c) (hA : allA A b c) :
     allA A.succ b c := allA_succ A b c (Or.inl h) hA
@@ -284,7 +285,7 @@ lemma testBit_shiftRight_toDoubleBitVector {q a b c k z : ℕ} (hkq : k ≤ q) (
 noncomputable def checkValid (q v x y z : ℕ) : Bool :=
   q.rec true fun i acc ↦
     let v' := v.shiftRight (q.sub i)
-    ((Nat.blt 0 (v'.land x)).and' ((Nat.blt 0 (v'.land y)).and' (Nat.blt 0 (v'.land z)))).and' acc
+    ((Nat.ble 1 (v'.land x)).and' ((Nat.ble 1 (v'.land y)).and' (Nat.ble 1 (v'.land z)))).and' acc
 
 lemma rec_and {q : ℕ} (P : ℕ → Bool) :
     Nat.rec true (fun i acc ↦ (P i).and' acc) q = true ↔ ∀ i < q, P i := by
@@ -318,17 +319,21 @@ lemma or_lt_two_pow_iff {x y n : Nat} : x ||| y < 2 ^ n ↔ x < 2 ^ n ∧ y < 2 
   · rintro ⟨hx, hy⟩
     exact Nat.or_lt_two_pow hx hy
 
-lemma mainProof {q a b c v x y z : ℕ}
-    (hv : v.beq (toDoubleBitVectorK q a b c))
-    (hq : Nat.blt 0 q)
+lemma mainProof {q a b c v v' x y z : ℕ}
+    (hv' : v'.beq (toBitVectorK a b c))
+    (hv : v.beq (v'.lor (v'.shiftLeft q)))
+    (hq : Nat.ble 1 q)
     (hxy : Nat.beq (x.land y) 0)
     (hxz : Nat.beq (x.land z) 0)
     (hyz : Nat.beq (y.land z) 0)
-    (hxyz : ((x.lor y).lor z).blt (Nat.shiftLeft 1 q))
+    (hxyz : ((x.lor y).lor z).succ.ble (Nat.shiftLeft 1 q))
     (hvalid : checkValid q v x y z) :
     ModAccept q a b c := by
-  simp only [toDoubleBitVectorK_eq, Nat.beq_eq, Nat.blt_eq, Nat.land_eq, Nat.lor_eq,
-    Nat.shiftLeft_eq', Nat.one_shiftLeft] at hv hq hxy hxz hyz hxyz
+  simp only [Nat.shiftLeft_eq', Nat.lor_eq, Nat.beq_eq, Nat.ble_eq, Nat.land_eq,
+    Nat.one_shiftLeft, toBitVectorK_eq] at hv hv' hq hxy hxz hyz hxyz
+  replace hv : v = toDoubleBitVector q a b c := by
+    rw [hv, hv']
+    simp [toDoubleBitVector]
   have : NeZero q := ⟨by omega⟩
   intro aq bq cq haq hbq hcq
   rw [Accept]
@@ -360,10 +365,10 @@ lemma mainProof {q a b c v x y z : ℕ}
   intro i hi
   specialize hvalid i hi
   simp only [Bool.and'_eq_and, Nat.sub_eq, Nat.shiftRight_eq, Bool.and_eq_true,
-    Nat.blt_eq, hv, Nat.land_eq] at hvalid
+    Nat.ble_eq, hv, Nat.land_eq] at hvalid
   simp only [Fin.forall_fin_succ, Fin.isValue, Fin.succ_zero_eq_one, Fin.succ_one_eq_two,
     IsEmpty.forall_iff, and_true]
-  simp only [or_lt_two_pow_iff] at hxyz
+  simp only [Nat.succ_le_iff, or_lt_two_pow_iff] at hxyz
   refine ⟨?_, ?_, ?_⟩
   · obtain ⟨j, hjq, hj, hjx⟩ :=
       testBit_shiftRight_toDoubleBitVector (by omega) (by grind) hvalid.1
@@ -385,5 +390,5 @@ lemma mainProof {q a b c v x y z : ℕ}
     simpa [Nat.mod_eq_of_lt hjq]
 
 example : ModAccept 6 1 3 4 :=
-  mainProof (v := 0b011011011011) (x := 0b000101) (y := 0b1010) (z := 0b110000)
-    rfl rfl rfl rfl rfl rfl rfl
+  mainProof (v' := 0b011011) (v := 0b011011011011) (x := 0b000101) (y := 0b1010) (z := 0b110000)
+    rfl rfl rfl rfl rfl rfl rfl rfl
