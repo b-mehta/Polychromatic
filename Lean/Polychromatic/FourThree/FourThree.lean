@@ -122,7 +122,7 @@ def mkTable (tot : ℕ) : MetaM (Std.HashMap (ℕ × ℕ × ℕ × ℕ) Lean.Nam
       reflBoolTrue reflBoolTrue reflBoolTrue
     let pf ← mkAuxLemma []
       (mkApp4 (mkConst ``ModAccept)
-        (mkRawNatLit q) (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c)) pf
+        (mkRawNatLit q) (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c)) pf (cache := false)
     table := table.insert (q, a, b, c) pf
   trace[debug] "size of table is {table.size}"
   return (table, entries)
@@ -226,7 +226,7 @@ elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaFinishingTactic fun g
     let (table, entries) ← mkTable (i.elim 0 TSyntax.getNat)
     withTraceNode `allC (fun _ ↦ return "thing") do
     let e ← (prove_allC C table entries).eval 0
-    let nm ← mkAuxLemma [] (mkApp (mkConst ``allC) (mkRawNatLit C)) e
+    let nm ← mkAuxLemma [] (mkApp (mkConst ``allC) (mkRawNatLit C)) e (cache := false)
     g.assign (mkConst nm)
   | _ => throwError "not an allC goal"
 
