@@ -225,7 +225,8 @@ def toBitVector (a b c : ℕ) : ℕ :=
 @[simp] lemma Nat.land_eq {x y : ℕ} : x.land y = x &&& y := rfl
 
 def toBitVectorK (a b c : ℕ) : ℕ :=
-  Nat.lor (Nat.lor (Nat.lor (nat_lit 1) (Nat.shiftLeft (nat_lit 1) a)) (Nat.shiftLeft (nat_lit 1) b)) (Nat.shiftLeft (nat_lit 1) c)
+  Nat.lor (Nat.lor (Nat.lor (nat_lit 1) (Nat.shiftLeft (nat_lit 1) a))
+    (Nat.shiftLeft (nat_lit 1) b)) (Nat.shiftLeft (nat_lit 1) c)
 
 def toDoubleBitVector (q a b c : ℕ) : ℕ :=
   toBitVector a b c ||| (toBitVector a b c <<< q)
@@ -284,7 +285,9 @@ lemma testBit_shiftRight_toDoubleBitVector {q a b c k z : ℕ} (hkq : k ≤ q) (
 noncomputable def checkValid (q v x y z : ℕ) : Bool :=
   q.rec true fun i acc ↦
     let v' := v.shiftRight (q.sub i)
-    ((Nat.ble (nat_lit 1) (v'.land x)).and' ((Nat.ble (nat_lit 1) (v'.land y)).and' (Nat.ble (nat_lit 1) (v'.land z)))).and' acc
+    ((Nat.ble (nat_lit 1) (v'.land x)).and'
+      ((Nat.ble (nat_lit 1) (v'.land y)).and'
+        (Nat.ble (nat_lit 1) (v'.land z)))).and' acc
 
 lemma rec_and {q : ℕ} (P : ℕ → Bool) :
     Nat.rec true (fun i acc ↦ (P i).and' acc) q = true ↔ ∀ i < q, P i := by
@@ -318,9 +321,8 @@ lemma or_lt_two_pow_iff {x y n : Nat} : x ||| y < 2 ^ n ↔ x < 2 ^ n ∧ y < 2 
   · rintro ⟨hx, hy⟩
     exact Nat.or_lt_two_pow hx hy
 
-lemma mainProof {q a b c v v' x y z : ℕ}
-    (hv' : v'.beq (toBitVectorK a b c))
-    (hv : v.beq (v'.lor (v'.shiftLeft q)))
+lemma mainProof {q a b c v x y z : ℕ}
+    (hv : v.beq (toDoubleBitVectorK q a b c))
     (hq : Nat.ble (nat_lit 1) q)
     (hxy : Nat.beq (x.land y) (nat_lit 0))
     (hxz : Nat.beq (x.land z) (nat_lit 0))
@@ -329,10 +331,7 @@ lemma mainProof {q a b c v v' x y z : ℕ}
     (hvalid : checkValid q v x y z) :
     ModAccept q a b c := by
   simp only [Nat.shiftLeft_eq', Nat.lor_eq, Nat.beq_eq, Nat.ble_eq, Nat.land_eq,
-    Nat.one_shiftLeft, toBitVectorK_eq] at hv hv' hq hxy hxz hyz hxyz
-  replace hv : v = toDoubleBitVector q a b c := by
-    rw [hv, hv']
-    simp [toDoubleBitVector]
+    Nat.one_shiftLeft, toDoubleBitVectorK_eq] at hv hq hxy hxz hyz hxyz
   have : NeZero q := ⟨by omega⟩
   intro aq bq cq haq hbq hcq
   rw [Accept]
@@ -389,5 +388,5 @@ lemma mainProof {q a b c v v' x y z : ℕ}
     simpa [Nat.mod_eq_of_lt hjq]
 
 example : ModAccept 6 1 3 4 :=
-  mainProof (v' := 0b011011) (v := 0b011011011011) (x := 0b000101) (y := 0b1010) (z := 0b110000)
-    rfl rfl rfl rfl rfl rfl rfl rfl
+  mainProof (v := 0b011011011011) (x := 0b000101) (y := 0b1010) (z := 0b110000)
+    rfl rfl rfl rfl rfl rfl rfl
