@@ -215,12 +215,16 @@ elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaFinishingTactic fun g
     let some C := C.nat? | throwError "no"
     let (table, entries) ← mkTable (i.elim 0 TSyntax.getNat)
     let e ← (prove_allC C table entries).eval 0
-    g.assign e
+    let nm ← mkAuxLemma [] (mkApp (mkConst ``allC) (mkNatLit C)) e
+    g.assign (mkConst nm)
   | _ => throwError "not an allC goal"
 
 end
 
-set_option diagnostics true
+-- set_option diagnostics true
 
-lemma allC_289 : allC 10 := by
-  prove_allC 90
+-- set_option trace.profiler.useHeartbeats true
+-- set_option trace.profiler true
+
+-- lemma allC_289 : allC 10 := by
+--   prove_allC 90
