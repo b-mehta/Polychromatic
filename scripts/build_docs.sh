@@ -18,7 +18,7 @@ version = "0.1.0"
 packagesDir = "../.lake/packages"
 
 [[require]]
-name = "13cubes"
+name = "Polychromatic"
 path = "../"
 
 [[require]]
