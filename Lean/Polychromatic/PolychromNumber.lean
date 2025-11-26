@@ -4,7 +4,8 @@ variable {G : Type*} [AddCommGroup G] {S : Finset G} {K : Type*}
 
 open Finset Fintype Pointwise
 
-noncomputable def polychromNumber (S : Finset G) : ℕ :=
+noncomputable
+def polychromNumber (S : Finset G) : ℕ :=
   sSup {n | HasPolychromColouring (Fin n) S}
 
 lemma polychromNumber_vadd [DecidableEq G] {n : G} :

@@ -94,8 +94,10 @@ lemma isPolychrom_univ_id [Fintype G] :
 instance [Fintype G] [Fintype K] [DecidableEq G] [DecidableEq K] : Decidable (IsPolychrom S χ) :=
   inferInstanceAs (Decidable (∀ _, _))
 
+-- ANCHOR: HasPolychromColouring
 def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
   ∃ χ : G → K, IsPolychrom S χ
+-- ANCHOR_END: HasPolychromColouring
 
 lemma HasPolychromColouring.nonempty_set (h : HasPolychromColouring K S) : S.Nonempty := by
   obtain ⟨χ, hχ⟩ := h

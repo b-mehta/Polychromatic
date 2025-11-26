@@ -4,17 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Author: Bhavik Mehta
 -/
 
-import Std.Data.HashMap
 import Berso.Main
--- import PolychromaticSite.Main
 import PolychromaticSite
 
-open Verso Doc
-open Verso.Genre Blog Site Syntax
+open Verso Genre Blog Site Syntax
 
-open Std (HashMap)
-
-open Output Html Template Theme in
+open Output Html Template in
 def theme : Theme := { Theme.default with
   primaryTemplate := do
     return {{
@@ -27,7 +22,6 @@ def theme : Theme := { Theme.default with
       </body>
     }}
   }
-  |>.override #[] ⟨do return {{<div class="frontpage"><h1>{{← param "title"}}</h1> {{← param "content"}}</div>}}, id⟩
 
 def jekyllHeader : String :=
 "---
@@ -39,9 +33,26 @@ useverso: true
 def mySite : Site := site PolychromaticSite -- /
   -- "test" PolychromaticSite.Main
 
+def baseUrl := "{{ site.baseurl }}/docs/"
+
+def linkTargets : Code.LinkTargets TraverseContext where
+  const name _ :=
+    #[{ shortDescription := "doc"
+        description := s!"Documentation for {name}"
+        href := s!"{baseUrl}find/?pattern={name}#doc"}]
+  definition name _ :=
+    #[{ shortDescription := "def"
+        description := s!"Definition for {name}"
+        href := s!"{baseUrl}find/?pattern={name}#doc"}]
+  keyword name _ :=
+    #[{ shortDescription := "keyword"
+        description := s!"Declaration for {name}"
+        href := s!"{baseUrl}find/?pattern={name}#doc"}]
+
 def main : IO UInt32 :=
   Berso.blogMain theme mySite
     (options := ["--output", "../site/_pages"])
+    (linkTargets := linkTargets)
     (header := jekyllHeader)
 
 run_meta

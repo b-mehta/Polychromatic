@@ -5,6 +5,7 @@ Author: Bhavik Mehta
 -/
 
 import Berso.Main
+import PolychromaticSite.Expanders
 
 -- This gets access to most of the blog genre
 open Verso Genre Blog
@@ -33,11 +34,84 @@ finite set {anchorTerm final}`S` of integers, a colouring of the integers is cal
 {anchorTerm final}`S`-polychromatic if every
 translate of {anchorTerm final}`S` contains an element of each colour class.
 
+Two primary targets of this repository are:
+- Formalise Erdős and Lovász' solution to Strauss' conjecture on the existence of polychromatic
+  colourings of sets of bounded size by any number of colours.
+- Formalise the result that every set of size `4` has a polychromatic `3`-colouring, due to
+  Axenovich, Goldwasser, Lidický, Martin, Offner, Talbot, and Young; and thus formally resolve a
+  conjecture of Newman.
+
+The first of these requires results from probability theory and topology, as well as some calculus.
+The second is more combinatorial, and the informal proof requires a large computer search to verify
+around 4 million cases.
+
+At the moment, we have achieved the first of these goals, and the computational part of the second
+is completed, but not the non-computational aspects of the proof. We also aim to formalise results
+of Alon, Kriz and Nešetřil as well as Harris and Srinivasan on tighter asymptotic bounds.
+
+The following diagram demonstrates the dependencies of these results.
+We define $`p(S)` to be the largest number of colours possible for an $`S`-polychromatic colouring,
+and $`m(k)` to be the smallest $`m` such that every set of size at least $`m` has a polychromatic
+$`k`-colouring. In this language, $`m(k) \leq m` if and only if every set of size at least $`m` has
+$p(S) \geq k$.
+Note that any $`S`-polychromatic colouring must use at least $`\#S` colours, so $`p(S) \leq \#S`,
+and in particular is defined.
+However it is not as immediate that $`m(k)` is well-defined: Strauss' conjecture says it is.
+
+```graph
+graph TD
+
+A[Lovász local lemma]
+B["$$m(k)\;$$ is well-defined (EL)"]
+
+%% Dependencies with Label
+A --> B
+
+%% Left Branch (Bounds)
+B --> C["$$m(k) \leq 3k^2$$"]
+C --> D["$$m(k) \leq (3+o(1))\;k\, \log\, k$$"]
+D --> E["$$m(k) \leq (1+o(1))\;k\, \log\, k\;\text{(AKN)}$$"]
+
+B --> F["$$m(k) \geq (1+o(1))\;k\, \log\, k\;\text{(HS)}$$"]
+
+%% Right Branch (Empty placeholders)
+B --> G["$$p(S) \geq 3\;\text{ if }\;\#S = 4\;\text{ and diam}(S) \lt 289$$"]
+G --> H["$$p(S) \geq 3\;\text{ if }\;\#S = 4\;\text{(AGLMOTY)}$$"]
+
+%% Styling
+classDef finImp fill:#dcfce7,stroke:#16a34a,stroke-width:4px,color:#14532d,font-weight:bold,rx:5px,ry:5px;
+classDef unfImp fill:#dbeafe,stroke:#2563eb,stroke-width:4px,color:#1e3a8a,font-weight:bold,rx:5px,ry:5px,stroke-dasharray: 5 5;
+classDef finU   fill:#f0fdf4,stroke:#16a34a,stroke-width:1px,color:#14532d,rx:5px,ry:5px;
+classDef unfU   fill:#eff6ff,stroke:#2563eb,stroke-width:1px,color:#1e3a8a,rx:5px,ry:5px,stroke-dasharray: 5 5;
+
+class A,C,D,G finU;
+class B finImp;
+class E,F,H unfU
+```
+
+# Definitions
+
+```anchor IsPolychrom (module := Polychromatic.Colouring)
+def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
+  ∀ n : G, ∀ k : K, ∃ a ∈ S, χ (n + a) = k
+```
+
+```anchor HasPolychromColouring (module := Polychromatic.Colouring)
+def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
+  ∃ χ : G → K, IsPolychrom S χ
+```
+
 Then, we define the polychromatic number of {anchorTerm final}`S` to be the maximum number of
 colours possible in an {anchorTerm final}`S`-polychromatic colouring.
 
-A primary target is to show that for any set {anchorTerm final}`S` of size {anchorTerm final}`4`,
-there is an {anchorTerm final}`S`-polychromatic colouring in {anchorTerm final}`3` colours.
+```
+def polychromNumber (S : Finset G) : ℕ :=
+  sSup {n | HasPolychromColouring (Fin n) S}
+```
+
+Strauss asked the question of if, for all `k`, there exists an upper bound `m` such that any set of
+size at least `m` has a polychromatic `k`-colouring.
+
 
 The repository structure is as follows:
 : `Generation`
@@ -56,9 +130,47 @@ The repository structure is as follows:
 
 # Examples
 
+Test latex $`1 + 2 = 3`.
+
 ```anchor IsPolychrom (module := Polychromatic.Colouring)
 def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
   ∀ n : G, ∀ k : K, ∃ a ∈ S, χ (n + a) = k
+```
+
+```anchor HasPolychromColouring (module := Polychromatic.Colouring)
+def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
+  ∃ χ : G → K, IsPolychrom S χ
+```
+
+```graph
+graph TD
+
+A[Lovász local lemma]
+B["$$m(k)\;$$ is well-defined"]
+
+%% Dependencies with Label
+A --> B
+
+%% Left Branch (Bounds)
+B --> C["$$m(k) \leq 3k^2$$"]
+C --> D["$$m(k) \leq (3+o(1))\;k\, \log\, k$$"]
+D --> E["$$m(k) \leq (1+o(1))\;k\, \log\, k$$"]
+
+B --> F["$$m(k) \geq (1+o(1))\;k\, \log\, k$$"]
+
+%% Right Branch (Empty placeholders)
+B --> G["$$p(S) \geq 3\;\text{ if }\;\#S = 4\;\text{ and diam}(S) \lt 289$$"]
+G --> H["$$p(S) \geq 3\;\text{ if }\;\#S = 4$$"]
+
+%% Styling
+classDef finImp fill:#dcfce7,stroke:#16a34a,stroke-width:4px,color:#14532d,font-weight:bold,rx:5px,ry:5px;
+classDef unfImp fill:#dbeafe,stroke:#2563eb,stroke-width:4px,color:#1e3a8a,font-weight:bold,rx:5px,ry:5px,stroke-dasharray: 5 5;
+classDef finU   fill:#f0fdf4,stroke:#16a34a,stroke-width:1px,color:#14532d,rx:5px,ry:5px;
+classDef unfU   fill:#eff6ff,stroke:#2563eb,stroke-width:1px,color:#1e3a8a,rx:5px,ry:5px,stroke-dasharray: 5 5;
+
+class A,C,D,G finU;
+class B finImp;
+class E,F,H unfU
 ```
 
 asdf

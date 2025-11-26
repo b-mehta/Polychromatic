@@ -14,13 +14,13 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: 13 Cubes
+title: Polychromatic
 description: >-
-  A mini-project to show that every natural number is the sum of thirteen cubes.
-baseurl: "/13cubes" # the subpath of your site, e.g. /blog
+  Polychromatic colourings of integers
+baseurl: "/Polychromatic" # the subpath of your site, e.g. /blog
 url: "https://b-mehta.github.io"
   # the base hostname & protocol for your site, e.g. http://example.com
-repository: b-mehta/13cubes
+repository: b-mehta/Polychromatic
 github_username: b-mehta
 
 collections:
