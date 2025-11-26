@@ -57,10 +57,10 @@ block_component graph (data : String) where
     pure {{<pre class="mermaid" markdown="0">{{ Html.text false data }}</pre>}}
   jsFiles := #[("mermaid-init.js", mermaidJs)]
 
-@[code_block_expander graph]
-def graphImpl : CodeBlockExpander
+@[code_block graph]
+def graphImpl : CodeBlockExpanderOf Unit
   | _, stxs => do
     let val ← ``(graph $(quote stxs.getString) #[])
-    pure #[val]
+    pure val
 
 end
