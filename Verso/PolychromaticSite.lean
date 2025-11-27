@@ -46,8 +46,7 @@ The second is more combinatorial, and the informal proof requires a large comput
 around 4 million cases.
 
 At the moment, we have achieved the first of these goals, and the computational part of the second
-is completed, but not the non-computational aspects of the proof. We also aim to formalise results
-of Alon, Kriz and Nešetřil as well as Harris and Srinivasan on tighter asymptotic bounds.
+is completed, but not the non-computational aspects of the proof.
 
 The following diagram demonstrates the dependencies of these results.
 We define $`p(S)` to be the largest number of colours possible for an $`S`-polychromatic colouring,
@@ -64,29 +63,20 @@ graph TD
 A[Lovász local lemma]
 B["$$m(k)\;$$ is well-defined (EL)"]
 
-%% Dependencies with Label
 A --> B
 
-%% Left Branch (Bounds)
 B --> C["$$m(k) \leq 3k^2$$"]
 C --> D["$$m(k) \leq (3+o(1))\;k\, \log\, k$$"]
-D --> E["$$m(k) \leq (1+o(1))\;k\, \log\, k\;\text{(AKN)}$$"]
 
-B --> F["$$m(k) \geq (1+o(1))\;k\, \log\, k\;\text{(HS)}$$"]
-
-%% Right Branch (Empty placeholders)
 B --> G["$$p(S) \geq 3\;\text{ if }\;\#S = 4\;\text{ and diam}(S) \lt 289$$"]
-G --> H["$$p(S) \geq 3\;\text{ if }\;\#S = 4\;\text{(AGLMOTY)}$$"]
+G --> H["$$p(S) \geq 3\;\text{ if }\;\#S = 4$$"]
 
-%% Styling
-classDef finImp fill:#dcfce7,stroke:#16a34a,stroke-width:4px,color:#14532d,font-weight:bold,rx:5px,ry:5px;
-classDef unfImp fill:#dbeafe,stroke:#2563eb,stroke-width:4px,color:#1e3a8a,font-weight:bold,rx:5px,ry:5px,stroke-dasharray: 5 5;
-classDef finU   fill:#f0fdf4,stroke:#16a34a,stroke-width:1px,color:#14532d,rx:5px,ry:5px;
-classDef unfU   fill:#eff6ff,stroke:#2563eb,stroke-width:1px,color:#1e3a8a,rx:5px,ry:5px,stroke-dasharray: 5 5;
+classDef green  fill:#f0fdf4,stroke:#16a34a,stroke-width:1px,color:#14532d,rx:5px,ry:5px;
+classDef blue   fill:#eff6ff,stroke:#2563eb,stroke-width:1px,color:#1e3a8a,rx:5px,ry:5px,stroke-dasharray: 3 3;
 
-class A,C,D,G finU;
-class B finImp;
-class E,F,H unfU
+class A,C,D,G green;
+class B green;
+class H blue
 ```
 
 # Definitions
@@ -127,50 +117,3 @@ The repository structure is as follows:
 : `site`
 
   A partial Jekyll website, which is completed by the code in `Verso`
-
-# Examples
-
-Test latex $`1 + 2 = 3`.
-
-```anchor IsPolychrom (module := Polychromatic.Colouring)
-def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
-  ∀ n : G, ∀ k : K, ∃ a ∈ S, χ (n + a) = k
-```
-
-```anchor HasPolychromColouring (module := Polychromatic.Colouring)
-def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
-  ∃ χ : G → K, IsPolychrom S χ
-```
-
-```graph
-graph TD
-
-A[Lovász local lemma]
-B["$$m(k)\;$$ is well-defined"]
-
-%% Dependencies with Label
-A --> B
-
-%% Left Branch (Bounds)
-B --> C["$$m(k) \leq 3k^2$$"]
-C --> D["$$m(k) \leq (3+o(1))\;k\, \log\, k$$"]
-D --> E["$$m(k) \leq (1+o(1))\;k\, \log\, k$$"]
-
-B --> F["$$m(k) \geq (1+o(1))\;k\, \log\, k$$"]
-
-%% Right Branch (Empty placeholders)
-B --> G["$$p(S) \geq 3\;\text{ if }\;\#S = 4\;\text{ and diam}(S) \lt 289$$"]
-G --> H["$$p(S) \geq 3\;\text{ if }\;\#S = 4$$"]
-
-%% Styling
-classDef finImp fill:#dcfce7,stroke:#16a34a,stroke-width:4px,color:#14532d,font-weight:bold,rx:5px,ry:5px;
-classDef unfImp fill:#dbeafe,stroke:#2563eb,stroke-width:4px,color:#1e3a8a,font-weight:bold,rx:5px,ry:5px,stroke-dasharray: 5 5;
-classDef finU   fill:#f0fdf4,stroke:#16a34a,stroke-width:1px,color:#14532d,rx:5px,ry:5px;
-classDef unfU   fill:#eff6ff,stroke:#2563eb,stroke-width:1px,color:#1e3a8a,rx:5px,ry:5px,stroke-dasharray: 5 5;
-
-class A,C,D,G finU;
-class B finImp;
-class E,F,H unfU
-```
-
-asdf
