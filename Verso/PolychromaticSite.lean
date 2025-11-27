@@ -29,10 +29,11 @@ set_option verso.exampleModule "Polychromatic.Main"
 
 # Overview
 
-This repository aims to formalise results related to polychromatic colourings of integers. Given a
-finite set {anchorTerm final}`S` of integers, a colouring of the integers is called
-{anchorTerm final}`S`-polychromatic if every
-translate of {anchorTerm final}`S` contains an element of each colour class.
+This repository provides a formalisation in the Lean 4 theorem prover of results related to
+polychromatic colourings of integers. Given a finite set {anchorTerm final}`S` of integers, a
+colouring of the integers is called {anchorTerm final}`S`-polychromatic if every translate of
+{anchorTerm final}`S` contains an element of each colour class. In other words, for every integer
+$`n` and every colour $`c`, there exists some element $`s \in S` such that $`n + s` has colour $`c`.
 
 Two primary targets of this repository are:
 - Formalise Erdős and Lovász' solution to Strauss' conjecture on the existence of polychromatic
@@ -48,12 +49,39 @@ around 4 million cases.
 At the moment, we have achieved the first of these goals, and the computational part of the second
 is completed, but not the non-computational aspects of the proof.
 
+# Mathematical Background
+
+## The Polychromatic Number
+
+The central object of study is the *polychromatic number* $`p(S)` of a finite set $`S` of integers.
+This is defined as the maximum number of colours possible in an $`S`-polychromatic colouring. Since
+any $`S`-polychromatic colouring must hit every colour at every translate, the number of colours
+cannot exceed $`|S|`, so $`p(S) \leq |S|`.
+
+## Strauss' Conjecture
+
+The *Strauss function* $`m(k)` is defined as the smallest $`m` such that every set of size at least
+$`m` has a polychromatic $`k`-colouring. Equivalently, $`m(k) \leq m` if and only if every set of
+size at least $`m` has $`p(S) \geq k`.
+
+Strauss conjectured that $`m(k)` is well-defined for all $`k` -- that is, for any $`k`, there exists
+some threshold $`m` beyond which all sets admit $`k`-polychromatic colourings. This was proved by
+Erdős and Lovász using the local lemma in 1975.
+
+## Newman's Conjecture
+
+Newman conjectured a specific value: that $`m(3) = 4`, meaning every set of 4 integers admits a
+3-polychromatic colouring. The upper bound $`m(3) \leq 4` was established by Axenovich, Goldwasser,
+Lidický, Martin, Offner, Talbot, and Young through a combination of theoretical reductions and
+computational verification. The lower bound $`m(3) > 3` follows from the fact that the set
+$`\{0, 1, 3\}` has polychromatic number exactly 2.
+
 The following diagram demonstrates the dependencies of these results.
 We define $`p(S)` to be the largest number of colours possible for an $`S`-polychromatic colouring,
 and $`m(k)` to be the smallest $`m` such that every set of size at least $`m` has a polychromatic
 $`k`-colouring. In this language, $`m(k) \leq m` if and only if every set of size at least $`m` has
-$p(S) \geq k$.
-Note that any $`S`-polychromatic colouring must use at least $`\#S` colours, so $`p(S) \leq \#S`,
+$`p(S) \geq k`.
+Note that any $`S`-polychromatic colouring must use at least $`|S|` colours, so $`p(S) \leq |S|`,
 and in particular is defined.
 However it is not as immediate that $`m(k)` is well-defined: Strauss' conjecture says it is.
 
@@ -79,6 +107,72 @@ class B green;
 class H blue
 ```
 
+# The Lovász Local Lemma Approach
+
+The key tool for proving Strauss' conjecture is the *Lovász local lemma*, a powerful result in
+probabilistic combinatorics. The lemma shows that if we have a collection of "bad" events, each of
+which has small probability and is mostly independent of the others, then with positive probability
+*none* of the bad events occur.
+
+## The Symmetric Local Lemma
+
+In its symmetric form, if we have events $`A_1, \ldots, A_n` where each event:
+- has probability at most $`p`, and
+- is independent of all but at most $`d` other events,
+
+then if $`e \cdot p \cdot (d + 1) \leq 1`, there exists an outcome avoiding all bad events.
+
+## Application to Polychromatic Colourings
+
+To prove that a set $`S` of size $`m$ admits a $`k`-polychromatic colouring, we:
+
+1. Consider a random colouring where each integer is coloured uniformly at random from $`k` colours.
+2. For each translate $`n + S` and each colour $`c`, define a "bad event" as the event that no
+   element of $`n + S` receives colour $`c`.
+3. The probability of a bad event is $`(1 - 1/k)^m`, which is small when $`m` is large relative
+   to $`k`.
+4. Bad events for translates $`n + S` and $`n' + S` are independent unless the translates overlap,
+   which bounds the dependency.
+
+Applying the local lemma gives the bound $`m(k) \leq 3k^2`. A more refined analysis using the
+Rado selection principle (a topological compactness argument) extends this to infinite colourings
+and yields the asymptotically optimal bound $`m(k) \leq (3 + o(1)) k \log k`.
+
+# The Four-Three Problem
+
+The statement that every set of 4 integers admits a 3-polychromatic colouring is known as the
+*four-three problem*. The proof combines theoretical reductions with exhaustive computational
+verification.
+
+## Theoretical Reductions
+
+Without loss of generality, we may assume:
+1. The minimum element of $`S` is 0 (by translation invariance).
+2. The elements are coprime (scaling preserves the polychromatic number in torsion-free groups).
+3. The elements satisfy certain ordering conditions.
+
+These reductions allow us to focus on quadruples of the form $`\{0, a, b, c\}` with
+$`0 < a < b < c`, $`a + b \leq c`, and $`\gcd(a, b, c) = 1`.
+
+## Computational Verification
+
+For quadruples with $`c < 289`, the proof is completed by computational verification. The approach
+uses:
+1. *Periodic colourings*: A colouring with period $`q$ is represented as a function
+   $`\mathbb{Z} \to \text{Fin } 3$ that repeats every $`q` integers.
+2. *Bit vector encoding*: Each period-$`q` colouring is encoded as three bit vectors (one per
+   colour), enabling efficient verification that every translate hits all colours.
+3. *Residue shortcuts*: Many cases can be quickly discharged using simple modular arithmetic
+   (e.g., if $`a \equiv 1$, $`b \equiv 2 \pmod 3$).
+
+The C++ code in the `Generation` directory produces around 900,000 colouring witnesses, which are
+verified in Lean using metaprogramming to construct proof terms.
+
+## Current Status
+
+The computational verification for $`c < 289` is complete in Lean. The remaining theoretical part
+(combining this with the local lemma for large cases) is in progress.
+
 # Definitions
 
 ```anchor IsPolychrom (module := Polychromatic.Colouring)
@@ -100,20 +194,73 @@ def polychromNumber (S : Finset G) : ℕ :=
 ```
 
 Strauss asked the question of if, for all `k`, there exists an upper bound `m` such that any set of
-size at least `m` has a polychromatic `k`-colouring.
+size at least `m` has a polychromatic `k`-colouring. This is answered affirmatively by the Lovász
+local lemma approach described above.
 
+# Key Formalised Results
 
-The repository structure is as follows:
+## The Strauss Function
+
+The Strauss function is formalised as:
+
+```
+noncomputable def straussFunction (k : ℕ) : ℕ :=
+  sInf {m : ℕ | ∀ S : Finset ℤ, m ≤ #S → HasPolychromColouring (Fin k) S}
+```
+
+Key results include:
+- `straussFunction_spec`: Sets of size at least `straussFunction k` have `k`-colourings.
+- `le_straussFunction_self`: $`k \leq m(k)` for all $`k`.
+- `straussFunction_le_of_forall_three_mul_sq`: $`m(k) \leq 3k^2`.
+- `straussFunction_isLittleO`: Asymptotically, $`m(k) \leq (3 + o(1)) k \log k`.
+
+## The Main Theorem (Partial)
+
+The main theorem states that every set of 4 integers has a 3-polychromatic colouring:
+
+```anchor final (module := Polychromatic.Main)
+/-- Every set `S` of 4 integers has a 3-polychromatic colouring. -/
+theorem final_result (S : Finset ℤ) (hS : S.card = 4) :
+    HasPolychromColouring (Fin 3) S := by
+  sorry
+```
+
+The `sorry` indicates this proof is incomplete, but the computational part (verifying small cases)
+is done.
+
+# References
+
+- Erdős, Paul; Lovász, László (1975). "Problems and results on 3-chromatic hypergraphs and some
+  related questions". *Infinite and finite sets*.
+- Axenovich, Maria; Goldwasser, John; Lidický, Bernard; Martin, Ryan; Offner, David; Talbot, John;
+  Young, Michael (2019). "Polychromatic colorings of integers".
+- Alon, Noga; Spencer, Joel H. (2016). *The Probabilistic Method*. Wiley.
+- de Bruijn, N. G.; Erdős, P. (1951). "A colour problem for infinite graphs and a problem in the
+  theory of relations".
+
+# Repository Structure
+
+The repository is organised as follows:
+
 : `Generation`
 
-  C++, Python and Z3 code which generates explicit colourings for certain sets
+  C++ and Python code for generating explicit periodic colourings. The main output is
+  `full-colors.log`, which contains around 900,000 colouring witnesses used by the Lean
+  verification.
 
 : `Lean`
 
-  Lean formal proofs of the results
+  The formal Lean 4 proofs, including:
+  - `Colouring.lean`: Core definitions of polychromatic colourings
+  - `LocalLemma.lean`: The Lovász local lemma
+  - `Existence.lean`: Existence results via probabilistic methods
+  - `PolychromNumber.lean`: The polychromatic number and Strauss function
+  - `FourThree/`: Computational verification for the four-three problem
+
 : `Verso`
 
-  Lean code to generate the website
+  Lean code for generating this documentation website using the Verso framework.
+
 : `site`
 
-  A partial Jekyll website, which is completed by the code in `Verso`
+  Jekyll website source files, completed by the Verso-generated content.
