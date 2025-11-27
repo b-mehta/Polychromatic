@@ -20,7 +20,7 @@ Lovász Local Lemma and probabilistic methods.
 
 * `polychromColouringBound k m`: A condition on `k` (number of colours) and `m` (size of set)
   that guarantees the existence of a polychromatic colouring.
-* `mBound k`: An asymptotically optimal bound on the set size needed for `k` colours,
+* `mBound k`: An asymptotically optimal bound (up to constants) on the set size needed for `k` colours,
   approximately `3k log k`.
 
 ## Main results
@@ -448,7 +448,7 @@ lemma hasPolychromColouring_mBound {S : Finset G} {k : ℕ} (hk : 4 ≤ k) (hS :
   apply polychromColouringBound_mono (by cutsat) _ hS (polychromColouringBound_mBound hk)
   · linear_combination linear_le_mBound (k := k)
 
-/-- Asymptotically, sets of size `(3 + ε)k log k` have `k`-colourings for sufficiently large `k`. -/
+/-- Sets of size `(3 + ε)k log k` have `k`-colourings for sufficiently large `k`. -/
 theorem exists_colouring_asymptotic {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ k : ℕ in atTop, ∀ S : Finset G, (3 + ε) * k * log k ≤ #S →
       HasPolychromColouring (Fin k) S := by

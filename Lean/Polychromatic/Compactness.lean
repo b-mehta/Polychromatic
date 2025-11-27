@@ -10,7 +10,7 @@ approximations. The main result is a formalization of Rado's selection principle
 ## Main results
 
 * `Finset.rado_selection`: Given functions `g : Finset α → α → β` where `β` is finite,
-  there exists a single function `χ : α → β` that agrees with infinitely many `g s` on `s`.
+  there exists a single function `χ : α → β` which is constructed out of `g`.
   More precisely, for each finite set `s`, there exists a larger set `t ⊇ s` such that
   `χ` and `g t` agree on `s`.
 

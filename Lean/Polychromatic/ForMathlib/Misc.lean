@@ -37,8 +37,8 @@ lemma Filter.Tendsto.exists_le_lt {α : Type*} [LinearOrder α] [NoMaxOrder α] 
   | m + 1 => have : n < f m.succ := hm ▸ Nat.find_spec h
              refine ⟨m, le_of_not_gt <| Nat.find_min h <| m.lt_succ_self.trans_eq hm.symm, this⟩
 
-/-- The cardinality of `(S - S) \ {0}` is at most `|S| * (|S| - 1)`. -/
 open Pointwise in
+/-- The cardinality of `(S - S) \ {0}` is at most `|S| * (|S| - 1)`. -/
 lemma card_sub_erase_zero_le {G : Type*} [DecidableEq G] [AddGroup G] {S : Finset G} :
     #((S - S).erase 0) ≤ #S * (#S - 1) := by
   calc
