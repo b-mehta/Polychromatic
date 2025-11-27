@@ -1,6 +1,28 @@
 import Polychromatic.Existence
 import Polychromatic.PolychromNumber
 
+/-!
+# The Strauss Function
+
+This file defines the Strauss function and studies its asymptotic behavior.
+
+## Main definitions
+
+* `straussFunction k`: The smallest `m` such that every set of size at least `m` has a
+  `k`-polychromatic colouring.
+
+## Main results
+
+* `straussFunction_spec`: Sets of size at least `straussFunction k` have `k`-colourings.
+* `straussFunction_le_of_forall`: Upper bounds on the Strauss function.
+* `le_straussFunction_self`: `k ≤ straussFunction k` for all `k`.
+* `straussFunction_isLittleO`: Asymptotically, `straussFunction k` is at most `(3 + o(1))k log k`.
+
+## Implementation notes
+
+The Strauss function is defined as `sInf` of a nonempty bounded set.
+-/
+
 open Finset
 
 noncomputable def straussFunction (k : ℕ) : ℕ :=

@@ -10,6 +10,40 @@ import Polychromatic.Colouring
 import Polychromatic.Compactness
 import Polychromatic.LocalLemma
 
+/-!
+# Existence of Polychromatic Colourings
+
+This file proves existence results for polychromatic colourings using the
+Lovász Local Lemma and probabilistic methods.
+
+## Main definitions
+
+* `polychromColouringBound k m`: A condition on `k` (number of colours) and `m` (size of set)
+  that guarantees the existence of a polychromatic colouring.
+* `mBound k`: An asymptotically optimal bound on the set size needed for `k` colours,
+  approximately `3k log k`.
+
+## Main results
+
+* `exists_colouring_of_sq_le`: For sets of size at least `3k²`, a `k`-colouring exists.
+* `hasPolychromColouring_mBound`: For `k ≥ 4` and sets of size at least `mBound k`,
+  a `k`-colouring exists.
+* `exists_colouring_asymptotic`: Asymptotically, sets of size `(3 + ε)k log k` have
+  `k`-colourings for sufficiently large `k`.
+
+## Main techniques
+
+The proofs use:
+1. The symmetric Lovász Local Lemma for uniform probability bounds
+2. The Rado selection principle for extending finite colourings to infinite ones
+3. Analysis of the probability that a random colouring fails to be polychromatic
+
+## References
+
+* The probabilistic method follows standard applications of the Lovász Local Lemma
+  to colouring problems.
+-/
+
 open Finset
 
 open Pointwise

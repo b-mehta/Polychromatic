@@ -1,5 +1,36 @@
 import Polychromatic.Colouring
 
+/-!
+# The Polychromatic Number
+
+This file defines and studies the polychromatic number of a finite set.
+
+## Main definitions
+
+* `polychromNumber S`: The polychromatic number of a finite set `S`, defined as the supremum
+  of all `n` such that there exists a `Fin n`-valued `S`-polychromatic colouring.
+
+## Main results
+
+* `le_polychromNumber`: If `Fin n`-valued colouring exists, then `n ≤ polychromNumber S`.
+* `polychromNumber_le_card`: The polychromatic number is at most `|S|`.
+* `hasPolychromColouring_fin`: There exists an optimal colouring achieving the polychromatic number.
+* `polychromNumber_vadd`: The polychromatic number is invariant under translation.
+* `polychromNumber_neg`: The polychromatic number is invariant under negation.
+* `polychromNumber_image`: The polychromatic number does not increase under group homomorphisms.
+* `polychromNumber_iso`: The polychromatic number is preserved by group isomorphisms.
+* `polychromNumber_subgroup`: The polychromatic number is preserved when embedding a subgroup.
+* `polychromNumber_nsmul`: Scaling by a nonzero natural preserves the polychromatic number
+  (in torsion-free groups).
+* `polychromNumber_pair`: A pair has polychromatic number 2 (in torsion-free groups).
+* `polychromNumber_three_eq_two`: The specific set `{0, 1, 3}` has polychromatic number 2.
+
+## Implementation notes
+
+The polychromatic number is defined as a supremum over natural numbers `n` such that
+`HasPolychromColouring (Fin n) S`. This is well-defined because the set is bounded above by `|S|`.
+-/
+
 variable {G : Type*} [AddCommGroup G] {S : Finset G} {K : Type*}
 
 open Finset Fintype Pointwise

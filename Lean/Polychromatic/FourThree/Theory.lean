@@ -8,6 +8,33 @@ import Mathlib.Algebra.Algebra.Subalgebra.Basic
 
 import Polychromatic.PolychromNumber
 
+/-!
+# Theoretical Framework for the Four-Three Problem
+
+This file develops the theoretical framework for proving that every set of 4 integers
+has a 3-polychromatic colouring. It reduces the problem to checking finitely many cases.
+
+## Main definitions
+
+* `Accept a b c`: A predicate stating that `{0, a, b, c}` has a 3-polychromatic colouring.
+* `allA A b c`: All `{0, a, b, c}` with `a < A` satisfy `Accept`.
+* `allB B c`: All `{0, a, b, c}` with `b < B` satisfy `Accept`.
+* `allC C`: All `{0, a, b, c}` with `c < C` satisfy `Accept`.
+* `ModAccept q aq bq cq`: Acceptance for all triples with given residues modulo `q`.
+
+## Main results
+
+* `suffices_minimal`: It suffices to prove the result for sets with minimal element 0.
+* `suffices_triple`: It suffices to verify all ordered triples `0 < a < b < c`.
+* `suffices_gcd`: It suffices to check coprime cases.
+* `mainProof`: The main computational proof using bit vector representations.
+
+## Implementation notes
+
+The approach uses modular arithmetic and bit vector operations to efficiently verify
+that periodic colourings witness the polychromatic property.
+-/
+
 open Finset
 
 section

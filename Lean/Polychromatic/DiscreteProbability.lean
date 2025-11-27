@@ -3,6 +3,18 @@ import Mathlib.Algebra.Field.Defs
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Algebra.Order.Ring.Abs
 
+/-!
+# Discrete Probability Inequalities
+
+This file contains discrete versions of classical probability inequalities.
+
+## Main results
+
+* `markov`: Markov's inequality for weighted sums.
+* `markov_abs`: Markov's inequality with absolute values.
+* `chebyshev`: Chebyshev's inequality for weighted sums.
+-/
+
 open Finset
 
 variable {ι α : Type*} {s : Finset ι} {p f : ι → α} {c : α} [LinearOrder α]

@@ -4,6 +4,23 @@ import Mathlib.Probability.UniformOn
 import Mathlib.Algebra.GCDMonoid.Finset
 import Mathlib.Algebra.GCDMonoid.Nat
 
+/-!
+# Miscellaneous Lemmas for Mathlib
+
+This file contains auxiliary lemmas that may be useful for mathlib contributions,
+including lemmas about:
+- Finset cardinality
+- Monotone functions
+- GCD operations
+- Probability measures
+- Finpartitions
+
+## Implementation notes
+
+These lemmas are separated into their own file to make it easier to extract them
+for potential mathlib contributions.
+-/
+
 open Finset
 
 lemma Finset.card_le_one_iff_subsingleton {α : Type*} {S : Finset α} :

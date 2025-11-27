@@ -3,6 +3,35 @@ import Mathlib.Analysis.Normed.Group.AddTorsor
 import Mathlib.Analysis.Normed.Ring.Lemmas
 import Polychromatic.ForMathlib.Misc
 
+/-!
+# Polychromatic Colourings - Core Definitions
+
+This file defines the core notions of polychromatic colourings.
+
+## Main definitions
+
+* `IsPolychrom S χ`: A predicate stating that the colouring `χ` is `S`-polychromatic,
+  meaning that every translate of the finite set `S` contains an element of each colour.
+
+* `HasPolychromColouring K S`: A predicate stating that there exists a `K`-valued colouring
+  that is `S`-polychromatic.
+
+## Main results
+
+* `IsPolychrom.card_le`: The number of colours is at most the size of the set `S`.
+* `HasPolychromColouring.subset`: If a smaller set has a polychromatic colouring,
+  so does any superset.
+* `HasPolychromColouring.of_surjective`: Polychromatic colourings transfer along surjections.
+* `hasPolychromColouring_vadd`: The existence of a polychromatic colouring is
+  invariant under translation.
+* `canonical_min_zero`: A technical lemma allowing us to assume the minimal element of `S` is 0.
+
+## Implementation notes
+
+The definition `IsPolychrom` uses an additive formulation where `χ (n + a) = k` for some `a ∈ S`,
+which is equivalent to saying that every translate `n + S` hits every colour class.
+-/
+
 open Pointwise
 
 section

@@ -1,6 +1,42 @@
 import Mathlib.Combinatorics.SimpleGraph.Coloring
 import Mathlib.Topology.Compactness.Compact
 
+/-!
+# Compactness and the Rado Selection Principle
+
+This file contains compactness arguments for constructing infinite objects from finite
+approximations. The main result is a formalization of Rado's selection principle.
+
+## Main results
+
+* `Finset.rado_selection`: Given functions `g : Finset α → α → β` where `β` is finite,
+  there exists a single function `χ : α → β` that agrees with infinitely many `g s` on `s`.
+  More precisely, for each finite set `s`, there exists a larger set `t ⊇ s` such that
+  `χ` and `g t` agree on `s`.
+
+* `Finset.rado_selection_subtype`: A variant where `g` takes subtype elements.
+
+* `Set.Finite.rado_selection`: Extension to finite subsets of arbitrary sets.
+
+* `nonempty_hom_of_forall_finite_subgraph_hom`: If every finite induced subgraph of `G`
+  admits a homomorphism to `F`, then so does `G` (when `F` is finite).
+
+* `deBruijn_erdos`: The de Bruijn–Erdős theorem: if every finite subgraph of a graph `G`
+  is `k`-colourable, then `G` is `k`-colourable.
+
+## Implementation notes
+
+The proof uses the fact that the product of finite discrete spaces is compact
+(by Tychonoff's theorem). The closed sets corresponding to "agreeing with `g s` on `s`"
+have the finite intersection property, so their intersection is nonempty.
+
+## References
+
+* de Bruijn, N. G.; Erdős, P. (1951). "A colour problem for infinite graphs and a problem
+  in the theory of relations".
+* Rado, R. (1949). "Axiomatic treatment of rank in infinite sets".
+-/
+
 theorem Finset.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
     (g : (s : Finset α) → (a : α) → β a) :
     ∃ χ : (a : α) → β a, ∀ s : Finset α, ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x := by
