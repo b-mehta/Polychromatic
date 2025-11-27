@@ -3,10 +3,24 @@ import Mathlib.Algebra.Field.Defs
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Algebra.Order.Ring.Abs
 
+/-!
+# Discrete Probability Inequalities
+
+This file contains discrete versions of classical probability inequalities.
+
+## Main results
+
+* `markov`: Markov's inequality for weighted sums.
+* `markov_abs`: Markov's inequality with absolute values.
+* `chebyshev`: Chebyshev's inequality for weighted sums.
+-/
+
 open Finset
 
 variable {ι α : Type*} {s : Finset ι} {p f : ι → α} {c : α} [LinearOrder α]
 
+/-- Markov's inequality for weighted sums: the total weight of elements exceeding threshold `c`
+is at most the weighted average divided by `c`. -/
 theorem markov [DivisionSemiring α] [IsStrictOrderedRing α]
     (hp : ∀ i ∈ s, 0 ≤ p i) (hf : ∀ i ∈ s, 0 ≤ f i) (hc : 0 < c) :
     ∑ i ∈ s with c ≤ f i, p i ≤ (∑ i ∈ s, p i * f i) / c := by
@@ -19,11 +33,14 @@ theorem markov [DivisionSemiring α] [IsStrictOrderedRing α]
     _ ≤ ∑ i ∈ s, p i * f i := sum_le_sum_of_subset_of_nonneg (filter_subset _ _)
       fun i hi _ ↦ mul_nonneg (hp i hi) (hf i hi)
 
+/-- Markov's inequality with absolute values. -/
 theorem markov_abs [DivisionRing α] [IsStrictOrderedRing α]
     (hp : ∀ i ∈ s, 0 ≤ p i) (hc : 0 < c) :
     ∑ i ∈ s with c ≤ |f i|, p i ≤ (∑ i ∈ s, p i * |f i|) / c :=
   markov hp (by simp) hc
 
+/-- Chebyshev's inequality for weighted sums: the total weight of elements with
+`|f i| ≥ c` is at most the weighted second moment divided by `c²`. -/
 theorem chebyshev [DivisionRing α] [IsStrictOrderedRing α]
     (hp : ∀ i ∈ s, 0 ≤ p i) (hc : 0 < c) :
     ∑ i ∈ s with c ≤ |f i|, p i ≤ (∑ i ∈ s, p i * f i ^ 2) / c ^ 2 := by

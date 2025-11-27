@@ -1,13 +1,47 @@
 import Polychromatic.Colouring
 
+/-!
+# The Polychromatic Number
+
+This file defines and studies the polychromatic number of a finite set.
+
+## Main definitions
+
+* `polychromNumber S`: The polychromatic number of a finite set `S`, defined as the supremum
+  of all `n` such that there exists a `Fin n`-valued `S`-polychromatic colouring.
+
+## Main results
+
+* `le_polychromNumber`: If `Fin n`-valued colouring exists, then `n ≤ polychromNumber S`.
+* `polychromNumber_le_card`: The polychromatic number is at most `|S|`.
+* `hasPolychromColouring_fin`: There exists an optimal colouring achieving the polychromatic number.
+* `polychromNumber_vadd`: The polychromatic number is invariant under translation.
+* `polychromNumber_neg`: The polychromatic number is invariant under negation.
+* `polychromNumber_image`: The polychromatic number does not increase under group homomorphisms.
+* `polychromNumber_iso`: The polychromatic number is preserved by group isomorphisms.
+* `polychromNumber_subgroup`: The polychromatic number is preserved when embedding a subgroup.
+* `polychromNumber_nsmul`: Scaling by a nonzero natural preserves the polychromatic number
+  (in torsion-free groups).
+* `polychromNumber_pair`: A pair has polychromatic number 2 (in torsion-free groups).
+* `polychromNumber_three_eq_two`: The specific set `{0, 1, 3}` has polychromatic number 2.
+
+## Implementation notes
+
+The polychromatic number is defined as a supremum over natural numbers `n` such that
+`HasPolychromColouring (Fin n) S`. This is well-defined because the set is bounded above by `|S|`.
+-/
+
 variable {G : Type*} [AddCommGroup G] {S : Finset G} {K : Type*}
 
 open Finset Fintype Pointwise
 
+/-- The polychromatic number of a finite set `S`, defined as the supremum of all `n`
+such that there exists a `Fin n`-valued `S`-polychromatic colouring. -/
 noncomputable
 def polychromNumber (S : Finset G) : ℕ :=
   sSup {n | HasPolychromColouring (Fin n) S}
 
+/-- The polychromatic number is invariant under translation. -/
 lemma polychromNumber_vadd [DecidableEq G] {n : G} :
     polychromNumber (n +ᵥ S) = polychromNumber S := by
   simp [polychromNumber]
@@ -18,6 +52,7 @@ private lemma bddAbove : BddAbove {n | HasPolychromColouring (Fin n) S} :=
 private lemma nonempty (hS : S.Nonempty) : {n | HasPolychromColouring (Fin n) S}.Nonempty :=
   ⟨1, default, isPolychrom_subsingleton hS⟩
 
+/-- If a `Fin n`-valued polychromatic colouring exists, then `n ≤ polychromNumber S`. -/
 lemma le_polychromNumber {n : ℕ} (hn : HasPolychromColouring (Fin n) S) :
     n ≤ polychromNumber S :=
   le_csSup bddAbove hn
@@ -35,6 +70,7 @@ lemma one_le_polychromNumber (hS : S.Nonempty) : 1 ≤ polychromNumber S :=
 lemma polychromNumber_pos (hS : S.Nonempty) : 0 < polychromNumber S :=
   one_le_polychromNumber hS
 
+/-- There exists an optimal colouring achieving the polychromatic number. -/
 lemma hasPolychromColouring_fin (hS : S.Nonempty) :
     HasPolychromColouring (Fin (polychromNumber S)) S :=
   Nat.sSup_mem (nonempty hS) bddAbove
@@ -54,6 +90,7 @@ lemma hasPolychromColouring_fin_of_le {n : ℕ}
     HasPolychromColouring (Fin n) S :=
   hasPolychromColouring_of_card_le (hK := Fin.pos_iff_nonempty.1 (by omega)) <| by simpa
 
+/-- The polychromatic number is at most `|S|`. -/
 lemma polychromNumber_le_card : polychromNumber S ≤ #S := by
   obtain rfl | hS' := S.eq_empty_or_nonempty
   · simp
@@ -88,6 +125,7 @@ lemma polychromNumber_eq_card_of_subsingleton (hS : (S : Set G).Subsingleton) :
   · exact polychromNumber_le_card
   · exact card_le_polychromNumber hasPolychromColouring_univ
 
+/-- The polychromatic number does not increase under group homomorphisms. -/
 -- Lemma 9
 lemma polychromNumber_image {H : Type*} [DecidableEq H] [AddCommGroup H]
     {F : Type*} [FunLike F G H] [AddHomClass F G H] (φ : F) {S : Finset G} :
@@ -96,6 +134,7 @@ lemma polychromNumber_image {H : Type*} [DecidableEq H] [AddCommGroup H]
   · simp
   exact le_polychromNumber (.of_image _ (hasPolychromColouring_fin (hS'.image φ)))
 
+/-- The polychromatic number is preserved by group isomorphisms. -/
 -- Corollary 10
 lemma polychromNumber_iso {H : Type*} [DecidableEq H] [AddCommGroup H]
     {F : Type*} [EquivLike F G H] [AddEquivClass F G H] (φ : F)
@@ -107,6 +146,7 @@ lemma polychromNumber_iso {H : Type*} [DecidableEq H] [AddCommGroup H]
       polychromNumber_image (φ : G ≃+ H).symm
     simpa [Finset.image_image] using this
 
+/-- The polychromatic number is preserved when embedding a subgroup. -/
 -- Lemma 11
 lemma polychromNumber_subgroup [DecidableEq G] (H : AddSubgroup G) {S : Finset H} :
     polychromNumber S = polychromNumber (G := G) (S.image H.subtype) := by
@@ -157,6 +197,7 @@ lemma polychromNumber_image_injective {H : Type*} [DecidableEq H] [AddCommGroup 
   rw [← polychromNumber_iso ψ, polychromNumber_subgroup _, Finset.image_image]
   rfl
 
+/-- Scaling by a nonzero natural preserves the polychromatic number (in torsion-free groups). -/
 -- Lemma 12(i)
 lemma polychromNumber_nsmul [DecidableEq G] [IsAddTorsionFree G] {k : ℕ} (hk : k ≠ 0) :
     polychromNumber (S.image (k • ·)) = polychromNumber S :=
@@ -190,6 +231,7 @@ private lemma polychromNumber_pair_aux [DecidableEq G] [IsAddTorsionFree G] {x :
   rw [← polychromNumber_pair_aux_ℤ, ← polychromNumber_image_injective _ this]
   simp
 
+/-- A pair has polychromatic number 2 (in torsion-free groups). -/
 @[simp] lemma polychromNumber_pair [DecidableEq G] [IsAddTorsionFree G] {x y : G} (hxy : x ≠ y) :
     polychromNumber {x, y} = 2 := by
   have := polychromNumber_pair_aux (x := y - x) (by simpa [sub_eq_zero, eq_comm] using hxy)
@@ -237,6 +279,7 @@ example : polychromNumber (G := ℤ) {0, 1, 5} = 3 := by
     simp_rw [Finset.image_vadd_distrib, this]
     simp
 
+/-- The specific set `{0, 1, 3}` has polychromatic number 2. -/
 lemma polychromNumber_three_eq_two : polychromNumber (G := ℤ) {0, 1, 3} = 2 := by
   set S : Finset ℤ := {0, 1, 3}
   refine le_antisymm ?hard ?easy

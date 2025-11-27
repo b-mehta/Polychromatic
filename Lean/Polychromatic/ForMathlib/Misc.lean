@@ -4,8 +4,26 @@ import Mathlib.Probability.UniformOn
 import Mathlib.Algebra.GCDMonoid.Finset
 import Mathlib.Algebra.GCDMonoid.Nat
 
+/-!
+# Miscellaneous Lemmas for Mathlib
+
+This file contains auxiliary lemmas that may be useful for mathlib contributions,
+including lemmas about:
+- Finset cardinality
+- Monotone functions
+- GCD operations
+- Probability measures
+- Finpartitions
+
+## Implementation notes
+
+These lemmas are separated into their own file to make it easier to extract them
+for potential mathlib contributions.
+-/
+
 open Finset
 
+/-- A finset has cardinality at most 1 iff its underlying set is subsingleton. -/
 lemma Finset.card_le_one_iff_subsingleton {α : Type*} {S : Finset α} :
     #S ≤ 1 ↔ (S : Set α).Subsingleton := by
   rw [Finset.card_le_one_iff_subsingleton_coe, ← Set.subsingleton_coe]
@@ -20,6 +38,7 @@ lemma Filter.Tendsto.exists_le_lt {α : Type*} [LinearOrder α] [NoMaxOrder α] 
              refine ⟨m, le_of_not_gt <| Nat.find_min h <| m.lt_succ_self.trans_eq hm.symm, this⟩
 
 open Pointwise in
+/-- The cardinality of `(S - S) \ {0}` is at most `|S| * (|S| - 1)`. -/
 lemma card_sub_erase_zero_le {G : Type*} [DecidableEq G] [AddGroup G] {S : Finset G} :
     #((S - S).erase 0) ≤ #S * (#S - 1) := by
   calc
@@ -38,6 +57,7 @@ lemma StrictMono.exists_le_lt {f : ℕ → ℕ} (hf : StrictMono f) (hf₀ : f 0
     ∃ m, f m ≤ n ∧ n < f (m + 1) :=
   hf.tendsto_atTop.exists_le_lt _ (by simp [hf₀])
 
+/-- For a minimal element `x` with property `P`, any `y` satisfying `P` has `x ≤ y`. -/
 theorem Minimal.le {α : Type*} [LinearOrder α] {P : α → Prop} {x : α} (y : α)
     (hx : Minimal P x) (hy : P y) : x ≤ y := by
   simpa using not_lt_iff_le_imp_ge.2 (hx.2 hy)
