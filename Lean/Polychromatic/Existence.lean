@@ -141,6 +141,8 @@ lemma nonempty_of_uniformOn_apply_pos {Ω : Type*} [MeasurableSpace Ω]
   have hs_fin : s.Finite := finite_of_uniformOn_ne_zero h.ne'
   exact nonempty_of_uniformOn_apply_pos' h (hs_fin.measurableSet)
 
+/-- A condition on `k` (number of colours) and `m` (size of set) that guarantees the existence
+of a polychromatic colouring. -/
 def polychromColouringBound (k m : ℕ) : Prop :=
   Real.exp 1 * (m * (m - 1) + 1) * k * (1 - (k : ℝ)⁻¹) ^ m ≤ 1
 
@@ -303,6 +305,7 @@ lemma condition_of_mul_sq {k m : ℕ} (hm : 3 * k ^ 2 ≤ m) :
   gcongr
   norm_num
 
+/-- For sets of size at least `3k²`, a `k`-colouring exists. -/
 theorem exists_colouring_of_sq_le {S : Finset G} {k : ℕ} (hk : k ≠ 0) (hm : 3 * k ^ 2 ≤ #S) :
     HasPolychromColouring (Fin k) S := by
   refine exists_of_le rfl ?_ hk (condition_of_mul_sq hm)
@@ -310,6 +313,8 @@ theorem exists_colouring_of_sq_le {S : Finset G} {k : ℕ} (hk : k ≠ 0) (hm : 
   grw [← hm, ← this]
   simp
 
+/-- An asymptotically optimal bound on the set size needed for `k` colours,
+approximately `3k log k`. -/
 noncomputable def mBound (k : ℕ) : ℕ :=
   ⌈k * (3 * log k + (2 * log (log k) + 5.2))⌉₊
 
@@ -434,6 +439,7 @@ lemma polychromColouringBound_mBound {k : ℕ} (hk : 4 ≤ k) :
         log_mul (by positivity) (by positivity), log_exp, log_one, log_pow, log_two_lt_d9]
       norm_num
 
+/-- For `k ≥ 4` and sets of size at least `mBound k`, a `k`-colouring exists. -/
 lemma hasPolychromColouring_mBound {S : Finset G} {k : ℕ} (hk : 4 ≤ k) (hS : mBound k ≤ #S):
     HasPolychromColouring (Fin k) S := by
   have h2S : 2 ≤ #S := by
@@ -443,6 +449,7 @@ lemma hasPolychromColouring_mBound {S : Finset G} {k : ℕ} (hk : 4 ≤ k) (hS :
   apply polychromColouringBound_mono (by cutsat) _ hS (polychromColouringBound_mBound hk)
   · linear_combination linear_le_mBound (k := k)
 
+/-- Asymptotically, sets of size `(3 + ε)k log k` have `k`-colourings for sufficiently large `k`. -/
 theorem exists_colouring_asymptotic {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ k : ℕ in atTop, ∀ S : Finset G, (3 + ε) * k * log k ≤ #S →
       HasPolychromColouring (Fin k) S := by

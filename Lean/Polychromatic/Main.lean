@@ -25,6 +25,7 @@ example : ∀ (a b c : ℤ), 0 < a → a < b → b < c → c < 289 →
   suffices_flip _ (suffices_gcd _ (suffices_nat _ (allC_289)))
 
 -- ANCHOR: final
+/-- Every set `S` of 4 integers has a 3-polychromatic colouring. -/
 theorem final_result (S : Finset ℤ) (hS : S.card = 4) :
     HasPolychromColouring (Fin 3) S := by
   sorry

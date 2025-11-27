@@ -25,6 +25,8 @@ The Strauss function is defined as `sInf` of a nonempty bounded set.
 
 open Finset
 
+/-- The Strauss function: the smallest `m` such that every set of size at least `m` has a
+`k`-polychromatic colouring. -/
 noncomputable def straussFunction (k : ℕ) : ℕ :=
   sInf {m : ℕ | ∀ S : Finset ℤ, m ≤ #S → HasPolychromColouring (Fin k) S}
 
@@ -42,10 +44,12 @@ private lemma straussFunction_nonempty {k : ℕ} (hk : k ≠ 0) :
   intro S hS
   exact exists_colouring_of_sq_le hk (S := S) hS
 
+/-- Sets of size at least `straussFunction k` have `k`-colourings. -/
 lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ) (hkS : straussFunction k ≤ #S) :
     HasPolychromColouring (Fin k) S :=
   Nat.sInf_mem (straussFunction_nonempty hk) S hkS
 
+/-- Upper bounds on the Strauss function. -/
 lemma straussFunction_le_of_forall {k m : ℕ}
     (h : ∀ S : Finset ℤ, m ≤ #S → HasPolychromColouring (Fin k) S) :
     straussFunction k ≤ m := by
@@ -76,6 +80,7 @@ lemma lt_straussFunction_of_polychromNumber {k : ℕ} (hk : k ≠ 0) {S : Finset
   rw [← le_polychromNumber_iff_hasPolychromColouring hk]
   simpa
 
+/-- `k ≤ straussFunction k` for all `k`. -/
 lemma le_straussFunction_self {k : ℕ} :
     k ≤ straussFunction k := by
   obtain rfl | hk := eq_or_ne k 0
@@ -123,6 +128,7 @@ lemma straussFunction_le_of_forall_mBound {k : ℕ} (hk : 4 ≤ k) : straussFunc
 
 open Asymptotics Filter
 
+/-- Asymptotically, `straussFunction k` is at most `(3 + o(1))k log k`. -/
 lemma straussFunction_isLittleO :
     ∃ f : ℕ → ℝ, f =o[atTop] (fun _ ↦ 1 : ℕ → ℝ) ∧ ∀ k ≥ 4,
       straussFunction k ≤ (3 + f k) * k * Real.log k := by

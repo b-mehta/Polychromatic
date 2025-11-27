@@ -39,11 +39,13 @@ open Finset
 
 section
 
+/-- It suffices to prove the result for sets with minimal element 0. -/
 lemma suffices_minimal
     (h : ∀ S : Finset ℤ, #S = 4 → Minimal (· ∈ S) 0 → HasPolychromColouring (Fin 3) S):
     ∀ S : Finset ℤ, #S = 4 → HasPolychromColouring (Fin 3) S :=
   canonical_min_zero (by simp) h
 
+/-- It suffices to verify all ordered triples `0 < a < b < c`. -/
 lemma suffices_triple
     (h : ∀ a b c : ℤ, 0 < a → a < b → b < c → HasPolychromColouring (Fin 3) {0, a, b, c}) :
     ∀ S : Finset ℤ, #S = 4 → Minimal (· ∈ S) 0 → HasPolychromColouring (Fin 3) S := by
@@ -88,6 +90,7 @@ lemma suffices_flip (C : ℕ)
     grind
   grind
 
+/-- It suffices to check coprime cases. -/
 lemma suffices_gcd (C : ℕ)
     (h : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → c < C → Finset.gcd {a, b, c} id = 1 →
       HasPolychromColouring (Fin 3) {0, a, b, c}) :
@@ -136,16 +139,20 @@ lemma suffices_gcd (C : ℕ)
     · exact hcc
     · cutsat
 
+/-- A predicate stating that `{0, a, b, c}` has a 3-polychromatic colouring. -/
 def Accept (a b c : ℕ) : Prop :=
   HasPolychromColouring (Fin 3) {0, (a : ℤ), (b : ℤ), (c : ℤ)}
 
+/-- All `{0, a, b, c}` with `a < A` satisfy `Accept`. -/
 -- it works for all {0,a,b,c} with a < A
 def allA (A : ℕ) (b c : ℕ) : Prop :=
   ∀ a : ℕ, 0 < a → a < b → a < A → a + b ≤ c → Nat.gcd a (Nat.gcd b c) = 1 → Accept a b c
 
+/-- All `{0, a, b, c}` with `b < B` satisfy `Accept`. -/
 -- it works for all {0,a,b,c} with a < b < B
 def allB (B : ℕ) (c : ℕ) : Prop := ∀ b : ℕ, b < B → b < c → allA b b c
 
+/-- All `{0, a, b, c}` with `c < C` satisfy `Accept`. -/
 -- it works for all {0,a,b,c} with a < b < c < C}
 def allC (C : ℕ) : Prop := ∀ c : ℕ, c < C → allB c c
 
@@ -222,6 +229,7 @@ lemma allA_succ_of_accept (A b c : ℕ)
     allA A.succ b c := by
   exact allA_succ A b c (Or.inl h) hA
 
+/-- Acceptance for all triples with given residues modulo `q`. -/
 abbrev ModAccept (q aq bq cq : ℕ) : Prop :=
   ∀ a b c : ℕ, (a.mod q).beq aq → (b.mod q).beq bq → (c.mod q).beq cq → Accept a b c
 
@@ -245,6 +253,7 @@ lemma accept_of_three {a b c : ℕ}
 -- 0,3,4,7;6;1,2,1,2,3,3,
 -- 0,1,6,7;4;1,2,1,3,
 
+/-- Converts a triple `(a, b, c)` to a bit vector representation. -/
 def toBitVector (a b c : ℕ) : ℕ :=
   1 ||| 1 <<< a ||| 1 <<< b ||| 1 <<< c
 
@@ -255,6 +264,7 @@ def toBitVectorK (a b c : ℕ) : ℕ :=
   Nat.lor (Nat.lor (Nat.lor (nat_lit 1) (Nat.shiftLeft (nat_lit 1) a))
     (Nat.shiftLeft (nat_lit 1) b)) (Nat.shiftLeft (nat_lit 1) c)
 
+/-- Double bit vector for periodic colouring verification. -/
 def toDoubleBitVector (q a b c : ℕ) : ℕ :=
   toBitVector a b c ||| (toBitVector a b c <<< q)
 
@@ -347,6 +357,7 @@ lemma or_lt_two_pow_iff {x y n : Nat} : x ||| y < 2 ^ n ↔ x < 2 ^ n ∧ y < 2 
   · rintro ⟨hx, hy⟩
     exact Nat.or_lt_two_pow hx hy
 
+/-- The main computational proof using bit vector representations. -/
 lemma mainProof {q a b c v v' x y z : ℕ}
     (hv' : v'.beq (toBitVectorK a b c))
     (hv : v.beq (v'.lor (v'.shiftLeft q)))
