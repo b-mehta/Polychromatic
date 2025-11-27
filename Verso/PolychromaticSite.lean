@@ -81,8 +81,9 @@ We define $`p(S)` to be the largest number of colours possible for an $`S`-polyc
 and $`m(k)` to be the smallest $`m` such that every set of size at least $`m` has a polychromatic
 $`k`-colouring. In this language, $`m(k) \leq m` if and only if every set of size at least $`m` has
 $`p(S) \geq k`.
-Note that any $`S`-polychromatic colouring must use at least $`|S|` colours, so $`p(S) \leq |S|`,
-and in particular is defined.
+Note that any $`S`-polychromatic colouring must use at most $`|S|` colours (since each translate
+contains exactly $`|S|` elements and must hit every colour), so $`p(S) \leq |S|`, and in particular
+is defined.
 However it is not as immediate that $`m(k)` is well-defined: Strauss' conjecture says it is.
 
 ```graph
@@ -231,12 +232,13 @@ is done.
 # References
 
 - Erdős, Paul; Lovász, László (1975). "Problems and results on 3-chromatic hypergraphs and some
-  related questions". *Infinite and finite sets*.
+  related questions". *Infinite and finite sets (Colloq., Keszthely, 1973), Vol. II*, Colloq. Math.
+  Soc. János Bolyai, Vol. 10, North-Holland, pp. 609–627.
 - Axenovich, Maria; Goldwasser, John; Lidický, Bernard; Martin, Ryan; Offner, David; Talbot, John;
-  Young, Michael (2019). "Polychromatic colorings of integers".
-- Alon, Noga; Spencer, Joel H. (2016). *The Probabilistic Method*. Wiley.
+  Young, Michael (2019). "Polychromatic colorings on the integers". *Integers* 19, A18.
+- Alon, Noga; Spencer, Joel H. (2016). *The Probabilistic Method*, 4th edition. John Wiley & Sons.
 - de Bruijn, N. G.; Erdős, P. (1951). "A colour problem for infinite graphs and a problem in the
-  theory of relations".
+  theory of relations". *Indagationes Mathematicae* 13, pp. 371–373.
 
 # Repository Structure
 
