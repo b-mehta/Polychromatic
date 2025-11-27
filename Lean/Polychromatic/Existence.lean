@@ -40,8 +40,7 @@ The proofs use:
 
 ## References
 
-* The probabilistic method follows standard applications of the Lovász Local Lemma
-  to colouring problems.
+* Alon, N., Spencer, J.H.: The Probabilistic Method. Wiley (2016)
 -/
 
 open Finset
