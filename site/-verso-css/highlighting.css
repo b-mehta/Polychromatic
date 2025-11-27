@@ -29,11 +29,3 @@ code.hl.lean, pre.hl.lean, span.hl.lean {
   --verso-code-var-color: #a73e06;
   --verso-code-color: #691e00
 }
-
-header {
-  width: 220px;
-}
-
-.content {
-  width: 600px;
-}
