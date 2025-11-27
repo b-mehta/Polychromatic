@@ -37,10 +37,6 @@ have the finite intersection property, so their intersection is nonempty.
 * Rado, R. (1949). "Axiomatic treatment of rank in infinite sets".
 -/
 
-/-- Rado's selection principle: Given functions `g : Finset α → α → β` where `β` is finite,
-there exists a single function `χ : α → β` that agrees with infinitely many `g s` on `s`.
-More precisely, for each finite set `s`, there exists a larger set `t ⊇ s` such that
-`χ` and `g t` agree on `s`. -/
 theorem Finset.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
     (g : (s : Finset α) → (a : α) → β a) :
     ∃ χ : (a : α) → β a, ∀ s : Finset α, ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x := by
@@ -61,7 +57,6 @@ theorem Finset.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finite (�
     exact ⟨_, Finset.subset_biUnion_of_mem id hi, by simp⟩
   simpa using CompactSpace.iInter_nonempty he' he''
 
-/-- Variant of Rado's selection principle where `g` takes subtype elements. -/
 theorem Finset.rado_selection_subtype {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
     (g : (s : Finset α) → (a : s) → β a) :
     ∃ χ : (a : α) → β a, ∀ s : Finset α,
@@ -72,7 +67,6 @@ theorem Finset.rado_selection_subtype {α : Type*} {β : α → Type*} [∀ a, F
   have hg (s : Finset α) (x : s) : g s x = g' s x := by simp [g']
   simpa [hg] using Finset.rado_selection g'
 
-/-- Extension of Rado's selection principle to finite subsets of arbitrary sets. -/
 theorem Set.Finite.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
     (g : (s : Set α) → s.Finite → (a : α) → β a) :
     ∃ χ : (a : α) → β a, ∀ s : Set α, s.Finite →
@@ -93,8 +87,6 @@ theorem Set.Finite.rado_selection_subtype {α : Type*} {β : α → Type*} [∀ 
   simp only [Set.Finite.toFinset_subset] at ht
   exact ⟨t, by simp_all⟩
 
-/-- If every finite induced subgraph of `G` admits a homomorphism to `F`,
-then so does `G` (when `F` is finite). -/
 theorem nonempty_hom_of_forall_finite_subgraph_hom {V W : Type*} [Finite W]
     {G : SimpleGraph V} {F : SimpleGraph W}
     (h : ∀ G' : G.Subgraph, G'.verts.Finite → G'.coe →g F) : Nonempty (G →g F) := by
@@ -115,8 +107,6 @@ theorem nonempty_hom_of_forall_finite_subgraph_hom {V W : Type*} [Finite W]
     Set.singleton_subset_iff] at hHsub
   simp_all [a', b']
 
-/-- The de Bruijn–Erdős theorem: if every finite subgraph of a graph `G`
-is `k`-colourable, then `G` is `k`-colourable. -/
 theorem deBruijn_erdos {α β : Type*} (G : SimpleGraph α) [Finite β]
     (h : ∀ G' : G.Subgraph, G'.verts.Finite → G'.coe.Coloring β) : Nonempty (G.Coloring β) :=
   nonempty_hom_of_forall_finite_subgraph_hom h

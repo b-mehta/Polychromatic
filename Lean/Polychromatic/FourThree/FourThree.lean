@@ -71,14 +71,12 @@ lemma accept_3_5 (a b c : ℕ)
     Accept a b c :=
   accept_of_three (by simp [helper ha, helper hb, Finset.insert_subset_iff])
 
-/-- Closure lemma for the `allA` predicate using mod-3 reasoning (case 0). -/
 lemma allA_of_3_0 (A b c : ℕ)
     (hb : (b.mod (nat_lit 3)).beq (nat_lit 1)) (hc : (c.mod (nat_lit 3)).beq (nat_lit 2)) :
     allA A b c := by
   intro a _ _ _ _ _
   apply accept_3_0 a b c hb hc
 
-/-- Closure lemma for the `allA` predicate using mod-3 reasoning (case 1). -/
 lemma allA_of_3_1 (A b c : ℕ)
     (hb : (b.mod (nat_lit 3)).beq (nat_lit 2)) (hc : (c.mod (nat_lit 3)).beq (nat_lit 1)) :
     allA A b c := by

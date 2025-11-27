@@ -313,7 +313,7 @@ theorem exists_colouring_of_sq_le {S : Finset G} {k : ℕ} (hk : k ≠ 0) (hm : 
   grw [← hm, ← this]
   simp
 
-/-- An asymptotically optimal bound on the set size needed for `k` colours,
+/-- An asymptotically optimal bound (up to constant factors) on the set size needed for `k` colours,
 approximately `3k log k`. -/
 noncomputable def mBound (k : ℕ) : ℕ :=
   ⌈k * (3 * log k + (2 * log (log k) + 5.2))⌉₊
