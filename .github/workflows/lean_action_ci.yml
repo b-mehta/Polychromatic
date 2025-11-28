@@ -75,6 +75,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Cleanup to free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+
       - name: Checkout project
         uses: actions/checkout@v6
 
