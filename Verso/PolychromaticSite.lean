@@ -35,8 +35,8 @@ colouring of the integers is called {anchorTerm final}`S`-polychromatic if every
 {anchorTerm final}`S` contains an element of each colour class. In other words, for every integer
 $`n` and every colour $`c`, there exists some element $`s \in S` such that $`n + s` has colour $`c`.
 
-For example, consider the set $`S = \{0, 1\}$. A 2-colouring of the integers is $`S`-polychromatic
-if every pair of consecutive integers $`\{n, n+1\}$ contains both colours. The standard alternating
+For example, consider the set $`S = \{0, 1\}`. A 2-colouring of the integers is $`S`-polychromatic
+if every pair of consecutive integers $`\{n, n+1\}` contains both colours. The standard alternating
 colouring (even numbers red, odd numbers blue) achieves this, so $`S` admits a 2-polychromatic
 colouring. In fact, this is optimal: no 3-colouring can be $`S`-polychromatic since each pair would
 need to contain all three colours but only has two elements.
@@ -126,7 +126,7 @@ lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ) (hkS : stra
   Nat.sInf_mem (straussFunction_nonempty hk) S hkS
 ```
 
-Strauss conjectured that $`m(k)` is *finite* for all $`k$. This is not obvious: while $`p(S) \leq |S|`
+Strauss conjectured that $`m(k)` is *finite* for all $`k`. This is not obvious: while $`p(S) \leq |S|`
 tells us that small sets cannot have many colours, it does not immediately imply that large sets
 must have many colours. Strauss' conjecture asserts that size alone guarantees a minimum polychromatic
 number. This was proved by Erdős and Lovász using the Local Lemma in 1975.
@@ -136,7 +136,7 @@ number. This was proved by Erdős and Lovász using the Local Lemma in 1975.
 A result of Axenovich, Goldwasser, Lidický, Martin, Offner, Talbot, and Young establishes that
 $`m(3) \leq 4`, meaning every set of 4 integers admits a 3-polychromatic colouring. Combined with
 the fact that the set $`\{0, 1, 3\}` has polychromatic number exactly 2 (giving $`m(3) > 3`), this
-shows $`m(3) = 4$. A consequence of this result is Newman's conjecture, though this consequence is
+shows $`m(3) = 4`. A consequence of this result is Newman's conjecture, though this consequence is
 not yet formalised.
 
 In Lean, we prove that the set $`\{0, 1, 3\}` has polychromatic number 2:
@@ -189,7 +189,7 @@ then if $`e \cdot p \cdot (d + 1) \leq 1`, there exists an outcome avoiding all 
 To prove that a set $`S` of size $`m` admits a $`k`-polychromatic colouring, we fix a finite set
 $`X` of integers from which we will choose translations, then:
 
-1. Consider a random colouring where each element of $`X + S$ is coloured uniformly at random from
+1. Consider a random colouring where each element of $`X + S` is coloured uniformly at random from
    $`k` colours.
 2. For each translate $`n + S` with $`n \in X` and each colour $`c`, define a "bad event" as the
    event that no element of $`n + S` receives colour $`c`.
@@ -206,20 +206,20 @@ any $`n \in X`. This gives a polychromatic colouring on the finite set $`X`.
 The Local Lemma only applies to finitely many translations. To extend this to *all* of $`\mathbb{Z}`,
 we use the *Rado selection principle*, a compactness argument based on Tychonoff's theorem.
 
-The Rado selection principle states that if we have a family of functions $`g_F : F \to K$ indexed
-by finite sets $`F$, where $`K$ is finite, then there exists a global function $`\chi : \mathbb{Z} \to K`
+The Rado selection principle states that if we have a family of functions $`g_F : F \to K` indexed
+by finite sets $`F`, where $`K` is finite, then there exists a global function $`\chi : \mathbb{Z} \to K`
 such that for every finite set $`F`, there is a larger finite set $`F' \supseteq F` where $`\chi`
-and $`g_{F'}` agree on $`F$.
+and $`g_{F'}` agree on $`F`.
 
-Here is the key idea: suppose that for every finite set $`X \subseteq \mathbb{Z}$, we can find an
-$`S`-polychromatic colouring $`g_X$ of $`X`. We want to "glue" these together into a single global
-colouring $`\chi : \mathbb{Z} \to K`. The difficulty is that $`g_X$ and $`g_Y$ might disagree on
-their common domain $`X \cap Y$.
+Here is the key idea: suppose that for every finite set $`X \subseteq \mathbb{Z}`, we can find an
+$`S`-polychromatic colouring $`g_X` of $`X`. We want to "glue" these together into a single global
+colouring $`\chi : \mathbb{Z} \to K`. The difficulty is that $`g_X` and $`g_Y` might disagree on
+their common domain $`X \cap Y`.
 
 The Rado selection principle resolves this: it guarantees there exists a global colouring $`\chi`
-such that for every finite set $`F$, there is some larger finite set $`F' \supseteq F$ where $`\chi`
-agrees with $`g_{F'}` on $`F`. Since $`g_{F'}` is $`S`-polychromatic on $`F'$, any translate
-$`n + S \subseteq F$ hits all colours under $`g_{F'}$, and hence under $`\chi$. Since this holds
+such that for every finite set $`F`, there is some larger finite set $`F' \supseteq F` where $`\chi`
+agrees with $`g_{F'}` on $`F`. Since $`g_{F'}` is $`S`-polychromatic on $`F'`, any translate
+$`n + S \subseteq F` hits all colours under $`g_{F'}`, and hence under $`\chi`. Since this holds
 for all finite $`F` containing any given translate, $`\chi` is $`S`-polychromatic globally.
 
 In Lean, this is formalised as:
@@ -231,7 +231,7 @@ theorem Finset.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finite (�
 ```
 
 By applying the Local Lemma to each finite set $`X` to get colourings $`g_X`, and then using Rado
-selection, we obtain a global colouring $`\chi$ that is $`S`-polychromatic.
+selection, we obtain a global colouring $`\chi` that is $`S`-polychromatic.
 
 ## Bounds on the Strauss Function
 
@@ -280,8 +280,8 @@ sets, this succeeds. For the cases where a period greater than 30 is necessary, 
 too slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find colourings instead.
 
 Once witnesses are found, Lean verifies them all using three key steps:
-1. *Periodic colourings*: A colouring with period $`q$ is represented as a function
-   $`\mathbb{Z}/q\mathbb{Z} \to \text{Fin } 3$ that repeats.
+1. *Periodic colourings*: A colouring with period $`q` is represented as a function
+   $`\mathbb{Z}/q\mathbb{Z} \to \text{Fin } 3` that repeats.
 2. *Bit vector encoding*: Each period-$`q` colouring is encoded as three bit vectors (one per
    colour), enabling efficient verification that every translate hits all colours.
 3. *Residue shortcuts*: Certain cases can be quickly discharged using simple modular arithmetic
@@ -301,17 +301,17 @@ def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
   ∀ n : G, ∀ k : K, ∃ a ∈ S, χ (n + a) = k
 ```
 
-This says: a colouring $`\chi` is $`S`-polychromatic if for every translation $`n$ and every
-colour $`k$, there exists an element $`a \in S$ such that $`n + a$ has colour $`k$. In other words,
-every translate $`n + S$ contains all colours.
+This says: a colouring $`\chi` is $`S`-polychromatic if for every translation $`n` and every
+colour $`k`, there exists an element $`a \in S` such that $`n + a` has colour $`k`. In other words,
+every translate $`n + S` contains all colours.
 
 ```anchor HasPolychromColouring (module := Polychromatic.Colouring)
 def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
   ∃ χ : G → K, IsPolychrom S χ
 ```
 
-This says: a set $`S$ admits a $`K`-coloured polychromatic colouring if there exists some colouring
-$`\chi : G \to K$ that is $`S`-polychromatic.
+This says: a set $`S` admits a $`K`-coloured polychromatic colouring if there exists some colouring
+$`\chi : G \to K` that is $`S`-polychromatic.
 
 ## The Main Theorem (Partial)
 
