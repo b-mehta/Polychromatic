@@ -258,9 +258,9 @@ lemma le_straussFunction_self {k : ℕ} :
     k ≤ straussFunction k := by
 ```
 
-# The Four-Three Problem
+# Sets of Size Four
 
-The four-three problem asks whether every set of 4 integers admits a 3-polychromatic colouring.
+This section addresses whether every set of 4 integers admits a 3-polychromatic colouring.
 The proof combines theoretical reductions with exhaustive computational verification.
 
 ## Theoretical Reductions
@@ -279,10 +279,6 @@ algorithm searches for colourings with period $`q` up to 30. For the vast majori
 sets, this succeeds. For the cases where a period greater than 30 is necessary, the C++ search is
 too slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find colourings instead.
 
-Why $`c < 289`? The bound 289 comes from applying the Local Lemma: when $`c \geq 289` (and hence
-$`|S| = 4`), the set is large enough in "diameter" that the Local Lemma directly guarantees a
-3-polychromatic colouring exists. So we only need computational verification for smaller sets.
-
 Once witnesses are found, Lean verifies them all using three key steps:
 1. *Periodic colourings*: A colouring with period $`q$ is represented as a function
    $`\mathbb{Z}/q\mathbb{Z} \to \text{Fin } 3$ that repeats.
@@ -294,7 +290,7 @@ Once witnesses are found, Lean verifies them all using three key steps:
 ## Current Status
 
 The computational verification for $`c < 289` is complete in Lean. The remaining theoretical part
-(combining this with the local lemma for large cases) is in progress.
+is in progress.
 
 # Definitions
 
