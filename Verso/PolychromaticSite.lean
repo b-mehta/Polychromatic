@@ -60,7 +60,7 @@ The repository is organised as follows:
 
 : `Generation`
 
-  C++ and Python code for generating explicit periodic colourings. The main output is
+  C++ and Python code using Z3 for generating explicit periodic colourings. The main output is
   `full-colors.log`, which contains colouring witnesses used by the Lean verification.
 
 : `Lean`
