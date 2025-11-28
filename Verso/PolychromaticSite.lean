@@ -63,7 +63,8 @@ The repository is organised as follows:
   - `Colouring.lean`: Core definitions of polychromatic colourings
   - `LocalLemma.lean`: The Lovász local lemma
   - `Existence.lean`: Existence results via probabilistic methods
-  - `PolychromNumber.lean`: The polychromatic number and Strauss function
+  - `PolychromNumber.lean`: The polychromatic number
+  - `LovaszFunction.lean`: The Strauss function and its bounds
   - `FourThree/`: Computational verification for the four-three problem
 
 : `Verso`
@@ -247,7 +248,6 @@ The proof combines theoretical reductions with exhaustive computational verifica
 Without loss of generality, we may assume:
 1. The minimum element of $`S` is 0 (by translation invariance).
 2. The elements are coprime (scaling preserves the polychromatic number in torsion-free groups).
-3. The elements satisfy certain ordering conditions.
 
 These reductions allow us to focus on quadruples of the form $`\{0, a, b, c\}` with
 $`0 < a < b < c`, $`a + b \leq c`, and $`\gcd(a, b, c) = 1`.
