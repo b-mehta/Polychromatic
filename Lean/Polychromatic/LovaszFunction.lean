@@ -27,8 +27,10 @@ open Finset
 
 /-- The Strauss function: the smallest `m` such that every set of size at least `m` has a
 `k`-polychromatic colouring. -/
+-- ANCHOR: straussFunction
 noncomputable def straussFunction (k : ℕ) : ℕ :=
   sInf {m : ℕ | ∀ S : Finset ℤ, m ≤ #S → HasPolychromColouring (Fin k) S}
+-- ANCHOR_END: straussFunction
 
 @[simp] lemma straussFunction_zero : straussFunction 0 = 0 := by
   simp only [straussFunction, HasPolychromColouring, IsEmpty.exists_iff, imp_false, not_le,
@@ -45,9 +47,11 @@ private lemma straussFunction_nonempty {k : ℕ} (hk : k ≠ 0) :
   exact exists_colouring_of_sq_le hk (S := S) hS
 
 /-- Sets of size at least `straussFunction k` have `k`-colourings. -/
+-- ANCHOR: straussFunction_spec
 lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ) (hkS : straussFunction k ≤ #S) :
     HasPolychromColouring (Fin k) S :=
   Nat.sInf_mem (straussFunction_nonempty hk) S hkS
+-- ANCHOR_END: straussFunction_spec
 
 /-- Upper bounds on the Strauss function. -/
 lemma straussFunction_le_of_forall {k m : ℕ}
@@ -81,8 +85,10 @@ lemma lt_straussFunction_of_polychromNumber {k : ℕ} (hk : k ≠ 0) {S : Finset
   simpa
 
 /-- `k ≤ straussFunction k` for all `k`. -/
+-- ANCHOR: le_straussFunction_self
 lemma le_straussFunction_self {k : ℕ} :
     k ≤ straussFunction k := by
+-- ANCHOR_END: le_straussFunction_self
   obtain rfl | hk := eq_or_ne k 0
   · simp
   let S : Finset ℤ := Finset.Ico (0 : ℤ) (k - 1)
@@ -116,7 +122,9 @@ lemma four_le_straussFunction_three : 4 ≤ straussFunction 3 := by
   simp
 
 
+-- ANCHOR: straussFunction_le_of_forall_three_mul_sq
 lemma straussFunction_le_of_forall_three_mul_sq {k : ℕ} : straussFunction k ≤ 3 * k ^ 2 := by
+-- ANCHOR_END: straussFunction_le_of_forall_three_mul_sq
   obtain rfl | hk := eq_or_ne k 0
   · simp
   apply straussFunction_le_of_forall
@@ -129,9 +137,11 @@ lemma straussFunction_le_of_forall_mBound {k : ℕ} (hk : 4 ≤ k) : straussFunc
 open Asymptotics Filter
 
 /-- Asymptotically, `straussFunction k` is at most `(3 + o(1))k log k`. -/
+-- ANCHOR: straussFunction_isLittleO
 lemma straussFunction_isLittleO :
     ∃ f : ℕ → ℝ, f =o[atTop] (fun _ ↦ 1 : ℕ → ℝ) ∧ ∀ k ≥ 4,
       straussFunction k ≤ (3 + f k) * k * Real.log k := by
+-- ANCHOR_END: straussFunction_isLittleO
   obtain ⟨f, hf, hfbound⟩ := mBound_isLittleO
   refine ⟨f, hf, fun k hk ↦ ?_⟩
   grw [straussFunction_le_of_forall_mBound hk]

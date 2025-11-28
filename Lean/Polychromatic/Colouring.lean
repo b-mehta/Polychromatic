@@ -96,9 +96,11 @@ lemma IsPolychrom.finite (hχ : IsPolychrom S χ) :
   classical exact hχ.fintype.finite
 
 /-- The number of colours in any `S`-polychromatic colouring is at most `|S|`. -/
+-- ANCHOR: IsPolychrom.card_le
 lemma IsPolychrom.card_le [Fintype K] (hχ : IsPolychrom S χ) :
     Fintype.card K ≤ #S :=
   card_le_card_of_surjOn χ (by classical simpa using hχ.surjOn 0)
+-- ANCHOR_END: IsPolychrom.card_le
 
 lemma IsPolychrom.subset {S' : Finset G} (hχ : IsPolychrom S' χ) (hS : S' ⊆ S) :
     IsPolychrom S χ := by
