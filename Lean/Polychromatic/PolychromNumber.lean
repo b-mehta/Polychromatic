@@ -37,8 +37,8 @@ open Finset Fintype Pointwise
 
 /-- The polychromatic number of a finite set `S`, defined as the supremum of all `n`
 such that there exists a `Fin n`-valued `S`-polychromatic colouring. -/
--- ANCHOR: polychromNumber
 noncomputable
+-- ANCHOR: polychromNumber
 def polychromNumber (S : Finset G) : ℕ :=
   sSup {n | HasPolychromColouring (Fin n) S}
 -- ANCHOR_END: polychromNumber
@@ -95,10 +95,10 @@ lemma hasPolychromColouring_fin_of_le {n : ℕ}
 /-- The polychromatic number is at most `|S|`. -/
 -- ANCHOR: polychromNumber_le_card
 lemma polychromNumber_le_card : polychromNumber S ≤ #S := by
+-- ANCHOR_END: polychromNumber_le_card
   obtain rfl | hS' := S.eq_empty_or_nonempty
   · simp
   simpa using (hasPolychromColouring_fin hS').card_le
--- ANCHOR_END: polychromNumber_le_card
 
 lemma le_polychromNumber_iff_hasPolychromColouring {n : ℕ} (hn : n ≠ 0) {S : Finset G} :
     n ≤ polychromNumber S ↔ HasPolychromColouring (Fin n) S := by

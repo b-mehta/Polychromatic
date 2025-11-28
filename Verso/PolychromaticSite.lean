@@ -48,6 +48,32 @@ around 4 million cases.
 At the moment, we have achieved the first of these goals, and the computational part of the second
 is completed, but not the non-computational aspects of the proof.
 
+# Repository Structure
+
+The repository is organised as follows:
+
+: `Generation`
+
+  C++ and Python code for generating explicit periodic colourings. The main output is
+  `full-colors.log`, which contains colouring witnesses used by the Lean verification.
+
+: `Lean`
+
+  The formal Lean 4 proofs, including:
+  - `Colouring.lean`: Core definitions of polychromatic colourings
+  - `LocalLemma.lean`: The Lovász local lemma
+  - `Existence.lean`: Existence results via probabilistic methods
+  - `PolychromNumber.lean`: The polychromatic number and Strauss function
+  - `FourThree/`: Computational verification for the four-three problem
+
+: `Verso`
+
+  Lean code for generating this documentation website using the Verso framework.
+
+: `site`
+
+  Jekyll website source files, completed by the Verso-generated content.
+
 # Mathematical Background
 
 ## The Polychromatic Number
@@ -60,7 +86,6 @@ cannot exceed $`|S|`, so $`p(S) \leq |S|`.
 In Lean, we formalise this as:
 
 ```anchor polychromNumber (module := Polychromatic.PolychromNumber)
-noncomputable
 def polychromNumber (S : Finset G) : ℕ :=
   sSup {n | HasPolychromColouring (Fin n) S}
 ```
@@ -69,9 +94,6 @@ The bound $`p(S) \leq |S|` is established by:
 
 ```anchor polychromNumber_le_card (module := Polychromatic.PolychromNumber)
 lemma polychromNumber_le_card : polychromNumber S ≤ #S := by
-  obtain rfl | hS' := S.eq_empty_or_nonempty
-  · simp
-  simpa using (hasPolychromColouring_fin hS').card_le
 ```
 
 ## Strauss' Conjecture
@@ -85,6 +107,14 @@ In Lean, this is defined as:
 ```anchor straussFunction (module := Polychromatic.LovaszFunction)
 noncomputable def straussFunction (k : ℕ) : ℕ :=
   sInf {m : ℕ | ∀ S : Finset ℤ, m ≤ #S → HasPolychromColouring (Fin k) S}
+```
+
+The key property of the Strauss function is that sets of sufficient size have polychromatic colourings:
+
+```anchor straussFunction_spec (module := Polychromatic.LovaszFunction)
+lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ) (hkS : straussFunction k ≤ #S) :
+    HasPolychromColouring (Fin k) S :=
+  Nat.sInf_mem (straussFunction_nonempty hk) S hkS
 ```
 
 Strauss conjectured that $`m(k)` is well-defined for all $`k` -- that is, for any $`k`, there exists
@@ -146,29 +176,61 @@ then if $`e \cdot p \cdot (d + 1) \leq 1`, there exists an outcome avoiding all 
 
 ## Application to Polychromatic Colourings
 
-To prove that a set $`S` of size $`m` admits a $`k`-polychromatic colouring, we:
+To prove that a set $`S` of size $`m` admits a $`k`-polychromatic colouring, we fix a finite set
+$`X` of integers from which we will choose translations, then:
 
-1. Consider a random colouring where each integer is coloured uniformly at random from $`k` colours.
-2. For each translate $`n + S` and each colour $`c`, define a "bad event" as the event that no
-   element of $`n + S` receives colour $`c`.
+1. Consider a random colouring where each element of $`X + S$ is coloured uniformly at random from
+   $`k` colours.
+2. For each translate $`n + S` with $`n \in X` and each colour $`c`, define a "bad event" as the
+   event that no element of $`n + S` receives colour $`c`.
 3. The probability of a bad event is $`(1 - 1/k)^m`, which is small when $`m` is large relative
    to $`k`.
 4. Bad events for translates $`n + S` and $`n' + S` are independent unless the translates overlap,
    which bounds the dependency.
 
-The Local Lemma works for finitely many translations. The Rado selection principle (a topological
-compactness argument) extends this to all translations. Then straightforward analysis gives the
-bound $`m(k) \leq 3k^2`, and a more careful asymptotic analysis gives $`m(k) \leq (3 + o(1)) k \log k`.
-This latter bound is optimal up to constant factors (the true value is $`(1 + o(1)) k \log k`).
+The Local Lemma then guarantees that with positive probability, none of the bad events occur for
+any $`n \in X`. This gives a polychromatic colouring on the finite set $`X`.
 
-The quadratic bound is formalised in Lean:
+## The Rado Selection Principle
 
-```anchor exists_colouring_of_sq_le (module := Polychromatic.Existence)
-theorem exists_colouring_of_sq_le {S : Finset G} {k : ℕ} (hk : k ≠ 0) (hm : 3 * k ^ 2 ≤ #S) :
-    HasPolychromColouring (Fin k) S := by
+The Local Lemma only applies to finitely many translations. To extend this to *all* of $`\mathbb{Z}`,
+we use the *Rado selection principle*, a compactness argument based on Tychonoff's theorem.
+
+The Rado selection principle states that if we have a family of functions $`g_F : F \to K$ indexed
+by finite sets $`F$, where $`K$ is finite, then there exists a global function $`\chi : \mathbb{Z} \to K`
+such that for every finite set $`F`, there is a larger finite set $`F' \supseteq F` where $`\chi`
+and $`g_{F'}` agree on $`F$.
+
+In Lean, this is formalised as:
+
+```
+theorem Finset.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
+    (g : (s : Finset α) → (a : α) → β a) :
+    ∃ χ : (a : α) → β a, ∀ s : Finset α, ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x
 ```
 
-We also prove the lower bound $`k \leq m(k)`:
+By applying the Local Lemma to each finite set $`X` to get colourings $`g_X`, and then using Rado
+selection, we obtain a global colouring $`\chi$ that is $`S`-polychromatic.
+
+## Bounds on the Strauss Function
+
+Straightforward analysis of the probability bounds gives the quadratic upper bound:
+
+```anchor straussFunction_le_of_forall_three_mul_sq (module := Polychromatic.LovaszFunction)
+lemma straussFunction_le_of_forall_three_mul_sq {k : ℕ} : straussFunction k ≤ 3 * k ^ 2 := by
+```
+
+A more careful asymptotic analysis gives $`m(k) \leq (3 + o(1)) k \log k`:
+
+```anchor straussFunction_isLittleO (module := Polychromatic.LovaszFunction)
+lemma straussFunction_isLittleO :
+    ∃ f : ℕ → ℝ, f =o[atTop] (fun _ ↦ 1 : ℕ → ℝ) ∧ ∀ k ≥ 4,
+      straussFunction k ≤ (3 + f k) * k * Real.log k := by
+```
+
+This latter bound is optimal up to constant factors (the true value is $`(1 + o(1)) k \log k`).
+
+We also prove the easy lower bound $`k \leq m(k)`:
 
 ```anchor le_straussFunction_self (module := Polychromatic.LovaszFunction)
 lemma le_straussFunction_self {k : ℕ} :
@@ -177,9 +239,8 @@ lemma le_straussFunction_self {k : ℕ} :
 
 # The Four-Three Problem
 
-The statement that every set of 4 integers admits a 3-polychromatic colouring is known as the
-*four-three problem*. The proof combines theoretical reductions with exhaustive computational
-verification.
+The four-three problem asks whether every set of 4 integers admits a 3-polychromatic colouring.
+The proof combines theoretical reductions with exhaustive computational verification.
 
 ## Theoretical Reductions
 
@@ -193,19 +254,18 @@ $`0 < a < b < c`, $`a + b \leq c`, and $`\gcd(a, b, c) = 1`.
 
 ## Computational Verification
 
-For quadruples with $`c < 289`, the proof is completed by computational verification. The approach
-uses:
+For quadruples with $`c < 289`, we first search for explicit periodic colourings using C++. This
+algorithm searches for colourings with period $`q` up to 30. For the vast majority of the 900,000
+sets, this succeeds. For the cases where a period greater than 30 is necessary, the C++ search is
+too slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find colourings instead.
+
+Once witnesses are found, Lean verifies them all using three key steps:
 1. *Periodic colourings*: A colouring with period $`q$ is represented as a function
-   $`\mathbb{Z} \to \text{Fin } 3$ that repeats every $`q` integers.
+   $`\mathbb{Z}/q\mathbb{Z} \to \text{Fin } 3$ that repeats.
 2. *Bit vector encoding*: Each period-$`q` colouring is encoded as three bit vectors (one per
    colour), enabling efficient verification that every translate hits all colours.
 3. *Residue shortcuts*: Certain cases can be quickly discharged using simple modular arithmetic
    (e.g., if $`a \equiv 1`, $`b \equiv 2 \pmod 3`).
-
-The C++ code in the `Generation` directory produces colouring witnesses for the vast majority of the
-900,000 sets, but for the cases where a large ($`\geq 30`) period $`q` is necessary, this algorithm
-is too slow. For these, we use Z3Py to find a colouring instead. These are then verified in Lean
-using metaprogramming to construct proof terms.
 
 ## Current Status
 
@@ -213,6 +273,8 @@ The computational verification for $`c < 289` is complete in Lean. The remaining
 (combining this with the local lemma for large cases) is in progress.
 
 # Definitions
+
+The core definitions in Lean are:
 
 ```anchor IsPolychrom (module := Polychromatic.Colouring)
 def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
@@ -223,35 +285,6 @@ def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
 def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
   ∃ χ : G → K, IsPolychrom S χ
 ```
-
-Then, we define the polychromatic number of {anchorTerm final}`S` to be the maximum number of
-colours possible in an {anchorTerm final}`S`-polychromatic colouring.
-
-```
-def polychromNumber (S : Finset G) : ℕ :=
-  sSup {n | HasPolychromColouring (Fin n) S}
-```
-
-Strauss asked the question of if, for all `k`, there exists an upper bound `m` such that any set of
-size at least `m` has a polychromatic `k`-colouring. This is answered affirmatively by the Lovász
-local lemma approach described above.
-
-# Key Formalised Results
-
-## The Strauss Function
-
-The Strauss function is formalised as:
-
-```
-noncomputable def straussFunction (k : ℕ) : ℕ :=
-  sInf {m : ℕ | ∀ S : Finset ℤ, m ≤ #S → HasPolychromColouring (Fin k) S}
-```
-
-Key results include:
-- `straussFunction_spec`: Sets of size at least `straussFunction k` have `k`-colourings.
-- `le_straussFunction_self`: $`k \leq m(k)` for all $`k`.
-- `straussFunction_le_of_forall_three_mul_sq`: $`m(k) \leq 3k^2`.
-- `straussFunction_isLittleO`: Asymptotically, $`m(k) \leq (3 + o(1)) k \log k`.
 
 ## The Main Theorem (Partial)
 
@@ -277,30 +310,5 @@ is done.
 - Alon, Noga; Spencer, Joel H. (2016). *The Probabilistic Method*, 4th edition. John Wiley & Sons.
 - de Bruijn, N. G.; Erdős, P. (1951). "A colour problem for infinite graphs and a problem in the
   theory of relations". *Indagationes Mathematicae* 13, pp. 371–373.
-
-# Repository Structure
-
-The repository is organised as follows:
-
-: `Generation`
-
-  C++ and Python code for generating explicit periodic colourings. The main output is
-  `full-colors.log`, which contains around 900,000 colouring witnesses used by the Lean
-  verification.
-
-: `Lean`
-
-  The formal Lean 4 proofs, including:
-  - `Colouring.lean`: Core definitions of polychromatic colourings
-  - `LocalLemma.lean`: The Lovász local lemma
-  - `Existence.lean`: Existence results via probabilistic methods
-  - `PolychromNumber.lean`: The polychromatic number and Strauss function
-  - `FourThree/`: Computational verification for the four-three problem
-
-: `Verso`
-
-  Lean code for generating this documentation website using the Verso framework.
-
-: `site`
-
-  Jekyll website source files, completed by the Verso-generated content.
+- Rado, R. (1949). "Axiomatic treatment of rank in infinite sets". *Journal of the London
+  Mathematical Society* 24, pp. 249–255.
