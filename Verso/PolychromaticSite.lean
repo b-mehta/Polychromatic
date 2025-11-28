@@ -324,8 +324,6 @@ theorem final_result (S : Finset ℤ) (hS : S.card = 4) :
   sorry
 ```
 
-The `sorry` indicates this proof is incomplete, but the computational part (verifying small cases)
-is done.
 
 # References
 
