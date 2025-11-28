@@ -35,27 +35,10 @@ The repository structure is as follows:
 
 ## Build Instructions
 
-### Building the Lean Proofs
-
-**IMPORTANT**: Before building, you must download the pre-compiled mathlib cache to avoid
-a 60+ minute build time.
-
-```bash
-cd Lean
-lake exe cache get  # Download mathlib cache (required!)
-lake build          # Build the project
-```
-
-For incremental builds after making changes:
-```bash
-cd Lean
-lake build
-```
-
 ### Generating Colouring Log Files
 
 The `Generation` directory contains tools to generate explicit polychromatic colourings for
-quadruples of integers.
+quadruples of integers. These files are required by the Lean build.
 
 #### Generating `temp-colors.log`
 
@@ -83,6 +66,24 @@ python fill_in_blanks.py
 ```
 
 This reads `temp-colors.log` and writes the completed results to `full-colors.log`.
+
+### Building the Lean Proofs
+
+**IMPORTANT**: Before building, you must download the pre-compiled mathlib cache to avoid
+a 60+ minute build time. The colouring log files from the Generation step above must also be
+present.
+
+```bash
+cd Lean
+lake exe cache get  # Download mathlib cache (required!)
+lake build          # Build the project
+```
+
+For incremental builds after making changes:
+```bash
+cd Lean
+lake build
+```
 
 ### Building the Verso Documentation
 
