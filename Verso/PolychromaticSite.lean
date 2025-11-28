@@ -39,8 +39,7 @@ Two primary targets of this repository are:
 - Formalise Erdős and Lovász' solution to Strauss' conjecture on the existence of polychromatic
   colourings of sets of bounded size by any number of colours.
 - Formalise the result that every set of size `4` has a polychromatic `3`-colouring, due to
-  Axenovich, Goldwasser, Lidický, Martin, Offner, Talbot, and Young; and thus formally resolve a
-  conjecture of Newman.
+  Axenovich, Goldwasser, Lidický, Martin, Offner, Talbot, and Young.
 
 The first of these requires results from probability theory and topology, as well as some calculus.
 The second is more combinatorial, and the informal proof requires a large computer search to verify
