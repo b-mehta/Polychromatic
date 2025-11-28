@@ -85,8 +85,10 @@ def e₂Param (m d₂ : ℕ) : ℕ := m / d₂
 
 /-! ### GCD Property -/
 
-/-- When `gcd(a, b, c) = 1`, we have `gcd(d₁, d₂) = 1`. -/
-lemma gcd_d₁_d₂_eq_one {a b c m : ℕ} (hm : m = c - a + b)
+/-- When `gcd(a, b, c) = 1`, we have `gcd(d₁, d₂) = 1`.
+
+Note: This lemma assumes `a < b` so that `b - a` doesn't underflow. -/
+lemma gcd_d₁_d₂_eq_one {a b c m : ℕ} (hab : a < b) (hm : m = c - a + b)
     (hgcd : Nat.gcd a (Nat.gcd b c) = 1) :
     Nat.gcd (d₁Param b m) (d₂Param a b m) = 1 := by
   sorry
@@ -98,8 +100,10 @@ def singleCycleCase (a b m : ℕ) : Prop :=
   min (d₁Param b m) (d₂Param a b m) = 1
 
 /-- In the single cycle case with `d₁ = 1`, there exists `2 ≤ g ≤ m - 2` such that
-`g * b ≡ b - a (mod m)`. -/
-lemma exists_g_singleCycle {a b m : ℕ} (hd₁ : d₁Param b m = 1) (hm : 2 < m) :
+`g * b ≡ b - a (mod m)`.
+
+Note: This lemma assumes `a ≤ b` so that `b - a` doesn't underflow. -/
+lemma exists_g_singleCycle {a b m : ℕ} (hab : a ≤ b) (hd₁ : d₁Param b m = 1) (hm : 2 < m) :
     ∃ g : ℕ, 2 ≤ g ∧ g ≤ m - 2 ∧ g * b % m = (b - a) % m := by
   sorry
 
@@ -143,13 +147,19 @@ lemma singleCycle_solvable {a b c : ℕ} (ha : 0 < a) (hab : a < b) (hbc : b < c
     Accept a b c := by
   sorry
 
-/-! ### Main Case 2: Multiple Cycles -/
+/-! ### Main Case 2: Multiple Cycles
+
+In this section, all lemmas assume `0 < a < b < c`, which ensures that:
+- `b - a > 0` (no underflow)
+- `c - a + b = c + b - a > 0` (no underflow, since `a < c + b`)
+-/
 
 /-- Main Case 2: When `min(d₁, d₂) > 1`. -/
 def multipleCycleCase (a b m : ℕ) : Prop :=
   min (d₁Param b m) (d₂Param a b m) > 1
 
-/-- The cycles `Cᵢ` partition `ZMod m` into `d₁` cycles of length `e₁`. -/
+/-- The cycles `Cᵢ` partition `ZMod m` into `d₁` cycles of length `e₁`.
+Here `b_sub_a` should be `b - a` (assuming `a < b`). -/
 def cycle (b_sub_a b : ℕ) (m : ℕ) (i : ℕ) : Finset (ZMod m) :=
   (Finset.range (m / Nat.gcd b m)).image fun j =>
     (i * b_sub_a + j * b : ZMod m)
@@ -168,8 +178,10 @@ lemma translate_intersects_cycles {a b m : ℕ} (d₁ := d₁Param b m) (e₁ :=
        ((i + 1) * (b - a) + j * b : ZMod m), ((i + 1) * (b - a) + (j + 1) * b : ZMod m)} := by
   sorry
 
-/-- Subcase 2a: e₁ is even. Color cycles alternately with 0101...01 and 0202...02. -/
-lemma subcase_2a {a b c : ℕ} (hm : 0 < c - a + b)
+/-- Subcase 2a: e₁ is even. Color cycles alternately with 0101...01 and 0202...02.
+
+Note: The hypothesis `a < b` ensures `b - a` and `c - a + b` don't underflow. -/
+lemma subcase_2a {a b c : ℕ} (hab : a < b) (hbc : b < c)
     (d₁ := d₁Param b (c - a + b)) (e₁ := e₁Param (c - a + b) d₁)
     (he₁_even : Even e₁) :
     HasPolychromColouring (Fin 3)
@@ -177,7 +189,7 @@ lemma subcase_2a {a b c : ℕ} (hm : 0 < c - a + b)
   sorry
 
 /-- Subcase 2b: d₁ is even and e₁ is odd. -/
-lemma subcase_2b {a b c : ℕ} (hm : 0 < c - a + b)
+lemma subcase_2b {a b c : ℕ} (hab : a < b) (hbc : b < c)
     (d₁ := d₁Param b (c - a + b)) (e₁ := e₁Param (c - a + b) d₁)
     (hd₁_even : Even d₁) (he₁_odd : Odd e₁) :
     HasPolychromColouring (Fin 3)
@@ -186,7 +198,7 @@ lemma subcase_2b {a b c : ℕ} (hm : 0 < c - a + b)
 
 /-- Subcase 2c: d₁ and e₁ are both odd, with e₁ ≤ 17.
     In this case, e₁ must be a multiple of 3, and we use patterns 012012..., 120120..., 201201... -/
-lemma subcase_2c {a b c : ℕ} (hm : 0 < c - a + b)
+lemma subcase_2c {a b c : ℕ} (hab : a < b) (hbc : b < c)
     (d₁ := d₁Param b (c - a + b)) (e₁ := e₁Param (c - a + b) d₁)
     (hd₁_odd : Odd d₁) (he₁_odd : Odd e₁) (he₁_small : e₁ ≤ 17) :
     HasPolychromColouring (Fin 3)
@@ -194,7 +206,7 @@ lemma subcase_2c {a b c : ℕ} (hm : 0 < c - a + b)
   sorry
 
 /-- In Subcase 2c, e₁ must be divisible by 3. -/
-lemma subcase_2c_e₁_div_3 {a b c : ℕ} (hm : 289 ≤ c - a + b)
+lemma subcase_2c_e₁_div_3 {a b c : ℕ} (hab : a < b) (hbc : b < c) (hc : 289 ≤ c)
     (d₁ := d₁Param b (c - a + b)) (d₂ := d₂Param a b (c - a + b))
     (e₁ := e₁Param (c - a + b) d₁) (e₂ := e₂Param (c - a + b) d₂)
     (hd₁_odd : Odd d₁) (he₁_odd : Odd e₁) (he₁_small : e₁ ≤ 17)
@@ -205,7 +217,7 @@ lemma subcase_2c_e₁_div_3 {a b c : ℕ} (hm : 289 ≤ c - a + b)
 
 /-- Subcase 2d: d₁ and e₁ are both odd, with e₁ ≥ 19.
     Use rotating colorings of intervals. -/
-lemma subcase_2d {a b c : ℕ} (hm : 0 < c - a + b)
+lemma subcase_2d {a b c : ℕ} (hab : a < b) (hbc : b < c)
     (d₁ := d₁Param b (c - a + b)) (e₁ := e₁Param (c - a + b) d₁)
     (hd₁_odd : Odd d₁) (he₁_odd : Odd e₁) (he₁_large : 19 ≤ e₁) :
     HasPolychromColouring (Fin 3)
@@ -213,7 +225,7 @@ lemma subcase_2d {a b c : ℕ} (hm : 0 < c - a + b)
   sorry
 
 /-- In Subcase 2d, d₁ ≥ 5. -/
-lemma subcase_2d_d₁_ge_5 {a b c : ℕ} (hm : 0 < c - a + b)
+lemma subcase_2d_d₁_ge_5 {a b c : ℕ} (hab : a < b) (hbc : b < c)
     (d₁ := d₁Param b (c - a + b))
     (hd₁_not_div_3 : ¬ 3 ∣ d₁) (hMultiple : multipleCycleCase a b (c - a + b)) :
     5 ≤ d₁ := by
