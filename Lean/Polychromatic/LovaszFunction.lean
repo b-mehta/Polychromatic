@@ -27,8 +27,10 @@ open Finset
 
 /-- The Strauss function: the smallest `m` such that every set of size at least `m` has a
 `k`-polychromatic colouring. -/
+-- ANCHOR: straussFunction
 noncomputable def straussFunction (k : ℕ) : ℕ :=
   sInf {m : ℕ | ∀ S : Finset ℤ, m ≤ #S → HasPolychromColouring (Fin k) S}
+-- ANCHOR_END: straussFunction
 
 @[simp] lemma straussFunction_zero : straussFunction 0 = 0 := by
   simp only [straussFunction, HasPolychromColouring, IsEmpty.exists_iff, imp_false, not_le,
@@ -81,8 +83,10 @@ lemma lt_straussFunction_of_polychromNumber {k : ℕ} (hk : k ≠ 0) {S : Finset
   simpa
 
 /-- `k ≤ straussFunction k` for all `k`. -/
+-- ANCHOR: le_straussFunction_self
 lemma le_straussFunction_self {k : ℕ} :
     k ≤ straussFunction k := by
+-- ANCHOR_END: le_straussFunction_self
   obtain rfl | hk := eq_or_ne k 0
   · simp
   let S : Finset ℤ := Finset.Ico (0 : ℤ) (k - 1)

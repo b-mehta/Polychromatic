@@ -57,11 +57,35 @@ This is defined as the maximum number of colours possible in an $`S`-polychromat
 any $`S`-polychromatic colouring must hit every colour at every translate, the number of colours
 cannot exceed $`|S|`, so $`p(S) \leq |S|`.
 
+In Lean, we formalise this as:
+
+```anchor polychromNumber (module := Polychromatic.PolychromNumber)
+noncomputable
+def polychromNumber (S : Finset G) : ℕ :=
+  sSup {n | HasPolychromColouring (Fin n) S}
+```
+
+The bound $`p(S) \leq |S|` is established by:
+
+```anchor polychromNumber_le_card (module := Polychromatic.PolychromNumber)
+lemma polychromNumber_le_card : polychromNumber S ≤ #S := by
+  obtain rfl | hS' := S.eq_empty_or_nonempty
+  · simp
+  simpa using (hasPolychromColouring_fin hS').card_le
+```
+
 ## Strauss' Conjecture
 
 The *Strauss function* $`m(k)` is defined as the smallest $`m` such that every set of size at least
 $`m` has a polychromatic $`k`-colouring. Equivalently, $`m(k) \leq m` if and only if every set of
 size at least $`m` has $`p(S) \geq k`.
+
+In Lean, this is defined as:
+
+```anchor straussFunction (module := Polychromatic.LovaszFunction)
+noncomputable def straussFunction (k : ℕ) : ℕ :=
+  sInf {m : ℕ | ∀ S : Finset ℤ, m ≤ #S → HasPolychromColouring (Fin k) S}
+```
 
 Strauss conjectured that $`m(k)` is well-defined for all $`k` -- that is, for any $`k`, there exists
 some threshold $`m` beyond which all sets admit $`k`-polychromatic colourings. This was proved by
@@ -74,6 +98,12 @@ $`m(3) \leq 4`, meaning every set of 4 integers admits a 3-polychromatic colouri
 the fact that the set $`\{0, 1, 3\}` has polychromatic number exactly 2 (giving $`m(3) > 3`), this
 shows $`m(3) = 4$. A consequence of this result is Newman's conjecture, though this consequence is
 not yet formalised.
+
+In Lean, we prove that the set $`\{0, 1, 3\}` has polychromatic number 2:
+
+```anchor polychromNumber_three_eq_two (module := Polychromatic.PolychromNumber)
+lemma polychromNumber_three_eq_two : polychromNumber (G := ℤ) {0, 1, 3} = 2 := by
+```
 
 The following diagram demonstrates the dependencies of these results.
 
@@ -130,6 +160,20 @@ The Local Lemma works for finitely many translations. The Rado selection princip
 compactness argument) extends this to all translations. Then straightforward analysis gives the
 bound $`m(k) \leq 3k^2`, and a more careful asymptotic analysis gives $`m(k) \leq (3 + o(1)) k \log k`.
 This latter bound is optimal up to constant factors (the true value is $`(1 + o(1)) k \log k`).
+
+The quadratic bound is formalised in Lean:
+
+```anchor exists_colouring_of_sq_le (module := Polychromatic.Existence)
+theorem exists_colouring_of_sq_le {S : Finset G} {k : ℕ} (hk : k ≠ 0) (hm : 3 * k ^ 2 ≤ #S) :
+    HasPolychromColouring (Fin k) S := by
+```
+
+We also prove the lower bound $`k \leq m(k)`:
+
+```anchor le_straussFunction_self (module := Polychromatic.LovaszFunction)
+lemma le_straussFunction_self {k : ℕ} :
+    k ≤ straussFunction k := by
+```
 
 # The Four-Three Problem
 
