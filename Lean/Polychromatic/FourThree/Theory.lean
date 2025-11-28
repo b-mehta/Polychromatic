@@ -167,6 +167,11 @@ lemma suffices_nat (C : ℕ) (h : allC C) :
     Int.gcd_natCast_natCast, Nat.cast_eq_one] at hgcd
   exact h c (by omega) b (by omega) (by omega) a (by omega) (by omega) (by omega) (by omega) hgcd
 
+/-- For c ≥ 289, the set {0, a, b, c} has a 3-polychromatic colouring. -/
+lemma large_case (a b c : ℤ) (ha : 0 < a) (hab : a < b) (hbc : b < c) (hc : 289 ≤ c) :
+    HasPolychromColouring (Fin 3) {0, a, b, c} := by
+  sorry
+
 end
 
 lemma allC_zero : allC (nat_lit 0) := by grind [allC]
