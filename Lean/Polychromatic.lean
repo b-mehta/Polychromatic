@@ -10,3 +10,4 @@ import Polychromatic.LocalLemma
 import Polychromatic.LovaszFunction
 import Polychromatic.Main
 import Polychromatic.PolychromNumber
+import Polychromatic.Theorem1
