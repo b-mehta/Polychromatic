@@ -31,9 +31,10 @@ and Young (arXiv:1704.00042). The structure is:
 
    **Main Case 1 (Single Cycle)**: min{d₁, d₂} = 1.
    Without loss of generality, assume d₁ = 1. Find g such that gb ≡ b-a (mod m),
-   so S' = {0, 1, g, g+1}. The proof splits into subcases:
+   so S' = {0, 1, g, g+1}. Let s be the smallest multiple of 3 such that g > ⌈m/s⌉.
+   The proof splits into subcases:
    - (1a) g = 2, 3, or 4: handled by subcase (1c)
-   - (1b) 5 ≤ g < 2⌊m/s⌋: split Z_m into intervals, colour 010101..., 121212..., 202020...
+   - (1b) 5 ≤ g < 2⌊m/s⌋: split Z_m into s intervals, colour 010101..., 121212..., 202020...
    - (1c) m = 3g + k for -2 ≤ k ≤ 5: explicit colourings for each residue class of m mod 6
    - (1d) m = 3g or 3g + 3: separate construction
 
@@ -61,13 +62,13 @@ These lemmas reduce the problem of finding an S-polychromatic colouring of Z to 
 one on Z_m for appropriate m. The key is Lemma 12 from the paper.
 -/
 
-/-- Lemma 12(ii): p_Z(S) ≥ p_{Z_q}(S) for any positive q.
-This follows from the homomorphism Z → Z_q. -/
+/-- Lemma 12(ii): The polychromatic number in Z is at least that in Z_q.
+This follows from the homomorphism Z → Z_q (Lemma 9 in the paper). -/
 lemma polychromNumber_Zmod_le (S : Finset ℤ) (q : ℕ) [NeZero q] :
     polychromNumber (S.image (Int.cast : ℤ → ZMod q)) ≤ polychromNumber S := by
   sorry
 
-/-- Lemma 12(iii) is already in PolychromNumber.lean as `polychromNumber_zmod_le`. -/
+/-- Lemma 12(iii) is in PolychromNumber.lean as `polychromNumber_zmod_le` (note lowercase). -/
 
 /-- For c ≥ 289, the transformed set S' = {0, b-a, b, 2b-a} in Z_m (where m = c-a+b)
 has a 3-polychromatic colouring. -/
@@ -81,7 +82,11 @@ lemma large_case_transformed (a b c : ℤ) (ha : 0 < a) (hab : a < b) (hbc : b <
 /-- Main Case 1: Single Cycle (min{d₁, d₂} = 1).
 
 When gcd(b, m) = 1 or gcd(b-a, m) = 1, we can reduce to colouring translates of {0, 1, g, g+1}
-for some g. The proof splits into subcases based on the value of g relative to m. -/
+for some g with 2 ≤ g ≤ m/2. The proof splits into subcases:
+- (1a) g ∈ {2, 3, 4}: handled by explicit colourings in subcase (1c)
+- (1b) 5 ≤ g < 2⌊m/s⌋: interval colourings with pattern 010101..., 121212..., 202020...
+- (1c) m ≈ 3g: explicit colourings for each residue class of m mod 6
+- (1d) m = 3g or 3g + 3: separate constructions -/
 lemma single_cycle_case (m g : ℕ) (hm : 0 < m) (hg : 2 ≤ g) (hgm : g ≤ m / 2) :
     HasPolychromColouring (Fin 3)
       (({0, 1, g, g + 1} : Finset ℕ).image (Nat.cast : ℕ → ZMod m)) := by
@@ -89,7 +94,8 @@ lemma single_cycle_case (m g : ℕ) (hm : 0 < m) (hg : 2 ≤ g) (hgm : g ≤ m /
 
 /-- Main Case 2: Multiple Cycles (min{d₁, d₂} > 1).
 
-When both gcd(b, m) > 1 and gcd(b-a, m) > 1, partition Z_m into cycles and colour each. -/
+When both gcd(b, m) > 1 and gcd(b-a, m) > 1, partition Z_m into cycles of length m/dᵢ
+for one of the choices of i, and colour each cycle appropriately. -/
 lemma multiple_cycle_case (a b c : ℤ) (m : ℕ) (hm : m = (c - a + b).toNat)
     (d₁ d₂ : ℕ) (hd₁ : d₁ = Nat.gcd b.toNat m) (hd₂ : d₂ = Nat.gcd (b - a).toNat m)
     (hmin : 1 < min d₁ d₂) :
