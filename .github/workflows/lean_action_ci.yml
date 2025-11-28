@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Cleanup to free disk space
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@v1.3.1
         with:
           tool-cache: false
 
@@ -42,7 +42,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
 
       - name: Build Lean files
-        uses: leanprover/lean-action@main
+        uses: leanprover/lean-action@v1.3.0
         with:
           mk_all-check: true
           lake-package-directory: Lean
@@ -75,11 +75,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Cleanup to free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+
       - name: Checkout project
         uses: actions/checkout@v6
 
       - name: Build Lean files
-        uses: leanprover/lean-action@main
+        uses: leanprover/lean-action@v1.3.0
         with:
           mk_all-check: true
           lake-package-directory: Lean
