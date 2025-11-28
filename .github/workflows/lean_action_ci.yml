@@ -42,7 +42,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
 
       - name: Build Lean files
-        uses: leanprover/lean-action@main
+        uses: leanprover/lean-action@v1.3.0
         with:
           mk_all-check: true
           lake-package-directory: Lean
@@ -84,7 +84,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build Lean files
-        uses: leanprover/lean-action@main
+        uses: leanprover/lean-action@v1.3.0
         with:
           mk_all-check: true
           lake-package-directory: Lean
