@@ -66,25 +66,17 @@ size at least $`m` has $`p(S) \geq k`.
 
 Strauss conjectured that $`m(k)` is well-defined for all $`k` -- that is, for any $`k`, there exists
 some threshold $`m` beyond which all sets admit $`k`-polychromatic colourings. This was proved by
-Erdős and Lovász using the local lemma in 1975.
+Erdős and Lovász using the Local Lemma in 1975.
 
-## Newman's Conjecture
+## Sets of size four
 
-Newman conjectured a specific value: that $`m(3) = 4`, meaning every set of 4 integers admits a
-3-polychromatic colouring. The upper bound $`m(3) \leq 4` was established by Axenovich, Goldwasser,
-Lidický, Martin, Offner, Talbot, and Young through a combination of theoretical reductions and
-computational verification. The lower bound $`m(3) > 3` follows from the fact that the set
-$`\{0, 1, 3\}` has polychromatic number exactly 2.
+A result of Axenovich, Goldwasser, Lidický, Martin, Offner, Talbot, and Young establishes that
+$`m(3) \leq 4`, meaning every set of 4 integers admits a 3-polychromatic colouring. Combined with
+the fact that the set $`\{0, 1, 3\}` has polychromatic number exactly 2 (giving $`m(3) > 3`), this
+shows $`m(3) = 4$. A consequence of this result is Newman's conjecture, though this consequence is
+not yet formalised.
 
 The following diagram demonstrates the dependencies of these results.
-We define $`p(S)` to be the largest number of colours possible for an $`S`-polychromatic colouring,
-and $`m(k)` to be the smallest $`m` such that every set of size at least $`m` has a polychromatic
-$`k`-colouring. In this language, $`m(k) \leq m` if and only if every set of size at least $`m` has
-$`p(S) \geq k`.
-Note that any $`S`-polychromatic colouring must use at most $`|S|` colours (since each translate
-contains exactly $`|S|` elements and must hit every colour), so $`p(S) \leq |S|`, and in particular
-is defined.
-However it is not as immediate that $`m(k)` is well-defined: Strauss' conjecture says it is.
 
 ```graph
 graph TD
@@ -112,12 +104,12 @@ class H blue
 
 The key tool for proving Strauss' conjecture is the *Lovász local lemma*, a powerful result in
 probabilistic combinatorics. The lemma shows that if we have a collection of "bad" events, each of
-which has small probability and is mostly independent of the others, then with positive probability
+which has relatively small probability and is "mostly independent" of the others, then with positive probability
 *none* of the bad events occur.
 
 ## The Symmetric Local Lemma
 
-In its symmetric form, if we have events $`A_1, \ldots, A_n` where each event:
+In its most common application, the symmetric form, we have events $`A_1, \ldots, A_n` where each event:
 - has probability at most $`p`, and
 - is independent of all but at most $`d` other events,
 
@@ -125,7 +117,7 @@ then if $`e \cdot p \cdot (d + 1) \leq 1`, there exists an outcome avoiding all 
 
 ## Application to Polychromatic Colourings
 
-To prove that a set $`S` of size $`m$ admits a $`k`-polychromatic colouring, we:
+To prove that a set $`S` of size $`m` admits a $`k`-polychromatic colouring, we:
 
 1. Consider a random colouring where each integer is coloured uniformly at random from $`k` colours.
 2. For each translate $`n + S` and each colour $`c`, define a "bad event" as the event that no
@@ -135,9 +127,10 @@ To prove that a set $`S` of size $`m$ admits a $`k`-polychromatic colouring, we:
 4. Bad events for translates $`n + S` and $`n' + S` are independent unless the translates overlap,
    which bounds the dependency.
 
-Applying the local lemma gives the bound $`m(k) \leq 3k^2`. A more refined analysis using the
-Rado selection principle (a topological compactness argument) extends this to infinite colourings
-and yields the asymptotically optimal bound $`m(k) \leq (3 + o(1)) k \log k`.
+The Local Lemma works for finitely many translations. The Rado selection principle (a topological
+compactness argument) extends this to all translations. Then straightforward analysis gives the
+bound $`m(k) \leq 3k^2`, and a more careful asymptotic analysis gives $`m(k) \leq (3 + o(1)) k \log k`.
+This latter bound is optimal up to constant factors (the true value is $`(1 + o(1)) k \log k`).
 
 # The Four-Three Problem
 
@@ -163,11 +156,13 @@ uses:
    $`\mathbb{Z} \to \text{Fin } 3$ that repeats every $`q` integers.
 2. *Bit vector encoding*: Each period-$`q` colouring is encoded as three bit vectors (one per
    colour), enabling efficient verification that every translate hits all colours.
-3. *Residue shortcuts*: Many cases can be quickly discharged using simple modular arithmetic
-   (e.g., if $`a \equiv 1$, $`b \equiv 2 \pmod 3$).
+3. *Residue shortcuts*: Certain cases can be quickly discharged using simple modular arithmetic
+   (e.g., if $`a \equiv 1`, $`b \equiv 2 \pmod 3`).
 
-The C++ code in the `Generation` directory produces around 900,000 colouring witnesses, which are
-verified in Lean using metaprogramming to construct proof terms.
+The C++ code in the `Generation` directory produces colouring witnesses for the vast majority of the
+900,000 sets, but for the cases where a large ($`\geq 30`) period $`q` is necessary, this algorithm
+is too slow. For these, we use Z3Py to find a colouring instead. These are then verified in Lean
+using metaprogramming to construct proof terms.
 
 ## Current Status
 
