@@ -35,6 +35,12 @@ colouring of the integers is called {anchorTerm final}`S`-polychromatic if every
 {anchorTerm final}`S` contains an element of each colour class. In other words, for every integer
 $`n` and every colour $`c`, there exists some element $`s \in S` such that $`n + s` has colour $`c`.
 
+For example, consider the set $`S = \{0, 1\}$. A 2-colouring of the integers is $`S`-polychromatic
+if every pair of consecutive integers $`\{n, n+1\}$ contains both colours. The standard alternating
+colouring (even numbers red, odd numbers blue) achieves this, so $`S` admits a 2-polychromatic
+colouring. In fact, this is optimal: no 3-colouring can be $`S`-polychromatic since each pair would
+need to contain all three colours but only has two elements.
+
 Two primary targets of this repository are:
 - Formalise Erdős and Lovász' solution to Strauss' conjecture on the existence of polychromatic
   colourings of sets of bounded size by any number of colours.
@@ -80,18 +86,20 @@ The repository is organised as follows:
 ## The Polychromatic Number
 
 The central object of study is the *polychromatic number* $`p(S)` of a finite set $`S` of integers.
-This is defined as the maximum number of colours possible in an $`S`-polychromatic colouring. Since
-any $`S`-polychromatic colouring must hit every colour at every translate, the number of colours
-cannot exceed $`|S|`, so $`p(S) \leq |S|`.
+This is defined as the maximum number of colours possible in an $`S`-polychromatic colouring.
 
-In Lean, we formalise this as:
+Why is there a maximum? Because any $`S`-polychromatic colouring must hit every colour at every
+translate of $`S`. Consider any translate $`n + S` — it has exactly $`|S|` elements, and each colour
+must appear among them. Therefore the number of colours cannot exceed $`|S|`, so $`p(S) \leq |S|`.
+
+In Lean, we formalise the polychromatic number as:
 
 ```anchor polychromNumber (module := Polychromatic.PolychromNumber)
 def polychromNumber (S : Finset G) : ℕ :=
   sSup {n | HasPolychromColouring (Fin n) S}
 ```
 
-The bound $`p(S) \leq |S|` is established by:
+The upper bound $`p(S) \leq |S|` is established by:
 
 ```anchor polychromNumber_le_card (module := Polychromatic.PolychromNumber)
 lemma polychromNumber_le_card : polychromNumber S ≤ #S := by
@@ -118,9 +126,10 @@ lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ) (hkS : stra
   Nat.sInf_mem (straussFunction_nonempty hk) S hkS
 ```
 
-Strauss conjectured that $`m(k)` is well-defined for all $`k` -- that is, for any $`k`, there exists
-some threshold $`m` beyond which all sets admit $`k`-polychromatic colourings. This was proved by
-Erdős and Lovász using the Local Lemma in 1975.
+Strauss conjectured that $`m(k)` is *finite* for all $`k$. This is not obvious: while $`p(S) \leq |S|`
+tells us that small sets cannot have many colours, it does not immediately imply that large sets
+must have many colours. Strauss' conjecture asserts that size alone guarantees a minimum polychromatic
+number. This was proved by Erdős and Lovász using the Local Lemma in 1975.
 
 ## Sets of size four
 
@@ -202,6 +211,17 @@ by finite sets $`F$, where $`K$ is finite, then there exists a global function $
 such that for every finite set $`F`, there is a larger finite set $`F' \supseteq F` where $`\chi`
 and $`g_{F'}` agree on $`F$.
 
+Here is the key idea: suppose that for every finite set $`X \subseteq \mathbb{Z}$, we can find an
+$`S`-polychromatic colouring $`g_X$ of $`X`. We want to "glue" these together into a single global
+colouring $`\chi : \mathbb{Z} \to K`. The difficulty is that $`g_X$ and $`g_Y$ might disagree on
+their common domain $`X \cap Y$.
+
+The Rado selection principle resolves this: it guarantees there exists a global colouring $`\chi`
+such that for every finite set $`F$, there is some larger finite set $`F' \supseteq F$ where $`\chi`
+agrees with $`g_{F'}` on $`F`. Since $`g_{F'}` is $`S`-polychromatic on $`F'$, any translate
+$`n + S \subseteq F$ hits all colours under $`g_{F'}$, and hence under $`\chi$. Since this holds
+for all finite $`F` containing any given translate, $`\chi` is $`S`-polychromatic globally.
+
 In Lean, this is formalised as:
 
 ```
@@ -259,6 +279,10 @@ algorithm searches for colourings with period $`q` up to 30. For the vast majori
 sets, this succeeds. For the cases where a period greater than 30 is necessary, the C++ search is
 too slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find colourings instead.
 
+Why $`c < 289`? The bound 289 comes from applying the Local Lemma: when $`c \geq 289` (and hence
+$`|S| = 4`), the set is large enough in "diameter" that the Local Lemma directly guarantees a
+3-polychromatic colouring exists. So we only need computational verification for smaller sets.
+
 Once witnesses are found, Lean verifies them all using three key steps:
 1. *Periodic colourings*: A colouring with period $`q$ is represented as a function
    $`\mathbb{Z}/q\mathbb{Z} \to \text{Fin } 3$ that repeats.
@@ -281,10 +305,17 @@ def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
   ∀ n : G, ∀ k : K, ∃ a ∈ S, χ (n + a) = k
 ```
 
+This says: a colouring $`\chi` is $`S`-polychromatic if for every translation $`n$ and every
+colour $`k$, there exists an element $`a \in S$ such that $`n + a$ has colour $`k$. In other words,
+every translate $`n + S$ contains all colours.
+
 ```anchor HasPolychromColouring (module := Polychromatic.Colouring)
 def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
   ∃ χ : G → K, IsPolychrom S χ
 ```
+
+This says: a set $`S$ admits a $`K`-coloured polychromatic colouring if there exists some colouring
+$`\chi : G \to K$ that is $`S`-polychromatic.
 
 ## The Main Theorem (Partial)
 
