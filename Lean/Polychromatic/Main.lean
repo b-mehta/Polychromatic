@@ -12,13 +12,6 @@ admits a 3-polychromatic colouring.
 ## Main results
 
 * `final_result`: Every set `S` of 4 integers has a 3-polychromatic colouring.
-
-## Status
-
-The theorem statement is complete, but the proof currently contains `sorry`.
-The proof combines:
-1. Computational verification for small cases (quadruples with `c < 289`)
-2. The Lovász Local Lemma for larger cases
 -/
 
 -- ANCHOR: final

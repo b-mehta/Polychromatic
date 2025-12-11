@@ -30,6 +30,7 @@ probabilistic combinatorics for proving the existence of objects avoiding many "
 
 The lemma is proven using induction on subsets, following the standard probabilistic proof.
 The key insight is that conditional probabilities can be bounded using the independence structure.
+There are many variants of the Local Lemma, and we aim to support a few of them.
 
 ## References
 

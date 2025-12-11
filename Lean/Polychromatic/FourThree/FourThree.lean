@@ -265,13 +265,13 @@ elab "prove_allC" i:(num)? : tactic => Elab.Tactic.liftMetaFinishingTactic fun g
 
 end
 
-set_option diagnostics true
+-- set_option diagnostics true
 
-set_option trace.profiler.useHeartbeats true
+-- set_option trace.profiler.useHeartbeats true
 -- set_option trace.profiler true
 -- set_option trace.profiler.threshold 2
 
-lemma allC_10 : allC 8 := by
-  prove_allC 90
+-- lemma allC_10 : allC 8 := by
+--   prove_allC 90
 
-#print allC_10._proof_1_75
+-- #print allC_10._proof_1_75

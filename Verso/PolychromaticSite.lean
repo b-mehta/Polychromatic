@@ -320,8 +320,7 @@ The main theorem states that every set of 4 integers has a 3-polychromatic colou
 ```anchor final (module := Polychromatic.Main)
 /-- Every set `S` of 4 integers has a 3-polychromatic colouring. -/
 theorem final_result (S : Finset ℤ) (hS : S.card = 4) :
-    HasPolychromColouring (Fin 3) S := by
-  sorry
+    HasPolychromColouring (Fin 3) S :=
 ```
 
 
