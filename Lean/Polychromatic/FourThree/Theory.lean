@@ -69,19 +69,13 @@ lemma suffices_triple
   have : 0 < a := lt_of_le_of_ne' (hS'.le _ (by grind)) (by grind)
   grind
 
-lemma suffices_cases (C : ℕ)
-    (h₁ : ∀ a b c : ℤ, 0 < a → a < b → b < c → c < C → HasPolychromColouring (Fin 3) {0, a, b, c})
-    (h₂ : ∀ a b c : ℤ, 0 < a → a < b → b < c → C ≤ c → HasPolychromColouring (Fin 3) {0, a, b, c}) :
-    ∀ a b c : ℤ, 0 < a → a < b → b < c → HasPolychromColouring (Fin 3) {0, a, b, c} := by
-  grind
-
-lemma suffices_flip (C : ℕ)
-    (h : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → c < C →
+lemma suffices_flip
+    (h : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c →
       HasPolychromColouring (Fin 3) {0, a, b, c}) :
-    ∀ a b c : ℤ, 0 < a → a < b → b < c → c < C → HasPolychromColouring (Fin 3) {0, a, b, c} := by
-  intro a b c ha hab hbc hcc
+    ∀ a b c : ℤ, 0 < a → a < b → b < c → HasPolychromColouring (Fin 3) {0, a, b, c} := by
+  intro a b c ha hab hbc
   by_cases hsum : a + b ≤ c
-  · exact h a b c ha hab hsum hcc
+  · exact h a b c ha hab hsum
   rw [← hasPolychromColouring_neg, ← hasPolychromColouring_vadd (n := c)]
   suffices HasPolychromColouring (Fin 3) {0, c - b, c - a, c} by
     simp only [neg_insert, neg_zero, neg_singleton, vadd_finset_insert, vadd_eq_add, add_zero,
@@ -91,15 +85,15 @@ lemma suffices_flip (C : ℕ)
   grind
 
 /-- It suffices to check coprime cases. -/
-lemma suffices_gcd (C : ℕ)
-    (h : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → c < C → Finset.gcd {a, b, c} id = 1 →
+lemma suffices_gcd
+    (h : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → Finset.gcd {a, b, c} id = 1 →
       HasPolychromColouring (Fin 3) {0, a, b, c}) :
-    ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → c < C →
+    ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c →
       HasPolychromColouring (Fin 3) {0, a, b, c} := by
-  intro a b c ha hab hbc hcc
+  intro a b c ha hab hbc
   let d := Finset.gcd {a, b, c} id
   obtain hd | hd := eq_or_ne d 1
-  · exact h a b c ha hab hbc hcc hd
+  · exact h a b c ha hab hbc hd
   have hd₀ : 0 < d := gcd_pos ⟨a, by simp, ha.ne'⟩
   let a' := a / d
   let b' := b / d
@@ -123,7 +117,7 @@ lemma suffices_gcd (C : ℕ)
     le_polychromNumber_iff_hasPolychromColouring (by simp)]
   refine h _ _ _
     (Int.ediv_pos_of_pos_of_dvd ha hd₀.le (Finset.gcd_dvd (by simp)))
-    ?_ ?_ ?_ ‹_›
+    ?_ ?_ ‹_›
   · simp only [a', b']
     rw [Int.ediv_lt_ediv_iff_of_dvd_of_pos hd₀ hd₀, mul_comm]
     · gcongr
@@ -134,10 +128,15 @@ lemma suffices_gcd (C : ℕ)
     swap
     · exact Finset.gcd_dvd (by simp)
     apply Int.ediv_le_ediv hd₀ hbc
-  · simp only [c']
-    grw [Int.ediv_le_self]
-    · exact hcc
-    · cutsat
+
+lemma suffices_cases (C : ℕ)
+    (h₁ : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → c < C → Finset.gcd {a, b, c} id = 1 →
+      HasPolychromColouring (Fin 3) {0, a, b, c})
+    (h₂ : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → C ≤ c → Finset.gcd {a, b, c} id = 1 →
+      HasPolychromColouring (Fin 3) {0, a, b, c}) :
+    ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → Finset.gcd {a, b, c} id = 1 →
+      HasPolychromColouring (Fin 3) {0, a, b, c} := by
+  grind
 
 /-- A predicate stating that `{0, a, b, c}` has a 3-polychromatic colouring. -/
 def Accept (a b c : ℕ) : Prop :=

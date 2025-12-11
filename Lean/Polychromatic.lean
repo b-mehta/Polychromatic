@@ -3,6 +3,7 @@ import Polychromatic.Compactness
 import Polychromatic.DiscreteProbability
 import Polychromatic.Existence
 import Polychromatic.ForMathlib.Misc
+import Polychromatic.FourThree.Combi
 import Polychromatic.FourThree.Compute
 import Polychromatic.FourThree.FourThree
 import Polychromatic.FourThree.Theory

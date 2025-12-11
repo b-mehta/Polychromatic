@@ -1,6 +1,7 @@
 import Polychromatic.Existence
 import Polychromatic.PolychromNumber
 import Polychromatic.FourThree.Compute
+import Polychromatic.FourThree.Combi
 
 /-!
 # Main Theorem
@@ -20,13 +21,15 @@ The proof combines:
 2. The Lovász Local Lemma for larger cases
 -/
 
-example : ∀ (a b c : ℤ), 0 < a → a < b → b < c → c < 289 →
-    HasPolychromColouring (Fin 3) {0, a, b, c} :=
-  suffices_flip _ (suffices_gcd _ (suffices_nat _ (allC_289)))
-
 -- ANCHOR: final
 /-- Every set `S` of 4 integers has a 3-polychromatic colouring. -/
 theorem final_result (S : Finset ℤ) (hS : S.card = 4) :
-    HasPolychromColouring (Fin 3) S := by
-  sorry
+    HasPolychromColouring (Fin 3) S :=
 -- ANCHOR_END: final
+  suffices_minimal
+    (suffices_triple
+      (suffices_flip
+        (suffices_gcd
+          (suffices_cases _
+            (suffices_nat _ allC_289)
+          normal_bit)))) _ hS

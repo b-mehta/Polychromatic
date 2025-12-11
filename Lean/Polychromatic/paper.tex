@@ -1,0 +1,80 @@
+Let $S \subseteq \Z$ have cardinality four.  Since all translates of $S$ have the same polychromatic number, we may assume that 0 is the smallest element of $S$, and by Lemma~\ref{reduc}, Part (i), it suffices to prove the theorem in the case that $S=\{0,a,b,c\}$ with $0<a<b<c$ and $\gcd(a,b,c)=1$.
+
+It is possible, though tedious, to prove the entire theorem by hand.  Thus in the interest of simplifying the exposition, we verified using a computer search that for every $S$ with diameter at most 288 there exists an $S$-polychromatic 3-coloring of $\Z_q$ for some $q$ depending on $S$.  The code for this search has been included as an ancillary file with the preprint of this paper at arxiv.org/abs/1704.00042.  By Lemma~\ref{reduc}, Part (ii), this gives a periodic $S$-polychromatic 3-coloring of $\Z$.  Hence we suppose that $c \geq 289$.
+
+For the remainder of the proof, let $m=c-a+b$. By Lemma~\ref{reduc}, Parts (ii) and (iii), it suffices to show that we can 3-color $\Z_m= \{0,1,\ldots,m-1\}$ so that the translates of $\{0,b-a,b,2b-a\}$ are polychromatic.  So for the remainder of the proof we assume $S=\{0,b-a,b,2b-a\}$ and seek an $S$-polychromatic 3-coloring of $\Z_m$. The key observation regarding $S$ is that it contains two repeated differences: $b-a$ and $b$.
+
+Define $d_1=\gcd(b,m)$ and $d_2=\gcd(b-a,m)$. Since $1=\gcd(a,b,c)=\gcd(b-a,b,c-a+b) = \gcd(b-a, b, m)$, we know $\gcd(d_1,d_2)=1$. We distinguish two main cases. In the first case, which we call ``single cycle,'' we assume $\min\{d_1,d_2\}=1$ and give a coloring of $\Z_m$. In the second case, which we call ``multiple cycle,'' we assume $\min\{d_1,d_2\}>1$ and partition $\Z_m$ into multiple cycles of length $m/d_i$ for one of the choices of $i$.  We then give a rule for coloring each cycle.
+
+\textbf{Main case 1 (Single cycle):}  Suppose $\min\{d_1,d_2\}=1$. Without loss of generality, assume $d_1=1$ (if not, then simply switch all occurences of $b$ and $b-a$ in the argument below).  Let $2\leq g \le m-2$ satisfy $gb \equiv b-a \pmod{m}$, so that $S = \{0,bg,b,b(g+1)\}$.
+Applying Lemma~\ref{reduc}, Part (iv), with $q=m$ and $k=b$, we can instead work with $S = \{0,g,1,g+1\} = \{0,1,g,g+1\}$.
+
+We may assume that $g\leq m/2$, as otherwise we could work with the translate $(m-g)+S =\{0,1, m-g, m-g+1\}$. Let $s$ be the smallest multiple of 3 such that $g>\lceil m/s\rceil$. We consider four subcases:  The first two are (1a) $g=2$, $3$, or $4$ and (1b) $5 \le g<2\lfloor m/s \rfloor$. In the remaining subcases (1c) and (1d), $2\lfloor m/s\rfloor\leq g \leq \lceil m/(s-3)\rceil$. For $m >8$, if $2\lfloor m/s\rfloor\leq g\leq m/2$ then $s >3$, and for $m > 44$, if $2\lfloor m/s\rfloor\leq g \leq \lceil m/(s-3)\rceil$ then $s<9$.  Since $m > c \ge 289 > 44$, we can assume $s=6$, so $2\lfloor m/6\rfloor\leq g \leq \lceil m/3\rceil$. This implies $m=3g+k$ where $-2 \le k \le 5$ and there are two further subcases to consider, depending on the residue class of $m$ modulo 6: (1c)  $m=3g-2$, $3g-1$, $3g+1$, $3g+2$, $3g+4$, or $3g+5$, and (1d) $m=3g$ or $3g+3$.
+
+\textbf{Subcase (1a):} Suppose $g=2$, $3$, or $4$. Then $S = \{0,1,2,3\}$,  $\{0,1,3,4\}$, or $\{0,1,4,5\}$, respectively.  In Subcase (1c) we will construct $S$-polychromatic 3-colorings of $\Z_m$ for each of these sets.
+
+\textbf{Subcase (1b):}  Suppose $5 \le g<2\lfloor m/s \rfloor$. Then split $\Z_m$ into $s$ intervals as equally as possible (i.e. of lengths $\lfloor m/s\rfloor$ and $\lceil m/s \rceil$) and color these intervals $010101\ldots$, followed by $121212\ldots$, then $202020\ldots$, repeating $s/3$ times. Since $\lceil m/s\rceil<g<2\lfloor m/s \rfloor$, any translate of $S'$ where the pairs $\{0,1\}$ and $\{g,g+1\}$ lie in different intervals gets all three colors. If one of the pairs $\{0,1\}$ or $\{g,g+1\}$ straddles two consecutive intervals, this pair may get only the single color common to these two intervals, but then the other pair lies fully inside a third interval which is colored with the remaining two colors.
+
+\textbf{Subcase (1c):} Suppose  $m=3g-2$, $3g-1$, $3g+1$, $3g+2$, $3g+4$, or $3g+5$. In this case we know that $m\not\equiv 0 \pmod{3}$ so we can apply Lemma~\ref{reduc}, Part (iv), with $q=m$ and $k=3$, and instead work with one of the sets in $\mathcal{S} =  \{\{0,2,3,5\}, \{0,1,3,4\}, \{0,1,2,3\}, \{0,3,4,7\}, \{0,3,5,8\}\}$. For example, if $m=3g-2$, then multiplying by 3, $S$ is transformed into $\{0,3,3g,3g+3\} \equiv \{0,2,3,5\}$, while if $m=3g+4$, then multiplying by 3, $S$ is transformed into $\{0,3,3g,3g+3\} \equiv \{0,3,-4,-1\}$, which is a translate of $\{0,3,4,7\}$.
+
+Thus we have reduced the problem to finding an $S$-polychromatic 3-coloring of $\Z_m$ for each of the sets $S\in \mathcal{S}$. For each $S\in \mathcal{S}$, in Table~\ref{periodrr1} we list one interval of length $r$ and one of length $r+1$ obtained by adding an initial 0 to the other interval. We  also include an interval for $\{0,1,4,5\}$ to cover Subcase (1a).  Each of the intervals has the property that concatenating the intervals of length $r$ and $r+1$ in any way results in an $S$-polychromatic coloring for the corresponding set.  One can check this by hand, using the fact that in each case, a translate of $S\in \mathcal{S}$ intesects at most two consecutive intervals. Hence if $m$ can be expressed as a positive integer combination of $r$ and $r+1$, $m=hr + k(r+1)$, we can obtain an $S$-polychromatic coloring with period $m$. For $r=3,6,7,9$, by the 2-coin Frobenius problem, $m$ can be expressed as a positive integer combination of $r$ and $r+1$ for any $m$ greater than $r^2-r-1\leq 71<289$.
+
+%
+%"For each S in (script S) we list two "fragments" (or "blocks"?) of a coloring of Z_m, one of them of length r and the other of length r+1 obtained from the first by adding an extra initial 0.  It is not hard to check that piecing together these fragments of length r and r+1 in any way results in an S-polychromatic coloring.  Hence if we can express m as hr + k(r+1)...(and then the Frobenius stuff).  For example, for S = {0,1,4,5}, the template (I forget if we used that word earlier) must hit either 2,3, or 4 0's, and at least one 1 and one 2, not matter how the fragments are pieced together.
+
+%Thus we have reduced the problem to finding an $S$-polychromatic 3-coloring of $\Z_m$ for each of the sets $S\in \mathcal{S}$. For each $S\in \mathcal{S}$ we write one interval of a periodic $S$-polychromatic 3-coloring on $\Z$ in Table~\ref{periodrr1}, and also include one for $\{0,1,4,5\}$ to cover Subcase (1a). Each of these periodic colorings also has the following property, which can be checked by hand: If the coloring has period $r$, then the periodic 3-coloring with period $r+1$ obtained by adding a prefix of 0 to each interval is also $S$-polychromatic.  In each case this means that for any $h,k\geq 0$ we can create a period $hr+k(r+1)$ $S$-polychromatic 3-coloring by concatenating a suitable number of the two blocks. This follows from the observation that in each case, a translate of $S\in \mathcal{S}$ intesects at most two consecutive blocks.
+
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{c|c|l|l}
+$S$ &$r$ &period $r$ & period $r+1$ \\ \hline
+$\{0,2,3,5\}  $&6& 001122& 0001122\\
+$\{0,1,3,4\} $&6& 001212& 0001212\\
+$\{0,1,2,3\}$ &3& 012& 0012\\
+$\{0,3,4,7\}$&9& 000111222& 0000111222\\
+$\{0,3,5,8\}$&9& 000111222& 0000111222\\
+$\{0,1,4,5\}  $&7& 0001212& 00001212\\
+\end{tabular}
+\end{center}
+\caption{One interval of a periodic coloring for sets in Subcases (1a) and (1c).}
+\label{periodrr1}
+\end{table}
+
+
+
+\textbf{Subcase (1d):} Suppose $m=3g$ or $3g+3$. If $g\not\equiv 0 \pmod{3}$ then simply color $\Z_m$ with the pattern $0120120\ldots012$. If $g\equiv 0\pmod{3}$ and $m=3g$, color $\Z_m$ in 3 equal intervals, each of length $g$: $012012\ldots012$ followed by $120120\ldots120$ followed by $201201\ldots201$. Finally, if $g\equiv0 \pmod{3}$ and $m=3g+3$ we color $\Z_m$ in 3 equal intervals, each of length $g+1$: $012012\ldots0120$ followed by $201201\ldots2012$ followed by $120120\ldots1201$.
+
+\textbf{Main case 2 (Multiple cycles):} Suppose $\min\{d_1,d_2\}>1$. Since $d_1$ and $d_2$ are relatively prime, at most one of them can be a multiple of 3.  Choose the smallest of these numbers that is not a multiple of 3, and as in the single cycle case, without loss of generality assume it is $d_1$.
+
+Let $e_1=m/d_1$ and $e_2=m/d_2$. For $0 \le i <d_1$, let
+\[C_i = \{(b-a)i +bj\pmod{m}: 0 \le j < e_1\}.\]
+Since
+\[\Z_m=\{(b-a)i +bj \pmod{m} : 0\leq i < d_1, 0\leq j< e_1\},\]
+the $C_i$'s form a partition of $\Z_m$ into $d_1$ cycles, each with $e_1$ elements.
+
+\junk{%%%%%%%%%%%%%%%%%%
+\begin{align*}
+C_0&=\{0,b,2b,\ldots,(e_1-1)b\},\\
+C_1&=\{(b-a),(b-a)+b,\ldots,(b-a)+(e_1-1)b\},\\
+&\vdots\\
+C_{d_1-1}&=\{(d_1-1)(b-a),\ldots,(d_1-1)(b-a)+(e_1-1)b\}.\\
+\end{align*}
+}%%%%%%%%%%%%%%%%%%%%%%%5
+
+Let $c_{i,j}$ denote the $j$th element of $C_i$, i.e. $c_{i,j}=i(b-a)+jb \pmod{m}$. Note that any translate of $S$ contains two consecutive elements of two consecutive cycles, i.e. any translate of $S$ has the form $\{c_{i,j}, c_{i,j+1}, c_{i+1,j}, c_{i+1,j+1}\}$, where the first entry in the subscript is taken$\mod{d_1}$ and the second entry is taken$\mod{e_1}$. We describe an $S$-polychromatic 3-coloring for each of four subcases: (2a) $e_1$ is even, (2b) $d_1$ is even and $e_1$ is odd, (2c) $d_1$ and $e_1$ are both odd, with $e_1\leq 17$, and (2d) $d_1$ and $e_1$ are both odd, with $e_1\geq 19$.
+
+\textbf{Subcase (2a):} Suppose $e_1$ is even. For $i=0,\ldots,\lfloor d_1/2\rfloor -1$, color each $C_{2i}$ by  $01010\ldots 01$ and each $C_{2i+1}$ by $02020\ldots 02$. Finally, if $d_1$ is odd, color $C_{d_1-1}$ by $1212\ldots 12$.
+
+\textbf{Subcase (2b):} Suppose $d_1$ is even and $e_1$ is odd. For $i=0,\ldots,d_1/2 -1$, color each $C_{2i}$ by  $01010\ldots 011$ and each $C_{2i+1}$ by $22020\ldots 02$.
+
+\textbf{Subcase (2c):} Suppose $d_1$ and $e_1$ are both odd, with $e_1\leq 17$. Since $e_1e_2\geq m>c \ge 289$, one of $e_1$ and $e_2$ is larger than 17, so $e_2> e_1$ and hence $d_1 > d_2$.  Since $d_1$ is the smaller of $d_1$ and $d_2$ that is not a multiple of 3, $d_2$ must be a multiple of 3, and thus so is $e_1$.
+
+We color each $C_i$ with one of three patterns: $012012\ldots012$, $120120\ldots 120$, or $201201\ldots201$. Such a coloring is $S$-polychromatic so long as for all $i$, $C_i$ and $C_{i+1}$ are colored with different patterns. For $0 \le i \le (d_1-3)/2$, color $C_{2i}$ with the first pattern and color $C_{2i+1}$ with the second pattern. Finally, color $C_{d_1-1}$ with the third pattern.
+
+\textbf{Subcase (2d):} Suppose $d_1$ and $e_1$ are both odd, with $e_1\geq 19$. Since $d_1$ is not divisible by 3 and $\min\{d_1,d_2\}>1$, $d_1\geq 5$.  Let  $e_1=u+v+w$ be a sum of odd integers $u$, $v$, $w$ with $u\geq v\geq w\geq u-2$.  Color $C_0$ in intervals of size $u,v,w$, using the patterns $0101\ldots010$ then $1212\ldots 121$ and then $2020\ldots 202$. For each  $i\geq 1$, color $C_i$ by taking a ``counterclockwise rotation'' of length $r_i$ of the coloring of $C_{i-1}$, so that the color of $c_{i,j+r}$ is the same as the color of $c_{i-1,j}$. For $1 \le i \le d_1-1$, if $u\leq r_i \leq v+w=e_1-u$, then each translate of $S$ meeting $C_{i-1}$ and $C_{i}$ receives all 3 colors. %(This is similar to the case $s=3$ of the single cycle case although parity of the parts also plays a role here.)
+
+It remains to show that there are choices of $r_1, \ldots, r_{d_1-1}$ with $u\leq r_i \leq v+w=e_1-u$ so that of the translates of $S$ meeting $C_{d_1-1}$ and $C_0$ receive all three colors. The coloring of $C_0$ is a ``clockwise rotation'' of length $R= -r_1-r_2 -\cdots -r_{d_1-1}$ of the coloring of $C_{d_1-1}$, i.e. the  color of $c_{0,j-R}$ is the same as the color of $c_{d_1-1,j}$. Since for each $i$, $u\leq r_i \leq v+w=e_1-u$, it suffices to show that there is a multiple of $e_1$ in the interval $[d_1u,d_1(e_1-u)]$, ensuring there are choices for the $r_i$'s such that $R$ is congruent to a number between $u$ and $e_1-u$ $\pmod{e_1}$. This certainly holds if $d_1(e_1-2u)\geq e_1-1$ which, since $d_1\geq 5$, holds if $4e_1\geq 10u-1$. This inequality is true for $e_1\geq 19$.
+
+This completes the multiple cycles case and the proof.
