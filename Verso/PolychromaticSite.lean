@@ -247,7 +247,7 @@ theorem Finset.rado_selection {α : Type*} {β : α → Type*}
     [∀ a, Finite (β a)]
     (g : (s : Finset α) → (a : α) → β a) :
     ∃ χ : (a : α) → β a, ∀ s : Finset α,
-      ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x
+      ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x := by
 ```
 
 By applying the Local Lemma to each finite set $`X` to get colourings $`g_X`, and then using Rado
