@@ -30,9 +30,9 @@ set_option verso.exampleModule "Polychromatic.Main"
 # Overview
 
 This repository provides a formalisation in the Lean 4 theorem prover of results related to
-polychromatic colourings of integers. Given a finite set {anchorTerm final}`S` of integers, a
-colouring of the integers is called {anchorTerm final}`S`-polychromatic if every translate of
-{anchorTerm final}`S` contains an element of each colour class. In other words, for every integer
+polychromatic colourings of integers. Given a finite set $`S` of integers, a
+colouring of the integers is called $`S`-polychromatic if every translate of
+$`S` contains an element of each colour class. In other words, for every integer
 $`n` and every colour $`c`, there exists some element $`s \in S` such that $`n + s` has colour $`c`.
 
 For example, consider the set $`S = \{0, 1\}`. A 2-colouring of the integers is $`S`-polychromatic
@@ -44,7 +44,7 @@ need to contain all three colours but only has two elements.
 Two primary targets of this repository are:
 - Formalise Erdős and Lovász' solution to Strauss' conjecture on the existence of polychromatic
   colourings of sets of bounded size by any number of colours.
-- Formalise the result that every set of size `4` has a polychromatic `3`-colouring, due to
+- Formalise the result that every set of size $`4` has a polychromatic $`3`-colouring, due to
   Axenovich, Goldwasser, Lidický, Martin, Offner, Talbot, and Young.
 
 The first of these requires results from probability theory and topology, as well as some calculus.
@@ -68,9 +68,7 @@ The repository is organised as follows:
   The formal Lean 4 proofs, including:
   - `Colouring.lean`: Core definitions of polychromatic colourings
   - `LocalLemma.lean`: The Lovász local lemma
-  - `Existence.lean`: Existence results via probabilistic methods
-  - `PolychromNumber.lean`: The polychromatic number
-  - `LovaszFunction.lean`: The Strauss function and its bounds
+  - `Existence.lean`: Existence results via probabilistic and topological methods
   - `FourThree/`: Computational verification for the four-three problem
 
 : `Verso`
@@ -202,7 +200,7 @@ In its most common application, the symmetric form, we have events $`A_1, \ldots
 - has probability at most $`p`, and
 - is independent of all but at most $`d` other events,
 
-then if $`e \cdot p \cdot (d + 1) \leq 1`, there exists an outcome avoiding all bad events.
+then if $`e p (d + 1) \leq 1`, there exists an outcome avoiding all bad events.
 
 ## Application to Polychromatic Colourings
 
@@ -244,10 +242,12 @@ for all finite $`F` containing any given translate, $`\chi` is $`S`-polychromati
 
 In Lean, this is formalised as follows.
 
-```
-theorem Finset.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
+```anchor rado (module := Polychromatic.Compactness)
+theorem Finset.rado_selection {α : Type*} {β : α → Type*}
+    [∀ a, Finite (β a)]
     (g : (s : Finset α) → (a : α) → β a) :
-    ∃ χ : (a : α) → β a, ∀ s : Finset α, ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x
+    ∃ χ : (a : α) → β a, ∀ s : Finset α,
+      ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x
 ```
 
 By applying the Local Lemma to each finite set $`X` to get colourings $`g_X`, and then using Rado
