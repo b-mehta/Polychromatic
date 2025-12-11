@@ -83,23 +83,46 @@ The repository is organised as follows:
 
 # Mathematical Background
 
+## Definitions
+
+We first define the predicate for a colouring to be polychromatic for a set.
+
+```anchor IsPolychrom (module := Polychromatic.Colouring)
+def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
+  ∀ n : G, ∀ k : K, ∃ a ∈ S, χ (n + a) = k
+```
+
+This says that a colouring $`\chi` is $`S`-polychromatic if for every translation $`n` and every
+colour $`k`, there exists an element $`a \in S` such that $`n + a` has colour $`k`. In other words,
+every translate $`n + S` contains all colours.
+
+We can then say a set $`S` admits a $`K`-coloured polychromatic colouring if there exists some
+colouring $`\chi : G \to K` that is $`S`-polychromatic.
+
+```anchor HasPolychromColouring (module := Polychromatic.Colouring)
+def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
+  ∃ χ : G → K, IsPolychrom S χ
+```
+
 ## The Polychromatic Number
 
 The central object of study is the *polychromatic number* $`p(S)` of a finite set $`S` of integers.
 This is defined as the maximum number of colours possible in an $`S`-polychromatic colouring.
 
-Why is there a maximum? Because any $`S`-polychromatic colouring must hit every colour at every
-translate of $`S`. Consider any translate $`n + S` — it has exactly $`|S|` elements, and each colour
-must appear among them. Therefore the number of colours cannot exceed $`|S|`, so $`p(S) \leq |S|`.
+Why does this maximum exist?
+Any $`S`-polychromatic colouring must hit every colour at every translate of $`S`.
+Consider any translate $`n + S` — it has exactly $`|S|` elements, and each colour must appear among
+them.
+Therefore the number of colours cannot exceed $`|S|`, so $`p(S) \leq |S|`.
 
-In Lean, we formalise the polychromatic number as:
+In Lean, we formalise the polychromatic number as in a direct way.
 
 ```anchor polychromNumber (module := Polychromatic.PolychromNumber)
 def polychromNumber (S : Finset G) : ℕ :=
   sSup {n | HasPolychromColouring (Fin n) S}
 ```
 
-The upper bound $`p(S) \leq |S|` is established by:
+The upper bound $`p(S) \leq |S|` is established also.
 
 ```anchor polychromNumber_le_card (module := Polychromatic.PolychromNumber)
 lemma polychromNumber_le_card : polychromNumber S ≤ #S := by
@@ -111,14 +134,19 @@ The *Strauss function* $`m(k)` is defined as the smallest $`m` such that every s
 $`m` has a polychromatic $`k`-colouring. Equivalently, $`m(k) \leq m` if and only if every set of
 size at least $`m` has $`p(S) \geq k`.
 
-In Lean, this is defined as:
+Strauss conjectured that $`m(k)` is *finite* for all $`k`.
+This is not obvious: while $`p(S) \leq |S|` tells us that small sets cannot have many colours,
+it does not immediately imply that large sets must have many colours.
+Strauss' conjecture asserts that size alone guarantees a minimum polychromatic number.
+
+This was proved by Erdős and Lovász using the Local Lemma in 1975.
 
 ```anchor straussFunction (module := Polychromatic.LovaszFunction)
 noncomputable def straussFunction (k : ℕ) : ℕ :=
   sInf {m : ℕ | ∀ S : Finset ℤ, m ≤ #S → HasPolychromColouring (Fin k) S}
 ```
 
-The key property of the Strauss function is that sets of sufficient size have polychromatic colourings:
+The key property of the Strauss function is that sets of sufficient size have polychromatic colourings.
 
 ```anchor straussFunction_spec (module := Polychromatic.LovaszFunction)
 lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ) (hkS : straussFunction k ≤ #S) :
@@ -126,26 +154,14 @@ lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ) (hkS : stra
   Nat.sInf_mem (straussFunction_nonempty hk) S hkS
 ```
 
-Strauss conjectured that $`m(k)` is *finite* for all $`k`. This is not obvious: while $`p(S) \leq |S|`
-tells us that small sets cannot have many colours, it does not immediately imply that large sets
-must have many colours. Strauss' conjecture asserts that size alone guarantees a minimum polychromatic
-number. This was proved by Erdős and Lovász using the Local Lemma in 1975.
-
 ## Sets of size four
 
 A result of Axenovich, Goldwasser, Lidický, Martin, Offner, Talbot, and Young establishes that
 $`m(3) \leq 4`, meaning every set of 4 integers admits a 3-polychromatic colouring. Combined with
 the fact that the set $`\{0, 1, 3\}` has polychromatic number exactly 2 (giving $`m(3) > 3`), this
-shows $`m(3) = 4`. A consequence of this result is Newman's conjecture, though this consequence is
-not yet formalised.
+shows $`m(3) = 4`.
 
-In Lean, we prove that the set $`\{0, 1, 3\}` has polychromatic number 2:
-
-```anchor polychromNumber_three_eq_two (module := Polychromatic.PolychromNumber)
-lemma polychromNumber_three_eq_two : polychromNumber (G := ℤ) {0, 1, 3} = 2 := by
-```
-
-The following diagram demonstrates the dependencies of these results.
+The following diagram demonstrates the dependencies of the main results.
 
 ```graph
 graph TD
@@ -158,18 +174,21 @@ A --> B
 B --> C["$$m(k) \leq 3k^2$$"]
 C --> D["$$m(k) \leq (3+o(1))\;k\, \log\, k$$"]
 
-B --> G["$$p(S) \geq 3\;\text{ if }\;\#S = 4\;\text{ and diam}(S) \lt 289$$"]
+B --> E["$$m(3) = 4$$"]
+
+G["$$p(S) \geq 3\;\text{ if }\;\#S = 4\;\text{ and diam}(S) \lt 289$$"]
 G --> H["$$p(S) \geq 3\;\text{ if }\;\#S = 4$$"]
+H --> E
 
 classDef green  fill:#f0fdf4,stroke:#16a34a,stroke-width:1px,color:#14532d,rx:5px,ry:5px;
 classDef blue   fill:#eff6ff,stroke:#2563eb,stroke-width:1px,color:#1e3a8a,rx:5px,ry:5px,stroke-dasharray: 3 3;
 
 class A,C,D,G green;
 class B green;
-class H blue
+class E,H blue
 ```
 
-# The Lovász Local Lemma Approach
+# Proving Strauss' conjecture
 
 The key tool for proving Strauss' conjecture is the *Lovász local lemma*, a powerful result in
 probabilistic combinatorics. The lemma shows that if we have a collection of "bad" events, each of
@@ -222,7 +241,7 @@ agrees with $`g_{F'}` on $`F`. Since $`g_{F'}` is $`S`-polychromatic on $`F'`, a
 $`n + S \subseteq F` hits all colours under $`g_{F'}`, and hence under $`\chi`. Since this holds
 for all finite $`F` containing any given translate, $`\chi` is $`S`-polychromatic globally.
 
-In Lean, this is formalised as:
+In Lean, this is formalised as follows.
 
 ```
 theorem Finset.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
@@ -291,27 +310,6 @@ Once witnesses are found, Lean verifies them all using three key steps:
 
 The computational verification for $`c < 289` is complete in Lean. The remaining theoretical part
 is in progress.
-
-# Definitions
-
-The core definitions in Lean are:
-
-```anchor IsPolychrom (module := Polychromatic.Colouring)
-def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
-  ∀ n : G, ∀ k : K, ∃ a ∈ S, χ (n + a) = k
-```
-
-This says: a colouring $`\chi` is $`S`-polychromatic if for every translation $`n` and every
-colour $`k`, there exists an element $`a \in S` such that $`n + a` has colour $`k`. In other words,
-every translate $`n + S` contains all colours.
-
-```anchor HasPolychromColouring (module := Polychromatic.Colouring)
-def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
-  ∃ χ : G → K, IsPolychrom S χ
-```
-
-This says: a set $`S` admits a $`K`-coloured polychromatic colouring if there exists some colouring
-$`\chi : G \to K` that is $`S`-polychromatic.
 
 ## The Main Theorem (Partial)
 
