@@ -149,7 +149,8 @@ noncomputable def straussFunction (k : ℕ) : ℕ :=
 The key property of the Strauss function is that sets of sufficient size have polychromatic colourings.
 
 ```anchor straussFunction_spec (module := Polychromatic.LovaszFunction)
-lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ) (hkS : straussFunction k ≤ #S) :
+lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ)
+    (hkS : straussFunction k ≤ #S) :
     HasPolychromColouring (Fin k) S :=
   Nat.sInf_mem (straussFunction_nonempty hk) S hkS
 ```
@@ -257,7 +258,8 @@ selection, we obtain a global colouring $`\chi` that is $`S`-polychromatic.
 Straightforward analysis of the probability bounds gives the quadratic upper bound:
 
 ```anchor straussFunction_le_of_forall_three_mul_sq (module := Polychromatic.LovaszFunction)
-lemma straussFunction_le_of_forall_three_mul_sq {k : ℕ} : straussFunction k ≤ 3 * k ^ 2 := by
+lemma straussFunction_le_of_forall_three_mul_sq {k : ℕ} :
+    straussFunction k ≤ 3 * k ^ 2 := by
 ```
 
 A more careful asymptotic analysis gives $`m(k) \leq (3 + o(1)) k \log k`:

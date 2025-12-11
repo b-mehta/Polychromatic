@@ -48,7 +48,8 @@ private lemma straussFunction_nonempty {k : ℕ} (hk : k ≠ 0) :
 
 /-- Sets of size at least `straussFunction k` have `k`-colourings. -/
 -- ANCHOR: straussFunction_spec
-lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ) (hkS : straussFunction k ≤ #S) :
+lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ)
+    (hkS : straussFunction k ≤ #S) :
     HasPolychromColouring (Fin k) S :=
   Nat.sInf_mem (straussFunction_nonempty hk) S hkS
 -- ANCHOR_END: straussFunction_spec
@@ -123,7 +124,8 @@ lemma four_le_straussFunction_three : 4 ≤ straussFunction 3 := by
 
 
 -- ANCHOR: straussFunction_le_of_forall_three_mul_sq
-lemma straussFunction_le_of_forall_three_mul_sq {k : ℕ} : straussFunction k ≤ 3 * k ^ 2 := by
+lemma straussFunction_le_of_forall_three_mul_sq {k : ℕ} :
+    straussFunction k ≤ 3 * k ^ 2 := by
 -- ANCHOR_END: straussFunction_le_of_forall_three_mul_sq
   obtain rfl | hk := eq_or_ne k 0
   · simp
