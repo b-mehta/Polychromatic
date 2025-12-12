@@ -48,7 +48,7 @@ jobs:
           lake-package-directory: Lean
 
       - name: Cache Mathlib Docs
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             Lean/docbuild/.lake/build/doc
