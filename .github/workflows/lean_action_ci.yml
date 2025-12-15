@@ -125,14 +125,14 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download Verso site
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: verso-site
           path: site
         if: github.ref == 'refs/heads/main'
 
       - name: Download docs
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: docs
           path: site/docs
