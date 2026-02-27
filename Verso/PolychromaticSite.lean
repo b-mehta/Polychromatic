@@ -113,7 +113,7 @@ Consider any translate $`n + S` — it has exactly $`|S|` elements, and each col
 them.
 Therefore the number of colours cannot exceed $`|S|`, so $`p(S) \leq |S|`.
 
-In Lean, we formalise the polychromatic number as in a direct way.
+In Lean, we formalise the polychromatic number directly.
 
 ```anchor polychromNumber (module := Polychromatic.PolychromNumber)
 def polychromNumber (S : Finset G) : ℕ :=
