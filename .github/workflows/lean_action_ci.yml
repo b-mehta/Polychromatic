@@ -64,7 +64,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
 
       - name: Upload docs
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: docs
           path: site/docs
@@ -95,7 +95,7 @@ jobs:
         run: lake build :highlighted
 
       - name: Upload Verso artifacts
-        uses : actions/upload-artifact@v6
+        uses : actions/upload-artifact@v7
         with:
           name: verso-artifacts
           path: Lean/.lake/build/highlighted
@@ -106,7 +106,7 @@ jobs:
         run: lake exe docs
 
       - name: Upload Verso site
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: verso-site
           path: site
