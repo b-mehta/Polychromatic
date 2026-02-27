@@ -305,10 +305,8 @@ lemma condition_of_mul_sq {k m : ℕ} (hm : 3 * k ^ 2 ≤ m) :
   norm_num
 
 /-- For sets of size at least `3k²`, a `k`-colouring exists. -/
--- ANCHOR: exists_colouring_of_sq_le
 theorem exists_colouring_of_sq_le {S : Finset G} {k : ℕ} (hk : k ≠ 0) (hm : 3 * k ^ 2 ≤ #S) :
     HasPolychromColouring (Fin k) S := by
--- ANCHOR_END: exists_colouring_of_sq_le
   refine exists_of_le rfl ?_ hk (condition_of_mul_sq hm)
   have : 1 ≤ k := by cutsat
   grw [← hm, ← this]

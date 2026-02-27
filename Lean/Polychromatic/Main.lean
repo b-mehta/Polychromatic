@@ -14,11 +14,9 @@ admits a 3-polychromatic colouring.
 * `final_result`: Every set `S` of 4 integers has a 3-polychromatic colouring.
 -/
 
--- ANCHOR: final
 /-- Every set `S` of 4 integers has a 3-polychromatic colouring. -/
 theorem final_result (S : Finset ℤ) (hS : S.card = 4) :
     HasPolychromColouring (Fin 3) S :=
--- ANCHOR_END: final
   suffices_minimal
     (suffices_triple
       (suffices_flip

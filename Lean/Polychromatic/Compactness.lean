@@ -37,13 +37,11 @@ have the finite intersection property, so their intersection is nonempty.
 * Rado, R. (1949). "Axiomatic treatment of rank in infinite sets".
 -/
 
--- ANCHOR: rado
 theorem Finset.rado_selection {α : Type*} {β : α → Type*}
     [∀ a, Finite (β a)]
     (g : (s : Finset α) → (a : α) → β a) :
     ∃ χ : (a : α) → β a, ∀ s : Finset α,
       ∃ t : Finset α, s ⊆ t ∧ ∀ x ∈ s, χ x = g t x := by
--- ANCHOR_END: rado
   classical
   let instTop (a : α) : TopologicalSpace (β a) := ⊥
   have instDiscr (a : α) : DiscreteTopology (β a) := discreteTopology_bot _

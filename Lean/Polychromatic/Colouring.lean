@@ -44,10 +44,8 @@ open Finset
 /-- A colouring `χ : G → K` is `S`-polychromatic if every translate of `S` contains an element
 of each colour class. Equivalently, for every `n : G` and every colour `k : K`, there exists
 some `a ∈ S` such that `χ(n + a) = k`. -/
--- ANCHOR: IsPolychrom
 def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
   ∀ n : G, ∀ k : K, ∃ a ∈ S, χ (n + a) = k
--- ANCHOR_END: IsPolychrom
 
 /-- If `χ` is `S`-polychromatic then `S` must be nonempty. -/
 -- ANCHOR IsPolychrom.nonempty
@@ -96,11 +94,9 @@ lemma IsPolychrom.finite (hχ : IsPolychrom S χ) :
   classical exact hχ.fintype.finite
 
 /-- The number of colours in any `S`-polychromatic colouring is at most `|S|`. -/
--- ANCHOR: IsPolychrom.card_le
 lemma IsPolychrom.card_le [Fintype K] (hχ : IsPolychrom S χ) :
     Fintype.card K ≤ #S :=
   card_le_card_of_surjOn χ (by classical simpa using hχ.surjOn 0)
--- ANCHOR_END: IsPolychrom.card_le
 
 lemma IsPolychrom.subset {S' : Finset G} (hχ : IsPolychrom S' χ) (hS : S' ⊆ S) :
     IsPolychrom S χ := by
@@ -130,10 +126,8 @@ instance [Fintype G] [Fintype K] [DecidableEq G] [DecidableEq K] : Decidable (Is
   inferInstanceAs (Decidable (∀ _, _))
 
 /-- There exists a `K`-valued `S`-polychromatic colouring of `G`. -/
--- ANCHOR: HasPolychromColouring
 def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
   ∃ χ : G → K, IsPolychrom S χ
--- ANCHOR_END: HasPolychromColouring
 
 lemma HasPolychromColouring.nonempty_set (h : HasPolychromColouring K S) : S.Nonempty := by
   obtain ⟨χ, hχ⟩ := h
