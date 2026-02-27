@@ -1,14 +1,5 @@
 <meta charset="UTF-8"/>
 
-<!-- Check if the current page requires MathJax support -->
-{% if page.usemathjax %}
-  <script defer src="{{ '-verso-js/mathjax.js' | relative_url }}"></script>
-
-  <script defer id="MathJax-script"
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-  </script>
-{% endif %}
-
 {% if page.useverso %}
 <!-- Verso things -->
 <script>var __versoSiteRoot = "{{ '/' | absolute_url }}";</script>
