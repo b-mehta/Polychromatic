@@ -308,25 +308,4 @@ lemma polychromNumber_three_eq_two : polychromNumber (G := ℤ) {0, 1, 3} = 2 :=
     apply hn
     exact Finset.injOn_of_surjOn_of_card_le _ (by simp [Set.mapsTo_univ]) (hχ n) (by simp [S])
 
-lemma polychromNumber_zmod_le {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
-    polychromNumber (({0, a, b, c} : Finset ℤ).image Int.cast : Finset (ZMod m)) =
-      polychromNumber (({0, b - a, b, 2 * b - a} : Finset ℤ).image Int.cast : Finset (ZMod m)) := by
-  set S₁ : Finset (ZMod m) := ({0, a, b, c} : Finset ℤ).image Int.cast
-  set S₂ : Finset (ZMod m) := ({0, b - a, b, 2 * b - a} : Finset ℤ).image Int.cast
-  have : S₂ = (Int.cast (b - a) : ZMod m) +ᵥ S₁ := by
-    simp only [image_insert, Int.cast_zero, Int.cast_sub, image_singleton, Int.cast_mul,
-      Int.cast_ofNat, vadd_finset_insert, vadd_eq_add, add_zero, sub_add_cancel,
-      vadd_finset_singleton, S₂, S₁]
-    have : (b : ZMod m) - a + c = 0 := by
-      calc
-        (b : ZMod m) - a + c = c - a + b := by ring
-        _ = ↑(c - a + b : ℤ) := by simp
-        _ = (m : ℤ) := by rw [hm]
-        _ = 0 := by simp
-    rw [this, sub_add_eq_add_sub, ← two_mul]
-    ext i
-    simp
-    tauto
-  rw [this, polychromNumber_vadd]
-
 end Int
