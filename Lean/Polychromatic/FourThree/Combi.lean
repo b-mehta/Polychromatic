@@ -535,9 +535,6 @@ lemma case_one_res_3g_sub_2 (g : ℕ) (hm : m ≥ 289)
         ((m + 5 : ℕ) : ZMod m) := by congr 1; omega
     simpa [Nat.cast_mul, Nat.cast_add, Nat.cast_one,
       Nat.cast_ofNat, ZMod.natCast_self] using this
-  show HasPolychromColouring (Fin 3)
-    (({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
-      Finset (ZMod m)).image (u.val * ·))
   rw [image_insert, image_insert, image_insert,
     image_singleton,
     show u.val = (3 : ZMod m) from hu, mul_zero, mul_one,
