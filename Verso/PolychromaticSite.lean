@@ -41,6 +41,12 @@ colouring (even numbers red, odd numbers blue) achieves this, so $`S` admits a 2
 colouring. In fact, this is optimal: no 3-colouring can be $`S`-polychromatic since each pair would
 need to contain all three colours but only has two elements.
 
+Using fewer colours makes it *easier* to be polychromatic: if every translate of $`S` hits
+all $`k` colours, it certainly hits any subset of them. Similarly, larger sets are easier to colour
+polychromatically, since there are more elements available in each translate to cover the required
+colours. So a natural question is: how large must $`S` be to guarantee a $`k`-polychromatic
+colouring exists?
+
 Two primary targets of this repository are:
 - Formalise Erdős and Lovász' solution to Strauss' conjecture on the existence of polychromatic
   colourings of sets of bounded size by any number of colours.
@@ -120,13 +126,42 @@ def polychromNumber (S : Finset G) : ℕ :=
   sSup {n | HasPolychromColouring (Fin n) S}
 ```
 
-The upper bound $`p(S) \leq |S|` is established also.
+We also establish the upper bound $`p(S) \leq |S|`.
 
 ```anchor polychromNumber_le_card (module := Polychromatic.PolychromNumber)
 lemma polychromNumber_le_card : polychromNumber S ≤ #S := by
 ```
 
+As noted above, every pair of distinct integers has polychromatic number exactly 2.
+
+```anchor polychromNumber_pair (module := Polychromatic.PolychromNumber)
+@[simp] lemma polychromNumber_pair [DecidableEq G] [IsAddTorsionFree G] {x y : G} (hxy : x ≠ y) :
+    polychromNumber {x, y} = 2 := by
+```
+
+Can we do better with three elements? Consider the set $`\{0, 1, 3\}` and try to 3-colour the
+integers polychromatically. Since $`\{0, 1, 3\}` has three elements, each translate must contain all
+three colours, meaning the colouring restricted to each translate is a bijection onto the three
+colours. In particular, the elements $`0`, $`1`, $`3` must receive three distinct colours. Now
+consider the element $`2`: it must receive one of the three colours. Each choice leads to a
+contradiction:
+- If $`2` gets the same colour as $`1`, the translate $`\{1, 2, 4\}` has at most two distinct
+  colours among its three elements — but all three are needed.
+- If $`2` gets the same colour as $`0`, the translate $`\{-1, 0, 2\}` gives the same contradiction.
+- If $`2` gets the same colour as $`3`, the translate $`\{2, 3, 5\}` gives the same contradiction.
+
+So no 3-colouring of $`\{0, 1, 3\}` is polychromatic. Since $`\{0, 1, 3\}` contains a pair, it
+has polychromatic number at least 2, giving $`p(\{0, 1, 3\}) = 2`. This is formalised as:
+
+```anchor polychromNumber_three_eq_two (module := Polychromatic.PolychromNumber)
+lemma polychromNumber_three_eq_two : polychromNumber (G := ℤ) {0, 1, 3} = 2 := by
+```
+
 ## Strauss' Conjecture
+
+If we fix a set $`S`, there is always some number of colours that works — at most $`|S|`. But what
+if we turn the question around and fix the number of colours? Is there a set size large enough that
+*every* set of that size is guaranteed to have a polychromatic $`k`-colouring?
 
 The *Strauss function* $`m(k)` is defined as the smallest $`m` such that every set of size at least
 $`m` has a polychromatic $`k`-colouring. Equivalently, $`m(k) \leq m` if and only if every set of
@@ -153,14 +188,14 @@ lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ)
   Nat.sInf_mem (straussFunction_nonempty hk) S hkS
 ```
 
+The first few values of the Strauss function are easy to compute: $`m(1) = 1` (every nonempty set
+can be 1-coloured polychromatically) and $`m(2) = 2` (every pair has polychromatic number 2). The
+main theorem of this project establishes $`m(3) = 4`: the set $`\{0, 1, 3\}` shows
+$`m(3) > 3`, and the result of Axenovich et al. shows $`m(3) \leq 4`.
+
 ## Sets of size four
 
-A result of Axenovich, Goldwasser, Lidický, Martin, Offner, Talbot, and Young establishes that
-$`m(3) \leq 4`, meaning every set of 4 integers admits a 3-polychromatic colouring. Combined with
-the fact that the set $`\{0, 1, 3\}` has polychromatic number exactly 2 (giving $`m(3) > 3`), this
-shows $`m(3) = 4`.
-
-The following diagram demonstrates the dependencies of the main results.
+The following diagram shows the dependencies between the main results.
 
 ```graph
 graph TD
@@ -189,14 +224,14 @@ class E,H blue
 
 # Proving Strauss' conjecture
 
-The key tool for proving Strauss' conjecture is the *Lovász local lemma*, a powerful result in
-probabilistic combinatorics. The lemma shows that if we have a collection of "bad" events, each of
-which has relatively small probability and is "mostly independent" of the others, then with positive probability
-*none* of the bad events occur.
+The key tool for proving Strauss' conjecture is the *Lovász local lemma*, a classical result in
+probabilistic combinatorics. The idea is to colour randomly: if the "bad" events (a translate
+missing some colour) each have small probability and are mostly independent of each other, the
+Local Lemma guarantees that with positive probability *none* of the bad events occur.
 
 ## The Symmetric Local Lemma
 
-In its most common application, the symmetric form, we have events $`A_1, \ldots, A_n` where each event:
+The most commonly used form is the symmetric version. If we have events $`A_1, \ldots, A_n` where each event:
 - has probability at most $`p`, and
 - is independent of all but at most $`d` other events,
 
@@ -219,10 +254,14 @@ $`X` of integers from which we will choose translations, then:
 The Local Lemma then guarantees that with positive probability, none of the bad events occur for
 any $`n \in X`. This gives a polychromatic colouring on the finite set $`X`.
 
+However, the Local Lemma only applies to *finitely many* events. This is the key limitation: we get
+colourings on arbitrarily large finite subsets of $`\mathbb{Z}`, but not yet a single global
+colouring.
+
 ## The Rado Selection Principle
 
-The Local Lemma only applies to finitely many translations. To extend this to *all* of $`\mathbb{Z}`,
-we use the *Rado selection principle*, a compactness argument based on Tychonoff's theorem.
+To extend from finite to infinite, we use the *Rado selection principle*, a compactness argument
+based on Tychonoff's theorem (specifically, the finite intersection property for compact spaces).
 
 The Rado selection principle states that if we have a family of functions $`g_F : F \to K` indexed
 by finite sets $`F`, where $`K` is finite, then there exists a global function $`\chi : \mathbb{Z} \to K`
@@ -240,7 +279,10 @@ agrees with $`g_{F'}` on $`F`. Since $`g_{F'}` is $`S`-polychromatic on $`F'`, a
 $`n + S \subseteq F` hits all colours under $`g_{F'}`, and hence under $`\chi`. Since this holds
 for all finite $`F` containing any given translate, $`\chi` is $`S`-polychromatic globally.
 
-In Lean, this is formalised as follows.
+This kind of compactness argument appears throughout combinatorics (e.g. the de Bruijn–Erdős
+theorem on graph colouring), so isolating it as a standalone lemma is useful.
+
+In Lean, the Rado selection principle is formalised as follows.
 
 ```anchor rado (module := Polychromatic.Compactness)
 theorem Finset.rado_selection {α : Type*} {β : α → Type*}
@@ -251,7 +293,18 @@ theorem Finset.rado_selection {α : Type*} {β : α → Type*}
 ```
 
 By applying the Local Lemma to each finite set $`X` to get colourings $`g_X`, and then using Rado
-selection, we obtain a global colouring $`\chi` that is $`S`-polychromatic.
+selection, we obtain a global colouring $`\chi` that is $`S`-polychromatic. In Lean, the
+combination is `exists_of_le`:
+
+```anchor exists_of_le (module := Polychromatic.Existence)
+lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (hk : k ≠ 0)
+    (hkm : polychromColouringBound k m) :
+    HasPolychromColouring (Fin k) S := by
+```
+
+In fact, this result holds for any abelian group $`G`, not just $`\mathbb{Z}` — neither the Local
+Lemma nor the Rado selection principle use any specific properties of the integers, so the bound
+depends only on $`k` and $`|S|`.
 
 ## Bounds on the Strauss Function
 
@@ -281,24 +334,48 @@ lemma le_straussFunction_self {k : ℕ} :
 
 # Sets of Size Four
 
-This section addresses whether every set of 4 integers admits a 3-polychromatic colouring.
-The proof combines theoretical reductions with exhaustive computational verification.
+The proof that $`m(3) = 4` combines theoretical reductions with exhaustive computational
+verification. The original paper by Axenovich et al. noted: "It is possible, though tedious, to prove the entire
+theorem by hand. Thus in the interest of simplifying the exposition, we verified using a computer
+search..." — a pragmatic choice that becomes especially relevant for formalisation.
 
 ## Theoretical Reductions
 
-Without loss of generality, we may assume:
-1. The minimum element of $`S` is 0 (by translation invariance).
-2. The elements are coprime (scaling preserves the polychromatic number in torsion-free groups).
+The proof proceeds by a chain of without-loss-of-generality reductions that narrow the set of
+cases we need to check.
 
-These reductions allow us to focus on quadruples of the form $`\{0, a, b, c\}` with
-$`0 < a < b < c`, $`a + b \leq c`, and $`\gcd(a, b, c) = 1`.
+1. *Translation invariance* (`suffices_minimal`): We may assume the minimum element of $`S` is 0,
+   since the polychromatic number is invariant under translation.
+2. *Ordered triples* (`suffices_triple`): We may write $`S = \{0, a, b, c\}` with
+   $`0 < a < b < c`.
+3. *The flip* (`suffices_flip`): If $`a + b > c`, we can replace $`S` with
+   $`\{0, c-b, c-a, c\}`, which satisfies $`(c-b) + (c-a) \leq c`. This uses the fact that the
+   polychromatic number is invariant under negation.
+4. *Coprimality* (`suffices_gcd`): We may assume $`\gcd(a, b, c) = 1`, since scaling preserves
+   the polychromatic number in torsion-free groups.
+5. *Case split* (`suffices_cases`): The remaining cases split into $`c < 289` (handled
+   computationally) and $`c \geq 289` (handled by the existence bound from Strauss' conjecture).
+
+After these reductions, we are left with quadruples $`\{0, a, b, c\}` where
+$`0 < a < b < c < 289`, $`a + b \leq c`, and $`\gcd(a, b, c) = 1`. There are approximately
+$`\binom{288}{3} \approx 4` million total triples, reduced to around 900,000 after applying
+coprimality and the flip reduction.
 
 ## Computational Verification
 
+The original paper's included C++ code did not terminate after three days of running. A manual
+proof was reportedly written in John Goldwasser's notes, but was never published — it is said to be
+"in one of some non-trivial number of boxes."
+
+For the formalisation, we took a different approach: certificate-based verification. We do not need
+to trust any search code — we only need to verify that its output (explicit colourings) actually
+works.
+
 For quadruples with $`c < 289`, we first search for explicit periodic colourings using C++. This
 algorithm searches for colourings with period $`q` up to 30. For the vast majority of the 900,000
-sets, this succeeds. For the cases where a period greater than 30 is necessary, the C++ search is
-too slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find colourings instead.
+sets, this succeeds. For the few hundred stubborn cases where a period greater than 30 is necessary,
+the C++ search is too slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find
+colourings instead.
 
 Once witnesses are found, Lean verifies them all using three key steps:
 1. *Periodic colourings*: A colouring with period $`q` is represented as a function
@@ -307,6 +384,10 @@ Once witnesses are found, Lean verifies them all using three key steps:
    colour), enabling efficient verification that every translate hits all colours.
 3. *Residue shortcuts*: Certain cases can be quickly discharged using simple modular arithmetic
    (e.g., if $`a \equiv 1`, $`b \equiv 2 \pmod 3`).
+
+The crucial point is that Lean does not trust the C++ or Z3 code at all. The external solvers
+produce candidate colourings, and Lean independently checks each one. This is the certificate-based
+approach: separate search from verification.
 
 ## Current Status
 
@@ -323,6 +404,22 @@ theorem final_result (S : Finset ℤ) (hS : S.card = 4) :
     HasPolychromColouring (Fin 3) S :=
 ```
 
+# Formalization Reflections
+
+The proof draws on probability, topology, and calculus — all formalized using
+[mathlib](https://github.com/leanprover-community/mathlib4), Lean's mathematical library.
+Probability theory, measure theory, and combinatorics all live in the same system and can be
+composed directly: we apply the Local Lemma to a uniform probability measure, use topological
+compactness via Rado selection, and perform real analysis for the asymptotic bound, all within
+one proof.
+
+The search for general results also led to new formalisations. The Rado selection lemma, for
+instance, was not previously in mathlib, and its proof via Tychonoff's theorem provides a reusable
+tool for other compactness arguments in combinatorics.
+
+For the four-three problem, the certificate-based approach separates the *search* (C++, Z3 — any
+heuristic or solver) from the *verification* (Lean's trusted kernel). The search code can be
+arbitrarily complex or heuristic; only the output needs to be correct, and Lean checks that.
 
 # References
 

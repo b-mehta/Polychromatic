@@ -188,9 +188,14 @@ lemma exists_finite_of_le {k m : ℕ} (X : Finset G) {S : Finset G} (hm : #S = m
   refine ⟨x + s, ?_⟩
   simp [add_mem_add, hx, hs, Y, hc]
 
+/-- If the set size satisfies the polychromatic colouring bound for `k` colours, then the set
+admits a `k`-polychromatic colouring. This combines the Local Lemma (for finite sets) with
+the Rado selection principle (to extend to all of `G`). -/
+-- ANCHOR: exists_of_le
 lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (hk : k ≠ 0)
     (hkm : polychromColouringBound k m) :
     HasPolychromColouring (Fin k) S := by
+-- ANCHOR_END: exists_of_le
   have (X : Finset G) : ∃ χ : G → Fin k, ∀ x ∈ X, ∀ (c : Fin k), ∃ i ∈ x +ᵥ S, χ i = c :=
     exists_finite_of_le X hm hm₂ hk hkm
   choose g hg using this
