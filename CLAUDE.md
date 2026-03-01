@@ -22,7 +22,7 @@ lake clean                # Clean build artifacts
 
 ### Other Components
 
-- **Verso docs**: `cd Verso && lake exe docs` (uses a different Lean toolchain — this is intentional)
+- **Verso docs**: `cd Verso && lake exe docs` (uses a different Lean toolchain — this is intentional). No `lake exe cache get` needed — just run `lake exe docs` directly. Lean code is pulled into the site via `` ```anchor name (module := Module.Name) `` blocks, which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
 - **Jekyll site**: `cd site && bundle exec jekyll serve` (Ruby 3.1+)
 - **Generation**: C++ code in `Generation/` produces colouring log files consumed by `FourThree/Compute.lean`
 
