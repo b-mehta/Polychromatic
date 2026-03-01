@@ -236,8 +236,10 @@ private lemma polychromNumber_pair_aux [DecidableEq G] [IsAddTorsionFree G] {x :
   simp
 
 /-- A pair has polychromatic number 2 (in torsion-free groups). -/
+-- ANCHOR: polychromNumber_pair
 @[simp] lemma polychromNumber_pair [DecidableEq G] [IsAddTorsionFree G] {x y : G} (hxy : x ≠ y) :
     polychromNumber {x, y} = 2 := by
+-- ANCHOR_END: polychromNumber_pair
   have := polychromNumber_pair_aux (x := y - x) (by simpa [sub_eq_zero, eq_comm] using hxy)
   rwa [← polychromNumber_vadd (n := x), Finset.vadd_finset_insert, Finset.vadd_finset_singleton,
     vadd_eq_add, add_zero, vadd_eq_add, add_sub_cancel] at this

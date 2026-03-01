@@ -69,6 +69,9 @@ lemma suffices_triple
   have : 0 < a := lt_of_le_of_ne' (hS'.le _ (by grind)) (by grind)
   grind
 
+/-- The "flip" reduction: if `a + b > c`, we can replace `{0, a, b, c}` with
+`{0, c-b, c-a, c}`, which satisfies `(c-b) + (c-a) ≤ c` (since `a + b > c`).
+This uses translation and negation invariance of the polychromatic number. -/
 lemma suffices_flip
     (h : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c →
       HasPolychromColouring (Fin 3) {0, a, b, c}) :
