@@ -519,118 +519,184 @@ lemma case_one_res_3g_sub_2 (g : ℕ) (hm : m ≥ 289)
     HasPolychromColouring (Fin 3)
       ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
         Finset (ZMod m)) := by
-  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three
-    (show ¬(3 ∣ m) by intro ⟨k, hk⟩; omega)
-  rw [← hasPolychromColouring_mul_unit m u
-    {0, 1, (g : ZMod m), (g : ZMod m) + 1}]
+  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (show ¬3 ∣ m by grind)
+  rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * (g : ZMod m) = 2 := by
-    have : ((3 * g : ℕ) : ZMod m) = ((m + 2 : ℕ) : ZMod m) :=
-      by congr 1; omega
-    simpa [push_cast, ZMod.natCast_self] using this
-  have h3g1_mod :
-      (3 : ZMod m) * ((g : ZMod m) + 1) = 5 := by
-    have : ((3 * (g + 1) : ℕ) : ZMod m) =
-        ((m + 5 : ℕ) : ZMod m) := by congr 1; omega
-    simpa [push_cast, ZMod.natCast_self] using this
-  rw [image_insert, image_insert, image_insert,
-    image_singleton,
-    show u.val = (3 : ZMod m) from hu, mul_zero, mul_one,
-    h3g_mod, h3g1_mod,
-    show ({0, (3 : ZMod m), 2, 5} : Finset (ZMod m)) =
-      {0, 2, 3, 5} from by simp [Finset.insert_comm]]
-  exact table1_0235 m (by omega)
+    have : ((3 * g : ℕ) : ZMod m) = (m + 2 : ℕ) := by congr 1; grind
+    simpa using this
+  have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 5 := by grind
+  simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g_mod, image_singleton,
+    h3g1_mod, insert_comm] using table1_0235 m (by grind)
 
 /-- m = 3g - 1: ×3 maps {0,1,g,g+1} to {0,3,3g,3g+3} ≡ {0,1,3,4}. -/
-lemma case_one_res_3g_sub_1 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g - 1) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  have hg1 : g ≥ 97 := by omega
-  have hndvd : ¬(3 ∣ m) := by
-    intro ⟨k, hk⟩; omega
-  have h3unit : IsUnit (3 : ZMod m) :=
-    ZMod.isUnit_prime_of_not_dvd Nat.prime_three hndvd
-  obtain ⟨u, hu⟩ := h3unit
-  rw [← hasPolychromColouring_mul_unit m u
-    {0, 1, (g : ZMod m), (g : ZMod m) + 1}]
-  have h3g : (3 * g : ℕ) = m + 1 := by omega
-  have h3g1 : (3 * (g + 1) : ℕ) = m + 4 := by omega
+lemma case_one_res_3g_sub_1 (g : ℕ) (hm : m ≥ 289)
+    (hg : m = 3 * g - 1) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
+        Finset (ZMod m)) := by
+  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (show ¬3 ∣ m by grind)
+  rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * (g : ZMod m) = 1 := by
-    have : ((3 * g : ℕ) : ZMod m) = ((m + 1 : ℕ) : ZMod m) := by
-      rw [h3g]
-    simp only [Nat.cast_mul, Nat.cast_ofNat, Nat.cast_add, Nat.cast_one,
-      ZMod.natCast_self, zero_add] at this
-    exact this
-  have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 4 := by
-    have : ((3 * (g + 1) : ℕ) : ZMod m) = ((m + 4 : ℕ) : ZMod m) := by
-      rw [h3g1]
-    simp only [Nat.cast_mul, Nat.cast_add, Nat.cast_one, Nat.cast_ofNat,
-      ZMod.natCast_self, zero_add] at this
-    exact this
-  show HasPolychromColouring (Fin 3)
-    (({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
-      Finset (ZMod m)).image (u.val * ·))
-  rw [image_insert, image_insert, image_insert, image_singleton,
-    show u.val = (3 : ZMod m) from hu, mul_zero, mul_one,
-    h3g_mod, h3g1_mod]
-  rw [show ({0, (3 : ZMod m), 1, 4} : Finset (ZMod m)) =
-      {0, 1, 3, 4} from by ext x; simp [Finset.mem_insert]; tauto]
-  exact table1_0134 m (by omega)
+    have : ((3 * g : ℕ) : ZMod m) = (m + 1 : ℕ) := by congr 1; omega
+    simpa using this
+  have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 4 := by grind
+  simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g_mod,
+    image_singleton, h3g1_mod, insert_comm] using table1_0134 m (by grind)
 
 /-- m = 3g + 1: ×3 maps {0,1,g,g+1} to {0,3,-1,2}, a translate of {0,1,3,4}. -/
-lemma case_one_res_3g_add_1 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 1) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  have hg1 : g ≥ 96 := by omega
-  have hndvd : ¬(3 ∣ m) := by
-    intro ⟨k, hk⟩; omega
-  have h3unit : IsUnit (3 : ZMod m) :=
-    ZMod.isUnit_prime_of_not_dvd Nat.prime_three hndvd
-  obtain ⟨u, hu⟩ := h3unit
-  rw [← hasPolychromColouring_mul_unit m u
-    {0, 1, (g : ZMod m), (g : ZMod m) + 1}]
-  have h3g : (3 * g + 1 : ℕ) = m := by omega
-  have h3g1 : (3 * (g + 1) : ℕ) = m + 2 := by omega
+lemma case_one_res_3g_add_1 (g : ℕ) (hm : m ≥ 289)
+    (hg : m = 3 * g + 1) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
+        Finset (ZMod m)) := by
+  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd
+    Nat.prime_three (show ¬3 ∣ m by intro ⟨k, hk⟩; omega)
+  rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * (g : ZMod m) = -1 := by
-    have : ((3 * g + 1 : ℕ) : ZMod m) = ((m : ℕ) : ZMod m) := by
-      rw [h3g]
-    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat,
-      Nat.cast_one, ZMod.natCast_self] at this
-    -- this : (3 : ZMod m) * (g : ZMod m) + 1 = 0
+    have : ((3 * g + 1 : ℕ) : ZMod m) =
+        ((m : ℕ) : ZMod m) := by congr 1; omega
+    simp only [Nat.cast_add, Nat.cast_mul,
+      Nat.cast_ofNat, Nat.cast_one,
+      ZMod.natCast_self] at this
     exact eq_neg_of_add_eq_zero_left this
   have h3g1_mod :
       (3 : ZMod m) * ((g : ZMod m) + 1) = 2 := by
     have : ((3 * (g + 1) : ℕ) : ZMod m) =
-        ((m + 2 : ℕ) : ZMod m) := by
-      rw [h3g1]
-    simp only [Nat.cast_mul, Nat.cast_add, Nat.cast_one,
-      Nat.cast_ofNat, ZMod.natCast_self, zero_add] at this
-    exact this
-  show HasPolychromColouring (Fin 3)
-    (({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
-      Finset (ZMod m)).image (u.val * ·))
-  rw [image_insert, image_insert, image_insert, image_singleton,
-    show u.val = (3 : ZMod m) from hu, mul_zero, mul_one,
-    h3g_mod, h3g1_mod]
-  rw [show ({0, (3 : ZMod m), -1, 2} : Finset (ZMod m)) =
-      (-1 : ZMod m) +ᵥ ({0, 1, 3, 4} : Finset (ZMod m)) from by
-    simp only [vadd_finset_insert, vadd_finset_singleton,
-      vadd_eq_add]
-    ext x; simp [Finset.mem_insert]; ring_nf; tauto]
-  rw [hasPolychromColouring_vadd]
+        ((m + 2 : ℕ) : ZMod m) := by congr 1; omega
+    simpa [push_cast, ZMod.natCast_self] using this
+  rw [image_insert, image_insert, image_insert,
+    image_singleton,
+    show u.val = (3 : ZMod m) from hu,
+    mul_zero, mul_one, h3g_mod, h3g1_mod,
+    show ({0, (3 : ZMod m), -1, 2} :
+      Finset (ZMod m)) =
+      (-1 : ZMod m) +ᵥ ({0, 1, 3, 4} :
+      Finset (ZMod m)) from by
+      simp only [vadd_finset_insert,
+        vadd_finset_singleton, vadd_eq_add]
+      ext x; simp [Finset.mem_insert]; ring_nf; tauto,
+    hasPolychromColouring_vadd]
   exact table1_0134 m (by omega)
 
 /-- m = 3g + 2: ×3 maps {0,1,g,g+1} to {0,3,-2,1}, a translate of {0,2,3,5}. -/
-lemma case_one_res_3g_add_2 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 2) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  sorry
+lemma case_one_res_3g_add_2 (g : ℕ) (hm : m ≥ 289)
+    (hg : m = 3 * g + 2) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
+        Finset (ZMod m)) := by
+  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd
+    Nat.prime_three
+    (show ¬3 ∣ m by intro ⟨k, hk⟩; omega)
+  rw [← hasPolychromColouring_mul_unit m u]
+  have h3g_mod :
+      (3 : ZMod m) * (g : ZMod m) = -2 := by
+    have : ((3 * g + 2 : ℕ) : ZMod m) =
+        ((m : ℕ) : ZMod m) := by congr 1; omega
+    simp only [Nat.cast_add, Nat.cast_mul,
+      Nat.cast_ofNat,
+      ZMod.natCast_self] at this
+    exact eq_neg_of_add_eq_zero_left this
+  have h3g1_mod :
+      (3 : ZMod m) * ((g : ZMod m) + 1) = 1 := by
+    have : ((3 * (g + 1) : ℕ) : ZMod m) =
+        ((m + 1 : ℕ) : ZMod m) := by congr 1; omega
+    simpa [push_cast, ZMod.natCast_self] using this
+  rw [image_insert, image_insert, image_insert,
+    image_singleton,
+    show u.val = (3 : ZMod m) from hu,
+    mul_zero, mul_one, h3g_mod, h3g1_mod,
+    show ({0, (3 : ZMod m), -2, 1} :
+      Finset (ZMod m)) =
+      (-2 : ZMod m) +ᵥ ({0, 2, 3, 5} :
+      Finset (ZMod m)) from by
+      simp only [vadd_finset_insert,
+        vadd_finset_singleton, vadd_eq_add]
+      ext x; simp [Finset.mem_insert]
+      ring_nf; tauto,
+    hasPolychromColouring_vadd]
+  exact table1_0235 m (by omega)
 
 /-- m = 3g + 4: ×3 maps {0,1,g,g+1} to {0,3,-4,-1}, a translate of {0,3,4,7}. -/
-lemma case_one_res_3g_add_4 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 4) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  sorry
+lemma case_one_res_3g_add_4 (g : ℕ) (hm : m ≥ 289)
+    (hg : m = 3 * g + 4) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
+        Finset (ZMod m)) := by
+  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd
+    Nat.prime_three
+    (show ¬3 ∣ m by intro ⟨k, hk⟩; omega)
+  rw [← hasPolychromColouring_mul_unit m u]
+  have h3g_mod :
+      (3 : ZMod m) * (g : ZMod m) = -4 := by
+    have : ((3 * g + 4 : ℕ) : ZMod m) =
+        ((m : ℕ) : ZMod m) := by congr 1; omega
+    simp only [Nat.cast_add, Nat.cast_mul,
+      Nat.cast_ofNat,
+      ZMod.natCast_self] at this
+    exact eq_neg_of_add_eq_zero_left this
+  have h3g1_mod :
+      (3 : ZMod m) * ((g : ZMod m) + 1) = -1 := by
+    have : ((3 * (g + 1) + 1 : ℕ) : ZMod m) =
+        ((m : ℕ) : ZMod m) := by congr 1; omega
+    simp only [Nat.cast_add, Nat.cast_mul,
+      Nat.cast_ofNat, Nat.cast_one,
+      ZMod.natCast_self] at this
+    exact eq_neg_of_add_eq_zero_left this
+  rw [image_insert, image_insert, image_insert,
+    image_singleton,
+    show u.val = (3 : ZMod m) from hu,
+    mul_zero, mul_one, h3g_mod, h3g1_mod,
+    show ({0, (3 : ZMod m), -4, -1} :
+      Finset (ZMod m)) =
+      (-4 : ZMod m) +ᵥ ({0, 3, 4, 7} :
+      Finset (ZMod m)) from by
+      simp only [vadd_finset_insert,
+        vadd_finset_singleton, vadd_eq_add]
+      ext x; simp [Finset.mem_insert]
+      ring_nf; tauto,
+    hasPolychromColouring_vadd]
+  exact table1_0347 m (by omega)
 
 /-- m = 3g + 5: ×3 maps {0,1,g,g+1} to {0,3,-5,-2}, a translate of {0,3,5,8}. -/
-lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 5) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  sorry
+lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289)
+    (hg : m = 3 * g + 5) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
+        Finset (ZMod m)) := by
+  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd
+    Nat.prime_three
+    (show ¬3 ∣ m by intro ⟨k, hk⟩; omega)
+  rw [← hasPolychromColouring_mul_unit m u]
+  have h3g_mod :
+      (3 : ZMod m) * (g : ZMod m) = -5 := by
+    have : ((3 * g + 5 : ℕ) : ZMod m) =
+        ((m : ℕ) : ZMod m) := by congr 1; omega
+    simp only [Nat.cast_add, Nat.cast_mul,
+      Nat.cast_ofNat,
+      ZMod.natCast_self] at this
+    exact eq_neg_of_add_eq_zero_left this
+  have h3g1_mod :
+      (3 : ZMod m) * ((g : ZMod m) + 1) = -2 := by
+    have : ((3 * (g + 1) + 2 : ℕ) : ZMod m) =
+        ((m : ℕ) : ZMod m) := by congr 1; omega
+    simp only [Nat.cast_add, Nat.cast_mul,
+      Nat.cast_ofNat, Nat.cast_one,
+      ZMod.natCast_self] at this
+    exact eq_neg_of_add_eq_zero_left this
+  rw [image_insert, image_insert, image_insert,
+    image_singleton,
+    show u.val = (3 : ZMod m) from hu,
+    mul_zero, mul_one, h3g_mod, h3g1_mod,
+    show ({0, (3 : ZMod m), -5, -2} :
+      Finset (ZMod m)) =
+      (-5 : ZMod m) +ᵥ ({0, 3, 5, 8} :
+      Finset (ZMod m)) from by
+      simp only [vadd_finset_insert,
+        vadd_finset_singleton, vadd_eq_add]
+      ext x; simp [Finset.mem_insert]
+      ring_nf; tauto,
+    hasPolychromColouring_vadd]
+  exact table1_0358 m (by omega)
 
 /-- Subcase (1c) assembled: dispatches to the six per-residue lemmas above. -/
 lemma case_one_residues (g : ℕ) (hm : m ≥ 289) (h_res : m % 3 ≠ 0)
