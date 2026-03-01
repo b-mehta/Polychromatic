@@ -50,7 +50,7 @@ The proof proceeds by successive reductions:
 2. **`suffices_triple`** — check ordered triples 0 < a < b < c
 3. **`suffices_flip`** — handle cases where a + b > c
 4. **`suffices_gcd`** — reduce to coprime cases via scaling
-5. **`suffices_cases`** — split: c < 289 (combinatorial) vs c ≥ 289 (computational via `allC_289`)
+5. **`suffices_cases`** — split: c < 289 (computational via `allC_289`) vs c ≥ 289 (combinatorial)
 
 ### Data Pipeline
 
