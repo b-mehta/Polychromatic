@@ -10,8 +10,35 @@
 
 @media screen and (min-width: 961px) {
   header { width: 220px; }
-  section { width: 600px; }
   footer { width: 220px; }
+}
+
+// ---------------------------------------------------------------------------
+// Content area: the theme styles <section>, but the layout uses
+// <div class="content">, so we provide our own rules here.
+// ---------------------------------------------------------------------------
+
+.content {
+  width: 600px;
+  float: right;
+  padding-bottom: 50px;
+}
+
+@media print, screen and (max-width: 960px) {
+  .content {
+    float: none;
+    position: static;
+    width: auto;
+    padding: 20px 84px 20px 50px;
+    margin: 0 0 20px;
+  }
+}
+
+@media print, screen and (max-width: 720px) {
+  .content {
+    padding: 10px 0 10px 20px;
+    margin: 0 0 30px;
+  }
 }
 
 // ---------------------------------------------------------------------------
