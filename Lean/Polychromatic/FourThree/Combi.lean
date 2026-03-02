@@ -192,265 +192,6 @@ lemma table1_0123 (hm : m ≥ 6) :
 /-- {0,1,3,4}: blocks 001212 (r=6), 0001212 (r+1=7). Frobenius bound: m > 29. -/
 lemma table1_0134 (hm : m ≥ 30) :
     HasPolychromColouring (Fin 3) ({0, 1, 3, 4} : Finset (ZMod m)) := by sorry
-/-  haveI : NeZero m := ⟨by omega⟩
-  haveI : Fact (1 < m) := ⟨by omega⟩
-  -- Block boundary: first bd positions use length-7 blocks [0,0,0,1,2,1,2],
-  -- remaining positions use length-6 blocks [0,0,1,2,1,2].
-  set bd := 7 * (m % 6) with hbd_def
-  have hbd_le : bd ≤ m := by omega
-  -- Define the coloring
-  let c (p : ℕ) : ℕ :=
-    if p < bd then
-      if p % 7 ≤ 2 then 0 else if p % 7 % 2 = 1 then 1 else 2
-    else
-      let q := (p - bd) % 6
-      if q ≤ 1 then 0 else if q % 2 = 0 then 1 else 2
-  -- Basic properties of c
-  have hc_lt3 : ∀ p, c p < 3 := by intro p; simp only [c]; split_ifs <;> omega
-  have hc0 : c 0 = 0 := by simp only [c]; split_ifs <;> omega
-  have hc_m1 : c (m - 1) = 2 := by simp only [c]; split_ifs <;> omega
-  have hc_m2 : c (m - 2) = 1 := by simp only [c]; split_ifs <;> omega
-  have hc_m3 : c (m - 3) = 2 := by simp only [c]; split_ifs <;> omega
-  have hc_m4 : c (m - 4) = 1 := by simp only [c]; split_ifs <;> omega
-  -- Color values at small positions
-  have hc1 : c 1 = 0 := by simp only [c]; split_ifs <;> omega
-  have hc2 : c 2 = (if m % 6 = 0 then 1 else 0) := by
-    simp only [c]; split_ifs <;> omega
-  have hc3 : c 3 = (if m % 6 = 0 then 2 else 1) := by
-    simp only [c]; split_ifs <;> omega
-  have hc4 : c 4 = (if m % 6 = 0 then 1 else 2) := by
-    simp only [c]; split_ifs <;> omega
-  -- Construct the polychromatic coloring
-  refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k => ?_⟩
-  have hv : n.val < m := ZMod.val_lt n
-  -- Reduce to: find a in {0,1,3,4} with c((n.val+a) % m) = k.val
-  suffices ∃ a : ℕ, a ∈ ({0, 1, 3, 4} : Finset ℕ) ∧ c ((n.val + a) % m) = k.val by
-    obtain ⟨a, ha_mem, hca⟩ := this
-    have ha_lt_m : a < m := by
-      simp only [Finset.mem_insert, Finset.mem_singleton] at ha_mem
-      rcases ha_mem with rfl | rfl | rfl | rfl <;> omega
-    refine ⟨(a : ZMod m), ?_, ?_⟩
-    · simp only [Finset.mem_insert, Finset.mem_singleton]
-      simp only [Finset.mem_insert, Finset.mem_singleton] at ha_mem
-      rcases ha_mem with rfl | rfl | rfl | rfl <;> simp
-    · ext
-      show c (n + (a : ZMod m)).val = k.val
-      have : (n + (a : ZMod m)).val = (n.val + a) % m := by
-        rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt_m]
-      rw [this, hca]
-  -- Abbreviate
-  set v := n.val with hv_def
-  -- Main case split: wrap vs no-wrap
-  by_cases hwrap : v + 4 < m
-  · -- NO WRAP: all (v+a) % m = v + a for a ≤ 4
-    have no_wrap : ∀ a, a ≤ 4 → (v + a) % m = v + a :=
-      fun a ha => Nat.mod_eq_of_lt (by omega)
-    by_cases hzone : v ≥ bd
-    · -- Block-6 zone: entirely in 6-block pattern
-      set r := (v - bd) % 6
-      have hr_lt : r < 6 := Nat.mod_lt _ (by omega)
-      -- All offsets stay in block-6 zone
-      have h_in_6 : ∀ a, a ≤ 4 → ¬ (v + a < bd) := fun a _ => by omega
-      -- c(v + a) for a ≤ 4 depends on (v + a - bd) % 6
-      have hr_eq : ∀ a, a ≤ 4 → (v + a - bd) % 6 = (r + a) % 6 := by
-        intro a ha; omega
-      -- For each color k, find appropriate a in {0,1,3,4}
-      -- r=0: offsets 0,1,3,4 -> (r+a)%6 = 0,1,3,4 -> colors 0,0,2,1
-      -- r=1: offsets 0,1,3,4 -> 1,2,4,5 -> 0,1,1,2
-      -- r=2: offsets 0,1,3,4 -> 2,3,5,0 -> 1,2,2,0
-      -- r=3: offsets 0,1,3,4 -> 3,4,0,1 -> 2,1,0,0
-      -- r=4: offsets 0,1,3,4 -> 4,5,1,2 -> 1,2,0,1
-      -- r=5: offsets 0,1,3,4 -> 5,0,2,3 -> 2,0,1,2
-      have find_a : ∀ kv : ℕ, kv < 3 → ∃ a ∈ ({0, 1, 3, 4} : Finset ℕ),
-          c (v + a) = kv := by
-        intro kv hkv
-        rcases show r = 0 ∨ r = 1 ∨ r = 2 ∨ r = 3 ∨ r = 4 ∨ r = 5 from by omega
-          with rfl | rfl | rfl | rfl | rfl | rfl <;>
-          rcases show kv = 0 ∨ kv = 1 ∨ kv = 2 from by omega
-            with rfl | rfl | rfl <;> (
-          first
-          | exact ⟨0, by simp, by simp only [c]; rw [if_neg (h_in_6 0 (by omega))];
-              show (fun q => if q ≤ 1 then 0 else if q % 2 = 0 then 1 else 2)
-                ((v + 0 - bd) % 6) = _; rw [hr_eq 0 (by omega)]; simp; omega⟩
-          | exact ⟨1, by simp, by simp only [c]; rw [if_neg (h_in_6 1 (by omega))];
-              show (fun q => if q ≤ 1 then 0 else if q % 2 = 0 then 1 else 2)
-                ((v + 1 - bd) % 6) = _; rw [hr_eq 1 (by omega)]; simp; omega⟩
-          | exact ⟨3, by simp, by simp only [c]; rw [if_neg (h_in_6 3 (by omega))];
-              show (fun q => if q ≤ 1 then 0 else if q % 2 = 0 then 1 else 2)
-                ((v + 3 - bd) % 6) = _; rw [hr_eq 3 (by omega)]; simp; omega⟩
-          | exact ⟨4, by simp, by simp only [c]; rw [if_neg (h_in_6 4 (by omega))];
-              show (fun q => if q ≤ 1 then 0 else if q % 2 = 0 then 1 else 2)
-                ((v + 4 - bd) % 6) = _; rw [hr_eq 4 (by omega)]; simp; omega⟩)
-      obtain ⟨a, ha_mem, ha_eq⟩ := find_a k.val k.isLt
-      exact ⟨a, ha_mem, by
-        rw [no_wrap a (by simp only [Finset.mem_insert, Finset.mem_singleton] at ha_mem;
-          rcases ha_mem with rfl | rfl | rfl | rfl <;> omega)]
-        exact ha_eq⟩
-    · push_neg at hzone
-      by_cases hzone2 : v + 4 < bd
-      · -- Block-7 zone: entirely in 7-block pattern
-        have h_in_7 : ∀ a, a ≤ 4 → v + a < bd := fun a ha => by omega
-        set r := v % 7
-        have hr_lt : r < 7 := Nat.mod_lt _ (by omega)
-        have hr_eq : ∀ a, a ≤ 4 → (v + a) % 7 = (r + a) % 7 := by
-          intro a ha; omega
-        -- r=0: offsets 0,1,3,4 -> 0,1,3,4 -> 0,0,1,2
-        -- r=1: offsets 0,1,3,4 -> 1,2,4,5 -> 0,0,2,1
-        -- r=2: offsets 0,1,3,4 -> 2,3,5,6 -> 0,1,1,2
-        -- r=3: offsets 0,1,3,4 -> 3,4,6,0 -> 1,2,2,0
-        -- r=4: offsets 0,1,3,4 -> 4,5,0,1 -> 2,1,0,0
-        -- r=5: offsets 0,1,3,4 -> 5,6,1,2 -> 1,2,0,0
-        -- r=6: offsets 0,1,3,4 -> 6,0,2,3 -> 2,0,0,1
-        have find_a : ∀ kv : ℕ, kv < 3 → ∃ a ∈ ({0, 1, 3, 4} : Finset ℕ),
-            c (v + a) = kv := by
-          intro kv hkv
-          rcases show r = 0 ∨ r = 1 ∨ r = 2 ∨ r = 3 ∨ r = 4 ∨ r = 5 ∨ r = 6
-            from by omega with rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
-            rcases show kv = 0 ∨ kv = 1 ∨ kv = 2 from by omega
-              with rfl | rfl | rfl <;> (
-            first
-            | exact ⟨0, by simp, by simp only [c]; rw [if_pos (h_in_7 0 (by omega))];
-                show (if (v + 0) % 7 ≤ 2 then 0
-                  else if (v + 0) % 7 % 2 = 1 then 1 else 2) = _;
-                rw [hr_eq 0 (by omega)]; simp; omega⟩
-            | exact ⟨1, by simp, by simp only [c]; rw [if_pos (h_in_7 1 (by omega))];
-                show (if (v + 1) % 7 ≤ 2 then 0
-                  else if (v + 1) % 7 % 2 = 1 then 1 else 2) = _;
-                rw [hr_eq 1 (by omega)]; simp; omega⟩
-            | exact ⟨3, by simp, by simp only [c]; rw [if_pos (h_in_7 3 (by omega))];
-                show (if (v + 3) % 7 ≤ 2 then 0
-                  else if (v + 3) % 7 % 2 = 1 then 1 else 2) = _;
-                rw [hr_eq 3 (by omega)]; simp; omega⟩
-            | exact ⟨4, by simp, by simp only [c]; rw [if_pos (h_in_7 4 (by omega))];
-                show (if (v + 4) % 7 ≤ 2 then 0
-                  else if (v + 4) % 7 % 2 = 1 then 1 else 2) = _;
-                rw [hr_eq 4 (by omega)]; simp; omega⟩)
-        obtain ⟨a, ha_mem, ha_eq⟩ := find_a k.val k.isLt
-        exact ⟨a, ha_mem, by
-          rw [no_wrap a (by simp only [Finset.mem_insert, Finset.mem_singleton] at ha_mem;
-            rcases ha_mem with rfl | rfl | rfl | rfl <;> omega)]
-          exact ha_eq⟩
-      · -- Spanning block-7/block-6 boundary: v < bd ≤ v + 4
-        push_neg at hzone2
-        have hbd_pos : 0 < bd := by omega
-        -- Near the boundary, the 7-block ends with ...1,2,1,2 and
-        -- the 6-block starts 0,0,1,2,1,2.
-        -- Positions bd-4..bd+3 have colors 1,2,1,2,0,0,1,2
-        have hc_boundary : ∀ j, j ≤ 7 → c (bd - 4 + j) =
-            [1, 2, 1, 2, 0, 0, 1, 2].get ⟨j, by simp; omega⟩ := by
-          intro j hj
-          simp only [c]
-          rcases show j = 0 ∨ j = 1 ∨ j = 2 ∨ j = 3 ∨ j = 4 ∨ j = 5 ∨ j = 6 ∨ j = 7
-            from by omega with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
-            simp <;> split_ifs <;> omega
-        -- v is in {bd-4, bd-3, bd-2, bd-1}
-        set j := v - (bd - 4)
-        have hj_le : j ≤ 3 := by omega
-        have hva : ∀ a, a ≤ 4 → v + a = bd - 4 + (j + a) := by intro a _; omega
-        -- j=0 (v=bd-4): colors at j,j+1,j+3,j+4 = 1,2,2,0 -> {0,1,2}
-        -- j=1 (v=bd-3): 2,1,0,0 -> {0,1,2}
-        -- j=2 (v=bd-2): 1,2,0,1 -> {0,1,2}
-        -- j=3 (v=bd-1): 2,0,1,2 -> {0,1,2}
-        rcases show j = 0 ∨ j = 1 ∨ j = 2 ∨ j = 3 from by omega
-          with rfl | rfl | rfl | rfl
-        · -- j=0: colors 1,2,2,0
-          fin_cases k
-          · exact ⟨4, by simp, by rw [no_wrap 4 (by omega), hva 4 (by omega),
-              hc_boundary 4 (by omega)]; simp⟩
-          · exact ⟨0, by simp, by rw [no_wrap 0 (by omega), hva 0 (by omega),
-              hc_boundary 0 (by omega)]; simp⟩
-          · exact ⟨1, by simp, by rw [no_wrap 1 (by omega), hva 1 (by omega),
-              hc_boundary 1 (by omega)]; simp⟩
-        · -- j=1: colors 2,1,0,0
-          fin_cases k
-          · exact ⟨3, by simp, by rw [no_wrap 3 (by omega), hva 3 (by omega),
-              hc_boundary 4 (by omega)]; simp⟩
-          · exact ⟨1, by simp, by rw [no_wrap 1 (by omega), hva 1 (by omega),
-              hc_boundary 2 (by omega)]; simp⟩
-          · exact ⟨0, by simp, by rw [no_wrap 0 (by omega), hva 0 (by omega),
-              hc_boundary 1 (by omega)]; simp⟩
-        · -- j=2: colors 1,2,0,1
-          fin_cases k
-          · exact ⟨3, by simp, by rw [no_wrap 3 (by omega), hva 3 (by omega),
-              hc_boundary 5 (by omega)]; simp⟩
-          · exact ⟨0, by simp, by rw [no_wrap 0 (by omega), hva 0 (by omega),
-              hc_boundary 2 (by omega)]; simp⟩
-          · exact ⟨1, by simp, by rw [no_wrap 1 (by omega), hva 1 (by omega),
-              hc_boundary 3 (by omega)]; simp⟩
-        · -- j=3: colors 2,0,1,2
-          fin_cases k
-          · exact ⟨1, by simp, by rw [no_wrap 1 (by omega), hva 1 (by omega),
-              hc_boundary 4 (by omega)]; simp⟩
-          · exact ⟨3, by simp, by rw [no_wrap 3 (by omega), hva 3 (by omega),
-              hc_boundary 6 (by omega)]; simp⟩
-          · exact ⟨0, by simp, by rw [no_wrap 0 (by omega), hva 0 (by omega),
-              hc_boundary 3 (by omega)]; simp⟩
-  · -- WRAP case: v ≥ m - 4
-    push_neg at hwrap
-    have hmod_v : v % m = v := Nat.mod_eq_of_lt hv
-    -- v in {m-4, m-3, m-2, m-1}
-    rcases show v = m - 4 ∨ v = m - 3 ∨ v = m - 2 ∨ v = m - 1 from by omega
-      with hveq | hveq | hveq | hveq
-    · -- v = m - 4: window {m-4, m-3, m-1, 0}
-      have h1 : (v + 1) % m = m - 3 := by
-        have : v + 1 = m - 3 := by omega
-        rw [this]; exact Nat.mod_eq_of_lt (by omega)
-      have h3 : (v + 3) % m = m - 1 := by
-        have : v + 3 = m - 1 := by omega
-        rw [this]; exact Nat.mod_eq_of_lt (by omega)
-      have h4 : (v + 4) % m = 0 := by
-        have : v + 4 = m := by omega
-        rw [this, Nat.mod_self]
-      fin_cases k
-      · exact ⟨4, by simp, by rw [h4]; exact hc0⟩
-      · exact ⟨0, by simp, by rw [add_zero, hmod_v, hveq]; exact hc_m4⟩
-      · exact ⟨1, by simp, by rw [h1]; exact hc_m3⟩
-    · -- v = m - 3: window {m-3, m-2, 0, 1}
-      have h1 : (v + 1) % m = m - 2 := by
-        have : v + 1 = m - 2 := by omega
-        rw [this]; exact Nat.mod_eq_of_lt (by omega)
-      have h3 : (v + 3) % m = 0 := by
-        have : v + 3 = m := by omega
-        rw [this, Nat.mod_self]
-      have h4 : (v + 4) % m = 1 := by
-        have : v + 4 = 1 + m := by omega
-        rw [this, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]
-      fin_cases k
-      · exact ⟨3, by simp, by rw [h3]; exact hc0⟩
-      · exact ⟨1, by simp, by rw [h1]; exact hc_m2⟩
-      · exact ⟨0, by simp, by rw [add_zero, hmod_v, hveq]; exact hc_m3⟩
-    · -- v = m - 2: window {m-2, m-1, 1, 2}
-      have h1 : (v + 1) % m = m - 1 := by
-        have : v + 1 = m - 1 := by omega
-        rw [this]; exact Nat.mod_eq_of_lt (by omega)
-      have h3 : (v + 3) % m = 1 := by
-        have : v + 3 = 1 + m := by omega
-        rw [this, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]
-      have h4 : (v + 4) % m = 2 := by
-        have : v + 4 = 2 + m := by omega
-        rw [this, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]
-      fin_cases k
-      · exact ⟨3, by simp, by rw [h3]; exact hc1⟩
-      · exact ⟨0, by simp, by rw [add_zero, hmod_v, hveq]; exact hc_m2⟩
-      · exact ⟨1, by simp, by rw [h1]; exact hc_m1⟩
-    · -- v = m - 1: window {m-1, 0, 2, 3}
-      have h1 : (v + 1) % m = 0 := by
-        have : v + 1 = m := by omega
-        rw [this, Nat.mod_self]
-      have h3 : (v + 3) % m = 2 := by
-        have : v + 3 = 2 + m := by omega
-        rw [this, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]
-      have h4 : (v + 4) % m = 3 := by
-        have : v + 4 = 3 + m := by omega
-        rw [this, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]
-      fin_cases k
-      · exact ⟨1, by simp, by rw [h1]; exact hc0⟩
-      · -- k = 1: c(2) or c(3) depending on m % 6
-        by_cases hmod : m % 6 = 0
-        · exact ⟨3, by simp, by rw [h3]; rw [hc2, if_pos hmod]⟩
-        · exact ⟨4, by simp, by rw [h4]; rw [hc3, if_neg hmod]⟩
-      · exact ⟨0, by simp, by rw [add_zero, hmod_v, hveq]; exact hc_m1⟩
--/
 
 /-- {0,2,3,5}: blocks 001122 (r=6), 0001122 (r+1=7). Frobenius bound: m > 29. -/
 lemma table1_0235 (hm : m ≥ 30) :
@@ -610,7 +351,16 @@ lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289)
 lemma case_one_residues (g : ℕ) (hm : m ≥ 289) (h_res : m % 3 ≠ 0)
     (h_range : 2 * (m / 6) ≤ g ∧ g ≤ (m + 2) / 3) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  sorry
+  obtain ⟨hl, hr⟩ := h_range
+  have h1 : m = 3 * g - 2 ∨ m = 3 * g - 1 ∨ m = 3 * g + 1 ∨
+      m = 3 * g + 2 ∨ m = 3 * g + 4 ∨ m = 3 * g + 5 := by omega
+  rcases h1 with rfl | rfl | rfl | rfl | rfl | rfl
+  · exact case_one_res_3g_sub_2 _ g hm rfl
+  · exact case_one_res_3g_sub_1 _ g hm rfl
+  · exact case_one_res_3g_add_1 _ g hm rfl
+  · exact case_one_res_3g_add_2 _ g hm rfl
+  · exact case_one_res_3g_add_4 _ g hm rfl
+  · exact case_one_res_3g_add_5 _ g hm rfl
 
 -- Subcase (1d) sub-subcases, split by g mod 3.
 
@@ -678,10 +428,33 @@ lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3
     · exact case_one_div_3g3 m g h (Nat.dvd_of_mod_eq_zero hg3)
   · exact case_one_div_g_not_three m g h_div hg3
 
-/-- Combined dispatch: applies subcases (1a)–(1d) for 2 ≤ g ≤ m/2 and m ≥ 289. -/
-lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g) (hg_le : g ≤ m / 2) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
+/-- Subcase (1b) with s=3: interval coloring for g > ⌈m/3⌉.
+    Same argument as case_one_interval but with 3 intervals of size ≈ m/3. -/
+lemma case_one_interval_large (g : ℕ) (h_ge : (m + 2) / 3 < g)
+    (h_le : g ≤ m / 2) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
+        Finset (ZMod m)) := by
   sorry
+
+/-- Combined dispatch: applies subcases (1a)–(1d) for 2 ≤ g ≤ m/2 and m ≥ 289. -/
+lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
+    (hg_le : g ≤ m / 2) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
+        Finset (ZMod m)) := by
+  by_cases hg4 : g ≤ 4
+  · exact case_one_small_g m g hm (by simp; omega)
+  · push_neg at hg4
+    by_cases hg_int : g < 2 * (m / 6)
+    · exact case_one_interval m g (by omega) hg_int
+    · push_neg at hg_int
+      by_cases hg_res : g ≤ (m + 2) / 3
+      · by_cases h3 : m % 3 = 0
+        · exact case_one_divisible m g hm (by omega)
+        · exact case_one_residues m g hm h3 ⟨hg_int, hg_res⟩
+      · push_neg at hg_res
+        exact case_one_interval_large m g hg_res hg_le
 
 /-- WLOG g ≤ m/2: in ZMod m, {0,1,m-g,m-g+1} = (-g) +ᵥ {0,1,g,g+1},
     so HasPolychromColouring is preserved. -/
