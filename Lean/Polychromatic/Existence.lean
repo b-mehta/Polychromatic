@@ -213,7 +213,7 @@ lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (h
 open Real
 
 lemma condition_of_mul_exp_le {k m : ℕ} (hk : k ≠ 0) (hm : m ≠ 0)
-    (hm : m ^ 2 * k * Real.exp (- m / k + 1) ≤ 1) :
+    (hm : m ^ 2 * k * Real.exp (-m / k + 1) ≤ 1) :
     polychromColouringBound k m := by
   have : 0 ≤ 1 - (k : ℝ)⁻¹ := by
     simp only [sub_nonneg]
@@ -446,7 +446,7 @@ lemma polychromColouringBound_mBound {k : ℕ} (hk : 4 ≤ k) :
       norm_num
 
 /-- For `k ≥ 4` and sets of size at least `mBound k`, a `k`-colouring exists. -/
-lemma hasPolychromColouring_mBound {S : Finset G} {k : ℕ} (hk : 4 ≤ k) (hS : mBound k ≤ #S):
+lemma hasPolychromColouring_mBound {S : Finset G} {k : ℕ} (hk : 4 ≤ k) (hS : mBound k ≤ #S) :
     HasPolychromColouring (Fin k) S := by
   have h2S : 2 ≤ #S := by
     grw [← hS, ← linear_le_mBound, ← hk]

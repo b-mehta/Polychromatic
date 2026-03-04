@@ -73,7 +73,7 @@ lemma table1_0123 (hm : m ≥ 6) :
       rcases show a = 0 ∨ a = 1 ∨ a = 2 ∨ a = 3 from by omega with
         rfl | rfl | rfl | rfl <;> simp
     · ext
-      show c (n + (a : ZMod m)).val = k.val
+      change c (n + (a : ZMod m)).val = k.val
       have : (n + (a : ZMod m)).val = (n.val + a) % m := by
         rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt_m]
       rw [this, hca]
@@ -92,7 +92,7 @@ lemma table1_0123 (hm : m ≥ 6) :
       simp only [c]
       have : ¬ (v + a < bd) := by omega
       rw [if_neg this]
-      show (v + a - bd) % 3 = k.val
+      change (v + a - bd) % 3 = k.val
       have := k.isLt; omega
     · push_neg at hzone
       by_cases hzone2 : v + 3 < bd
@@ -170,10 +170,10 @@ lemma table1_0123 (hm : m ≥ 6) :
       · exact ⟨1, by omega, by rw [h1]; exact hc0⟩
       · by_cases hmod : m % 3 = 0
         · refine ⟨2, by omega, ?_⟩
-          rw [h2]; show c 1 = 1
+          rw [h2]; change c 1 = 1
           simp only [c, hbd_def, hmod]; norm_num
         · refine ⟨3, by omega, ?_⟩
-          rw [h3]; show c 2 = 1
+          rw [h3]; change c 2 = 1
           simp only [c]; split_ifs <;> omega
       · exact ⟨0, by omega, by rw [add_zero, hmod_v, hveq]; exact hc_m1⟩
 
@@ -387,7 +387,7 @@ private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
   exact ⟨(a : ZMod m),
     by simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
        rcases ha with rfl | rfl | rfl | rfl <;> simp,
-    by ext; show c (n + (a : ZMod m)).val = k.val
+    by ext; change c (n + (a : ZMod m)).val = k.val
        rw [show (n + (a : ZMod m)).val = (n.val + a) % m from by
          rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt], hc_period, hca]⟩
 
@@ -402,22 +402,14 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   let c (p : ℕ) : ℕ := (p % 3 + p / g) % 3
   have hc_lt3 : ∀ p, c p < 3 := fun p => Nat.mod_lt _ (by omega)
   have hc_period : ∀ p, c (p % m) = c p := by
-    intro p
-    simp only [c]
-    rw [hm_eq]
-    conv_rhs => rw [show p = 3 * g * (p / (3 * g)) + p % (3 * g) from
-      (Nat.div_add_mod p (3 * g)).symm]
-    have hg3t : g = 3 * t := ht
-    rw [hg3t]
-    set q := p / (3 * (3 * t)) with hq_def
-    set r := p % (3 * (3 * t)) with hr_def
-    have h3mod : (3 * (3 * t) * q + r) % 3 = r % 3 := by
-      have : 3 * (3 * t) * q = 3 * (3 * t * q) := by ring
-      rw [this, Nat.mul_add_mod]
-    have h3div : (3 * (3 * t) * q + r) / (3 * t) = 3 * q + r / (3 * t) := by
-      have : 3 * (3 * t) * q + r = r + 3 * t * (3 * q) := by ring
-      rw [this, Nat.add_mul_div_left r (3 * q) (by omega)]; ring
-    omega
+    intro p; simp only [c, hm_eq]
+    have h1 : p % (3 * g) % 3 = p % 3 := Nat.mod_mod_of_dvd p (dvd_mul_right 3 g)
+    have h2 : p / g = p % (3 * g) / g + 3 * (p / (3 * g)) := by
+      conv_lhs => rw [show p = p % (3 * g) + (3 * (p / (3 * g))) * g from by
+        rw [show (3 * (p / (3 * g))) * g = 3 * g * (p / (3 * g)) from by ring]
+        exact (Nat.mod_add_div p (3 * g)).symm]
+      exact Nat.add_mul_div_right _ _ hg
+    rw [h1, h2]; omega
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
     lift_coloring_witness (by omega) hc_lt3 hc_period ?_⟩
   set v := n.val
@@ -425,9 +417,12 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   set q := v / g with hq_def
   have hv_eq : v = g * q + r := (Nat.div_add_mod v g).symm
   have hr_lt : r < g := Nat.mod_lt _ hg
+  have gk_mod3 : ∀ k a, (g * k + a) % 3 = a % 3 := by
+    intro k a; rw [ht, show 3 * t * k + a = 3 * (t * k) + a from by ring, Nat.mul_add_mod]
+  have gk_mul_mod3 : ∀ k, (g * k) % 3 = 0 := fun k => by simpa using gk_mod3 k 0
   by_cases hr_lt_gm1 : r + 1 < g
   · have hv1_div : (v + 1) / g = q := by
-      rw [hv_eq, show g * q + r + 1 = g * q + (r + 1) from by ring,
+      rw [hv_eq, show g * q + r + 1 = g * q + (r + 1) from by omega,
           Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
     have hvg_div : (v + g) / g = q + 1 := by
       rw [hv_eq, show g * q + r + g = g * (q + 1) + r from by ring,
@@ -435,17 +430,14 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     have hvg1_div : (v + g + 1) / g = q + 1 := by
       rw [hv_eq, show g * q + r + g + 1 = g * (q + 1) + (r + 1) from by ring,
           Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
-    have hv_mod3 : v % 3 = r % 3 := by
-      rw [hv_eq, ht, show 3 * t * q + r = 3 * (t * q) + r from by ring, Nat.mul_add_mod]
+    have hv_mod3 : v % 3 = r % 3 := by rw [hv_eq]; exact gk_mod3 q r
     have hv1_mod3 : (v + 1) % 3 = (r + 1) % 3 := by
-      rw [hv_eq, ht, show 3 * t * q + r + 1 = 3 * (t * q) + (r + 1) from by ring,
-          Nat.mul_add_mod]
+      rw [hv_eq, show g * q + r + 1 = g * q + (r + 1) from by omega]; exact gk_mod3 q (r + 1)
     have hvg_mod3 : (v + g) % 3 = r % 3 := by
-      rw [hv_eq, ht, show 3 * t * q + r + 3 * t = 3 * (t * q + t) + r from by ring,
-          Nat.mul_add_mod]
+      rw [hv_eq, show g * q + r + g = g * (q + 1) + r from by ring]; exact gk_mod3 (q + 1) r
     have hvg1_mod3 : (v + g + 1) % 3 = (r + 1) % 3 := by
-      rw [hv_eq, ht, show 3 * t * q + r + 3 * t + 1 = 3 * (t * q + t) + (r + 1) from by ring,
-          Nat.mul_add_mod]
+      rw [hv_eq, show g * q + r + g + 1 = g * (q + 1) + (r + 1) from by ring]
+      exact gk_mod3 (q + 1) (r + 1)
     have hcv : c v = (r % 3 + q) % 3 := by simp only [c]; rw [hv_mod3]
     have hcv1 : c (v + 1) = ((r + 1) % 3 + q) % 3 := by
       simp only [c]; rw [hv1_mod3, hv1_div]
@@ -465,40 +457,28 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
     · exact ⟨g, by simp, by rw [hcvg_s]; exact wit.2.1 hd⟩
     · exact ⟨g + 1, by simp, by
-        show c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
+        change c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
   · push_neg at hr_lt_gm1
     have hr_eq : r = g - 1 := by omega
     have ht_pos : 0 < t := by omega
     have hk := k.isLt
-    have hv_mod3 : v % 3 = 2 := by
-      rw [hv_eq, hr_eq, ht, show 3 * t * q = 3 * (t * q) from by ring,
-          Nat.mul_add_mod]
-      have : 3 * t - 1 = 3 * (t - 1) + 2 := by omega
-      rw [this, Nat.mul_add_mod]
-    have hv1_mod3 : (v + 1) % 3 = 0 := by
-      have : v + 1 = 3 * (t * q + t) := by
-        rw [hv_eq, hr_eq, ht, show 3 * t * q = 3 * (t * q) from by ring]; omega
-      rw [this, Nat.mul_mod_right]
+    have hv_mod3 : v % 3 = 2 := by rw [hv_eq, gk_mod3, hr_eq, ht]; omega
+    have hv1_eq : v + 1 = g * (q + 1) := by
+      rw [show g * (q + 1) = g * q + g from by ring]; omega
+    have hv1_mod3 : (v + 1) % 3 = 0 := by rw [hv1_eq]; exact gk_mul_mod3 (q + 1)
     have hv1_div : (v + 1) / g = q + 1 := by
-      have : v + 1 = g * (q + 1) := by
-        rw [show g * (q + 1) = g * q + g from by ring]; omega
-      rw [this, Nat.mul_div_cancel_left _ hg]
+      rw [hv1_eq, Nat.mul_div_cancel_left _ hg]
+    have hvg_eq : v + g = g * (q + 1) + (g - 1) := by
+      rw [show g * (q + 1) = g * q + g from by ring]; omega
     have hvg_mod3 : (v + g) % 3 = 2 := by
-      have : v + g = 3 * (t * q + 2 * t - 1) + 2 := by
-        rw [hv_eq, hr_eq, ht, show 3 * t * q = 3 * (t * q) from by ring]; omega
-      rw [this, Nat.mul_add_mod]
+      rw [hvg_eq, gk_mod3, ht]; omega
     have hvg_div : (v + g) / g = q + 1 := by
-      have : v + g = g * (q + 1) + (g - 1) := by
-        rw [show g * (q + 1) = g * q + g from by ring]; omega
-      rw [this, Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
-    have hvg1_mod3 : (v + g + 1) % 3 = 0 := by
-      have : v + g + 1 = 3 * (t * q + 2 * t) := by
-        rw [hv_eq, hr_eq, ht, show 3 * t * q = 3 * (t * q) from by ring]; omega
-      rw [this, Nat.mul_mod_right]
+      rw [hvg_eq, Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
+    have hvg1_eq : v + g + 1 = g * (q + 2) := by
+      rw [show g * (q + 2) = g * q + 2 * g from by ring]; omega
+    have hvg1_mod3 : (v + g + 1) % 3 = 0 := by rw [hvg1_eq]; exact gk_mul_mod3 (q + 2)
     have hvg1_div : (v + g + 1) / g = q + 2 := by
-      have : v + g + 1 = g * (q + 2) := by
-        rw [show g * (q + 2) = g * q + 2 * g from by ring]; omega
-      rw [this, Nat.mul_div_cancel_left _ hg]
+      rw [hvg1_eq, Nat.mul_div_cancel_left _ hg]
     have hcv : c v = (2 + q) % 3 := by simp only [c]; rw [hv_mod3]
     have hcv1 : c (v + 1) = (q + 1) % 3 := by
       simp only [c]; rw [hv1_mod3, hv1_div]; simp
@@ -518,7 +498,6 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     · exact ⟨g, by simp, by rw [hcvg_s]; exact wit.2.1 hd⟩
     · exact ⟨1, by simp, by rw [hcv1_s]; exact wit.2.2 hd⟩
 
-set_option maxHeartbeats 400000 in
 lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0 < g) :
     HasPolychromColouring (Fin 3)
       ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
@@ -575,15 +554,15 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
             rw [show h * (q + 1) = h * q + h from by ring]; omega,
           Nat.mul_div_cancel_left _ hh_pos]
     have hcv : c v = (3 - q % 3) % 3 := by
-      show (r % 3 + (3 - q % 3)) % 3 = _; rw [hr0]; omega
+      change (r % 3 + (3 - q % 3)) % 3 = _; rw [hr0]; omega
     have hcv1 : c (v + 1) = (1 + (3 - q % 3)) % 3 := by
-      show ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
+      change ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
       rw [hv1_modh, hv1_divh]
     have hcvg : c (v + g) = (3 - q % 3) % 3 := by
-      show ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
+      change ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
       rw [hvg_modh, hvg_divh, ht, Nat.mul_mod_right]; omega
     have hcvg1 : c (v + g + 1) = (3 - (q + 1) % 3) % 3 := by
-      show ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
+      change ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
       rw [hvg1_modh, hvg1_divh]; omega
     set s := (3 - q % 3) % 3 with hs_def
     have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
@@ -596,7 +575,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
     · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
     · exact ⟨1, by simp, by rw [hcv1_s]; exact wit.2.1 hd⟩
     · exact ⟨g + 1, by simp, by
-        show c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
+        change c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
   · by_cases hrg : r = g
     · have hv1_modh : (v + 1) % h = 0 := by
         rw [hv_eq, hrg,
@@ -629,19 +608,19 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
               rw [show h * (q + 1) = h * q + h from by ring]; omega,
             Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
       have hcv : c v = (3 - q % 3) % 3 := by
-        show (r % 3 + (3 - q % 3)) % 3 = _
+        change (r % 3 + (3 - q % 3)) % 3 = _
         rw [hrg, ht, Nat.mul_mod_right]; omega
       have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
-        show ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
+        change ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
         rw [hv1_modh, hv1_divh]; omega
       have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
-        show ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
+        change ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
         rw [hvg_modh, hvg_divh, ht]
         have : (3 * t - 1) % 3 = 2 := by
           rw [show 3 * t - 1 = 3 * (t - 1) + 2 from by omega, Nat.mul_add_mod]
         rw [this]
       have hcvg1 : c (v + g + 1) = (3 - (q + 1) % 3) % 3 := by
-        show ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
+        change ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
         rw [hvg1_modh, hvg1_divh, ht, Nat.mul_mod_right]; omega
       set s := (3 - q % 3) % 3 with hs_def
       have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
@@ -684,13 +663,13 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
             Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
       have hcv : c v = (r % 3 + (3 - q % 3)) % 3 := rfl
       have hcv1 : c (v + 1) = ((r + 1) % 3 + (3 - q % 3)) % 3 := by
-        show ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
+        change ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
         rw [hv1_modh, hv1_divh]
       have hcvg : c (v + g) = ((r - 1) % 3 + (3 - (q + 1) % 3)) % 3 := by
-        show ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
+        change ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
         rw [hvg_modh, hvg_divh]
       have hcvg1 : c (v + g + 1) = (r % 3 + (3 - (q + 1) % 3)) % 3 := by
-        show ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
+        change ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
         rw [hvg1_modh, hvg1_divh]
       set s := (r % 3 + (3 - q % 3)) % 3 with hs_def
       have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
@@ -703,7 +682,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
       · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
       · exact ⟨1, by simp, by rw [hcv1_s]; exact wit.2.1 hd⟩
       · exact ⟨g + 1, by simp, by
-          show c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
+          change c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
 
 /-- Subcase (1d) assembled: dispatches to the three sub-subcases above. -/
 lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3 * g + 3) :
@@ -786,7 +765,7 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
   set az : ZMod m := (a : ZMod m)
   set g' : ZMod m := bz⁻¹ * (bz - az)
   have hbg' : bz * g' = bz - az := by
-    show bz * (bz⁻¹ * (bz - az)) = bz - az
+    change bz * (bz⁻¹ * (bz - az)) = bz - az
     rw [← mul_assoc, ZMod.mul_inv_of_unit _ hub, one_mul]
   have hbg'1 : bz * (g' + 1) = 2 * bz - az := by
     rw [mul_add, mul_one, hbg']; ring
@@ -993,7 +972,7 @@ lemma hasPolychromColouring_of_zmod_set {a b c : ℤ} {m : ℕ}
     (h : HasPolychromColouring (Fin 3) (zmod_set m a b)) :
     HasPolychromColouring (Fin 3) ({0, a, b, c} : Finset ℤ) := by
   apply HasPolychromColouring.of_image (Int.castAddHom (ZMod m))
-  show HasPolychromColouring (Fin 3)
+  change HasPolychromColouring (Fin 3)
     (({0, a, b, c} : Finset ℤ).image (Int.cast : ℤ → ZMod m))
   apply hasPolychromColouring_fin_of_le (by simp)
   rw [polychromNumber_zmod hm_eq]

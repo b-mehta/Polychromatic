@@ -55,7 +55,7 @@ def IndepFrom (s : Set Ω) (t : Set (Set Ω)) (P : Measure Ω) : Prop :=
   Indep (generateFrom {s}) (generateFrom t) P
 
 lemma indepFrom_iff_indepSets {P : Measure Ω} [IsZeroOrProbabilityMeasure P]
-    {s : Set Ω} {t : Set (Set Ω)} (hs : MeasurableSet s) (ht : ∀ i ∈ t, MeasurableSet i):
+    {s : Set Ω} {t : Set (Set Ω)} (hs : MeasurableSet s) (ht : ∀ i ∈ t, MeasurableSet i) :
     IndepFrom s t P ↔ IndepSets {s} (generatePiSystem t) P := by
   rw [IndepFrom, ← generateFrom_generatePiSystem_eq (g := t)]
   constructor

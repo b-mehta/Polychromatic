@@ -154,7 +154,7 @@ lemma pi_pi' {f : ι → Set Ω} {s : Finset ι} :
   simp [this, Measure.pi_pi, apply_ite]
 
 open Classical in
-lemma map_pi_restrict (i₁ : Set ι)  :
+lemma map_pi_restrict (i₁ : Set ι) :
     (Measure.pi P).map i₁.restrict = Measure.pi (fun i : i₁ ↦ P i) := by
   apply (Measure.pi_eq _).symm
   intro t hs
