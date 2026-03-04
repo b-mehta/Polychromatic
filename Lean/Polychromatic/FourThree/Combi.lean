@@ -1,6 +1,6 @@
 import Polychromatic.Colouring
 import Polychromatic.PolychromNumber
-import Mathlib.Data.ZMod.Aut
+import Mathlib.Algebra.Ring.AddAut
 
 open Finset Pointwise
 
@@ -137,8 +137,7 @@ lemma table1_0123 (hm : m ≥ 6) :
     have hmod_v : v % m = v := Nat.mod_eq_of_lt hv
     rcases show v = m - 3 ∨ v = m - 2 ∨ v = m - 1 from by omega
       with hveq | hveq | hveq
-    ·
-      have h1 : (v + 1) % m = m - 2 := by
+    · have h1 : (v + 1) % m = m - 2 := by
         have : v + 1 = m - 2 := by omega
         rw [this]; exact Nat.mod_eq_of_lt (by omega)
       have h2 : (v + 2) % m = m - 1 := by
@@ -355,13 +354,9 @@ lemma case_one_div_g_not_three (g : ℕ)
   have h3_dvd : 3 ∣ m :=
     by rcases h_div with rfl | rfl <;> omega
   haveI : NeZero m := ⟨by omega⟩
-  -- Map ZMod m → ZMod 3 via the canonical quotient
-  apply HasPolychromColouring.of_image
-    (ZMod.castHom h3_dvd (ZMod 3))
-  -- Image is {0,1,(g:ZMod 3),(g:ZMod 3)+1} = univ
+  apply HasPolychromColouring.of_image (ZMod.castHom h3_dvd (ZMod 3))
   simp only [Finset.image_insert, Finset.image_singleton,
     map_zero, map_one, map_add, map_natCast]
-  -- Since g%3 ≠ 0, the image is all of ZMod 3
   have hg12 : g % 3 = 1 ∨ g % 3 = 2 := by omega
   suffices ({0, 1, (g : ZMod 3), (g : ZMod 3) + 1} :
       Finset (ZMod 3)) = Finset.univ by
@@ -396,7 +391,6 @@ private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
        rw [show (n + (a : ZMod m)).val = (n.val + a) % m from by
          rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt], hc_period, hca]⟩
 
-set_option maxHeartbeats 400000 in
 lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     (hg3 : 3 ∣ g) (hg : 0 < g) :
     HasPolychromColouring (Fin 3)
@@ -543,7 +537,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
     conv_rhs => rw [show p = h * (3 * Q) + R from by
       rw [show h * (3 * Q) = 3 * h * Q from by ring]; exact (Nat.div_add_mod p (3 * h)).symm]
     have hmod : (h * (3 * Q) + R) % h = R % h := by
-      rw [show h * (3 * Q) = h * (3 * Q) from rfl, Nat.mul_add_mod]
+      rw [Nat.mul_add_mod]
     have hdiv : (h * (3 * Q) + R) / h % 3 = R / h % 3 := by
       rw [show h * (3 * Q) + R = R + h * (3 * Q) from by ring,
           Nat.add_mul_div_left _ _ hh_pos]; omega
@@ -759,7 +753,7 @@ lemma case_one_complement (g : ℕ) (hg : g < m) :
     rw [Nat.cast_sub hg.le, ZMod.natCast_self, zero_sub]
   rw [key, show ({0, 1, -(↑g : ZMod m), -(↑g : ZMod m) + 1} : Finset (ZMod m)) =
       (-(↑g : ZMod m)) +ᵥ ({0, 1, (↑g : ZMod m), (↑g : ZMod m) + 1} : Finset (ZMod m)) from by
-    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add, neg_add_cancel, zero_add]
+    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add, neg_add_cancel]
     ext x; simp; tauto]
   exact hasPolychromColouring_vadd
 
@@ -781,75 +775,59 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
       zmod_set m a b =
         ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)).image
           ((b : ZMod m) * ·) := by
-  -- m ≥ 4 since zmod_set has 4 distinct elements in ZMod m
   have hm4 : 4 ≤ m := by
     haveI : NeZero m := ⟨by omega⟩
     calc 4 = (zmod_set m a b).card := hcard.symm
       _ ≤ Fintype.card (ZMod m) := Finset.card_le_univ _
       _ = m := ZMod.card m
   haveI : NeZero m := ⟨by omega⟩
-  -- b is a unit in ZMod m
   have hub : IsUnit ((b : ℤ) : ZMod m) := isUnit_intCast_of_natAbs_coprime hd
-  -- Abbreviations for casts
   set bz : ZMod m := (b : ZMod m)
   set az : ZMod m := (a : ZMod m)
-  -- Define g' = b⁻¹ * (b - a) in ZMod m
   set g' : ZMod m := bz⁻¹ * (bz - az)
-  -- Key identity: b * g' = b - a
   have hbg' : bz * g' = bz - az := by
     show bz * (bz⁻¹ * (bz - az)) = bz - az
     rw [← mul_assoc, ZMod.mul_inv_of_unit _ hub, one_mul]
-  -- Consequence: b * (g' + 1) = 2b - a
   have hbg'1 : bz * (g' + 1) = 2 * bz - az := by
     rw [mul_add, mul_one, hbg']; ring
-  -- The set equality (with g' as ZMod m element)
   have hset : zmod_set m a b =
       ({0, 1, g', g' + 1} : Finset (ZMod m)).image (bz * ·) := by
     simp only [zmod_set, Finset.image_insert, Finset.image_singleton]
     simp only [mul_zero, mul_one, hbg', hbg'1]
     push_cast
     ext x; simp only [Finset.mem_insert, Finset.mem_singleton]; tauto
-  -- g'.val is our witness. Since (g'.val : ZMod m) = g', we can substitute.
   have hval : (g'.val : ZMod m) = g' := ZMod.natCast_zmod_val g'
-  -- Multiplication by bz is injective (bz is a unit)
   have hinj : Function.Injective (bz * · : ZMod m → ZMod m) := by
     intro x y (hxy : bz * x = bz * y)
     have h1 : bz⁻¹ * (bz * x) = bz⁻¹ * (bz * y) := congr_arg (bz⁻¹ * ·) hxy
     simp only [← mul_assoc, ZMod.inv_mul_of_unit _ hub, one_mul] at h1
     exact h1
-  -- Source set has card 4
   have hcard4 : ({0, 1, g', g' + 1} : Finset (ZMod m)).card = 4 := by
     rwa [hset, Finset.card_image_of_injective _ hinj] at hcard
   refine ⟨g'.val, ?_, ?_, ?_⟩
-  · -- 2 ≤ g'.val: if g'.val < 2, then g' ∈ {0, 1}, source set has < 4 elements
-    by_contra hlt; push_neg at hlt
+  · by_contra hlt; push_neg at hlt
     have hcases : g'.val = 0 ∨ g'.val = 1 := by omega
     rcases hcases with h | h
     · have hg'0 : g' = 0 := by rw [← hval, h, Nat.cast_zero]
-      -- {0, 1, 0, 0+1} ⊆ {0, 1}, card ≤ 2
       have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1} := by
         rw [hg'0, zero_add]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]
       linarith [Finset.card_le_card hsub, Finset.card_le_two (a := (0 : ZMod m)) (b := 1)]
     · have hg'1 : g' = 1 := by rw [← hval, h, Nat.cast_one]
-      -- {0, 1, 1, 1+1} ⊆ {0, 1, 1+1}, card ≤ 3
       have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1, (1 : ZMod m) + 1} := by
         rw [hg'1]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]
       linarith [Finset.card_le_card hsub,
         Finset.card_le_three (a := (0 : ZMod m)) (b := 1) (c := (1 : ZMod m) + 1)]
-  · -- g'.val ≤ m - 2
-    by_contra hgt; push_neg at hgt
+  · by_contra hgt; push_neg at hgt
     have hval_lt := ZMod.val_lt g'
     have hgm1 : g'.val = m - 1 := by omega
     have hg'p1 : g' + 1 = 0 := by
       rw [← hval, hgm1, Nat.cast_sub (by omega), Nat.cast_one, ZMod.natCast_self, zero_sub,
         neg_add_cancel]
-    -- {0, 1, g', 0} ⊆ {0, 1, g'}, card ≤ 3
     have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1, g'} := by
       rw [hg'p1]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]; tauto
     linarith [Finset.card_le_card hsub,
       Finset.card_le_three (a := (0 : ZMod m)) (b := 1) (c := g')]
-  · -- The set equality: substitute g'.val for g'
-    conv at hset => rhs; rw [show g' = (g'.val : ZMod m) from hval.symm]
+  · conv at hset => rhs; rw [show g' = (g'.val : ZMod m) from hval.symm]
     exact hset
 
 /-- Aggregation of Main Case 1.
@@ -860,7 +838,6 @@ lemma main_case_one (a b : ℤ) (hm : m ≥ 289)
     (hcard : (zmod_set m a b).card = 4)
     (h_gcd : Nat.gcd b.natAbs m = 1 ∨ Nat.gcd (b - a).natAbs m = 1) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  -- Helper: prove HasPolychromColouring given gcd(b, m) = 1 for a general (a, b)
   suffices ∀ a' b' : ℤ, Nat.gcd b'.natAbs m = 1 →
       (zmod_set m a' b').card = 4 →
       HasPolychromColouring (Fin 3) (zmod_set m a' b') by
@@ -870,12 +847,10 @@ lemma main_case_one (a b : ℤ) (hm : m ≥ 289)
       apply this (-a) (b - a) hba
       rwa [zmod_set_swap]
   intro a' b' hd hcard'
-  -- Get g with 2 ≤ g ≤ m - 2 and the set equality
   obtain ⟨g, hg_ge, hg_le, hset⟩ := exists_g_of_coprime m a' b' hd (by omega) hcard'
   obtain ⟨u, hu⟩ := isUnit_intCast_of_natAbs_coprime hd
   rw [hset, ← hu]
   rw [hasPolychromColouring_mul_unit]
-  -- Now prove HasPolychromColouring (Fin 3) ({0, 1, g, g+1})
   by_cases hg_half : g ≤ m / 2
   · exact case_one_dispatch m g hm hg_ge hg_half
   · push_neg at hg_half
