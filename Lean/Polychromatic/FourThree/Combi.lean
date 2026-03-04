@@ -57,23 +57,17 @@ lemma table1_0123 (hm : m ≥ 6) :
     HasPolychromColouring (Fin 3) ({0, 1, 2, 3} : Finset (ZMod m)) := by
   haveI : NeZero m := ⟨by omega⟩
   haveI : Fact (1 < m) := ⟨by omega⟩
-  -- Block boundary: first bd positions use length-4 blocks [0,0,1,2],
-  -- remaining positions use length-3 blocks [0,1,2].
   set bd := 4 * (m % 3) with hbd_def
   have hbd_le : bd ≤ m := by omega
-  -- Define the coloring
   let c (p : ℕ) : ℕ :=
     if p < bd then (if p % 4 ≤ 1 then 0 else p % 4 - 1) else (p - bd) % 3
-  -- Basic properties of c
   have hc_lt3 : ∀ p, c p < 3 := by intro p; simp only [c]; split_ifs <;> omega
   have hc0 : c 0 = 0 := by simp only [c]; split_ifs <;> omega
   have hc_m1 : c (m - 1) = 2 := by simp only [c]; split_ifs <;> omega
   have hc_m2 : c (m - 2) = 1 := by simp only [c]; split_ifs <;> omega
   have hc_m3 : c (m - 3) = 0 := by simp only [c]; split_ifs <;> omega
-  -- Construct the polychromatic coloring
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k => ?_⟩
   have hv : n.val < m := ZMod.val_lt n
-  -- Reduce to: find a ≤ 3 with c((n.val+a) % m) = k.val
   suffices ∃ a : ℕ, a ≤ 3 ∧ c ((n.val + a) % m) = k.val by
     obtain ⟨a, ha_le, hca⟩ := this
     have ha_lt_m : a < m := by omega
@@ -86,16 +80,12 @@ lemma table1_0123 (hm : m ≥ 6) :
       have : (n + (a : ZMod m)).val = (n.val + a) % m := by
         rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt_m]
       rw [this, hca]
-  -- Abbreviate
   set v := n.val with hv_def
-  -- Main case split: wrap vs no-wrap
   by_cases hwrap : v + 3 < m
-  · -- NO WRAP: all (v+a) % m = v + a for a ≤ 3
-    have no_wrap : ∀ a, a ≤ 3 → (v + a) % m = v + a :=
+  · have no_wrap : ∀ a, a ≤ 3 → (v + a) % m = v + a :=
       fun a ha => Nat.mod_eq_of_lt (by omega)
     by_cases hzone : v ≥ bd
-    · -- Block-3 zone
-      set r := (v - bd) % 3
+    · set r := (v - bd) % 3
       have hr_lt : r < 3 := Nat.mod_lt _ (by omega)
       set a := (k.val + 3 - r) % 3
       have ha_lt : a < 3 := Nat.mod_lt _ (by omega)
@@ -109,8 +99,7 @@ lemma table1_0123 (hm : m ≥ 6) :
       have := k.isLt; omega
     · push_neg at hzone
       by_cases hzone2 : v + 3 < bd
-      · -- Block-4 zone
-        have h_in_bd : ∀ a, a ≤ 3 → v + a < bd := fun a ha => by omega
+      · have h_in_bd : ∀ a, a ≤ 3 → v + a < bd := fun a ha => by omega
         set q := v % 4
         have find_a : ∀ kv : ℕ, kv < 3 → ∃ a, a ≤ 3 ∧ c (v + a) = kv := by
           intro kv hkv
@@ -131,16 +120,13 @@ lemma table1_0123 (hm : m ≥ 6) :
             omega
         obtain ⟨a, ha_le, ha_eq⟩ := find_a k.val k.isLt
         exact ⟨a, ha_le, by rw [no_wrap a ha_le]; exact ha_eq⟩
-      · -- Spanning block-4/block-3 boundary: v < bd, v + 3 ≥ bd
-        push_neg at hzone2
+      · push_neg at hzone2
         have hbd_pos : 0 < bd := by omega
-        -- The last 3 of block-4 and first 3 of block-3 give colors 0,1,2,0,1,2
         have hc_boundary : ∀ j, j ≤ 5 → c (bd - 3 + j) = j % 3 := by
           intro j hj
           simp only [c]
           rcases show j = 0 ∨ j = 1 ∨ j = 2 ∨ j = 3 ∨ j = 4 ∨ j = 5 from
             by omega with rfl | rfl | rfl | rfl | rfl | rfl <;> split_ifs <;> omega
-        -- v = bd - 3 + j for some j ≤ 2
         set j := v - (bd - 3)
         have hj_le : j ≤ 2 := by omega
         set a := (k.val + 3 - j % 3) % 3
@@ -150,13 +136,11 @@ lemma table1_0123 (hm : m ≥ 6) :
         have hva : v + a = bd - 3 + (j + a) := by omega
         rw [hva, hc_boundary (j + a) (by omega)]
         have := k.isLt; omega
-  · -- WRAP case: v ≥ m - 3
-    push_neg at hwrap
+  · push_neg at hwrap
     have hmod_v : v % m = v := Nat.mod_eq_of_lt hv
-    -- v ∈ {m-3, m-2, m-1}
     rcases show v = m - 3 ∨ v = m - 2 ∨ v = m - 1 from by omega
       with hveq | hveq | hveq
-    · -- v = m - 3: window {m-3, m-2, m-1, 0}
+    ·
       have h1 : (v + 1) % m = m - 2 := by
         have : v + 1 = m - 2 := by omega
         rw [this]; exact Nat.mod_eq_of_lt (by omega)
@@ -167,8 +151,7 @@ lemma table1_0123 (hm : m ≥ 6) :
       · exact ⟨0, by omega, by rw [add_zero, hmod_v, hveq]; exact hc_m3⟩
       · exact ⟨1, by omega, by rw [h1]; exact hc_m2⟩
       · exact ⟨2, by omega, by rw [h2]; exact hc_m1⟩
-    · -- v = m - 2: window {m-2, m-1, 0, 1}
-      have h1 : (v + 1) % m = m - 1 := by
+    · have h1 : (v + 1) % m = m - 1 := by
         have : v + 1 = m - 1 := by omega
         rw [this]; exact Nat.mod_eq_of_lt (by omega)
       have h2 : (v + 2) % m = 0 := by
@@ -178,8 +161,7 @@ lemma table1_0123 (hm : m ≥ 6) :
       · exact ⟨2, by omega, by rw [h2]; exact hc0⟩
       · exact ⟨0, by omega, by rw [add_zero, hmod_v, hveq]; exact hc_m2⟩
       · exact ⟨1, by omega, by rw [h1]; exact hc_m1⟩
-    · -- v = m - 1: window {m-1, 0, 1, 2}
-      have h1 : (v + 1) % m = 0 := by
+    · have h1 : (v + 1) % m = 0 := by
         have : v + 1 = m := by omega
         rw [this, Nat.mod_self]
       have h2 : (v + 2) % m = 1 := by
@@ -190,8 +172,7 @@ lemma table1_0123 (hm : m ≥ 6) :
         rw [this, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]
       fin_cases k
       · exact ⟨1, by omega, by rw [h1]; exact hc0⟩
-      · -- k = 1: depends on m % 3
-        by_cases hmod : m % 3 = 0
+      · by_cases hmod : m % 3 = 0
         · refine ⟨2, by omega, ?_⟩
           rw [h2]; show c 1 = 1
           simp only [c, hbd_def, hmod]; norm_num
@@ -405,6 +386,25 @@ private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
     ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
     ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by omega
 
+/-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
+private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
+    (hg_lt : g + 1 < m) {c : ℕ → ℕ} (hc_lt : ∀ p, c p < 3)
+    (hc_period : ∀ p, c (p % m) = c p)
+    {n : ZMod m} {k : Fin 3}
+    (h : ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (n.val + a) = k.val) :
+    ∃ s ∈ ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)),
+      (⟨c (n + s).val, hc_lt _⟩ : Fin 3) = k := by
+  obtain ⟨a, ha, hca⟩ := h
+  have ha_lt : a < m := by
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
+    rcases ha with rfl | rfl | rfl | rfl <;> omega
+  exact ⟨(a : ZMod m),
+    by simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
+       rcases ha with rfl | rfl | rfl | rfl <;> simp,
+    by ext; show c (n + (a : ZMod m)).val = k.val
+       rw [show (n + (a : ZMod m)).val = (n.val + a) % m from by
+         rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt], hc_period, hca]⟩
+
 set_option maxHeartbeats 400000 in
 lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     (hg3 : 3 ∣ g) (hg : 0 < g) :
@@ -414,13 +414,8 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   haveI : NeZero m := ⟨by omega⟩
   haveI : Fact (1 < m) := ⟨by omega⟩
   obtain ⟨t, ht⟩ := hg3
-  -- Coloring: c(p) = (p % 3 + p / g) % 3
-  -- Since 3 | g, the period is lcm(3, g) * 3 / g... actually period = 3g = m
-  -- because c(p + 3g) = ((p+3g) % 3 + (p+3g) / g) % 3
-  --                   = (p%3 + (p/g + 3)) % 3 = (p%3 + p/g) % 3 = c(p)
   let c (p : ℕ) : ℕ := (p % 3 + p / g) % 3
   have hc_lt3 : ∀ p, c p < 3 := fun p => Nat.mod_lt _ (by omega)
-  -- c has period m = 3g, so c(p % m) = c(p) for all p
   have hc_period : ∀ p, c (p % m) = c p := by
     intro p
     simp only [c]
@@ -431,8 +426,6 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     rw [hg3t]
     set q := p / (3 * (3 * t)) with hq_def
     set r := p % (3 * (3 * t)) with hr_def
-    -- (3 * (3*t) * q + r) % 3 = r % 3
-    -- (3 * (3*t) * q + r) / (3*t) = 3*q + r / (3*t)
     have h3mod : (3 * (3 * t) * q + r) % 3 = r % 3 := by
       have : 3 * (3 * t) * q = 3 * (3 * t * q) := by ring
       rw [this, Nat.mul_add_mod]
@@ -440,50 +433,15 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
       have : 3 * (3 * t) * q + r = r + 3 * t * (3 * q) := by ring
       rw [this, Nat.add_mul_div_left r (3 * q) (by omega)]; ring
     omega
-  -- Bridge to ℕ
-  refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k => ?_⟩
-  suffices ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (n.val + a) = k.val by
-    obtain ⟨a, ha, hca⟩ := this
-    have ha_lt : a < m := by
-      simp only [Finset.mem_insert, Finset.mem_singleton] at ha
-      rcases ha with rfl | rfl | rfl | rfl <;> omega
-    refine ⟨(a : ZMod m), ?_, ?_⟩
-    · simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
-      rcases ha with rfl | rfl | rfl | rfl <;> simp
-    · ext
-      show c (n + (a : ZMod m)).val = k.val
-      rw [show (n + (a : ZMod m)).val = (n.val + a) % m from by
-        rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt]]
-      rw [hc_period, hca]
-  -- Now find witness. Set v = n.val
+  refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
+    lift_coloring_witness (by omega) hc_lt3 hc_period ?_⟩
   set v := n.val
-  -- The 4 colors are c(v), c(v+1), c(v+g), c(v+g+1)
-  -- c(v) = (v%3 + v/g) % 3
-  -- c(v+1) = ((v+1)%3 + (v+1)/g) % 3
-  -- c(v+g) = ((v+g)%3 + (v+g)/g) % 3 = (v%3 + (v/g + 1)) % 3
-  -- c(v+g+1) = ((v+g+1)%3 + (v+g+1)/g) % 3
-  -- Key: set r = v % g, q = v / g. Then v = g*q + r, 0 ≤ r < g.
   set r := v % g with hr_def
   set q := v / g with hq_def
   have hv_eq : v = g * q + r := (Nat.div_add_mod v g).symm
   have hr_lt : r < g := Nat.mod_lt _ hg
-  -- Case 1: r + 1 < g (both pairs stay in their blocks)
-  -- c(v) = (r%3 + q) % 3
-  -- c(v+1) = ((r+1)%3 + q) % 3  (since r+1 < g, (v+1)/g = q)
-  -- c(v+g) = (r%3 + q+1) % 3    (since (g*q+r+g)/g = q+1)
-  -- c(v+g+1) = ((r+1)%3 + q+1) % 3
-  -- Colors: {r%3+q, (r+1)%3+q, r%3+q+1, (r+1)%3+q+1} mod 3
-  -- Since r%3 ≠ (r+1)%3 (mod 3), the first pair gives 2 colors, shifted by 1 gives third
-  -- Case 2: r = g - 1 (boundary: v+1 and v+g+1 cross block boundaries)
-  -- c(v) = ((g-1)%3 + q) % 3
-  -- c(v+1) = (0 + q+1) % 3 = (q+1) % 3
-  -- c(v+g) = ((g-1)%3 + q+1) % 3
-  -- c(v+g+1) = (0 + q+2) % 3 = (q+2) % 3
-  -- Since 3|g, (g-1)%3 = 2, so c(v) = (2+q)%3, c(v+g) = (3+q)%3 = q%3
-  -- Colors: {(2+q)%3, (q+1)%3, q%3, (q+2)%3} = {0,1,2} ✓
   by_cases hr_lt_gm1 : r + 1 < g
-  · -- Case 1: interior
-    have hv1_div : (v + 1) / g = q := by
+  · have hv1_div : (v + 1) / g = q := by
       rw [hv_eq, show g * q + r + 1 = g * q + (r + 1) from by ring,
           Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
     have hvg_div : (v + g) / g = q + 1 := by
@@ -503,7 +461,6 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     have hvg1_mod3 : (v + g + 1) % 3 = (r + 1) % 3 := by
       rw [hv_eq, ht, show 3 * t * q + r + 3 * t + 1 = 3 * (t * q + t) + (r + 1) from by ring,
           Nat.mul_add_mod]
-    -- Compute the 4 color values
     have hcv : c v = (r % 3 + q) % 3 := by simp only [c]; rw [hv_mod3]
     have hcv1 : c (v + 1) = ((r + 1) % 3 + q) % 3 := by
       simp only [c]; rw [hv1_mod3, hv1_div]
@@ -511,14 +468,10 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
       simp only [c]; rw [hvg_mod3, hvg_div]
     have hcvg1 : c (v + g + 1) = ((r + 1) % 3 + (q + 1)) % 3 := by
       simp only [c]; rw [hvg1_mod3, hvg1_div]
-    -- The 4 colors are (s+q)%3, (s+1+q)%3, (s+q+1)%3, (s+1+q+1)%3 where s = r%3
-    -- These cover {(s+q)%3, (s+q+1)%3, (s+q+2)%3} = {0,1,2}
     have hk := k.isLt
-    -- Introduce s to help omega avoid deeply nested %
     set s := (r % 3 + q) % 3 with hs_def
     have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
-    -- Rewrite color facts in terms of s
-    rw [hs_def] at hcv -- hcv : c v = s
+    rw [hs_def] at hcv
     have hcvg_s : c (v + g) = (s + 1) % 3 := by rw [hcvg]; omega
     have hcvg1_s : c (v + g + 1) = (s + 2) % 3 := by rw [hcvg1]; omega
     have wit := mod3_witness hs_lt hk
@@ -528,18 +481,15 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     · exact ⟨g, by simp, by rw [hcvg_s]; exact wit.2.1 hd⟩
     · exact ⟨g + 1, by simp, by
         show c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
-  · -- Case 2: r = g - 1 (boundary)
-    push_neg at hr_lt_gm1
+  · push_neg at hr_lt_gm1
     have hr_eq : r = g - 1 := by omega
     have ht_pos : 0 < t := by omega
     have hk := k.isLt
-    -- v % 3 = 2 (since v = 3t*q + 3t - 1 = 3*(t*q+t-1) + 2)
     have hv_mod3 : v % 3 = 2 := by
       rw [hv_eq, hr_eq, ht, show 3 * t * q = 3 * (t * q) from by ring,
           Nat.mul_add_mod]
       have : 3 * t - 1 = 3 * (t - 1) + 2 := by omega
       rw [this, Nat.mul_add_mod]
-    -- (v + 1) % 3 = 0 and (v + 1) / g = q + 1
     have hv1_mod3 : (v + 1) % 3 = 0 := by
       have : v + 1 = 3 * (t * q + t) := by
         rw [hv_eq, hr_eq, ht, show 3 * t * q = 3 * (t * q) from by ring]; omega
@@ -548,7 +498,6 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
       have : v + 1 = g * (q + 1) := by
         rw [show g * (q + 1) = g * q + g from by ring]; omega
       rw [this, Nat.mul_div_cancel_left _ hg]
-    -- (v + g) % 3 = 2 and (v + g) / g = q + 1
     have hvg_mod3 : (v + g) % 3 = 2 := by
       have : v + g = 3 * (t * q + 2 * t - 1) + 2 := by
         rw [hv_eq, hr_eq, ht, show 3 * t * q = 3 * (t * q) from by ring]; omega
@@ -557,7 +506,6 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
       have : v + g = g * (q + 1) + (g - 1) := by
         rw [show g * (q + 1) = g * q + g from by ring]; omega
       rw [this, Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
-    -- (v + g + 1) % 3 = 0 and (v + g + 1) / g = q + 2
     have hvg1_mod3 : (v + g + 1) % 3 = 0 := by
       have : v + g + 1 = 3 * (t * q + 2 * t) := by
         rw [hv_eq, hr_eq, ht, show 3 * t * q = 3 * (t * q) from by ring]; omega
@@ -566,7 +514,6 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
       have : v + g + 1 = g * (q + 2) := by
         rw [show g * (q + 2) = g * q + 2 * g from by ring]; omega
       rw [this, Nat.mul_div_cancel_left _ hg]
-    -- Compute colors
     have hcv : c v = (2 + q) % 3 := by simp only [c]; rw [hv_mod3]
     have hcv1 : c (v + 1) = (q + 1) % 3 := by
       simp only [c]; rw [hv1_mod3, hv1_div]; simp
@@ -574,10 +521,9 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
       simp only [c]; rw [hvg_mod3, hvg_div]
     have hcvg1 : c (v + g + 1) = (q + 2) % 3 := by
       simp only [c]; rw [hvg1_mod3, hvg1_div]; simp
-    -- Introduce s to help omega avoid deeply nested %
     set s := (2 + q) % 3 with hs_def
     have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
-    rw [hs_def] at hcv -- hcv : c v = s
+    rw [hs_def] at hcv
     have hcv1_s : c (v + 1) = (s + 2) % 3 := by rw [hcv1]; omega
     have hcvg_s : c (v + g) = (s + 1) % 3 := by rw [hcvg]; omega
     have wit := mod3_witness hs_lt hk
@@ -597,10 +543,8 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   set h := g + 1 with hh_def
   have hh_pos : 0 < h := by omega
   have hh_m : m = 3 * h := by omega
-  -- Coloring: c(p) = (p % h % 3 + (3 - p / h % 3)) % 3
   let c (p : ℕ) : ℕ := (p % h % 3 + (3 - p / h % 3)) % 3
   have hc_lt3 : ∀ p, c p < 3 := fun p => Nat.mod_lt _ (by omega)
-  -- Period: c(p % m) = c(p), since m = 3h
   have hc_period : ∀ p, c (p % m) = c p := by
     intro p; simp only [c, hh_m]
     set Q := p / (3 * h)
@@ -613,21 +557,8 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
       rw [show h * (3 * Q) + R = R + h * (3 * Q) from by ring,
           Nat.add_mul_div_left _ _ hh_pos]; omega
     rw [hmod, hdiv]
-  -- Bridge to ℕ
-  refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k => ?_⟩
-  suffices ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (n.val + a) = k.val by
-    obtain ⟨a, ha, hca⟩ := this
-    have ha_lt : a < m := by
-      simp only [Finset.mem_insert, Finset.mem_singleton] at ha
-      rcases ha with rfl | rfl | rfl | rfl <;> omega
-    refine ⟨(a : ZMod m), ?_, ?_⟩
-    · simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
-      rcases ha with rfl | rfl | rfl | rfl <;> simp
-    · ext
-      show c (n + (a : ZMod m)).val = k.val
-      rw [show (n + (a : ZMod m)).val = (n.val + a) % m from by
-        rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt]]
-      rw [hc_period, hca]
+  refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
+    lift_coloring_witness (by omega) hc_lt3 hc_period ?_⟩
   set v := n.val
   set r := v % h with hr_def
   set q := v / h with hq_def
@@ -635,14 +566,8 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   have hr_lt : r < h := Nat.mod_lt _ hh_pos
   have hk := k.isLt
   have ht_pos : 0 < t := by omega
-  -- Key: g = 3t, h = 3t+1, g % 3 = 0, (g-1) % 3 = 2
-  -- For any block b, position j: color = (j%3 + (3 - b%3)) % 3
-  -- In ℤ_3 terms: color ≡ j - b (mod 3)
-  -- The 4 positions' (block, local_pos) for v = h*q + r:
-  --   v: (q, r), v+1: (q, r+1) or (q+1, 0), v+g: (q+1, r-1) or (q, g), v+g+1: (q+1, r)
   by_cases hr0 : r = 0
-  · -- Case 1: r = 0. Positions: v=(q,0), v+1=(q,1), v+g=(q,g), v+g+1=(q+1,0)
-    have hv1_modh : (v + 1) % h = 1 := by
+  · have hv1_modh : (v + 1) % h = 1 := by
       rw [hv_eq, hr0, show h * q + 0 + 1 = h * q + 1 from by omega, Nat.mul_add_mod,
           Nat.mod_eq_of_lt (by omega)]
     have hv1_divh : (v + 1) / h = q := by
@@ -664,7 +589,6 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
           show h * q + 0 + g + 1 = h * (q + 1) from by
             rw [show h * (q + 1) = h * q + h from by ring]; omega,
           Nat.mul_div_cancel_left _ hh_pos]
-    -- Compute colors
     have hcv : c v = (3 - q % 3) % 3 := by
       show (r % 3 + (3 - q % 3)) % 3 = _; rw [hr0]; omega
     have hcv1 : c (v + 1) = (1 + (3 - q % 3)) % 3 := by
@@ -676,7 +600,6 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
     have hcvg1 : c (v + g + 1) = (3 - (q + 1) % 3) % 3 := by
       show ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
       rw [hvg1_modh, hvg1_divh]; omega
-    -- s = (3 - q%3) % 3, colors = {s, (s+1)%3, s, (s+2)%3}
     set s := (3 - q % 3) % 3 with hs_def
     have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
     rw [hs_def] at hcv hcvg
@@ -690,8 +613,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
     · exact ⟨g + 1, by simp, by
         show c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
   · by_cases hrg : r = g
-    · -- Case 3: r = g = h-1
-      have hv1_modh : (v + 1) % h = 0 := by
+    · have hv1_modh : (v + 1) % h = 0 := by
         rw [hv_eq, hrg,
             show h * q + g + 1 = h * (q + 1) from by
               rw [show h * (q + 1) = h * q + h from by ring]; omega,
@@ -721,7 +643,6 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
             show h * q + g + g + 1 = h * (q + 1) + g from by
               rw [show h * (q + 1) = h * q + h from by ring]; omega,
             Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
-      -- Colors
       have hcv : c v = (3 - q % 3) % 3 := by
         show (r % 3 + (3 - q % 3)) % 3 = _
         rw [hrg, ht, Nat.mul_mod_right]; omega
@@ -737,7 +658,6 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
       have hcvg1 : c (v + g + 1) = (3 - (q + 1) % 3) % 3 := by
         show ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
         rw [hvg1_modh, hvg1_divh, ht, Nat.mul_mod_right]; omega
-      -- s = (3 - q%3) % 3, colors = {s, (s+2)%3, (s+1)%3, (s+2)%3}
       set s := (3 - q % 3) % 3 with hs_def
       have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
       rw [hs_def] at hcv
@@ -749,8 +669,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
       · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
       · exact ⟨g, by simp, by rw [hcvg_s]; exact wit.2.1 hd⟩
       · exact ⟨1, by simp, by rw [hcv1_s]; exact wit.2.2 hd⟩
-    · -- Case 2: 1 ≤ r ≤ g-1 (interior)
-      have hr_pos : 0 < r := by omega
+    · have hr_pos : 0 < r := by omega
       have hr_lt_g : r < g := by omega
       have hv1_modh : (v + 1) % h = r + 1 := by
         rw [hv_eq, show h * q + r + 1 = h * q + (r + 1) from by omega,
@@ -778,7 +697,6 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
             show h * q + r + g + 1 = h * (q + 1) + r from by
               rw [show h * (q + 1) = h * q + h from by ring]; omega,
             Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
-      -- Compute colors
       have hcv : c v = (r % 3 + (3 - q % 3)) % 3 := rfl
       have hcv1 : c (v + 1) = ((r + 1) % 3 + (3 - q % 3)) % 3 := by
         show ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
@@ -789,7 +707,6 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
       have hcvg1 : c (v + g + 1) = (r % 3 + (3 - (q + 1) % 3)) % 3 := by
         show ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
         rw [hvg1_modh, hvg1_divh]
-      -- colors ≡ r-q, r+1-q, r-1-q-1, r-q-1 mod 3. Cover {0,1,2}.
       set s := (r % 3 + (3 - q % 3)) % 3 with hs_def
       have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
       rw [hs_def] at hcv
@@ -849,14 +766,10 @@ lemma case_one_complement (g : ℕ) (hg : g < m) :
       ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   have key : (↑(m - g) : ZMod m) = -(↑g : ZMod m) := by
     rw [Nat.cast_sub hg.le, ZMod.natCast_self, zero_sub]
-  rw [key]
-  conv_lhs =>
-    rw [show ({0, 1, -(↑g : ZMod m), -(↑g : ZMod m) + 1} : Finset (ZMod m)) =
-        (-(↑g : ZMod m)) +ᵥ ({(↑g : ZMod m), (↑g : ZMod m) + 1, 0, 1} : Finset (ZMod m)) from by
-      simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
-      ext x; simp [neg_add_cancel]]
-  rw [show ({(↑g : ZMod m), (↑g : ZMod m) + 1, 0, 1} : Finset (ZMod m)) =
-      ({0, 1, (↑g : ZMod m), (↑g : ZMod m) + 1} : Finset (ZMod m)) from by ext x; simp; tauto]
+  rw [key, show ({0, 1, -(↑g : ZMod m), -(↑g : ZMod m) + 1} : Finset (ZMod m)) =
+      (-(↑g : ZMod m)) +ᵥ ({0, 1, (↑g : ZMod m), (↑g : ZMod m) + 1} : Finset (ZMod m)) from by
+    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add, neg_add_cancel, zero_add]
+    ext x; simp; tauto]
   exact hasPolychromColouring_vadd
 
 private lemma isUnit_intCast_of_natAbs_coprime {n : ℕ} {b : ℤ}
