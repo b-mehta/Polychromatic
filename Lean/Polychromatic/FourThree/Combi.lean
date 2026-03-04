@@ -1,5 +1,6 @@
 import Polychromatic.Colouring
 import Polychromatic.PolychromNumber
+import Mathlib.Data.ZMod.Aut
 
 open Finset Pointwise
 
@@ -34,11 +35,7 @@ lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
 lemma zmod_set_swap (m : ℕ) (a b : ℤ) :
     zmod_set m (-a) (b - a) = zmod_set m a b := by
   simp only [zmod_set]
-  congr 1
-  have h1 : b - a - -a = b := by ring
-  have h2 : 2 * (b - a) - -a = 2 * b - a := by ring
-  rw [h1, h2]
-  simp [insert_comm]
+  grind
 
 /-! ## Table 1: Block concatenation colorings
 
@@ -229,14 +226,8 @@ lemma case_one_interval (g : ℕ) (h_ge : 5 ≤ g) (h_lt : g < 2 * (m / 6)) :
 lemma hasPolychromColouring_mul_unit (u : (ZMod m)ˣ) (S : Finset (ZMod m)) :
     HasPolychromColouring (Fin 3) (S.image (u.val * ·)) ↔
     HasPolychromColouring (Fin 3) S := by
-  have key : polychromNumber (S.image (u.val * ·)) = polychromNumber S := by
-    let φ : ZMod m ≃+ ZMod m :=
-      { toFun := (u.val * ·)
-        invFun := (↑u⁻¹ * ·)
-        left_inv := fun x => by simp [← mul_assoc, Units.inv_mul]
-        right_inv := fun x => by simp [← mul_assoc, Units.mul_inv]
-        map_add' := fun x y => mul_add _ _ _ }
-    exact polychromNumber_iso φ
+  have key : polychromNumber (S.image (u.val * ·)) = polychromNumber S :=
+    polychromNumber_iso (AddAut.mulLeft u)
   exact ⟨fun h => hasPolychromColouring_fin_of_le (by omega) (key ▸ le_polychromNumber h),
     fun h => hasPolychromColouring_fin_of_le (by omega) (key.symm ▸ le_polychromNumber h)⟩
 
