@@ -29,6 +29,17 @@ lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
     tauto
   rw [this, polychromNumber_vadd]
 
+/-- The set {0, b-a, b, 2b-a} is symmetric in the two repeated differences b and b-a:
+    swapping them (replacing a by -a, b by b-a) gives the same set. -/
+lemma zmod_set_swap (m : ℕ) (a b : ℤ) :
+    zmod_set m (-a) (b - a) = zmod_set m a b := by
+  simp only [zmod_set]
+  congr 1
+  have h1 : b - a - -a = b := by ring
+  have h2 : 2 * (b - a) - -a = 2 * b - a := by ring
+  rw [h1, h2]
+  simp [insert_comm]
+
 /-! ## Table 1: Block concatenation colorings
 
 For each set S below, blocks of length r and r+1 (prepending 0 to the period-r block)
@@ -245,11 +256,8 @@ lemma hasPolychromColouring_mul_unit (u : (ZMod m)ˣ) (S : Finset (ZMod m)) :
         right_inv := fun x => by simp [← mul_assoc, Units.mul_inv]
         map_add' := fun x y => mul_add _ _ _ }
     exact polychromNumber_iso φ
-  constructor
-  · intro h
-    exact hasPolychromColouring_fin_of_le (by omega) (key ▸ le_polychromNumber h)
-  · intro h
-    exact hasPolychromColouring_fin_of_le (by omega) (key.symm ▸ le_polychromNumber h)
+  exact ⟨fun h => hasPolychromColouring_fin_of_le (by omega) (key ▸ le_polychromNumber h),
+    fun h => hasPolychromColouring_fin_of_le (by omega) (key.symm ▸ le_polychromNumber h)⟩
 
 -- Subcase (1c) per-residue lemmas: each reduces {0,1,g,g+1} to a Table 1 set
 -- via multiplication by 3 (an automorphism of ZMod m when 3 ∤ m) and translation.
@@ -954,29 +962,13 @@ lemma main_case_one (a b : ℤ) (hm : m ≥ 289)
       HasPolychromColouring (Fin 3) (zmod_set m a' b') by
     rcases h_gcd with hb | hba
     · exact this a b hb hcard
-    · -- Use zmod_set_swap: zmod_set m (-a) (b - a) = zmod_set m a b
-      have swap : zmod_set m (-a) (b - a) = zmod_set m a b := by
-        simp only [zmod_set]
-        congr 1
-        have h1 : b - a - -a = b := by ring
-        have h2 : 2 * (b - a) - -a = 2 * b - a := by ring
-        rw [h1, h2]
-        simp [insert_comm]
-      rw [← swap]
+    · rw [← zmod_set_swap m a b]
       apply this (-a) (b - a) hba
-      rwa [swap]
+      rwa [zmod_set_swap]
   intro a' b' hd hcard'
   -- Get g with 2 ≤ g ≤ m - 2 and the set equality
   obtain ⟨g, hg_ge, hg_le, hset⟩ := exists_g_of_coprime m a' b' hd (by omega) hcard'
-  -- Show (b' : ZMod m) is a unit
-  have hb'_unit : IsUnit (b' : ZMod m) := by
-    have hunit : IsUnit (b'.natAbs : ZMod m) :=
-      (ZMod.isUnit_iff_coprime _ _).mpr hd
-    rcases Int.natAbs_eq b' with h | h
-    · rwa [show (b' : ZMod m) = (b'.natAbs : ZMod m) from by rw [h]; simp]
-    · rw [show (b' : ZMod m) = -(b'.natAbs : ZMod m) from by rw [h]; simp]
-      exact hunit.neg
-  obtain ⟨u, hu⟩ := hb'_unit
+  obtain ⟨u, hu⟩ := isUnit_intCast_of_natAbs_coprime hd
   rw [hset, ← hu]
   rw [hasPolychromColouring_mul_unit]
   -- Now prove HasPolychromColouring (Fin 3) ({0, 1, g, g+1})
@@ -1055,17 +1047,6 @@ lemma main_case_two (hm : m ≥ 289)
 
 end Case2_MultipleCycles
 
-/-- The set {0, b-a, b, 2b-a} is symmetric in the two repeated differences b and b-a:
-    swapping them (replacing a by -a, b by b-a) gives the same set. -/
-lemma zmod_set_swap (m : ℕ) (a b : ℤ) :
-    zmod_set m (-a) (b - a) = zmod_set m a b := by
-  simp only [zmod_set]
-  congr 1
-  have h1 : b - a - -a = b := by ring
-  have h2 : 2 * (b - a) - -a = 2 * b - a := by ring
-  rw [h1, h2]
-  simp [insert_comm]
-
 /-- The set zmod_set m a b has 4 elements when 0 < a < b and 2b - a < m. -/
 lemma zmod_set_card_eq_four {a b : ℤ} {m : ℕ}
     (ha : 0 < a) (hab : a < b) (hbm : 2 * b - a < ↑m) :
@@ -1139,66 +1120,23 @@ lemma hasPolychromColouring_of_zmod_set {a b c : ℤ} {m : ℕ}
   rw [polychromNumber_zmod hm_eq]
   exact le_polychromNumber h
 
-/-- If gcd(d₁, d₂) = 1, at most one of d₁, d₂ is divisible by 3. -/
-lemma gcd_not_both_div_three {d₁ d₂ : ℕ} (h : Nat.gcd d₁ d₂ = 1) :
-    d₁ % 3 ≠ 0 ∨ d₂ % 3 ≠ 0 := by
-  by_contra h'
-  push_neg at h'
-  obtain ⟨h1, h2⟩ := h'
-  have : 3 ∣ Nat.gcd d₁ d₂ := Nat.dvd_gcd (Nat.dvd_of_mod_eq_zero h1) (Nat.dvd_of_mod_eq_zero h2)
-  omega
-
-/-- WLOG for Case 2: using zmod_set_swap, we can arrange that d₁ is not divisible by 3.
-    Swapping (a, b) ↦ (-a, b-a) exchanges d₁ = gcd(b,m) and d₂ = gcd(b-a,m). -/
-lemma main_case_two_wlog (m : ℕ) (a b : ℤ) (hm : m ≥ 289)
-    (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1) :
-    HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  exact main_case_two m a b hm h_gcd_coprime h_min
-
-/-- c - a + b > 0 when 0 < a < b ≤ c. -/
-lemma c_sub_a_add_b_pos {a b c : ℤ} (ha : 0 < a) (hab : a < b) (hbc : a + b ≤ c) :
-    0 < c - a + b := by
-  linarith
-
-/-- When (m : ℤ) = c - a + b with 0 < a < b and a + b ≤ c ≤ ... and c ≥ 289,
-    we have m ≥ 289. -/
-lemma m_ge_289 {a b c : ℤ} {m : ℕ}
-    (hm : (m : ℤ) = c - a + b) (hab : a < b) (hc : 289 ≤ c) :
-    m ≥ 289 := by
-  omega
-
-/-- 2b - a < m when 0 < a, (m : ℤ) = c - a + b, and a + b ≤ c. -/
-lemma two_b_sub_a_lt_m {a b c : ℤ} {m : ℕ}
-    (hm : (m : ℤ) = c - a + b) (ha : 0 < a) (hbc : a + b ≤ c) :
-    2 * b - a < ↑m := by
-  omega
-
-/--
-The main theorem.
-Combines the reduction to ZMod m with the case analysis on GCDs.
-Uses: hasPolychromColouring_of_zmod_set, gcd_coprime_of_gcd_abc, zmod_set_card_eq_four,
-      main_case_one (or main_case_two_wlog via zmod_set_swap), m_ge_289, c_sub_a_add_b_pos.
--/
+/-- The main theorem: combines the reduction to ZMod m with the case analysis on GCDs. -/
 theorem normal_bit :
     ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → 289 ≤ c → Finset.gcd {a, b, c} id = 1 →
           HasPolychromColouring (Fin 3) {0, a, b, c} := by
   intro a b c ha hab hbc hc hgcd
   set m := (c - a + b).toNat
-  have hm_eq : (m : ℤ) = c - a + b :=
-    Int.toNat_of_nonneg (le_of_lt (c_sub_a_add_b_pos ha hab hbc))
+  have hm_eq : (m : ℤ) = c - a + b := Int.toNat_of_nonneg (by linarith)
   have hm_pos : 0 < m := by omega
-  have hm_ge : m ≥ 289 := m_ge_289 hm_eq hab hc
-  have hcard := zmod_set_card_eq_four ha hab (two_b_sub_a_lt_m hm_eq ha hbc)
-  have hcoprime := gcd_coprime_of_gcd_abc hm_eq hgcd
+  have hcard := zmod_set_card_eq_four ha hab (by linarith)
   apply hasPolychromColouring_of_zmod_set hm_eq
   set d₁ := Nat.gcd b.natAbs m
   set d₂ := Nat.gcd (b - a).natAbs m
   by_cases hmin : min d₁ d₂ = 1
-  · apply main_case_one m a b hm_ge hcard
+  · apply main_case_one m a b (by omega) hcard
     have hd₁_pos : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
     have hd₂_pos : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
     rcases min_choice d₁ d₂ with h | h <;> rw [h] at hmin <;> [left; right] <;> omega
-  · have hd₁_pos : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
-    have hd₂_pos : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
-    exact main_case_two_wlog m a b hm_ge hcoprime (by omega)
+  · have : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
+    have : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
+    exact main_case_two m a b (by omega) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by omega)
