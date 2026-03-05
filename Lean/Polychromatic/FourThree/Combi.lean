@@ -365,6 +365,20 @@ lemma case_one_div_g_not_three (g : ℕ)
     simp only [this, h]; decide
   }
 
+private lemma color_shift_r (r q : ℕ) :
+    ((r + 1) % 3 + (3 - q % 3)) % 3 =
+      ((r % 3 + (3 - q % 3)) % 3 + 1) % 3 := by
+  have : q % 3 < 3 := Nat.mod_lt q (by omega)
+  rcases show q % 3 = 0 ∨ q % 3 = 1 ∨ q % 3 = 2 from by omega with h | h | h <;>
+    simp only [h, Nat.add_mod, Nat.mod_self, Nat.mod_mod] <;> omega
+
+private lemma color_shift_q (r q : ℕ) :
+    (r % 3 + (3 - (q + 1) % 3)) % 3 =
+      ((r % 3 + (3 - q % 3)) % 3 + 2) % 3 := by
+  have : q % 3 < 3 := Nat.mod_lt q (by omega)
+  rcases show q % 3 = 0 ∨ q % 3 = 1 ∨ q % 3 = 2 from by omega with h | h | h <;>
+    simp only [h, Nat.add_mod, Nat.mod_self, Nat.mod_mod] <;> omega
+
 private lemma nat_mod_div {a b q r : ℕ} (hb : 0 < b) (heq : a = b * q + r)
     (hr : r < b) : a % b = r ∧ a / b = q := by
   subst heq
@@ -504,8 +518,9 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   have hr_lt : r < h := Nat.mod_lt _ hh_pos
   have color_at : ∀ q' r', r' < h → c (h * q' + r') = (r' % 3 + (3 - q' % 3)) % 3 := by
     intro q' r' hr'
-    obtain ⟨hmod, hdiv⟩ := nat_mod_div hh_pos rfl hr'
-    simp only [c, hmod, hdiv]
+    change ((h * q' + r') % h % 3 + (3 - (h * q' + r') / h % 3)) % 3 = _
+    rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hr',
+        Nat.mul_add_div hh_pos, Nat.div_eq_of_lt hr', add_zero]
   by_cases hrg : r = g
   · have hcv : c v = (3 - q % 3) % 3 := by
       rw [show v = h * q + r from hv_eq, color_at q r hr_lt, hrg, ht, Nat.mul_mod_right]
@@ -529,7 +544,8 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
           color_at (q + 1) r hr_lt]
     exact endgame_witness (Nat.mod_lt _ (by omega)) 0 1 (g + 1)
       (by simp) (by simp) (by simp)
-      hcv (by rw [hcv1]; grind) (show c (v + g + 1) = _ by rw [hcvg1]; grind)
+      hcv (by rw [hcv1]; exact color_shift_r r q)
+      (show c (v + g + 1) = _ by rw [hcvg1]; exact color_shift_q r q)
 
 /-- Subcase (1d) assembled: dispatches to the three sub-subcases above. -/
 lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3 * g + 3) :
