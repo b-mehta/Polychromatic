@@ -25,9 +25,7 @@ lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
         _ = (m : ℤ) := by rw [hm]
         _ = 0 := by simp
     rw [this, sub_add_eq_add_sub, ← two_mul]
-    ext i
-    simp
-    tauto
+    ext i; simp; tauto
   rw [this, polychromNumber_vadd]
 
 /-- The set {0, b-a, b, 2b-a} is symmetric in the two repeated differences b and b-a:
@@ -351,8 +349,7 @@ lemma case_one_div_g_not_three (g : ℕ)
     HasPolychromColouring (Fin 3)
       ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
         Finset (ZMod m)) := by
-  have h3_dvd : 3 ∣ m :=
-    by rcases h_div with rfl | rfl <;> omega
+  have h3_dvd : 3 ∣ m := by rcases h_div with rfl | rfl <;> omega
   haveI : NeZero m := ⟨by omega⟩
   apply HasPolychromColouring.of_image (ZMod.castHom h3_dvd (ZMod 3))
   simp only [Finset.image_insert, Finset.image_singleton,
@@ -583,7 +580,7 @@ lemma case_one_complement (g : ℕ) (hg : g < m) :
   rw [key, show ({0, 1, -(↑g : ZMod m), -(↑g : ZMod m) + 1} : Finset (ZMod m)) =
       (-(↑g : ZMod m)) +ᵥ ({0, 1, (↑g : ZMod m), (↑g : ZMod m) + 1} : Finset (ZMod m)) from by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add, neg_add_cancel]
-    ext x; simp; tauto]
+    grind]
   exact hasPolychromColouring_vadd
 
 private lemma isUnit_intCast_of_natAbs_coprime {n : ℕ} {b : ℤ}
@@ -624,7 +621,7 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     simp only [zmod_set, Finset.image_insert, Finset.image_singleton]
     simp only [mul_zero, mul_one, hbg', hbg'1]
     push_cast
-    ext x; simp only [Finset.mem_insert, Finset.mem_singleton]; tauto
+    grind
   have hval : (g'.val : ZMod m) = g' := ZMod.natCast_zmod_val g'
   have hinj : Function.Injective (bz * · : ZMod m → ZMod m) := by
     intro x y (hxy : bz * x = bz * y)
