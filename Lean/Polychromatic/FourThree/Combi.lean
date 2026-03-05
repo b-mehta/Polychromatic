@@ -421,37 +421,28 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     intro k a; rw [ht, show 3 * t * k + a = 3 * (t * k) + a from by ring, Nat.mul_add_mod]
   have gk_mul_mod3 : ∀ k, (g * k) % 3 = 0 := fun k => by simpa using gk_mod3 k 0
   by_cases hr_lt_gm1 : r + 1 < g
-  · have hv1_div : (v + 1) / g = q := by
-      rw [hv_eq, show g * q + r + 1 = g * q + (r + 1) from by omega,
-          Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
-    have hvg_div : (v + g) / g = q + 1 := by
-      rw [hv_eq, show g * q + r + g = g * (q + 1) + r from by ring,
-          Nat.mul_add_div hg, Nat.div_eq_of_lt hr_lt, add_zero]
-    have hvg1_div : (v + g + 1) / g = q + 1 := by
-      rw [hv_eq, show g * q + r + g + 1 = g * (q + 1) + (r + 1) from by ring,
-          Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
-    have hv_mod3 : v % 3 = r % 3 := by rw [hv_eq]; exact gk_mod3 q r
-    have hv1_mod3 : (v + 1) % 3 = (r + 1) % 3 := by
-      rw [hv_eq, show g * q + r + 1 = g * q + (r + 1) from by omega]; exact gk_mod3 q (r + 1)
-    have hvg_mod3 : (v + g) % 3 = r % 3 := by
-      rw [hv_eq, show g * q + r + g = g * (q + 1) + r from by ring]; exact gk_mod3 (q + 1) r
-    have hvg1_mod3 : (v + g + 1) % 3 = (r + 1) % 3 := by
-      rw [hv_eq, show g * q + r + g + 1 = g * (q + 1) + (r + 1) from by ring]
-      exact gk_mod3 (q + 1) (r + 1)
-    have hcv : c v = (r % 3 + q) % 3 := by simp only [c]; rw [hv_mod3]
+  · have hcv : c v = (r % 3 + q) % 3 := by
+      simp only [c]
+      rw [hv_eq, gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr_lt, add_zero]
     have hcv1 : c (v + 1) = ((r + 1) % 3 + q) % 3 := by
-      simp only [c]; rw [hv1_mod3, hv1_div]
+      simp only [c]
+      rw [show v + 1 = g * q + (r + 1) from by omega, gk_mod3,
+          Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
     have hcvg : c (v + g) = (r % 3 + (q + 1)) % 3 := by
-      simp only [c]; rw [hvg_mod3, hvg_div]
+      simp only [c]
+      rw [show v + g = g * (q + 1) + r from by rw [mul_add, mul_one]; omega,
+          gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr_lt, add_zero]
     have hcvg1 : c (v + g + 1) = ((r + 1) % 3 + (q + 1)) % 3 := by
-      simp only [c]; rw [hvg1_mod3, hvg1_div]
-    have hk := k.isLt
+      simp only [c]
+      rw [show v + g + 1 = g * (q + 1) + (r + 1) from by
+            rw [mul_add, mul_one]; omega,
+          gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
     set s := (r % 3 + q) % 3 with hs_def
     have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
     rw [hs_def] at hcv
     have hcvg_s : c (v + g) = (s + 1) % 3 := by rw [hcvg]; omega
     have hcvg1_s : c (v + g + 1) = (s + 2) % 3 := by rw [hcvg1]; omega
-    have wit := mod3_witness hs_lt hk
+    have wit := mod3_witness hs_lt k.isLt
     set d := (k.val + 3 - s) % 3
     rcases show d = 0 ∨ d = 1 ∨ d = 2 from by omega with hd | hd | hd
     · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
@@ -461,37 +452,30 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   · push_neg at hr_lt_gm1
     have hr_eq : r = g - 1 := by omega
     have ht_pos : 0 < t := by omega
-    have hk := k.isLt
-    have hv_mod3 : v % 3 = 2 := by rw [hv_eq, gk_mod3, hr_eq, ht]; omega
-    have hv1_eq : v + 1 = g * (q + 1) := by
-      rw [show g * (q + 1) = g * q + g from by ring]; omega
-    have hv1_mod3 : (v + 1) % 3 = 0 := by rw [hv1_eq]; exact gk_mul_mod3 (q + 1)
-    have hv1_div : (v + 1) / g = q + 1 := by
-      rw [hv1_eq, Nat.mul_div_cancel_left _ hg]
-    have hvg_eq : v + g = g * (q + 1) + (g - 1) := by
-      rw [show g * (q + 1) = g * q + g from by ring]; omega
-    have hvg_mod3 : (v + g) % 3 = 2 := by
-      rw [hvg_eq, gk_mod3, ht]; omega
-    have hvg_div : (v + g) / g = q + 1 := by
-      rw [hvg_eq, Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega), add_zero]
-    have hvg1_eq : v + g + 1 = g * (q + 2) := by
-      rw [show g * (q + 2) = g * q + 2 * g from by ring]; omega
-    have hvg1_mod3 : (v + g + 1) % 3 = 0 := by rw [hvg1_eq]; exact gk_mul_mod3 (q + 2)
-    have hvg1_div : (v + g + 1) / g = q + 2 := by
-      rw [hvg1_eq, Nat.mul_div_cancel_left _ hg]
-    have hcv : c v = (2 + q) % 3 := by simp only [c]; rw [hv_mod3]
+    have hcv : c v = (2 + q) % 3 := by
+      simp only [c]
+      rw [hv_eq, gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr_lt, add_zero,
+          hr_eq, ht]; omega
     have hcv1 : c (v + 1) = (q + 1) % 3 := by
-      simp only [c]; rw [hv1_mod3, hv1_div]; simp
+      simp only [c]
+      rw [show v + 1 = g * (q + 1) from by rw [mul_add, mul_one]; omega,
+          gk_mul_mod3, Nat.mul_div_cancel_left _ hg]; simp
     have hcvg : c (v + g) = (2 + (q + 1)) % 3 := by
-      simp only [c]; rw [hvg_mod3, hvg_div]
+      simp only [c]
+      rw [show v + g = g * (q + 1) + (g - 1) from by
+            rw [mul_add, mul_one]; omega,
+          gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt (by omega),
+          add_zero, ht]; omega
     have hcvg1 : c (v + g + 1) = (q + 2) % 3 := by
-      simp only [c]; rw [hvg1_mod3, hvg1_div]; simp
+      simp only [c]
+      rw [show v + g + 1 = g * (q + 2) from by rw [mul_add]; omega,
+          gk_mul_mod3, Nat.mul_div_cancel_left _ hg]; simp
     set s := (2 + q) % 3 with hs_def
     have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
     rw [hs_def] at hcv
     have hcv1_s : c (v + 1) = (s + 2) % 3 := by rw [hcv1]; omega
     have hcvg_s : c (v + g) = (s + 1) % 3 := by rw [hcvg]; omega
-    have wit := mod3_witness hs_lt hk
+    have wit := mod3_witness hs_lt k.isLt
     set d := (k.val + 3 - s) % 3
     rcases show d = 0 ∨ d = 1 ∨ d = 2 from by omega with hd | hd | hd
     · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
@@ -528,48 +512,33 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   set q := v / h with hq_def
   have hv_eq : v = h * q + r := (Nat.div_add_mod v h).symm
   have hr_lt : r < h := Nat.mod_lt _ hh_pos
-  have hk := k.isLt
   have ht_pos : 0 < t := by omega
+  have hg_lt_h : g < h := by omega
+  have h1_lt_h : 1 < h := by omega
   by_cases hr0 : r = 0
-  · have hv1_modh : (v + 1) % h = 1 := by
-      rw [hv_eq, hr0, show h * q + 0 + 1 = h * q + 1 from by omega, Nat.mul_add_mod,
-          Nat.mod_eq_of_lt (by omega)]
-    have hv1_divh : (v + 1) / h = q := by
-      rw [hv_eq, hr0, show h * q + 0 + 1 = h * q + 1 from by omega,
-          Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
-    have hvg_modh : (v + g) % h = g := by
-      rw [hv_eq, hr0, show h * q + 0 + g = h * q + g from by omega, Nat.mul_add_mod,
-          Nat.mod_eq_of_lt (by omega)]
-    have hvg_divh : (v + g) / h = q := by
-      rw [hv_eq, hr0, show h * q + 0 + g = h * q + g from by omega,
-          Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
-    have hvg1_modh : (v + g + 1) % h = 0 := by
-      rw [hv_eq, hr0,
-          show h * q + 0 + g + 1 = h * (q + 1) from by
-            rw [show h * (q + 1) = h * q + h from by ring]; omega,
-          Nat.mul_mod_right]
-    have hvg1_divh : (v + g + 1) / h = q + 1 := by
-      rw [hv_eq, hr0,
-          show h * q + 0 + g + 1 = h * (q + 1) from by
-            rw [show h * (q + 1) = h * q + h from by ring]; omega,
-          Nat.mul_div_cancel_left _ hh_pos]
+  · have hv1_rw : v + 1 = h * q + 1 := by omega
+    have hvg_rw : v + g = h * q + g := by omega
+    have hvg1_rw : v + g + 1 = h * (q + 1) := by rw [mul_add, mul_one]; omega
     have hcv : c v = (3 - q % 3) % 3 := by
       change (r % 3 + (3 - q % 3)) % 3 = _; rw [hr0]; omega
     have hcv1 : c (v + 1) = (1 + (3 - q % 3)) % 3 := by
       change ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
-      rw [hv1_modh, hv1_divh]
+      rw [hv1_rw, Nat.mul_add_mod, Nat.mod_eq_of_lt h1_lt_h,
+          Nat.mul_add_div hh_pos, Nat.div_eq_of_lt h1_lt_h, add_zero]
     have hcvg : c (v + g) = (3 - q % 3) % 3 := by
       change ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
-      rw [hvg_modh, hvg_divh, ht, Nat.mul_mod_right]; omega
+      rw [hvg_rw, Nat.mul_add_mod, Nat.mod_eq_of_lt hg_lt_h,
+          Nat.mul_add_div hh_pos, Nat.div_eq_of_lt hg_lt_h,
+          add_zero, ht, Nat.mul_mod_right]; omega
     have hcvg1 : c (v + g + 1) = (3 - (q + 1) % 3) % 3 := by
       change ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
-      rw [hvg1_modh, hvg1_divh]; omega
+      rw [hvg1_rw, Nat.mul_mod_right, Nat.mul_div_cancel_left _ hh_pos]; omega
     set s := (3 - q % 3) % 3 with hs_def
     have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
     rw [hs_def] at hcv hcvg
     have hcv1_s : c (v + 1) = (s + 1) % 3 := by rw [hcv1]; omega
     have hcvg1_s : c (v + g + 1) = (s + 2) % 3 := by rw [hcvg1]; omega
-    have wit := mod3_witness hs_lt hk
+    have wit := mod3_witness hs_lt k.isLt
     set d := (k.val + 3 - s) % 3
     rcases show d = 0 ∨ d = 1 ∨ d = 2 from by omega with hd | hd | hd
     · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
@@ -577,57 +546,37 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
     · exact ⟨g + 1, by simp, by
         change c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
   · by_cases hrg : r = g
-    · have hv1_modh : (v + 1) % h = 0 := by
-        rw [hv_eq, hrg,
-            show h * q + g + 1 = h * (q + 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; omega,
-            Nat.mul_mod_right]
-      have hv1_divh : (v + 1) / h = q + 1 := by
-        rw [hv_eq, hrg,
-            show h * q + g + 1 = h * (q + 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; omega,
-            Nat.mul_div_cancel_left _ hh_pos]
-      have hvg_modh : (v + g) % h = g - 1 := by
-        rw [hv_eq, hrg,
-            show h * q + g + g = h * (q + 1) + (g - 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; omega,
-            Nat.mul_add_mod, Nat.mod_eq_of_lt (by omega)]
-      have hvg_divh : (v + g) / h = q + 1 := by
-        rw [hv_eq, hrg,
-            show h * q + g + g = h * (q + 1) + (g - 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; omega,
-            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
-      have hvg1_modh : (v + g + 1) % h = g := by
-        rw [hv_eq, hrg,
-            show h * q + g + g + 1 = h * (q + 1) + g from by
-              rw [show h * (q + 1) = h * q + h from by ring]; omega,
-            Nat.mul_add_mod, Nat.mod_eq_of_lt (by omega)]
-      have hvg1_divh : (v + g + 1) / h = q + 1 := by
-        rw [hv_eq, hrg,
-            show h * q + g + g + 1 = h * (q + 1) + g from by
-              rw [show h * (q + 1) = h * q + h from by ring]; omega,
-            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
+    · have hg_lt_h : g < h := by omega
+      have hg1_lt_h : g - 1 < h := by omega
+      have hv1_rw : v + 1 = h * (q + 1) := by rw [mul_add, mul_one]; omega
+      have hvg_rw : v + g = h * (q + 1) + (g - 1) := by
+        rw [mul_add, mul_one]; omega
+      have hvg1_rw : v + g + 1 = h * (q + 1) + g := by
+        rw [mul_add, mul_one]; omega
       have hcv : c v = (3 - q % 3) % 3 := by
         change (r % 3 + (3 - q % 3)) % 3 = _
         rw [hrg, ht, Nat.mul_mod_right]; omega
       have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
         change ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
-        rw [hv1_modh, hv1_divh]; omega
+        rw [hv1_rw, Nat.mul_mod_right, Nat.mul_div_cancel_left _ hh_pos]; omega
       have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
         change ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
-        rw [hvg_modh, hvg_divh, ht]
-        have : (3 * t - 1) % 3 = 2 := by
-          rw [show 3 * t - 1 = 3 * (t - 1) + 2 from by omega, Nat.mul_add_mod]
-        rw [this]
+        rw [hvg_rw, Nat.mul_add_mod, Nat.mod_eq_of_lt hg1_lt_h,
+            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt hg1_lt_h,
+            add_zero, ht,
+            show 3 * t - 1 = 3 * (t - 1) + 2 from by omega,
+            Nat.mul_add_mod]
       have hcvg1 : c (v + g + 1) = (3 - (q + 1) % 3) % 3 := by
         change ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
-        rw [hvg1_modh, hvg1_divh, ht, Nat.mul_mod_right]; omega
+        rw [hvg1_rw, Nat.mul_add_mod, Nat.mod_eq_of_lt hg_lt_h,
+            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt hg_lt_h,
+            add_zero, ht, Nat.mul_mod_right]; omega
       set s := (3 - q % 3) % 3 with hs_def
       have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
       rw [hs_def] at hcv
       have hcv1_s : c (v + 1) = (s + 2) % 3 := by rw [hcv1]; omega
       have hcvg_s : c (v + g) = (s + 1) % 3 := by rw [hcvg]; omega
-      have wit := mod3_witness hs_lt hk
+      have wit := mod3_witness hs_lt k.isLt
       set d := (k.val + 3 - s) % 3
       rcases show d = 0 ∨ d = 1 ∨ d = 2 from by omega with hd | hd | hd
       · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
@@ -635,48 +584,32 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
       · exact ⟨1, by simp, by rw [hcv1_s]; exact wit.2.2 hd⟩
     · have hr_pos : 0 < r := by omega
       have hr_lt_g : r < g := by omega
-      have hv1_modh : (v + 1) % h = r + 1 := by
-        rw [hv_eq, show h * q + r + 1 = h * q + (r + 1) from by omega,
-            Nat.mul_add_mod, Nat.mod_eq_of_lt (by omega)]
-      have hv1_divh : (v + 1) / h = q := by
-        rw [hv_eq, show h * q + r + 1 = h * q + (r + 1) from by omega,
-            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
-      have hvg_modh : (v + g) % h = r - 1 := by
-        rw [hv_eq,
-            show h * q + r + g = h * (q + 1) + (r - 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; omega,
-            Nat.mul_add_mod, Nat.mod_eq_of_lt (by omega)]
-      have hvg_divh : (v + g) / h = q + 1 := by
-        rw [hv_eq,
-            show h * q + r + g = h * (q + 1) + (r - 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; omega,
-            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
-      have hvg1_modh : (v + g + 1) % h = r := by
-        rw [hv_eq,
-            show h * q + r + g + 1 = h * (q + 1) + r from by
-              rw [show h * (q + 1) = h * q + h from by ring]; omega,
-            Nat.mul_add_mod, Nat.mod_eq_of_lt (by omega)]
-      have hvg1_divh : (v + g + 1) / h = q + 1 := by
-        rw [hv_eq,
-            show h * q + r + g + 1 = h * (q + 1) + r from by
-              rw [show h * (q + 1) = h * q + h from by ring]; omega,
-            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by omega), add_zero]
+      have hv1_rw : v + 1 = h * q + (r + 1) := by omega
+      have hvg_rw : v + g = h * (q + 1) + (r - 1) := by
+        rw [mul_add, mul_one]; omega
+      have hvg1_rw : v + g + 1 = h * (q + 1) + r := by
+        rw [mul_add, mul_one]; omega
       have hcv : c v = (r % 3 + (3 - q % 3)) % 3 := rfl
+      have hr1_lt_h : r + 1 < h := by omega
+      have hr1'_lt_h : r - 1 < h := by omega
       have hcv1 : c (v + 1) = ((r + 1) % 3 + (3 - q % 3)) % 3 := by
         change ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
-        rw [hv1_modh, hv1_divh]
+        rw [hv1_rw, Nat.mul_add_mod, Nat.mod_eq_of_lt hr1_lt_h,
+            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt hr1_lt_h, add_zero]
       have hcvg : c (v + g) = ((r - 1) % 3 + (3 - (q + 1) % 3)) % 3 := by
         change ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
-        rw [hvg_modh, hvg_divh]
+        rw [hvg_rw, Nat.mul_add_mod, Nat.mod_eq_of_lt hr1'_lt_h,
+            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt hr1'_lt_h, add_zero]
       have hcvg1 : c (v + g + 1) = (r % 3 + (3 - (q + 1) % 3)) % 3 := by
         change ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
-        rw [hvg1_modh, hvg1_divh]
+        rw [hvg1_rw, Nat.mul_add_mod, Nat.mod_eq_of_lt hr_lt,
+            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt hr_lt, add_zero]
       set s := (r % 3 + (3 - q % 3)) % 3 with hs_def
       have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
       rw [hs_def] at hcv
       have hcv1_s : c (v + 1) = (s + 1) % 3 := by rw [hcv1]; omega
       have hcvg1_s : c (v + g + 1) = (s + 2) % 3 := by rw [hcvg1]; omega
-      have wit := mod3_witness hs_lt hk
+      have wit := mod3_witness hs_lt k.isLt
       set d := (k.val + 3 - s) % 3
       rcases show d = 0 ∨ d = 1 ∨ d = 2 from by omega with hd | hd | hd
       · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
