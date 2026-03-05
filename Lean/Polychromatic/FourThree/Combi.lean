@@ -459,31 +459,36 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     intro k a; rw [ht, show 3 * t * k + a = 3 * (t * k) + a from by ring, Nat.mul_add_mod]
   have gk_mul_mod3 : ∀ k, (g * k) % 3 = 0 := fun k => by simpa using gk_mod3 k 0
   by_cases hr_lt_gm1 : r + 1 < g
-  · have hvg_eq : v + g = g * (q + 1) + r := by rw [hv_eq]; ring
-    have hvg1_eq : v + g + 1 = g * (q + 1) + (r + 1) := by rw [hv_eq]; ring
-    have hvg_div := (nat_mod_div hg hvg_eq hr_lt).2
-    have hvg1_div := (nat_mod_div hg hvg1_eq (by grind)).2
-    have hcv : c v = (r % 3 + q) % 3 := by
-      simp only [c]; grind
+  · have hcv : c v = (r % 3 + q) % 3 := by
+      simp only [c]
+      rw [hv_eq, gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr_lt, add_zero]
     have hcvg : c (v + g) = (r % 3 + (q + 1)) % 3 := by
-      simp only [c, hvg_div]; grind
+      simp only [c]
+      rw [show v + g = g * (q + 1) + r from by rw [mul_add, mul_one]; grind,
+          gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr_lt, add_zero]
     have hcvg1 : c (v + g + 1) = ((r + 1) % 3 + (q + 1)) % 3 := by
-      simp only [c, hvg1_div]; grind
+      simp only [c]
+      rw [show v + g + 1 = g * (q + 1) + (r + 1) from by rw [mul_add, mul_one]; grind,
+          gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt (by grind), add_zero]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g (g + 1)
       (by simp) (by simp) (by simp)
       hcv (by rw [hcvg]; grind) (show c (v + g + 1) = _ by rw [hcvg1]; grind)
   · push_neg at hr_lt_gm1
     have hr_eq : r = g - 1 := by grind
-    have hv1_eq : v + 1 = g * (q + 1) := by grind
-    have hv1_div : (v + 1) / g = q + 1 := by rw [hv1_eq, Nat.mul_div_cancel_left _ hg]
-    have hvg_eq : v + g = g * (q + 1) + (g - 1) := by grind
-    have hvg_div := (nat_mod_div hg hvg_eq (by grind)).2
+    have ht_pos : 0 < t := by grind
     have hcv : c v = (2 + q) % 3 := by
-      simp only [c]; grind
+      simp only [c]
+      rw [hv_eq, gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr_lt, add_zero,
+          hr_eq, ht]; grind
     have hcv1 : c (v + 1) = (q + 1) % 3 := by
-      simp only [c, hv1_div]; grind
+      simp only [c]
+      rw [show v + 1 = g * (q + 1) from by rw [mul_add, mul_one]; grind,
+          gk_mul_mod3, Nat.mul_div_cancel_left _ hg]; simp
     have hcvg : c (v + g) = (2 + (q + 1)) % 3 := by
-      simp only [c, hvg_div]; grind
+      simp only [c]
+      rw [show v + g = g * (q + 1) + (g - 1) from by rw [mul_add, mul_one]; grind,
+          gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt (by grind),
+          add_zero, ht]; grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
       hcv (by rw [hcvg]; grind) (by rw [hcv1]; grind)
