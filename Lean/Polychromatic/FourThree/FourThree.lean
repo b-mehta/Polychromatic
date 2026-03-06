@@ -180,7 +180,6 @@ def proveAccept (a b c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Na
   if a % 3 = 2 ∧ b % 3 = 1 then
     return mkApp5 (mkConst ``accept_3_5)
       (mkRawNatLit a) (mkRawNatLit b) (mkRawNatLit c) reflBoolTrue reflBoolTrue
-
   let ind ← get
   let some q := entries[ind]?
     | throwError "ran out of entries at {ind}; only have {entries.size}"

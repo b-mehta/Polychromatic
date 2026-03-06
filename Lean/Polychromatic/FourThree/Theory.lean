@@ -55,18 +55,15 @@ lemma suffices_triple
   obtain ⟨a, b, c, hab, hac, hbc, hS0⟩ := this
   have : S = {0, a, b, c} := by rw [← insert_erase hS'.1, hS0]
   wlog hab : a < b generalizing a b
-  · apply this b a (by grind) (by grind) (by grind) (by grind) (by grind)
-    order
+  · apply this b a
+    all_goals grind
   wlog hac : a < c generalizing a c
-  · apply this a c (by grind) (by grind) (by grind) (by grind) (by grind)
-    · order
-    · order
+  · apply this a c
+    all_goals grind
   wlog hbc : b < c generalizing b c
-  · apply this c b (by grind) (by grind) (by grind) (by grind) (by grind)
-    · order
-    · order
-    · order
-  have : 0 < a := lt_of_le_of_ne' (hS'.le _ (by grind)) (by grind)
+  · apply this c b
+    all_goals grind
+  have : 0 ≤ a := hS'.le (by grind)
   grind
 
 /-- The "flip" reduction: if `a + b > c`, we can replace `{0, a, b, c}` with
@@ -201,7 +198,7 @@ lemma allB_succ' (A B c : ℕ) (hc : c.succ.ble (A.add B)) (ha : allA A B c)
   obtain hbB | rfl : b < B ∨ b = B := by grind
   · exact hB _ hbB hbc
   · rintro a ha0 hab - habc hgcd
-    exact ha a ha0 hab (by cutsat) habc hgcd
+    exact ha a ha0 hab (by lia) habc hgcd
 
 lemma allA_zero (b c : ℕ) : allA (nat_lit 0) b c := by grind [allA]
 lemma allA_one (b c : ℕ) : allA (nat_lit 1) b c := by grind [allA]

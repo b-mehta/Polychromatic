@@ -258,7 +258,7 @@ lemma polychromNumber_le_of_forall {S : Finset G} {k : ℕ}
     (h : ∀ χ : G → Fin (k + 1), ¬ IsPolychrom S χ) :
     polychromNumber S ≤ k := by
   by_contra! h'
-  obtain ⟨χ, hχ⟩ := hasPolychromColouring_fin_of_le (n := k + 1) (S := S) (by simp) (by cutsat)
+  obtain ⟨χ, hχ⟩ := hasPolychromColouring_fin_of_le (n := k + 1) (S := S) (by simp) (by lia)
   exact h _ hχ
 
 section Int

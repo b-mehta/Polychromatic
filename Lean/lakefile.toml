@@ -14,6 +14,7 @@ weak.linter.mathlibStandardSet = true
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
+rev = "v4.28.0"
 
 [[lean_lib]]
 name = "Polychromatic"

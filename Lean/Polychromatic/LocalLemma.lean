@@ -213,12 +213,13 @@ lemma prod_le_prod_of_subset_of_le_one {α : Type*} [CommMonoidWithZero α] [Par
     · apply prod_le_one (by simp [hx₀]) (by simp [hx₁])
   _ = ∏ j ∈ s, x j := by simp [inter_eq_right.2 hst]
 
-lemma individualBound [DecidableEq ι] [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
+lemma individualBound [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
     (hN : lopsidedCondition P A N)
     (hx₀ : ∀ i, 0 ≤ x i) (hx₁ : ∀ i, x i ≤ 1)
     (hAx : ∀ i, P.real (A i) ≤ x i * ∏ j ∈ N i, (1 - x j))
     (hiS : i ∉ S) :
     IndividualBound P A x i S := by
+  classical
   induction S using strongInduction generalizing i with
   | H S ih =>
     let S₁ : Finset ι := S ∩ N i
@@ -270,11 +271,12 @@ lemma add_one_inv_pow_le_exp {n : ℕ} : (1 + (n : ℝ)⁻¹) ^ n ≤ Real.exp 1
 
 /-- The symmetric Lovász Local Lemma: if all events have probability at most `p` and
 neighbourhood size at most `d`, and `e · p · (d + 1) ≤ 1`, then `P(⋂ᵢ Aᵢᶜ) > 0`. -/
-theorem symmetricLocalLemma [Fintype ι] [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
+theorem symmetricLocalLemma [Finite ι] [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
     {d : ℕ} (hd : d ≠ 0) {p : ℝ} (h : lopsidedCondition P A N) (hAp : ∀ i, P.real (A i) ≤ p)
     (hN : ∀ i, #(N i) ≤ d)
     (hpd : Real.exp 1 * p * (d + 1) ≤ 1) :
     0 < P.real (⋂ i, (A i)ᶜ) := by
+  have := Fintype.ofFinite ι
   let x (i : ι) : ℝ := (d + 1)⁻¹
   have hx₀ (i : ι) : 0 ≤ x i := by positivity
   have hx₁ (i : ι) : x i < 1 := inv_lt_one_of_one_lt₀ (by simp [hd, pos_iff_ne_zero])
@@ -316,7 +318,7 @@ lemma dependsOn_mem_iff_exists_preimage {α β : Type*} {t : Set α} {A : Set (�
   dependsOn_iff_exists_comp
 
 /-- A way to construct the standard condition from independence structure of random variables. -/
-lemma standardCondition_of {α β : Type*} [Fintype ι] [MeasurableSpace β] [IsProbabilityMeasure P]
+lemma standardCondition_of {α β : Type*} [Finite ι] [MeasurableSpace β] [IsProbabilityMeasure P]
     (I : α → Ω → β) {A : ι → Set Ω} {N : ι → Finset ι} (D : ι → Finset α)
     (hND : ∀ i j, i ≠ j → i ∉ N j → Disjoint (D i) (D j))
     (hI : ∀ a : α, Measurable (I a))
@@ -324,6 +326,7 @@ lemma standardCondition_of {α β : Type*} [Fintype ι] [MeasurableSpace β] [Is
     (hA : ∀ i, ∃ S : Set (α → β), MeasurableSet S ∧
       DependsOn (· ∈ S) (D i) ∧ A i = (fun ω a ↦ I a ω) ⁻¹' S) :
     standardCondition P A N := by
+  have := Fintype.ofFinite ι
   rw [standardCondition]
   have hA' (i : ι) : MeasurableSet (A i) := by
     obtain ⟨S, hS, -, h⟩ := hA i

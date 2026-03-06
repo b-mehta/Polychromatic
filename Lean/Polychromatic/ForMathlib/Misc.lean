@@ -57,11 +57,6 @@ lemma StrictMono.exists_le_lt {f : ℕ → ℕ} (hf : StrictMono f) (hf₀ : f 0
     ∃ m, f m ≤ n ∧ n < f (m + 1) :=
   hf.tendsto_atTop.exists_le_lt _ (by simp [hf₀])
 
-/-- For a minimal element `x` with property `P`, any `y` satisfying `P` has `x ≤ y`. -/
-theorem Minimal.le {α : Type*} [LinearOrder α] {P : α → Prop} {x : α} (y : α)
-    (hx : Minimal P x) (hy : P y) : x ≤ y := by
-  simpa using not_lt_iff_le_imp_ge.2 (hx.2 hy)
-
 lemma gcd_pos {ι : Type*} {f : ι → ℤ} {s : Finset ι} (hf : ∃ i ∈ s, f i ≠ 0) : 0 < s.gcd f := by
   induction s using Finset.cons_induction_on with
   | empty => simp at hf
@@ -81,27 +76,6 @@ lemma Fintype.piFinset_inter {ι α : Type*} [DecidableEq ι] [Fintype ι] [Deci
   simp only [mem_inter, mem_piFinset]
   grind
 
-lemma ENNReal.prod_div_distrib {ι : Type*} [DecidableEq ι] {f g : ι → ENNReal}
-    (s : Finset ι) (h : ∀ i ∈ s, g i ≠ ⊤) :
-    (∏ i ∈ s, f i / g i) = (∏ i ∈ s, f i) / (∏ i ∈ s, g i) := by
-  induction s using Finset.cons_induction_on with
-  | empty => simp
-  | cons a s has ih =>
-    simp only [cons_eq_insert, mem_insert, ne_eq, forall_eq_or_imp] at h
-    simp only [cons_eq_insert, has, not_false_eq_true, prod_insert]
-    rw [ENNReal.mul_div_mul_comm (Or.inr (prod_ne_top h.2)) (Or.inl h.1), ih h.2]
-
-lemma ENNReal.prod_div_distrib' {ι : Type*} [DecidableEq ι] {f g : ι → ENNReal}
-    (s : Finset ι) (h : ∀ i ∈ s, g i ≠ 0) :
-    (∏ i ∈ s, f i / g i) = (∏ i ∈ s, f i) / (∏ i ∈ s, g i) := by
-  induction s using Finset.cons_induction_on with
-  | empty => simp
-  | cons a s has ih =>
-    simp only [cons_eq_insert, mem_insert, ne_eq, forall_eq_or_imp] at h
-    simp only [cons_eq_insert, has, not_false_eq_true, prod_insert]
-    rw [ENNReal.mul_div_mul_comm (Or.inl h.1)
-      (Or.inr (by simpa [prod_eq_zero_iff] using h.2)), ih h.2]
-
 section
 
 open MeasureTheory Measure ProbabilityTheory
@@ -119,20 +93,9 @@ lemma uniformOn_apply_finset {Ω : Type*} [DecidableEq Ω] [MeasurableSpace Ω]
     uniformOn (s : Set Ω) (t : Set Ω) = #(s ∩ t) / #s :=
   uniformOn_apply_finset' s.measurableSet t.measurableSet
 
-theorem uniformOn_isProbabilityMeasure' {Ω : Type*} [MeasurableSpace Ω]
-    {s : Set Ω} (hs : s.Finite) (hs' : s.Nonempty) (hsm : MeasurableSet s) :
-    IsProbabilityMeasure (uniformOn s) := by
-  apply cond_isProbabilityMeasure_of_finite
-  · rwa [Measure.count_ne_zero_iff]
-  · exact ((Measure.count_apply_lt_top' hsm).2 hs).ne
-
-instance {α : Type*} [Nonempty α] [Finite α] [MeasurableSpace α] :
-    IsProbabilityMeasure (uniformOn (Set.univ : Set α)) :=
-  uniformOn_isProbabilityMeasure' Set.finite_univ Set.univ_nonempty MeasurableSet.univ
-
 variable {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω] {P : ι → Measure Ω}
 
-lemma uniformOn_pi [Fintype Ω] [MeasurableSingletonClass Ω] {f : ι → Set Ω} :
+lemma uniformOn_pi [Finite Ω] [MeasurableSingletonClass Ω] {f : ι → Set Ω} :
     uniformOn (Set.univ.pi f) = Measure.pi fun i ↦ uniformOn (f i) := by
   refine (MeasureTheory.Measure.pi_eq fun t ht ↦ ?_).symm
   lift f to ι → Finset Ω
@@ -141,7 +104,7 @@ lemma uniformOn_pi [Fintype Ω] [MeasurableSingletonClass Ω] {f : ι → Set Ω
   · simp [Set.toFinite]
   classical
   simp [← Fintype.coe_piFinset, uniformOn_apply_finset, Fintype.piFinset_inter,
-    ENNReal.prod_div_distrib]
+    ENNReal.prod_div_distrib_of_ne_top]
 
 variable [∀ i, IsProbabilityMeasure (P i)] {s : Set ι}
 
@@ -259,7 +222,7 @@ theorem equipartitionToIco.extracted_3 {a b k : ℕ} (hk₀ : k ≠ 0) (hk : k �
     intro i hi
     apply Ico_subset_Ico (by simp)
     calc
-      _ ≤ a + equiEndpoint (b - a) k k := add_le_add_left (equiEndpoint_monotone (by omega)) a
+      _ ≤ a + equiEndpoint (b - a) k k := add_le_add_right (equiEndpoint_monotone (by omega)) a
       _ ≤ b := by rw [equiEndpoint_hi hk₀]; omega
   · simp only [subset_iff, mem_Ico, mem_biUnion, mem_range, and_imp]
     intro x hax hxb
