@@ -147,7 +147,7 @@ lemma straussFunction_isLittleO :
   obtain ⟨f, hf, hfbound⟩ := mBound_isLittleO
   refine ⟨f, hf, fun k hk ↦ ?_⟩
   grw [straussFunction_le_of_forall_mBound hk]
-  exact hfbound _ (by omega)
+  exact hfbound _ (by grind)
 
 lemma straussFunction_le_of_forall_mul_log {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ k : ℕ in atTop, straussFunction k ≤ (3 + ε) * k * Real.log k := by

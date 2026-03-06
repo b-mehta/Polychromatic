@@ -210,9 +210,9 @@ variable (m : ℕ)
 lemma case_one_small_g (g : ℕ) (hm : m ≥ 289) (hg : g ∈ ({2, 3, 4} : Finset ℕ)) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   fin_cases hg <;> push_cast <;> norm_num
-  · exact table1_0123 m (by omega)
-  · exact table1_0134 m (by omega)
-  · exact table1_0145 m (by omega)
+  · exact table1_0123 m (by grind)
+  · exact table1_0134 m (by grind)
+  · exact table1_0145 m (by grind)
 
 /-- Subcase (1b): 5 ≤ g < 2⌊m/s⌋ (specifically s=6 here).
     Handled by the interval coloring strategy (01...12...20...). -/
@@ -276,7 +276,7 @@ lemma case_one_res_3g_add_1 (g : ℕ) (hm : m ≥ 289)
   have : {0, (3 : ZMod m), -1, 2} = (-1 : ZMod m) +ᵥ ({0, 1, 3, 4} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
     grind
-  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0134 m (by omega)
+  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0134 m (by grind)
 
 /-- m = 3g + 2: ×3 maps {0,1,g,g+1} to {0,3,-2,1}, a translate of {0,2,3,5}. -/
 lemma case_one_res_3g_add_2 (g : ℕ) (hm : m ≥ 289)
@@ -292,7 +292,7 @@ lemma case_one_res_3g_add_2 (g : ℕ) (hm : m ≥ 289)
   have : {0, (3 : ZMod m), -2, 1} = (-2 : ZMod m) +ᵥ ({0, 2, 3, 5} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
     grind
-  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0235 m (by omega)
+  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0235 m (by grind)
 
 /-- m = 3g + 4: ×3 maps {0,1,g,g+1} to {0,3,-4,-1}, a translate of {0,3,4,7}. -/
 lemma case_one_res_3g_add_4 (g : ℕ) (hm : m ≥ 289)
@@ -308,7 +308,7 @@ lemma case_one_res_3g_add_4 (g : ℕ) (hm : m ≥ 289)
   have : {0, (3 : ZMod m), -4, -1} = (-4 : ZMod m) +ᵥ ({0, 3, 4, 7} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
     grind
-  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0347 m (by omega)
+  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0347 m (by grind)
 
 /-- m = 3g + 5: ×3 maps {0,1,g,g+1} to {0,3,-5,-2}, a translate of {0,3,5,8}. -/
 lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289)
@@ -324,7 +324,7 @@ lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289)
   have : {0, (3 : ZMod m), -5, -2} = (-5 : ZMod m) +ᵥ ({0, 3, 5, 8} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
     grind
-  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0358 m (by omega)
+  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0358 m (by grind)
 
 /-- Subcase (1c) assembled: dispatches to the six per-residue lemmas above. -/
 lemma case_one_residues (g : ℕ) (hm : m ≥ 289) (h_res : m % 3 ≠ 0)

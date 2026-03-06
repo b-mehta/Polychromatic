@@ -210,7 +210,7 @@ theorem equipartitionToIco.extracted_2 {n k a : ℕ} :
   wlog hij : i ≤ j generalizing i j
   · exact (this h.symm (by order)).symm
   have : equiEndpoint n k (i + 1) ≤ equiEndpoint n k j :=
-    equiEndpoint_monotone (by omega)
+    equiEndpoint_monotone (by grind)
   simp [this]
 
 theorem equipartitionToIco.extracted_3 {a b k : ℕ} (hk₀ : k ≠ 0) (hk : k ≤ b - a) :
@@ -222,7 +222,7 @@ theorem equipartitionToIco.extracted_3 {a b k : ℕ} (hk₀ : k ≠ 0) (hk : k �
     intro i hi
     apply Ico_subset_Ico (by simp)
     calc
-      _ ≤ a + equiEndpoint (b - a) k k := add_le_add_right (equiEndpoint_monotone (by omega)) a
+      _ ≤ a + equiEndpoint (b - a) k k := add_le_add_right (equiEndpoint_monotone (by grind)) a
       _ ≤ b := by rw [equiEndpoint_hi hk₀]; omega
   · simp only [subset_iff, mem_Ico, mem_biUnion, mem_range, and_imp]
     intro x hax hxb
@@ -231,9 +231,9 @@ theorem equipartitionToIco.extracted_3 {a b k : ℕ} (hk₀ : k ≠ 0) (hk : k �
     have : i < k := by
       have : equiEndpoint (b - a) k k = b - a := equiEndpoint_hi hk₀
       by_contra!
-      have : equiEndpoint (b - a) k k ≤ equiEndpoint (b - a) k i := equiEndpoint_monotone (by omega)
-      omega
-    exact ⟨i, this, by omega⟩
+      have : equiEndpoint (b - a) k k ≤ equiEndpoint (b - a) k i := equiEndpoint_monotone (by grind)
+      grind
+    exact ⟨i, this, by grind⟩
 
 theorem equipartitionToIco_nonempty {a b k i : ℕ} (hk₀ : k ≠ 0) (hk : k ≤ b - a) :
     (Ico (a + equiEndpoint (b - a) k i) (a + equiEndpoint (b - a) k (i + 1))).Nonempty := by
