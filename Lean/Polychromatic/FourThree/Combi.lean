@@ -91,7 +91,7 @@ lemma table1_0123 (hm : m ≥ 6) :
       have : ¬ (v + a < bd) := by grind
       rw [if_neg this]
       change (v + a - bd) % 3 = k.val
-      have := k.isLt; grind
+      have := k.isLt; lia
     · push_neg at hzone
       by_cases hzone2 : v + 3 < bd
       · have h_in_bd : ∀ a, a ≤ 3 → v + a < bd := fun a ha => by grind
