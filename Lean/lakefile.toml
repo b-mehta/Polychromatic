@@ -22,4 +22,4 @@ name = "Polychromatic"
 [[require]]
 name = "subverso"
 git = "https://github.com/leanprover/subverso"
-rev = "no-modules/1d663ae67d8088111bb37c3c526fe2d43e4df01c"
+rev = "no-modules/69981335508430ec0fc09241f535aa353c1e978e"
