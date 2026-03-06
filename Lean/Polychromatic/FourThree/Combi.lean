@@ -738,6 +738,223 @@ lemma case_two_odd_small (hm : m ≥ 289)
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   sorry
 
+/-! ### Case (2d): d₁, e₁ both odd, e₁ ≥ 19
+
+The base pattern on C₀ uses three alternating bicolor intervals of sizes u, v, w.
+Each subsequent cycle is a rotation of C₀. The rotation amount must be in [u, e₁-u].
+-/
+
+/-- Partition parameter: first interval size for case 2d.
+    u = e₁/3 + e₁%3 (i.e. k+r where e₁ = 3k+r).
+    For e₁ odd: r=0 → u=k (odd), r=1 → u=k+1 (odd), r=2 → u=k+2 (odd). -/
+private def case2d_u (e₁ : ℕ) : ℕ := e₁ / 3 + e₁ % 3
+
+/-- Second interval size for case 2d.
+    v = e₁/3 + (1 if e₁%3 = 1 else 0).
+    r=0: v = k   r=1: v = k+1   r=2: v = k -/
+private def case2d_v (e₁ : ℕ) : ℕ :=
+  if e₁ % 3 = 1 then e₁ / 3 + 1 else e₁ / 3
+
+private lemma case2d_u_odd {e₁ : ℕ} (he : Odd e₁) : Odd (case2d_u e₁) := by
+  sorry
+
+private lemma case2d_v_odd {e₁ : ℕ} (he : Odd e₁) : Odd (case2d_v e₁) := by
+  sorry
+
+private lemma case2d_w_odd {e₁ : ℕ} (he : Odd e₁) :
+    Odd (e₁ - case2d_u e₁ - case2d_v e₁) := by
+  sorry
+
+private lemma case2d_uv_le {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19) :
+    case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
+  simp only [case2d_u, case2d_v]; split_ifs <;> omega
+
+private lemma case2d_v_le_u {e₁ : ℕ} : case2d_v e₁ ≤ case2d_u e₁ := by
+  simp only [case2d_u, case2d_v]; split_ifs <;> omega
+
+private lemma case2d_w_le_u {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19) :
+    e₁ - (case2d_u e₁ + case2d_v e₁) ≤ case2d_u e₁ := by
+  simp only [case2d_u, case2d_v]; split_ifs <;> omega
+
+private lemma case2d_u_pos {e₁ : ℕ} (hge : e₁ ≥ 19) : 0 < case2d_u e₁ := by
+  simp only [case2d_u]; omega
+
+private lemma case2d_u_lt {e₁ : ℕ} (hge : e₁ ≥ 19) : case2d_u e₁ < e₁ := by
+  simp only [case2d_u]; omega
+
+private lemma case2d_two_u_le {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19) :
+    2 * case2d_u e₁ ≤ e₁ := by
+  simp only [case2d_u]; obtain ⟨k, hk⟩ := he; omega
+
+/-- The base pattern: three alternating bicolor intervals on {0,...,e₁-1}.
+    Positions 0..u-1: alternating 0,1 (starts and ends with 0 since u is odd)
+    Positions u..u+v-1: alternating 1,2 (starts and ends with 1)
+    Positions u+v..e₁-1: alternating 2,0 (starts and ends with 2) -/
+private def basePattern (e₁ : ℕ) (j : ℕ) : Fin 3 :=
+  let u := case2d_u e₁
+  let v := case2d_v e₁
+  if j < u then
+    if j % 2 = 0 then 0 else 1
+  else if j < u + v then
+    if (j - u) % 2 = 0 then 1 else 2
+  else
+    if (j - u - v) % 2 = 0 then 2 else 0
+
+/-- Which interval (0, 1, or 2) a position j falls in. -/
+private def whichInterval (e₁ j : ℕ) : Fin 3 :=
+  let u := case2d_u e₁
+  let v := case2d_v e₁
+  if j < u then 0
+  else if j < u + v then 1
+  else 2
+
+/-- The color pair for each interval. -/
+private def intervalColors : Fin 3 → Finset (Fin 3)
+  | 0 => {0, 1}
+  | 1 => {1, 2}
+  | 2 => {0, 2}
+
+/-- Any two distinct interval color pairs union to {0, 1, 2}. -/
+private lemma intervalColors_union_covers {i₁ i₂ : Fin 3} (h : i₁ ≠ i₂) :
+    ∀ k : Fin 3, k ∈ intervalColors i₁ ∨ k ∈ intervalColors i₂ := by
+  intro k; fin_cases i₁ <;> fin_cases i₂ <;> fin_cases k <;>
+    simp_all [intervalColors, Finset.mem_insert, Finset.mem_singleton]
+
+/-- basePattern(e₁, j) is always in the pair of whichInterval(e₁, j). -/
+private lemma basePattern_mem_interval {e₁ j : ℕ} :
+    basePattern e₁ j ∈ intervalColors (whichInterval e₁ j) := by
+  simp only [basePattern, whichInterval, intervalColors]
+  split_ifs with h1 h2 h3 h4 h5 h6 <;>
+    simp_all [Finset.mem_insert, Finset.mem_singleton] <;> omega
+
+/-- Consecutive positions (j, j+1) within the same interval produce
+    both colors of that interval. -/
+private lemma basePattern_consec_same_interval {e₁ j : ℕ}
+    (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁) (hj1 : j + 1 < e₁)
+    (hsame : whichInterval e₁ j = whichInterval e₁ (j + 1)) :
+    {basePattern e₁ j, basePattern e₁ (j + 1)} = intervalColors (whichInterval e₁ j) := by
+  simp only [whichInterval, basePattern, intervalColors] at *
+  set u := case2d_u e₁
+  -- Both j and j+1 are in the same interval; their parities differ
+  split_ifs at hsame ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 <;>
+    simp_all <;> ext x <;> fin_cases x <;>
+    simp_all [Finset.mem_insert, Finset.mem_singleton] <;> omega
+
+/-- At an interval boundary (j at end, j+1 at start of next), the pair of
+    consecutive basePattern values equals the pair of the left interval. -/
+private lemma basePattern_consec_boundary {e₁ j : ℕ}
+    (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁)
+    (hdiff : whichInterval e₁ j ≠ whichInterval e₁ ((j + 1) % e₁)) :
+    {basePattern e₁ j, basePattern e₁ ((j + 1) % e₁)} =
+      intervalColors (whichInterval e₁ j) := by
+  obtain ⟨ku, hku⟩ := case2d_u_odd he
+  obtain ⟨kv, hkv⟩ := case2d_v_odd he
+  obtain ⟨kw, hkw⟩ := case2d_w_odd he
+  have huv := case2d_uv_le he hge
+  simp only [whichInterval] at hdiff ⊢
+  by_cases hj1_wrap : j + 1 < e₁
+  · rw [Nat.mod_eq_of_lt hj1_wrap] at hdiff ⊢
+    simp only [basePattern, intervalColors]
+    split_ifs at hdiff ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9 <;> (try omega) <;>
+      ext x <;> fin_cases x <;>
+      simp_all [Finset.mem_insert, Finset.mem_singleton] <;> omega
+  · -- Wrap: j = e₁ - 1
+    push_neg at hj1_wrap
+    have hj_eq : j = e₁ - 1 := by omega
+    subst hj_eq
+    rw [show e₁ - 1 + 1 = e₁ from by omega, Nat.mod_self] at hdiff ⊢
+    simp only [basePattern, intervalColors]
+    split_ifs at hdiff ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9 <;> (try omega) <;>
+      ext x <;> fin_cases x <;>
+      simp_all [Finset.mem_insert, Finset.mem_singleton] <;> omega
+
+/-- Combined: for any j, {basePattern(j), basePattern(j+1 mod e₁)} is the
+    interval pair of whichInterval(j). -/
+private lemma basePattern_consec_pair {e₁ j : ℕ}
+    (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁) :
+    intervalColors (whichInterval e₁ j) ⊆
+      {basePattern e₁ j, basePattern e₁ ((j + 1) % e₁)} := by
+  sorry
+
+/-- A rotation by r ∈ [u, e₁-u] moves to a different interval:
+    whichInterval(j) ≠ whichInterval((j + r) % e₁). -/
+private lemma rotation_changes_interval {e₁ j : ℕ}
+    (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁)
+    {r : ℕ} (hr_lo : case2d_u e₁ ≤ r) (hr_hi : r ≤ e₁ - case2d_u e₁) :
+    whichInterval e₁ j ≠ whichInterval e₁ ((j + r) % e₁) := by
+  have he₁_pos : 0 < e₁ := by omega
+  have huv_bound := case2d_uv_le he hge
+  have hv_le_u := case2d_v_le_u (e₁ := e₁)
+  have hw_le_u := case2d_w_le_u he hge
+  simp only [whichInterval]
+  have hj'_lt : (j + r) % e₁ < e₁ := Nat.mod_lt _ he₁_pos
+  intro heq
+  by_cases hjr_wrap : j + r < e₁
+  · -- No wrap
+    rw [Nat.mod_eq_of_lt hjr_wrap] at heq hj'_lt
+    split_ifs at heq <;> omega
+  · -- Wrap: (j + r) % e₁ = j + r - e₁
+    push_neg at hjr_wrap
+    have hmod : (j + r) % e₁ = j + r - e₁ := by
+      have : r < e₁ := by omega
+      have h1 : j + r - e₁ < e₁ := by omega
+      rw [Nat.add_mod_eq_sub, Nat.mod_eq_of_lt hj, Nat.mod_eq_of_lt this, if_neg (by grind)]
+    rw [hmod] at heq hj'_lt
+    split_ifs at heq <;> omega
+
+/-- Key polychromaticity lemma: if the base pattern is rotated by r ∈ [u, e₁-u],
+    then at every position j, the 2×2 block covers all 3 colors. -/
+private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19)
+    {r : ℕ} (hr_lo : case2d_u e₁ ≤ r) (hr_hi : r ≤ e₁ - case2d_u e₁)
+    (hj : j < e₁) :
+    ∀ k : Fin 3, k ∈
+      ({basePattern e₁ j, basePattern e₁ ((j + 1) % e₁),
+        basePattern e₁ ((j + r) % e₁),
+        basePattern e₁ ((j + r + 1) % e₁)} : Finset (Fin 3)) := by
+  intro k
+  have he₁_pos : 0 < e₁ := by omega
+  have hI := rotation_changes_interval he hge hj hr_lo hr_hi
+  have h1 := basePattern_consec_pair he hge hj
+  have hjr : (j + r) % e₁ < e₁ := Nat.mod_lt _ he₁_pos
+  have h2 := basePattern_consec_pair he hge hjr
+  -- Rewrite ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁
+  have hmod : ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁ := by
+    conv_rhs => rw [show j + r + 1 = (j + r) + 1 from by ring]
+    rw [Nat.add_mod, Nat.mod_mod_of_dvd _ (dvd_refl _), ← Nat.add_mod]
+  rw [hmod] at h2
+  have hcov := intervalColors_union_covers hI k
+  simp only [Finset.mem_insert, Finset.mem_singleton]
+  rcases hcov with hk | hk
+  · have := h1 hk
+    simp only [Finset.mem_insert, Finset.mem_singleton] at this
+    tauto
+  · have := h2 hk
+    simp only [Finset.mem_insert, Finset.mem_singleton] at this
+    tauto
+
+/-- Existence of a valid wrap rotation: there exists R ∈ [u, e₁-u] mod e₁
+    achievable as a sum of (d₁-1) values each in [u, e₁-u].
+    Simplified: we just need some R with u ≤ R%e₁ ≤ e₁-u. Since u < e₁-u
+    (because u ≤ (e₁+2)/3 < e₁/2 for e₁ ≥ 19), taking R = u works. -/
+private lemma exists_valid_wrap_rotation {e₁ : ℕ}
+    (he : Odd e₁) (hge : e₁ ≥ 19) :
+    ∃ R : ℕ, R < e₁ ∧ case2d_u e₁ ≤ R ∧ R ≤ e₁ - case2d_u e₁ := by
+  refine ⟨case2d_u e₁, ?_, le_refl _, ?_⟩
+  · simp only [case2d_u]; omega
+  · simp only [case2d_u]; omega
+
+/-- The coloring for case (2d), connecting to ZMod m. Uses cycle coordinates
+    c_{i,j} = i*(b-a) + j*b and the base pattern with rotations. -/
+private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
+    (hm : m ≥ 289)
+    (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
+    (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
+    (hd1_odd : Odd (Nat.gcd b.natAbs m))
+    (he1_odd : Odd (m / Nat.gcd b.natAbs m))
+    (he1_ge : m / Nat.gcd b.natAbs m ≥ 19) :
+    HasPolychromColouring (Fin 3) (zmod_set m a b) := by
+  sorry
+
 /-- Subcase (2d): d1 and e1 are both odd, with e1 ≥ 19.
     Uses "rotating" colorings based on partitioning e1 = u + v + w. -/
 lemma case_two_odd_large (hm : m ≥ 289)
@@ -746,8 +963,8 @@ lemma case_two_odd_large (hm : m ≥ 289)
     (hd1_odd : Odd (Nat.gcd b.natAbs m))
     (he1_odd : Odd (m / Nat.gcd b.natAbs m))
     (he1_ge : m / Nat.gcd b.natAbs m ≥ 19) :
-    HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  sorry
+    HasPolychromColouring (Fin 3) (zmod_set m a b) :=
+  case2d_coloring_works hm h_gcd_coprime h_min hd1_odd he1_odd he1_ge
 
 /-- Aggregation of Main Case 2.
     Assumption: min(gcd(b, m), gcd(b-a, m)) > 1.
