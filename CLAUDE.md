@@ -80,6 +80,22 @@ Configured in `lakefile.toml`:
 
 Preserve `-- ANCHOR:` / `-- ANCHOR_END:` comments — they mark sections extracted for website documentation.
 
+### Antipatterns
+
+- **Avoid `show`** — use `have` to prove intermediate facts and `change` to adjust the goal type. `show` is less readable and mixes poorly with other tactics:
+  ```lean
+  -- Bad: show as inline proof term
+  rcases show d = 0 ∨ d = 1 ∨ d = 2 from by grind with h | h | h
+  -- Good: extract to have
+  have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
+  rcases this with h | h | h
+
+  -- Bad: show to change goal type
+  show ((h * q' + r') % h % 3 + ...) % 3 = _
+  -- Good: use change instead
+  change ((h * q' + r') % h % 3 + ...) % 3 = _
+  ```
+
 ## Proof Golfing Tips
 
 When simplifying or shortening Lean proofs:
@@ -96,6 +112,16 @@ When simplifying or shortening Lean proofs:
 - **Avoid redundant hypotheses** — if a lemma's hypothesis can be closed by `inferInstance` or `by omega`, remove the explicit `have` that provides it.
 - **Combine `constructor` with `⟨..., ...⟩`** — use anonymous constructor syntax to close `And`/`Exists` goals concisely.
 - **`norm_num` extensions** — `norm_num [...]` can close goals involving specific numeric computations, including modular arithmetic.
+- **Try removing tactics before `grind`** — `grind` is powerful and often subsumes preceding tactics. When a proof ends with `tactic; grind`, try deleting the preceding tactic. Known results:
+  - **`rw [mul_add, mul_one]; grind`** → `grind` — works when proving ℕ arithmetic equalities (e.g. `v + g = g * (q + 1) + r`). `grind` handles `mul_add`/`mul_one` rewrites.
+  - **`rw [hv_eq, color_at ...]; grind`** → `grind` — works when the `rw` unfolds definitions that `grind` can see through.
+  - **`rw [hcvg]; grind`** → `grind` — works when `hcvg` is a local hypothesis rewrite.
+  - **`congr 1; grind`** → `grind` — works for simple congruence goals.
+  - **`have := Nat.mul_pos ...; grind`** → `grind` — works when the positivity fact is inferrable.
+  - **`simp; grind`** → `grind` — works for simple normalization (e.g. `Fin.val` goals).
+  - **`simp [h, Nat.add_mod, ...] <;> grind`** → `grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]` — passing the simp lemmas directly to `grind` works for modular arithmetic.
+  - **`rw [Nat.mul_add_mod, ...]; grind`** → `grind [Nat.mul_add_mod, Nat.add_mul_div_left]` — passing lemmas about `%` and `/` to `grind` works.
+  - **`rw [this, color_at (q + 1) 0 ...]; grind`** — does NOT simplify, even with `grind [color_at (q + 1) 0]`, when `color_at` is a local `have`.
 
 ## Commit Conventions
 
