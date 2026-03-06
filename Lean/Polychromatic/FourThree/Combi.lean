@@ -387,12 +387,6 @@ private lemma color_shift_q (r q : ℕ) :
   rcases show q % 3 = 0 ∨ q % 3 = 1 ∨ q % 3 = 2 from by grind with h | h | h <;>
     simp only [h, Nat.add_mod, Nat.mod_self, Nat.mod_mod] <;> grind
 
-private lemma nat_mod_div {a b q r : ℕ} (hb : 0 < b) (heq : a = b * q + r)
-    (hr : r < b) : a % b = r ∧ a / b = q := by
-  subst heq
-  exact ⟨by rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hr],
-         by rw [Nat.mul_add_div hb, Nat.div_eq_of_lt hr, add_zero]⟩
-
 private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
     ((k + 3 - s) % 3 = 0 → s = k) ∧
     ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
