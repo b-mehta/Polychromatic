@@ -599,9 +599,48 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
       push_neg at hg_lb6
       -- s is the smallest multiple of 3 with g > ⌈m/s⌉.
       -- The condition g < 2⌊m/s⌋ follows from g ≤ ⌈m/(s-3)⌉.
-      set s := 3 * ((m - 1) / (3 * g) + 1)
-      exact case_one_interval m s g (by grind) ⟨(m - 1) / (3 * g) + 1, rfl⟩
-        (by sorry) (by sorry)
+      by_cases h6 : (m + 5) / 6 < g
+      · -- s = 6 works: ⌈m/6⌉ < g and g < 2⌊m/6⌋
+        exact case_one_interval m 6 g (by grind) ⟨2, rfl⟩ h6 hg_lb6
+      · -- s ≥ 9: use s = 3⌈m/(3(g-1))⌉
+        push_neg at h6
+        have hg5 : g ≥ 5 := by omega
+        have h3g1 : 0 < 3 * (g - 1) := by omega
+        set q := (m - 1) / (3 * (g - 1)) with hq_def
+        have hq_lb : q * (3 * (g - 1)) ≤ m - 1 := Nat.div_mul_le_self _ _
+        have hq_ub : m - 1 < 3 * (g - 1) * (q + 1) := Nat.lt_mul_div_succ _ h3g1
+        have hq2 : q ≥ 2 := by
+          by_contra hlt; push_neg at hlt
+          exact absurd (show m - 1 < 2 * (3 * (g - 1)) from
+            (Nat.div_lt_iff_lt_mul h3g1).mp hlt) (by omega)
+        have hm_lb : m ≥ q * (3 * (g - 1)) + 1 := by
+          have : 0 < q * (3 * (g - 1)) := Nat.mul_pos (by omega) (by omega)
+          omega
+        exact case_one_interval m (3 * (q + 1)) g (by omega) ⟨q + 1, rfl⟩
+          (by -- Goal 1: ⌈m/s⌉ < g
+            rw [Nat.div_lt_iff_lt_mul (by omega : 0 < 3 * (q + 1))]
+            have : g * (3 * (q + 1)) = (g - 1 + 1) * (3 * (q + 1)) := by
+              congr 1; omega
+            have : (g - 1 + 1) * (3 * (q + 1)) =
+                (g - 1) * (3 * (q + 1)) + 3 * (q + 1) := by ring
+            have : (g - 1) * (3 * (q + 1)) = 3 * (g - 1) * (q + 1) := by ring
+            omega)
+          (by -- Goal 2: g < 2⌊m/s⌋
+            suffices h : (g + 2) / 2 ≤ m / (3 * (q + 1)) by omega
+            rw [Nat.le_div_iff_mul_le (by omega : 0 < 3 * (q + 1))]
+            -- Reduce to (g+2)*(3*(q+1)) ≤ 2*m via a/2*b ≤ (a*b)/2 ≤ m
+            suffices (g + 2) * (3 * (q + 1)) ≤ 2 * m by
+              have : (g + 2) / 2 * (3 * (q + 1)) * 2 ≤
+                  (g + 2) * (3 * (q + 1)) := by
+                have := Nat.div_mul_le_self (g + 2) 2; nlinarith
+              omega
+            by_cases hg10 : g ≥ 10
+            · -- For g ≥ 10: use hq_lb via zify + nlinarith
+              zify [show g ≥ 1 from by omega] at hm_lb ⊢
+              nlinarith
+            · -- For g ∈ {5,...,9}: use m ≥ 289
+              have : g = 5 ∨ g = 6 ∨ g = 7 ∨ g = 8 ∨ g = 9 := by omega
+              rcases this with rfl | rfl | rfl | rfl | rfl <;> omega)
 
 /-- WLOG g ≤ m/2: in ZMod m, {0,1,m-g,m-g+1} = (-g) +ᵥ {0,1,g,g+1},
     so HasPolychromColouring is preserved. -/
