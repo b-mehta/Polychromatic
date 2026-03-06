@@ -119,9 +119,9 @@ When simplifying or shortening Lean proofs:
   - **`congr 1; grind`** → `grind` — works for simple congruence goals.
   - **`have := Nat.mul_pos ...; grind`** → `grind` — works when the positivity fact is inferrable.
   - **`simp; grind`** → `grind` — works for simple normalization (e.g. `Fin.val` goals).
-  - **`simp [...] <;> grind`** — does NOT simplify: `grind` alone fails on modular arithmetic goals where `simp` with `Nat.add_mod`/`Nat.mod_self` is needed first.
-  - **`rw [Nat.mul_add_mod, ...]; grind`** — does NOT simplify: `grind` fails on `Nat.mul_add_mod` style rewrites involving `%` and `/`.
-  - **`rw [this, color_at (q + 1) 0 ...]; grind`** — does NOT simplify when `color_at` is a local `have` (not a simp lemma).
+  - **`simp [h, Nat.add_mod, ...] <;> grind`** → `grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]` — passing the simp lemmas directly to `grind` works for modular arithmetic.
+  - **`rw [Nat.mul_add_mod, ...]; grind`** → `grind [Nat.mul_add_mod, Nat.add_mul_div_left]` — passing lemmas about `%` and `/` to `grind` works.
+  - **`rw [this, color_at (q + 1) 0 ...]; grind`** — does NOT simplify, even with `grind [color_at (q + 1) 0]`, when `color_at` is a local `have`.
 
 ## Commit Conventions
 

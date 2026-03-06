@@ -377,13 +377,13 @@ private lemma color_shift_r (r q : ℕ) :
     ((r + 1) % 3 + (3 - q % 3)) % 3 =
       ((r % 3 + (3 - q % 3)) % 3 + 1) % 3 := by
   rcases show q % 3 = 0 ∨ q % 3 = 1 ∨ q % 3 = 2 from by grind with h | h | h <;>
-    simp [h, Nat.add_mod, Nat.mod_self, Nat.mod_mod] <;> grind
+    grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]
 
 private lemma color_shift_q (r q : ℕ) :
     (r % 3 + (3 - (q + 1) % 3)) % 3 =
       ((r % 3 + (3 - q % 3)) % 3 + 2) % 3 := by
   rcases show q % 3 = 0 ∨ q % 3 = 1 ∨ q % 3 = 2 from by grind with h | h | h <;>
-    simp [h, Nat.add_mod, Nat.mod_self, Nat.mod_mod] <;> grind
+    grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]
 
 private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
     ((k + 3 - s) % 3 = 0 → s = k) ∧
@@ -497,10 +497,8 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
     intro p; simp only [c, hm3h]
     have h1 : p = h * (3 * (p / (3 * h))) + p % (3 * h) := by
       have := (Nat.mod_add_div p (3 * h)).symm; linarith
-    have h2 : h * (3 * (p / (3 * h))) + p % (3 * h) =
-        p % (3 * h) + h * (3 * (p / (3 * h))) := by ring
     conv_rhs => rw [h1]
-    rw [Nat.mul_add_mod, h2, Nat.add_mul_div_left _ _ hh_pos]; grind
+    grind [Nat.mul_add_mod, Nat.add_mul_div_left]
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
     lift_coloring_witness (by grind) hc_lt3 hc_period ?_⟩
   set v := n.val; set r := v % h; set q := v / h
