@@ -71,7 +71,6 @@ Preserve `-- ANCHOR:` / `-- ANCHOR_END:` comments — they mark sections extract
 
 When simplifying or shortening Lean proofs:
 
-- **`omega`** closes goals involving linear arithmetic over `Nat` and `Int` — try it before manual calc blocks or chains of `linarith`/`norm_num` steps.
 - **`simp` with lemma lists** — a single `simp [h₁, h₂, h₃]` often replaces multiple `rw` steps. Use `simp only [...]` when `simp` is too aggressive or slow.
 - **`gcongr`** handles monotonicity/congruence goals (e.g. `a ≤ b → f a ≤ f b`) — avoids manual `apply` chains.
 - **`positivity`** closes positivity/nonnegativity goals automatically.
