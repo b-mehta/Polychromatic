@@ -21,7 +21,7 @@ lake build Polychromatic.Main  # Build a single module
 
 ### Other Components
 
-- **Verso docs**: First run `cd Lean && lake exe cache get && lake build`, then `cd Verso && lake exe docs`. The Lean build must complete before building Verso docs, because the docs build shells out to `../Lean` to run `subverso-extract-mod` using the Lean project's toolchain. The Verso project uses a different Lean toolchain — this is intentional. Lean code is pulled into the site via `` ```anchor name (module := Module.Name) `` blocks, which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
+- **Verso docs**: `cd Verso && lake exe docs` (requires the Lean build above to have completed first). The Verso project uses a different Lean toolchain — this is intentional. The docs build shells out to `../Lean` to run `subverso-extract-mod` using the Lean project's toolchain. Lean code is pulled into the site via `` ```anchor name (module := Module.Name) `` blocks, which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
 - **Jekyll site**: `cd site && bundle exec jekyll serve` (Ruby 3.1+)
 - **Generation**: C++ code in `Generation/` produces colouring log files consumed by `FourThree/Compute.lean`
 
