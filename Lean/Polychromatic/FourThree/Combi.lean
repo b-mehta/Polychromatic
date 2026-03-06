@@ -214,12 +214,17 @@ lemma case_one_small_g (g : ℕ) (hm : m ≥ 289) (hg : g ∈ ({2, 3, 4} : Finse
   · exact table1_0145 m (by grind)
 
 /-- Subcase (1b): interval coloring strategy.
-    Split Z_m into s intervals of lengths ⌊m/s⌋ and ⌈m/s⌉, colored in a repeating
-    01/12/20 pattern (repeated s/3 times). Works when ⌈m/s⌉ < g < 2⌊m/s⌋,
-    where s is any positive multiple of 3. -/
+    Let s be the smallest multiple of 3 such that g > ⌈m/s⌉. Split Z_m into s
+    intervals of lengths ⌊m/s⌋ and ⌈m/s⌉, colored in a repeating 01/12/20
+    pattern (repeated s/3 times). Since ⌈m/s⌉ < g < 2⌊m/s⌋, any translate of
+    {0,1,g,g+1} where the pairs {0,1} and {g,g+1} lie in different intervals gets
+    all three colors. If one pair straddles two consecutive intervals, it gets only the
+    single color common to these two intervals, but the other pair lies fully inside
+    a third interval which is colored with the remaining two colors. -/
 lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
-    (hg : 5 ≤ g) (h_ub : g < 2 * (m / s)) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
+    (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s)) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   sorry
 
 /-- Multiplication by a unit in ZMod m is an additive automorphism,
@@ -559,24 +564,44 @@ lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3
     · exact case_one_div_3g3 m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)
   · exact case_one_div_g_not_three m g h_div hg3
 
-/-- Combined dispatch: applies subcases (1a)–(1d) for 2 ≤ g ≤ m/2 and m ≥ 289. -/
+/-- Combined dispatch: applies subcases (1a)–(1d) for 2 ≤ g ≤ m/2 and m ≥ 289.
+    Let s be the smallest multiple of 3 such that g > ⌈m/s⌉.
+    - (1a): g ∈ {2,3,4}, handled by Table 1 entries
+    - (1b): 5 ≤ g < 2⌊m/s⌋, handled by the interval coloring
+    - (1c): 2⌊m/s⌋ ≤ g ≤ ⌈m/(s-3)⌉ with 3 ∤ m (paper shows s = 6 here),
+            handled by multiplying by 3 and reducing to Table 1
+    - (1d): 2⌊m/s⌋ ≤ g ≤ ⌈m/(s-3)⌉ with 3 ∣ m (paper shows s = 6 here),
+            handled by explicit periodic colorings -/
 lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
     (hg_le : g ≤ m / 2) :
     HasPolychromColouring (Fin 3)
       ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
         Finset (ZMod m)) := by
+  -- (1a): small g
   by_cases hg4 : g ≤ 4
   · exact case_one_small_g m g hm (by simp; grind)
   · push_neg at hg4
-    by_cases hg_int : g < 2 * (m / 6)
-    · exact case_one_interval m 6 g (by grind) ⟨3, rfl⟩ (by grind) hg_int
-    · push_neg at hg_int
-      by_cases hg_res : g ≤ (m + 2) / 3
-      · by_cases h3 : m % 3 = 0
+    -- For g ≥ 5, let s be the smallest multiple of 3 such that g > ⌈m/s⌉.
+    -- The paper shows: for m ≥ 289, either g < 2⌊m/s⌋ (subcase 1b) or
+    -- s = 6 and 2⌊m/6⌋ ≤ g ≤ ⌈m/3⌉ (subcases 1c/1d).
+    -- We split on whether g falls in the (1c)/(1d) range.
+    by_cases hg_lb6 : 2 * (m / 6) ≤ g
+    · by_cases hg_ub3 : g ≤ (m + 2) / 3
+      · -- s = 6: subcases (1c) and (1d)
+        by_cases h3 : m % 3 = 0
         · exact case_one_divisible m g hm (by grind)
-        · exact case_one_residues m g hm h3 ⟨hg_int, hg_res⟩
-      · push_neg at hg_res
-        exact case_one_interval m 3 g (by grind) ⟨1, rfl⟩ (by grind) (by grind : g < 2 * (m / 3))
+        · exact case_one_residues m g hm h3 ⟨hg_lb6, hg_ub3⟩
+      · -- g > ⌈m/3⌉: (1b) with s = 3
+        push_neg at hg_ub3
+        exact case_one_interval m 3 g (by grind) ⟨1, rfl⟩
+          (by grind) (by grind : g < 2 * (m / 3))
+    · -- g < 2⌊m/6⌋: (1b), find appropriate s
+      push_neg at hg_lb6
+      -- s is the smallest multiple of 3 with g > ⌈m/s⌉.
+      -- The condition g < 2⌊m/s⌋ follows from g ≤ ⌈m/(s-3)⌉.
+      set s := 3 * ((m - 1) / (3 * g) + 1)
+      exact case_one_interval m s g (by grind) ⟨(m - 1) / (3 * g) + 1, rfl⟩
+        (by sorry) (by sorry)
 
 /-- WLOG g ≤ m/2: in ZMod m, {0,1,m-g,m-g+1} = (-g) +ᵥ {0,1,g,g+1},
     so HasPolychromColouring is preserved. -/
