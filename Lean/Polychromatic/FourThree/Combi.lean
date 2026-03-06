@@ -850,7 +850,7 @@ private lemma basePattern_consec_boundary {e₁ j : ℕ}
   obtain ⟨ku, hku⟩ := case2d_u_odd he
   obtain ⟨kv, hkv⟩ := case2d_v_odd he
   obtain ⟨kw, hkw⟩ := case2d_w_odd he (by omega)
-  have huv := case2d_uv_le he hge
+  have huv := case2d_uv_le hge
   simp only [whichInterval] at hdiff ⊢
   by_cases hj1_wrap : j + 1 < e₁
   · rw [Nat.mod_eq_of_lt hj1_wrap] at hdiff ⊢
