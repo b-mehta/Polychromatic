@@ -159,12 +159,12 @@ lemma suffices_nat (C : ℕ) (h : allC C) :
     ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → c < C → Finset.gcd {a, b, c} id = 1 →
       HasPolychromColouring (Fin 3) {0, a, b, c} := by
   intro a b c ha hab hbc hcc hgcd
-  lift a to ℕ using by omega
-  lift b to ℕ using by omega
-  lift c to ℕ using by omega
+  lift a to ℕ using by grind
+  lift b to ℕ using by grind
+  lift c to ℕ using by grind
   simp only [gcd_insert, id_eq, gcd_singleton, Int.normalize_coe_nat, ← Int.coe_gcd,
     Int.gcd_natCast_natCast, Nat.cast_eq_one] at hgcd
-  exact h c (by omega) b (by omega) (by omega) a (by omega) (by omega) (by omega) (by omega) hgcd
+  exact h c (by grind) b (by grind) (by grind) a (by grind) (by grind) (by grind) (by grind) hgcd
 
 end
 
@@ -221,7 +221,7 @@ lemma allA_succ_of_gcd (A b c g ga gb gc : ℕ) (hga : A.beq (ga.mul g)) (hgb : 
   rw [Nat.gcd_mul_right, Nat.gcd_mul_right]
   intro h
   have := Nat.eq_one_of_mul_eq_one_left h
-  omega
+  grind
 
 lemma allA_succ_of_accept (A b c : ℕ)
     (h : Accept A b c) (hA : allA A b c) :
@@ -372,7 +372,7 @@ lemma mainProof {q a b c v v' x y z : ℕ}
   replace hv : v = toDoubleBitVector q a b c := by
     rw [hv, hv']
     simp [toDoubleBitVector]
-  have : NeZero q := ⟨by omega⟩
+  have : NeZero q := ⟨by grind⟩
   intro aq bq cq haq hbq hcq
   rw [Accept]
   let χ (i : ZMod q) : Fin 3 := if x.testBit i.val then 0 else if y.testBit i.val then 1 else 2
@@ -409,19 +409,19 @@ lemma mainProof {q a b c v v' x y z : ℕ}
   simp only [Nat.succ_le_iff, or_lt_two_pow_iff] at hxyz
   refine ⟨?_, ?_, ?_⟩
   · obtain ⟨j, hjq, hj, hjx⟩ :=
-      testBit_shiftRight_toDoubleBitVector (by omega) (by grind) hvalid.1
+      testBit_shiftRight_toDoubleBitVector (by grind) (by grind) hvalid.1
     refine ⟨j - (i : ℕ), hj, ?_⟩
     simp only [add_sub_cancel, Fin.isValue]
     apply hχx j
     simpa [Nat.mod_eq_of_lt hjq]
   · obtain ⟨j, hjq, hj, hjy⟩ :=
-      testBit_shiftRight_toDoubleBitVector (by omega) (by grind) hvalid.2.1
+      testBit_shiftRight_toDoubleBitVector (by grind) (by grind) hvalid.2.1
     refine ⟨j - (i : ℕ), hj, ?_⟩
     simp only [add_sub_cancel, Fin.isValue]
     apply hχy j
     simpa [Nat.mod_eq_of_lt hjq]
   · obtain ⟨j, hjq, hj, hjz⟩ :=
-      testBit_shiftRight_toDoubleBitVector (by omega) (by grind) hvalid.2.2
+      testBit_shiftRight_toDoubleBitVector (by grind) (by grind) hvalid.2.2
     refine ⟨j - (i : ℕ), hj, ?_⟩
     simp only [add_sub_cancel, Fin.isValue]
     apply hχz j

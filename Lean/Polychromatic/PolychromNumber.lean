@@ -90,7 +90,7 @@ lemma hasPolychromColouring_of_card_le [Fintype K] [hK : Nonempty K]
 lemma hasPolychromColouring_fin_of_le {n : ℕ}
     (hn : n ≠ 0) (hS : n ≤ polychromNumber S) :
     HasPolychromColouring (Fin n) S :=
-  hasPolychromColouring_of_card_le (hK := Fin.pos_iff_nonempty.1 (by omega)) <| by simpa
+  hasPolychromColouring_of_card_le (hK := Fin.pos_iff_nonempty.1 (by grind)) <| by simpa
 
 /-- The polychromatic number is at most `|S|`. -/
 -- ANCHOR: polychromNumber_le_card

@@ -56,7 +56,7 @@ lemma standardCondition_lovasz [DecidableEq G] {k : ℕ} {S X : Finset G} (hk : 
       (Measure.pi (fun _ ↦ uniformOn Set.univ))
       (fun x : X ↦ {χ : X + S → Fin k | ∃ c, ∀ s : S, χ ⟨x + s, add_mem_add x.2 s.2⟩ ≠ c})
       (fun x : X ↦ X.attach.filter (fun i ↦ x.1 - i.1 ∈ (S - S).erase 0)) := by
-  have : Nonempty (Fin k) := Fin.pos_iff_nonempty.1 (by omega)
+  have : Nonempty (Fin k) := Fin.pos_iff_nonempty.1 (by grind)
   set add : X → S → X + S := fun x s ↦ ⟨x + s, add_mem_add x.2 s.2⟩
   set D : X → Finset (X + S) := fun x ↦ S.attach.image (fun s ↦ add x s)
   refine standardCondition_of _ D ?_ (by fun_prop)
@@ -80,7 +80,7 @@ lemma prob_bad_event [DecidableEq G] {k m : ℕ} {S X : Finset G} {x : X} (hm : 
     (Measure.pi (fun _ ↦ uniformOn Set.univ) : Measure (X + S → Fin k)).real
       {χ : X + S → Fin k | ∃ c, ∀ s : S, χ ⟨x + s, add_mem_add x.2 s.2⟩ ≠ c} ≤
         k * (1 - (k : ℝ)⁻¹) ^ m := by
-  have : Nonempty (Fin k) := Fin.pos_iff_nonempty.1 (by omega)
+  have : Nonempty (Fin k) := Fin.pos_iff_nonempty.1 (by grind)
   set add : X → S → X + S := fun x s ↦ ⟨x + s, add_mem_add x.2 s.2⟩
   set P : Measure (X + S → Fin k) := Measure.pi (fun _ ↦ uniformOn Set.univ)
   have : {χ : X + S → Fin k | ∃ c, ∀ s : S, χ ⟨x + s, add_mem_add x.2 s.2⟩ ≠ c} =
@@ -278,7 +278,7 @@ lemma condition_of_mul_sq {k m : ℕ} (hm : 3 * k ^ 2 ≤ m) :
   swap
   · linear_combination (3 * k + 7) * hk
   apply condition_of_mul_exp_le (by lia) (ne_of_gt <| by linear_combination ((3 * k + 9) * hk))
-  have hk₀ : k ≠ 0 := by omega
+  have hk₀ : k ≠ 0 := by grind
   let g (k : ℕ) : ℝ := k ^ 5 * Real.exp (-(3 * k) + 1)
   suffices 9 * g k ≤ 1 by
     simp only [Nat.cast_mul, Nat.cast_ofNat, Nat.cast_pow, ge_iff_le]
@@ -423,7 +423,7 @@ lemma mBound_isLittleO :
 
 lemma polychromColouringBound_mBound {k : ℕ} (hk : 4 ≤ k) :
     polychromColouringBound k (mBound k) := by
-  have hk' : k ≠ 0 := by omega
+  have hk' : k ≠ 0 := by grind
   have hk'' : 0 < log k := log_pos (by simp; lia)
   apply condition_of_mul_exp_le hk' (mBound_ne_zero hk')
   calc
@@ -451,7 +451,7 @@ lemma hasPolychromColouring_mBound {S : Finset G} {k : ℕ} (hk : 4 ≤ k) (hS :
   have h2S : 2 ≤ #S := by
     grw [← hS, ← linear_le_mBound, ← hk]
     norm_num
-  apply exists_of_le rfl (mod_cast h2S) (by omega)
+  apply exists_of_le rfl (mod_cast h2S) (by grind)
   apply polychromColouringBound_mono (by lia) _ hS (polychromColouringBound_mBound hk)
   · linear_combination linear_le_mBound (k := k)
 
