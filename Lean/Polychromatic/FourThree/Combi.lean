@@ -756,14 +756,15 @@ private def case2d_v (e₁ : ℕ) : ℕ :=
   if e₁ % 3 = 1 then e₁ / 3 + 1 else e₁ / 3
 
 private lemma case2d_u_odd {e₁ : ℕ} (he : Odd e₁) : Odd (case2d_u e₁) := by
-  sorry
+  simp only [case2d_u]; obtain ⟨k, hk⟩ := he; rw [hk, Nat.odd_iff]; omega
 
 private lemma case2d_v_odd {e₁ : ℕ} (he : Odd e₁) : Odd (case2d_v e₁) := by
-  sorry
+  simp only [case2d_v]; obtain ⟨k, hk⟩ := he; rw [hk]; split_ifs <;> rw [Nat.odd_iff] <;> omega
 
-private lemma case2d_w_odd {e₁ : ℕ} (he : Odd e₁) :
+private lemma case2d_w_odd {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 3) :
     Odd (e₁ - case2d_u e₁ - case2d_v e₁) := by
-  sorry
+  simp only [case2d_u, case2d_v]; obtain ⟨k, hk⟩ := he; rw [hk]
+  split_ifs <;> rw [Nat.odd_iff] <;> omega
 
 private lemma case2d_uv_le {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19) :
     case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
@@ -849,7 +850,7 @@ private lemma basePattern_consec_boundary {e₁ j : ℕ}
       intervalColors (whichInterval e₁ j) := by
   obtain ⟨ku, hku⟩ := case2d_u_odd he
   obtain ⟨kv, hkv⟩ := case2d_v_odd he
-  obtain ⟨kw, hkw⟩ := case2d_w_odd he
+  obtain ⟨kw, hkw⟩ := case2d_w_odd he (by omega)
   have huv := case2d_uv_le he hge
   simp only [whichInterval] at hdiff ⊢
   by_cases hj1_wrap : j + 1 < e₁
