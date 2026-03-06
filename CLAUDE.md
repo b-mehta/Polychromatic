@@ -68,7 +68,6 @@ When updating SubVerso, keep these constraints in mind:
 2. **The SubVerso version must compile with both the Lean and Verso toolchains.** The Verso docs build invokes `subverso-extract-mod` against `../Lean` using the Lean project's toolchain.
 3. **`lake update subverso` often changes `lean-toolchain` — always revert this.** The toolchains for both projects are intentionally pinned and should not change as a side effect.
 4. **Check API compatibility with Verso.** Newer SubVerso versions may change types (e.g., `Token.Kind.const` gained an extra parameter in commit `61d4c9d`). The pinned Verso version must match the SubVerso API.
-5. **`String.Pos` type change in Lean 4.28.0.** `String.Pos` became `String → Type` instead of plain `Type`. SubVerso's `Compat.lean` handles this, but only in versions from `4539e60` onward.
 
 ## Lean Style Conventions
 
