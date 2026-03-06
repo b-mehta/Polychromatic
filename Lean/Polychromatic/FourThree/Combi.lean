@@ -459,29 +459,28 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   by_cases hr_lt_gm1 : r + 1 < g
   · have hcv : c v = (r % 3 + q) % 3 := hv_eq ▸ color_at q r hr_lt
     have hcvg : c (v + g) = (r % 3 + (q + 1)) % 3 := by
-      have : v + g = g * (q + 1) + r := by rw [mul_add, mul_one]; grind
+      have : v + g = g * (q + 1) + r := by grind
       rw [this, color_at (q + 1) r hr_lt]
     have hcvg1 : c (v + g + 1) = ((r + 1) % 3 + (q + 1)) % 3 := by
-      have : v + g + 1 = g * (q + 1) + (r + 1) := by rw [mul_add, mul_one]; grind
+      have : v + g + 1 = g * (q + 1) + (r + 1) := by grind
       rw [this, color_at (q + 1) (r + 1) (by grind)]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g (g + 1)
       (by simp) (by simp) (by simp)
-      hcv (by rw [hcvg]; grind)
-        (by have : v + (g + 1) = v + g + 1 := by ring
-            rw [this, hcvg1]; grind)
+      hcv (by grind)
+        (by grind)
   · push_neg at hr_lt_gm1
     have hr_eq : r = g - 1 := by grind
     have hcv : c v = (2 + q) % 3 := by
-      rw [hv_eq, color_at q r hr_lt, hr_eq, ht]; grind
+      grind
     have hcv1 : c (v + 1) = (q + 1) % 3 := by
-      have : v + 1 = g * (q + 1) + 0 := by rw [mul_add, mul_one]; grind
+      have : v + 1 = g * (q + 1) + 0 := by grind
       rw [this, color_at (q + 1) 0 hg]; simp
     have hcvg : c (v + g) = (2 + (q + 1)) % 3 := by
-      have : v + g = g * (q + 1) + (g - 1) := by rw [mul_add, mul_one]; grind
-      rw [this, color_at (q + 1) (g - 1) (by grind), ht]; grind
+      have : v + g = g * (q + 1) + (g - 1) := by grind
+      grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
-      hcv (by rw [hcvg]; grind) (by rw [hcv1]; grind)
+      hcv (by grind) (by grind)
 
 lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0 < g) :
     HasPolychromColouring (Fin 3)
@@ -514,22 +513,22 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
         Nat.mul_add_div hh_pos, Nat.div_eq_of_lt hr', add_zero]
   by_cases hrg : r = g
   · have hcv : c v = (3 - q % 3) % 3 := by
-      rw [hv_eq, color_at q r hr_lt, hrg, ht, Nat.mul_mod_right]; grind
+      grind
     have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
-      have h1 : v + g = h * (q + 1) + (g - 1) := by rw [mul_add, mul_one]; grind
+      have h1 : v + g = h * (q + 1) + (g - 1) := by grind
       have h2 : 3 * t - 1 = 3 * (t - 1) + 2 := by grind
       rw [h1, color_at (q + 1) (g - 1) (by grind), ht, h2]; simp
     have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
-      have : v + 1 = h * (q + 1) + 0 := by rw [mul_add, mul_one]; grind
+      have : v + 1 = h * (q + 1) + 0 := by grind
       rw [this, color_at (q + 1) 0 (by grind)]; grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
-      hcv (by rw [hcvg]; grind) (by rw [hcv1]; grind)
+      hcv (by grind) (by grind)
   · have hcv1 : c (v + 1) = ((r + 1) % 3 + (3 - q % 3)) % 3 := by
       have : v + 1 = h * q + (r + 1) := by grind
       rw [this, color_at q (r + 1) (by grind)]
     have hcvg1 : c (v + g + 1) = (r % 3 + (3 - (q + 1) % 3)) % 3 := by
-      have : v + g + 1 = h * (q + 1) + r := by rw [mul_add, mul_one]; grind
+      have : v + g + 1 = h * (q + 1) + r := by grind
       rw [this, color_at (q + 1) r hr_lt]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 1 (g + 1)
       (by simp) (by simp) (by simp) rfl
@@ -561,7 +560,7 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
         Finset (ZMod m)) := by
   -- (1a): small g
   by_cases hg4 : g ≤ 4
-  · exact case_one_small_g m g hm (by simp; grind)
+  · exact case_one_small_g m g hm (by grind)
   · push_neg at hg4
     -- For g ≥ 5, let s be the smallest multiple of 3 such that g > ⌈m/s⌉.
     -- The paper shows: for m ≥ 289, either g < 2⌊m/s⌋ (subcase 1b) or
@@ -594,13 +593,11 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
           exact absurd ((Nat.div_lt_iff_lt_mul h3g1).mp hlt) (by grind)
         have hq_ub : m - 1 < 3 * (g - 1) * (q + 1) := Nat.lt_mul_div_succ _ h3g1
         have hm_lb : m ≥ q * (3 * (g - 1)) + 1 := by
-          have : 0 < q := by grind
-          have := Nat.mul_pos this h3g1; grind
+          grind
         exact case_one_interval m (3 * (q + 1)) g (by grind) ⟨q + 1, rfl⟩
           (by -- ⌈m/s⌉ < g
             rw [Nat.div_lt_iff_lt_mul (by grind : 0 < 3 * (q + 1))]
-            have : g * (3 * (q + 1)) = (g - 1 + 1) * (3 * (q + 1)) := by congr 1; grind
-            have : (g - 1) * (3 * (q + 1)) = 3 * (g - 1) * (q + 1) := by ring
+            have : g * (3 * (q + 1)) = (g - 1 + 1) * (3 * (q + 1)) := by grind
             grind)
           (by -- g < 2⌊m/s⌋
             suffices h : (g + 2) / 2 ≤ m / (3 * (q + 1)) by grind

@@ -112,6 +112,16 @@ When simplifying or shortening Lean proofs:
 - **Avoid redundant hypotheses** — if a lemma's hypothesis can be closed by `inferInstance` or `by omega`, remove the explicit `have` that provides it.
 - **Combine `constructor` with `⟨..., ...⟩`** — use anonymous constructor syntax to close `And`/`Exists` goals concisely.
 - **`norm_num` extensions** — `norm_num [...]` can close goals involving specific numeric computations, including modular arithmetic.
+- **Try removing tactics before `grind`** — `grind` is powerful and often subsumes preceding tactics. When a proof ends with `tactic; grind`, try deleting the preceding tactic. Known results:
+  - **`rw [mul_add, mul_one]; grind`** → `grind` — works when proving ℕ arithmetic equalities (e.g. `v + g = g * (q + 1) + r`). `grind` handles `mul_add`/`mul_one` rewrites.
+  - **`rw [hv_eq, color_at ...]; grind`** → `grind` — works when the `rw` unfolds definitions that `grind` can see through.
+  - **`rw [hcvg]; grind`** → `grind` — works when `hcvg` is a local hypothesis rewrite.
+  - **`congr 1; grind`** → `grind` — works for simple congruence goals.
+  - **`have := Nat.mul_pos ...; grind`** → `grind` — works when the positivity fact is inferrable.
+  - **`simp; grind`** → `grind` — works for simple normalization (e.g. `Fin.val` goals).
+  - **`simp [...] <;> grind`** — does NOT simplify: `grind` alone fails on modular arithmetic goals where `simp` with `Nat.add_mod`/`Nat.mod_self` is needed first.
+  - **`rw [Nat.mul_add_mod, ...]; grind`** — does NOT simplify: `grind` fails on `Nat.mul_add_mod` style rewrites involving `%` and `/`.
+  - **`rw [this, color_at (q + 1) 0 ...]; grind`** — does NOT simplify when `color_at` is a local `have` (not a simp lemma).
 
 ## Commit Conventions
 
