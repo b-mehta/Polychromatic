@@ -766,14 +766,14 @@ private lemma case2d_w_odd {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 3) :
   simp only [case2d_u, case2d_v]; obtain ⟨k, hk⟩ := he; rw [hk]
   split_ifs <;> rw [Nat.odd_iff] <;> omega
 
-private lemma case2d_uv_le {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19) :
+private lemma case2d_uv_le {e₁ : ℕ} (hge : e₁ ≥ 19) :
     case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
   simp only [case2d_u, case2d_v]; split_ifs <;> omega
 
 private lemma case2d_v_le_u {e₁ : ℕ} : case2d_v e₁ ≤ case2d_u e₁ := by
   simp only [case2d_u, case2d_v]; split_ifs <;> omega
 
-private lemma case2d_w_le_u {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19) :
+private lemma case2d_w_le_u {e₁ : ℕ} (hge : e₁ ≥ 19) :
     e₁ - (case2d_u e₁ + case2d_v e₁) ≤ case2d_u e₁ := by
   simp only [case2d_u, case2d_v]; split_ifs <;> omega
 
@@ -825,21 +825,20 @@ private lemma intervalColors_union_covers {i₁ i₂ : Fin 3} (h : i₁ ≠ i₂
 private lemma basePattern_mem_interval {e₁ j : ℕ} :
     basePattern e₁ j ∈ intervalColors (whichInterval e₁ j) := by
   simp only [basePattern, whichInterval, intervalColors]
-  split_ifs with h1 h2 h3 h4 h5 h6 <;>
-    simp_all [Finset.mem_insert, Finset.mem_singleton] <;> omega
+  split_ifs with h1 h2 h3 h4 h5 <;>
+    simp_all [Finset.mem_insert, Finset.mem_singleton]
 
 /-- Consecutive positions (j, j+1) within the same interval produce
     both colors of that interval. -/
 private lemma basePattern_consec_same_interval {e₁ j : ℕ}
-    (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁) (hj1 : j + 1 < e₁)
     (hsame : whichInterval e₁ j = whichInterval e₁ (j + 1)) :
     {basePattern e₁ j, basePattern e₁ (j + 1)} = intervalColors (whichInterval e₁ j) := by
   simp only [whichInterval, basePattern, intervalColors] at *
   set u := case2d_u e₁
   -- Both j and j+1 are in the same interval; their parities differ
-  split_ifs at hsame ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 <;>
-    simp_all <;> ext x <;> fin_cases x <;>
-    simp_all [Finset.mem_insert, Finset.mem_singleton] <;> omega
+  split_ifs at hsame ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11
+  all_goals (ext x; fin_cases x <;>
+    simp_all only [Fin.isValue, mem_insert, mem_singleton] <;> omega)
 
 /-- At an interval boundary (j at end, j+1 at start of next), the pair of
     consecutive basePattern values equals the pair of the left interval. -/
@@ -856,18 +855,18 @@ private lemma basePattern_consec_boundary {e₁ j : ℕ}
   by_cases hj1_wrap : j + 1 < e₁
   · rw [Nat.mod_eq_of_lt hj1_wrap] at hdiff ⊢
     simp only [basePattern, intervalColors]
-    split_ifs at hdiff ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9 <;> (try omega) <;>
-      ext x <;> fin_cases x <;>
-      simp_all [Finset.mem_insert, Finset.mem_singleton] <;> omega
+    split_ifs at hdiff ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9
+    all_goals (first | omega | (ext x; fin_cases x <;>
+      (simp_all only [Fin.isValue, mem_insert, mem_singleton]; try omega)))
   · -- Wrap: j = e₁ - 1
     push_neg at hj1_wrap
     have hj_eq : j = e₁ - 1 := by omega
     subst hj_eq
     rw [show e₁ - 1 + 1 = e₁ from by omega, Nat.mod_self] at hdiff ⊢
     simp only [basePattern, intervalColors]
-    split_ifs at hdiff ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9 <;> (try omega) <;>
-      ext x <;> fin_cases x <;>
-      simp_all [Finset.mem_insert, Finset.mem_singleton] <;> omega
+    split_ifs at hdiff ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9
+    all_goals (first | omega | (ext x; fin_cases x <;>
+      simp_all only [Fin.isValue, mem_insert, mem_singleton] <;> omega))
 
 /-- Combined: for any j, {basePattern(j), basePattern(j+1 mod e₁)} is the
     interval pair of whichInterval(j). -/
@@ -880,13 +879,13 @@ private lemma basePattern_consec_pair {e₁ j : ℕ}
 /-- A rotation by r ∈ [u, e₁-u] moves to a different interval:
     whichInterval(j) ≠ whichInterval((j + r) % e₁). -/
 private lemma rotation_changes_interval {e₁ j : ℕ}
-    (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁)
+    (hge : e₁ ≥ 19) (hj : j < e₁)
     {r : ℕ} (hr_lo : case2d_u e₁ ≤ r) (hr_hi : r ≤ e₁ - case2d_u e₁) :
     whichInterval e₁ j ≠ whichInterval e₁ ((j + r) % e₁) := by
   have he₁_pos : 0 < e₁ := by omega
-  have huv_bound := case2d_uv_le he hge
+  have huv_bound := case2d_uv_le hge
   have hv_le_u := case2d_v_le_u (e₁ := e₁)
-  have hw_le_u := case2d_w_le_u he hge
+  have hw_le_u := case2d_w_le_u hge
   simp only [whichInterval]
   have hj'_lt : (j + r) % e₁ < e₁ := Nat.mod_lt _ he₁_pos
   intro heq
@@ -914,7 +913,7 @@ private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : 
         basePattern e₁ ((j + r + 1) % e₁)} : Finset (Fin 3)) := by
   intro k
   have he₁_pos : 0 < e₁ := by omega
-  have hI := rotation_changes_interval he hge hj hr_lo hr_hi
+  have hI := rotation_changes_interval hge hj hr_lo hr_hi
   have h1 := basePattern_consec_pair he hge hj
   have hjr : (j + r) % e₁ < e₁ := Nat.mod_lt _ he₁_pos
   have h2 := basePattern_consec_pair he hge hjr
@@ -938,7 +937,7 @@ private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : 
     Simplified: we just need some R with u ≤ R%e₁ ≤ e₁-u. Since u < e₁-u
     (because u ≤ (e₁+2)/3 < e₁/2 for e₁ ≥ 19), taking R = u works. -/
 private lemma exists_valid_wrap_rotation {e₁ : ℕ}
-    (he : Odd e₁) (hge : e₁ ≥ 19) :
+    (hge : e₁ ≥ 19) :
     ∃ R : ℕ, R < e₁ ∧ case2d_u e₁ ≤ R ∧ R ≤ e₁ - case2d_u e₁ := by
   refine ⟨case2d_u e₁, ?_, le_refl _, ?_⟩
   · simp only [case2d_u]; omega
