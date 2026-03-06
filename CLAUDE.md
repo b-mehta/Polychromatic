@@ -22,7 +22,7 @@ lake clean                # Clean build artifacts
 
 ### Other Components
 
-- **Verso docs**: `cd Verso && lake exe docs` (uses a different Lean toolchain — this is intentional). **You must run `cd Lean && lake exe cache get` before building Verso docs**, because the docs build shells out to `../Lean` to run `subverso-extract-mod` using the Lean project's toolchain. Lean code is pulled into the site via `` ```anchor name (module := Module.Name) `` blocks, which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
+- **Verso docs**: First run `cd Lean && lake exe cache get`, then `cd Verso && lake exe docs`. The Verso project uses a different Lean toolchain — this is intentional. The docs build shells out to `../Lean` to run `subverso-extract-mod` using the Lean project's toolchain, so the Lean cache must be present. Lean code is pulled into the site via `` ```anchor name (module := Module.Name) `` blocks, which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
 - **Jekyll site**: `cd site && bundle exec jekyll serve` (Ruby 3.1+)
 - **Generation**: C++ code in `Generation/` produces colouring log files consumed by `FourThree/Compute.lean`
 
@@ -66,7 +66,7 @@ Both `Lean/` and `Verso/` depend on [SubVerso](https://github.com/leanprover/sub
 When updating SubVerso, keep these constraints in mind:
 
 1. **Same commit hash in both projects.** The `no-modules` branch mirrors `main` with auto-generated demodulized versions. Both branches share commit hashes for most of the history.
-2. **The Verso docs build invokes `subverso-extract-mod` against `../Lean` using the Lean project's toolchain.** So the SubVerso version must compile with both the Lean toolchain (for extraction) and the Verso toolchain (for the docs site).
+2. **The SubVerso version must compile with both the Lean and Verso toolchains.** The Verso docs build invokes `subverso-extract-mod` against `../Lean` using the Lean project's toolchain.
 3. **`lake update subverso` often changes `lean-toolchain` — always revert this.** The toolchains for both projects are intentionally pinned and should not change as a side effect.
 4. **Check API compatibility with Verso.** Newer SubVerso versions may change types (e.g., `Token.Kind.const` gained an extra parameter in commit `61d4c9d`). The pinned Verso version must match the SubVerso API.
 5. **`String.Pos` type change in Lean 4.28.0.** `String.Pos` became `String → Type` instead of plain `Type`. SubVerso's `Compat.lean` handles this, but only in versions from `4539e60` onward.
