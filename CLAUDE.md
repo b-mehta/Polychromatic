@@ -15,14 +15,13 @@ cd Lean
 lake exe cache get        # REQUIRED before first build — downloads mathlib cache
 lake build                # Build all proofs
 lake build Polychromatic.Main  # Build a single module
-lake clean                # Clean build artifacts
 ```
 
 **Always run `lake exe cache get` before building.** Without it, mathlib builds from source (~60+ min).
 
 ### Other Components
 
-- **Verso docs**: First run `cd Lean && lake exe cache get`, then `cd Verso && lake exe docs`. The Verso project uses a different Lean toolchain — this is intentional. The docs build shells out to `../Lean` to run `subverso-extract-mod` using the Lean project's toolchain, so the Lean cache must be present. Lean code is pulled into the site via `` ```anchor name (module := Module.Name) `` blocks, which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
+- **Verso docs**: `cd Verso && lake exe docs` (requires the Lean build above to have completed first). The Verso project uses a different Lean toolchain — this is intentional. The docs build shells out to `../Lean` to run `subverso-extract-mod` using the Lean project's toolchain. Lean code is pulled into the site via `` ```anchor name (module := Module.Name) `` blocks, which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
 - **Jekyll site**: `cd site && bundle exec jekyll serve` (Ruby 3.1+)
 - **Generation**: C++ code in `Generation/` produces colouring log files consumed by `FourThree/Compute.lean`
 
@@ -80,6 +79,49 @@ Configured in `lakefile.toml`:
 - **No rigid after flexible** — don't use `exact` after `simp`
 
 Preserve `-- ANCHOR:` / `-- ANCHOR_END:` comments — they mark sections extracted for website documentation.
+
+### Antipatterns
+
+- **Avoid `show`** — use `have` to prove intermediate facts and `change` to adjust the goal type. `show` is less readable and mixes poorly with other tactics:
+  ```lean
+  -- Bad: show as inline proof term
+  rcases show d = 0 ∨ d = 1 ∨ d = 2 from by grind with h | h | h
+  -- Good: extract to have
+  have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
+  rcases this with h | h | h
+
+  -- Bad: show to change goal type
+  show ((h * q' + r') % h % 3 + ...) % 3 = _
+  -- Good: use change instead
+  change ((h * q' + r') % h % 3 + ...) % 3 = _
+  ```
+
+## Proof Golfing Tips
+
+When simplifying or shortening Lean proofs:
+
+- **`simp` with lemma lists** — a single `simp [h₁, h₂, h₃]` often replaces multiple `rw` steps. Use `simp only [...]` when `simp` is too aggressive or slow.
+- **`gcongr`** handles monotonicity/congruence goals (e.g. `a ≤ b → f a ≤ f b`) — avoids manual `apply` chains.
+- **`positivity`** closes positivity/nonnegativity goals automatically.
+- **`field_simp`** clears denominators — combine with `ring` or `linarith` to finish.
+- **`exact?` / `apply?` / `rw?`** — use these search tactics locally to find the right lemma, then inline the result.
+- **Merge `have`/`suffices` chains** — if a `have` is used exactly once right after, consider inlining it or using `suffices`.
+- **`calc` blocks** — replace long `have` chains with `calc` when proving a sequence of inequalities or equalities.
+- **`obtain ⟨a, b, h⟩ := ...`** — destructure in one step instead of separate `have` + `cases`.
+- **`refine ... ?_`** — partially apply a lemma and let Lean generate remaining goals, avoiding verbose `apply` + `intro` sequences.
+- **Avoid redundant hypotheses** — if a lemma's hypothesis can be closed by `inferInstance` or `by omega`, remove the explicit `have` that provides it.
+- **Combine `constructor` with `⟨..., ...⟩`** — use anonymous constructor syntax to close `And`/`Exists` goals concisely.
+- **`norm_num` extensions** — `norm_num [...]` can close goals involving specific numeric computations, including modular arithmetic.
+- **Try removing tactics before `grind`** — `grind` is powerful and often subsumes preceding tactics. When a proof ends with `tactic; grind`, try deleting the preceding tactic. Known results:
+  - **`rw [mul_add, mul_one]; grind`** → `grind` — works when proving ℕ arithmetic equalities (e.g. `v + g = g * (q + 1) + r`). `grind` handles `mul_add`/`mul_one` rewrites.
+  - **`rw [hv_eq, color_at ...]; grind`** → `grind` — works when the `rw` unfolds definitions that `grind` can see through.
+  - **`rw [hcvg]; grind`** → `grind` — works when `hcvg` is a local hypothesis rewrite.
+  - **`congr 1; grind`** → `grind` — works for simple congruence goals.
+  - **`have := Nat.mul_pos ...; grind`** → `grind` — works when the positivity fact is inferrable.
+  - **`simp; grind`** → `grind` — works for simple normalization (e.g. `Fin.val` goals).
+  - **`simp [h, Nat.add_mod, ...] <;> grind`** → `grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]` — passing the simp lemmas directly to `grind` works for modular arithmetic.
+  - **`rw [Nat.mul_add_mod, ...]; grind`** → `grind [Nat.mul_add_mod, Nat.add_mul_div_left]` — passing lemmas about `%` and `/` to `grind` works.
+  - **`rw [this, color_at (q + 1) 0 ...]; grind`** — does NOT simplify, even with `grind [color_at (q + 1) 0]`, when `color_at` is a local `have`.
 
 ## Commit Conventions
 

@@ -25,9 +25,7 @@ lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
         _ = (m : ℤ) := by rw [hm]
         _ = 0 := by simp
     rw [this, sub_add_eq_add_sub, ← two_mul]
-    ext i
-    simp
-    tauto
+    ext i; simp; tauto
   rw [this, polychromNumber_vadd]
 
 /-- The set {0, b-a, b, 2b-a} is symmetric in the two repeated differences b and b-a:
@@ -125,14 +123,15 @@ lemma table1_0123 (hm : m ≥ 6) :
           rcases show j = 0 ∨ j = 1 ∨ j = 2 ∨ j = 3 ∨ j = 4 ∨ j = 5 from
             by grind with rfl | rfl | rfl | rfl | rfl | rfl <;> split_ifs <;> lia
         set j := v - (bd - 3)
-        have hj_le : j ≤ 2 := by omega
+        have hj_le : j ≤ 2 := by grind
         set a := (k.val + 3 - j % 3) % 3
-        have ha_lt : a < 3 := Nat.mod_lt _ (by omega)
-        refine ⟨a, by omega, ?_⟩
-        rw [no_wrap a (by omega)]
-        have hva : v + a = bd - 3 + (j + a) := by omega
-        rw [hva, hc_boundary (j + a) (by omega)]
-        have := k.isLt; omega
+        have ha_lt : a < 3 := Nat.mod_lt _ (by grind)
+        refine ⟨a, by grind, ?_⟩
+        rw [no_wrap a (by grind)]
+        have hva : v + a = bd - 3 + (j + a) := by grind
+        rw [hva, hc_boundary (j + a) (by grind)]
+        rcases show j = 0 ∨ j = 1 ∨ j = 2 from by grind with h | h | h <;>
+          fin_cases k <;> simp [a, h]
   · push_neg at hwrap
     have hmod_v : v % m = v := Nat.mod_eq_of_lt hv
     rcases show v = m - 3 ∨ v = m - 2 ∨ v = m - 1 from by grind
@@ -214,10 +213,18 @@ lemma case_one_small_g (g : ℕ) (hm : m ≥ 289) (hg : g ∈ ({2, 3, 4} : Finse
   · exact table1_0134 m (by grind)
   · exact table1_0145 m (by grind)
 
-/-- Subcase (1b): 5 ≤ g < 2⌊m/s⌋ (specifically s=6 here).
-    Handled by the interval coloring strategy (01...12...20...). -/
-lemma case_one_interval (g : ℕ) (h_ge : 5 ≤ g) (h_lt : g < 2 * (m / 6)) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
+/-- Subcase (1b): interval coloring strategy.
+    Let s be the smallest multiple of 3 such that g > ⌈m/s⌉. Split Z_m into s
+    intervals of lengths ⌊m/s⌋ and ⌈m/s⌉, colored in a repeating 01/12/20
+    pattern (repeated s/3 times). Since ⌈m/s⌉ < g < 2⌊m/s⌋, any translate of
+    {0,1,g,g+1} where the pairs {0,1} and {g,g+1} lie in different intervals gets
+    all three colors. If one pair straddles two consecutive intervals, it gets only the
+    single color common to these two intervals, but the other pair lies fully inside
+    a third interval which is colored with the remaining two colors. -/
+lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
+    (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s)) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   sorry
 
 /-- Multiplication by a unit in ZMod m is an additive automorphism,
@@ -351,8 +358,7 @@ lemma case_one_div_g_not_three (g : ℕ)
     HasPolychromColouring (Fin 3)
       ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
         Finset (ZMod m)) := by
-  have h3_dvd : 3 ∣ m :=
-    by rcases h_div with rfl | rfl <;> grind
+  have h3_dvd : 3 ∣ m := by rcases h_div with rfl | rfl <;> grind
   haveI : NeZero m := ⟨by grind⟩
   apply HasPolychromColouring.of_image (ZMod.castHom h3_dvd (ZMod 3))
   simp only [Finset.image_insert, Finset.image_singleton,
@@ -367,10 +373,38 @@ lemma case_one_div_g_not_three (g : ℕ)
     simp only [this, h]; decide
   }
 
+private lemma color_shift_r (r q : ℕ) :
+    ((r + 1) % 3 + (3 - q % 3)) % 3 =
+      ((r % 3 + (3 - q % 3)) % 3 + 1) % 3 := by
+  rcases show q % 3 = 0 ∨ q % 3 = 1 ∨ q % 3 = 2 from by grind with h | h | h <;>
+    grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]
+
+private lemma color_shift_q (r q : ℕ) :
+    (r % 3 + (3 - (q + 1) % 3)) % 3 =
+      ((r % 3 + (3 - q % 3)) % 3 + 2) % 3 := by
+  rcases show q % 3 = 0 ∨ q % 3 = 1 ∨ q % 3 = 2 from by grind with h | h | h <;>
+    grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]
+
 private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
     ((k + 3 - s) % 3 = 0 → s = k) ∧
     ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
     ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by grind
+
+private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ}
+    {v s : ℕ} {k : Fin 3} (hs : s < 3)
+    (a₀ a₁ a₂ : ℕ)
+    (ha₀ : a₀ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (ha₁ : a₁ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (ha₂ : a₂ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (hc₀ : c (v + a₀) = s)
+    (hc₁ : c (v + a₁) = (s + 1) % 3)
+    (hc₂ : c (v + a₂) = (s + 2) % 3) :
+    ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by
+  obtain ⟨h1, h2, h3⟩ := mod3_witness hs k.isLt
+  set d := (k.val + 3 - s) % 3
+  have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
+  rcases this with h | h | h
+  exacts [⟨a₀, ha₀, hc₀ ▸ h1 h⟩, ⟨a₁, ha₁, hc₁ ▸ h2 h⟩, ⟨a₂, ha₂, hc₂ ▸ h3 h⟩]
 
 /-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
 private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
@@ -388,8 +422,9 @@ private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
     by simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
        rcases ha with rfl | rfl | rfl | rfl <;> simp,
     by ext; change c (n + (a : ZMod m)).val = k.val
-       rw [show (n + (a : ZMod m)).val = (n.val + a) % m from by
-         rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt], hc_period, hca]⟩
+       have : (n + (a : ZMod m)).val = (n.val + a) % m := by
+         rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt]
+       rw [this, hc_period, hca]⟩
 
 lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     (hg3 : 3 ∣ g) (hg : 0 < g) :
@@ -403,100 +438,49 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   have hc_lt3 : ∀ p, c p < 3 := fun p => Nat.mod_lt _ (by grind)
   have hc_period : ∀ p, c (p % m) = c p := by
     intro p; simp only [c, hm_eq]
-    have h1 : p % (3 * g) % 3 = p % 3 := Nat.mod_mod_of_dvd p (dvd_mul_right 3 g)
-    have h2 : p / g = p % (3 * g) / g + 3 * (p / (3 * g)) := by
-      conv_lhs => rw [show p = p % (3 * g) + (3 * (p / (3 * g))) * g from by
-        rw [show (3 * (p / (3 * g))) * g = 3 * g * (p / (3 * g)) from by ring]
-        exact (Nat.mod_add_div p (3 * g)).symm]
-      exact Nat.add_mul_div_right _ _ hg
-    rw [h1, h2]; grind
+    rw [Nat.mod_mod_of_dvd p (dvd_mul_right 3 g)]
+    have h1 : (3 * (p / (3 * g))) * g = 3 * g * (p / (3 * g)) := by ring
+    have h2 : p = p % (3 * g) + (3 * (p / (3 * g))) * g := by
+      rw [h1]; exact (Nat.mod_add_div p (3 * g)).symm
+    have h3 : p / g = p % (3 * g) / g + 3 * (p / (3 * g)) := by
+      conv_lhs => rw [h2]; exact Nat.add_mul_div_right _ _ hg
+    conv_rhs => rw [h3]
+    grind
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
     lift_coloring_witness (by grind) hc_lt3 hc_period ?_⟩
-  set v := n.val
-  set r := v % g with hr_def
-  set q := v / g with hq_def
+  set v := n.val; set r := v % g; set q := v / g
   have hv_eq : v = g * q + r := (Nat.div_add_mod v g).symm
   have hr_lt : r < g := Nat.mod_lt _ hg
-  have gk_mod3 : ∀ k a, (g * k + a) % 3 = a % 3 := by
-    intro k a; rw [ht, show 3 * t * k + a = 3 * (t * k) + a from by ring, Nat.mul_add_mod]
-  have gk_mul_mod3 : ∀ k, (g * k) % 3 = 0 := fun k => by simpa using gk_mod3 k 0
+  have gk_mod3 : ∀ k a, (g * k + a) % 3 = a % 3 := fun k a => by
+    have : 3 * t * k + a = 3 * (t * k) + a := by ring
+    rw [ht, this, Nat.mul_add_mod]
+  have color_at : ∀ q' r', r' < g → c (g * q' + r') = (r' % 3 + q') % 3 := fun q' r' hr' => by
+    simp only [c, gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr', add_zero]
   by_cases hr_lt_gm1 : r + 1 < g
-  · have hv1_div : (v + 1) / g = q := by
-      rw [hv_eq, show g * q + r + 1 = g * q + (r + 1) from by grind,
-          Nat.mul_add_div hg, Nat.div_eq_of_lt (by grind), add_zero]
-    have hvg_div : (v + g) / g = q + 1 := by
-      rw [hv_eq, show g * q + r + g = g * (q + 1) + r from by ring,
-          Nat.mul_add_div hg, Nat.div_eq_of_lt hr_lt, add_zero]
-    have hvg1_div : (v + g + 1) / g = q + 1 := by
-      rw [hv_eq, show g * q + r + g + 1 = g * (q + 1) + (r + 1) from by ring,
-          Nat.mul_add_div hg, Nat.div_eq_of_lt (by grind), add_zero]
-    have hv_mod3 : v % 3 = r % 3 := by rw [hv_eq]; exact gk_mod3 q r
-    have hv1_mod3 : (v + 1) % 3 = (r + 1) % 3 := by
-      rw [hv_eq, show g * q + r + 1 = g * q + (r + 1) from by grind]; exact gk_mod3 q (r + 1)
-    have hvg_mod3 : (v + g) % 3 = r % 3 := by
-      rw [hv_eq, show g * q + r + g = g * (q + 1) + r from by ring]; exact gk_mod3 (q + 1) r
-    have hvg1_mod3 : (v + g + 1) % 3 = (r + 1) % 3 := by
-      rw [hv_eq, show g * q + r + g + 1 = g * (q + 1) + (r + 1) from by ring]
-      exact gk_mod3 (q + 1) (r + 1)
-    have hcv : c v = (r % 3 + q) % 3 := by simp only [c]; rw [hv_mod3]
-    have hcv1 : c (v + 1) = ((r + 1) % 3 + q) % 3 := by
-      simp only [c]; rw [hv1_mod3, hv1_div]
+  · have hcv : c v = (r % 3 + q) % 3 := hv_eq ▸ color_at q r hr_lt
     have hcvg : c (v + g) = (r % 3 + (q + 1)) % 3 := by
-      simp only [c]; rw [hvg_mod3, hvg_div]
+      have : v + g = g * (q + 1) + r := by grind
+      rw [this, color_at (q + 1) r hr_lt]
     have hcvg1 : c (v + g + 1) = ((r + 1) % 3 + (q + 1)) % 3 := by
-      simp only [c]; rw [hvg1_mod3, hvg1_div]
-    have hk := k.isLt
-    set s := (r % 3 + q) % 3 with hs_def
-    have hs_lt : s < 3 := Nat.mod_lt _ (by grind)
-    rw [hs_def] at hcv
-    have hcvg_s : c (v + g) = (s + 1) % 3 := by rw [hcvg]; grind
-    have hcvg1_s : c (v + g + 1) = (s + 2) % 3 := by rw [hcvg1]; grind
-    have wit := mod3_witness hs_lt hk
-    set d := (k.val + 3 - s) % 3
-    rcases show d = 0 ∨ d = 1 ∨ d = 2 from by grind with hd | hd | hd
-    · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
-    · exact ⟨g, by simp, by rw [hcvg_s]; exact wit.2.1 hd⟩
-    · exact ⟨g + 1, by simp, by
-        change c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
+      have : v + g + 1 = g * (q + 1) + (r + 1) := by grind
+      rw [this, color_at (q + 1) (r + 1) (by grind)]
+    exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g (g + 1)
+      (by simp) (by simp) (by simp)
+      hcv (by grind)
+        (by grind)
   · push_neg at hr_lt_gm1
     have hr_eq : r = g - 1 := by grind
-    have ht_pos : 0 < t := by grind
-    have hk := k.isLt
-    have hv_mod3 : v % 3 = 2 := by rw [hv_eq, gk_mod3, hr_eq, ht]; grind
-    have hv1_eq : v + 1 = g * (q + 1) := by
-      rw [show g * (q + 1) = g * q + g from by ring]; grind
-    have hv1_mod3 : (v + 1) % 3 = 0 := by rw [hv1_eq]; exact gk_mul_mod3 (q + 1)
-    have hv1_div : (v + 1) / g = q + 1 := by
-      rw [hv1_eq, Nat.mul_div_cancel_left _ hg]
-    have hvg_eq : v + g = g * (q + 1) + (g - 1) := by
-      rw [show g * (q + 1) = g * q + g from by ring]; grind
-    have hvg_mod3 : (v + g) % 3 = 2 := by
-      rw [hvg_eq, gk_mod3, ht]; grind
-    have hvg_div : (v + g) / g = q + 1 := by
-      rw [hvg_eq, Nat.mul_add_div hg, Nat.div_eq_of_lt (by grind), add_zero]
-    have hvg1_eq : v + g + 1 = g * (q + 2) := by
-      rw [show g * (q + 2) = g * q + 2 * g from by ring]; grind
-    have hvg1_mod3 : (v + g + 1) % 3 = 0 := by rw [hvg1_eq]; exact gk_mul_mod3 (q + 2)
-    have hvg1_div : (v + g + 1) / g = q + 2 := by
-      rw [hvg1_eq, Nat.mul_div_cancel_left _ hg]
-    have hcv : c v = (2 + q) % 3 := by simp only [c]; rw [hv_mod3]
+    have hcv : c v = (2 + q) % 3 := by
+      grind
     have hcv1 : c (v + 1) = (q + 1) % 3 := by
-      simp only [c]; rw [hv1_mod3, hv1_div]; simp
+      have : v + 1 = g * (q + 1) + 0 := by grind
+      rw [this, color_at (q + 1) 0 hg]; simp
     have hcvg : c (v + g) = (2 + (q + 1)) % 3 := by
-      simp only [c]; rw [hvg_mod3, hvg_div]
-    have hcvg1 : c (v + g + 1) = (q + 2) % 3 := by
-      simp only [c]; rw [hvg1_mod3, hvg1_div]; simp
-    set s := (2 + q) % 3 with hs_def
-    have hs_lt : s < 3 := Nat.mod_lt _ (by grind)
-    rw [hs_def] at hcv
-    have hcv1_s : c (v + 1) = (s + 2) % 3 := by rw [hcv1]; grind
-    have hcvg_s : c (v + g) = (s + 1) % 3 := by rw [hcvg]; grind
-    have wit := mod3_witness hs_lt hk
-    set d := (k.val + 3 - s) % 3
-    rcases show d = 0 ∨ d = 1 ∨ d = 2 from by grind with hd | hd | hd
-    · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
-    · exact ⟨g, by simp, by rw [hcvg_s]; exact wit.2.1 hd⟩
-    · exact ⟨1, by simp, by rw [hcv1_s]; exact wit.2.2 hd⟩
+      have : v + g = g * (q + 1) + (g - 1) := by grind
+      grind
+    exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
+      (by simp) (by simp) (by simp)
+      hcv (by grind) (by grind)
 
 lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0 < g) :
     HasPolychromColouring (Fin 3)
@@ -504,185 +488,51 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   haveI : NeZero m := ⟨by grind⟩
   haveI : Fact (1 < m) := ⟨by grind⟩
   obtain ⟨t, ht⟩ := hg3
-  set h := g + 1 with hh_def
+  set h := g + 1
   have hh_pos : 0 < h := by grind
-  have hh_m : m = 3 * h := by grind
   let c (p : ℕ) : ℕ := (p % h % 3 + (3 - p / h % 3)) % 3
   have hc_lt3 : ∀ p, c p < 3 := fun p => Nat.mod_lt _ (by grind)
   have hc_period : ∀ p, c (p % m) = c p := by
-    intro p; simp only [c, hh_m]
-    set Q := p / (3 * h)
-    set R := p % (3 * h) with hR_def
-    conv_rhs => rw [show p = h * (3 * Q) + R from by
-      rw [show h * (3 * Q) = 3 * h * Q from by ring]; exact (Nat.div_add_mod p (3 * h)).symm]
-    have hmod : (h * (3 * Q) + R) % h = R % h := by
-      rw [Nat.mul_add_mod]
-    have hdiv : (h * (3 * Q) + R) / h % 3 = R / h % 3 := by
-      rw [show h * (3 * Q) + R = R + h * (3 * Q) from by ring,
-          Nat.add_mul_div_left _ _ hh_pos]; grind
-    rw [hmod, hdiv]
+    have hm3h : m = 3 * h := by grind
+    intro p; simp only [c, hm3h]
+    have h1 : p = h * (3 * (p / (3 * h))) + p % (3 * h) := by
+      have := (Nat.mod_add_div p (3 * h)).symm; linarith
+    conv_rhs => rw [h1]
+    grind [Nat.mul_add_mod, Nat.add_mul_div_left]
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
     lift_coloring_witness (by grind) hc_lt3 hc_period ?_⟩
-  set v := n.val
-  set r := v % h with hr_def
-  set q := v / h with hq_def
+  set v := n.val; set r := v % h; set q := v / h
   have hv_eq : v = h * q + r := (Nat.div_add_mod v h).symm
   have hr_lt : r < h := Nat.mod_lt _ hh_pos
-  have hk := k.isLt
-  have ht_pos : 0 < t := by grind
-  by_cases hr0 : r = 0
-  · have hv1_modh : (v + 1) % h = 1 := by
-      rw [hv_eq, hr0, show h * q + 0 + 1 = h * q + 1 from by grind, Nat.mul_add_mod,
-          Nat.mod_eq_of_lt (by grind)]
-    have hv1_divh : (v + 1) / h = q := by
-      rw [hv_eq, hr0, show h * q + 0 + 1 = h * q + 1 from by grind,
-          Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by grind), add_zero]
-    have hvg_modh : (v + g) % h = g := by
-      rw [hv_eq, hr0, show h * q + 0 + g = h * q + g from by grind, Nat.mul_add_mod,
-          Nat.mod_eq_of_lt (by grind)]
-    have hvg_divh : (v + g) / h = q := by
-      rw [hv_eq, hr0, show h * q + 0 + g = h * q + g from by grind,
-          Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by grind), add_zero]
-    have hvg1_modh : (v + g + 1) % h = 0 := by
-      rw [hv_eq, hr0,
-          show h * q + 0 + g + 1 = h * (q + 1) from by
-            rw [show h * (q + 1) = h * q + h from by ring]; grind,
-          Nat.mul_mod_right]
-    have hvg1_divh : (v + g + 1) / h = q + 1 := by
-      rw [hv_eq, hr0,
-          show h * q + 0 + g + 1 = h * (q + 1) from by
-            rw [show h * (q + 1) = h * q + h from by ring]; grind,
-          Nat.mul_div_cancel_left _ hh_pos]
-    have hcv : c v = (3 - q % 3) % 3 := by
-      change (r % 3 + (3 - q % 3)) % 3 = _; rw [hr0]; grind
-    have hcv1 : c (v + 1) = (1 + (3 - q % 3)) % 3 := by
-      change ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
-      rw [hv1_modh, hv1_divh]
-    have hcvg : c (v + g) = (3 - q % 3) % 3 := by
-      change ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
-      rw [hvg_modh, hvg_divh, ht, Nat.mul_mod_right]; grind
-    have hcvg1 : c (v + g + 1) = (3 - (q + 1) % 3) % 3 := by
-      change ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
-      rw [hvg1_modh, hvg1_divh]; grind
-    set s := (3 - q % 3) % 3 with hs_def
-    have hs_lt : s < 3 := Nat.mod_lt _ (by grind)
-    rw [hs_def] at hcv hcvg
-    have hcv1_s : c (v + 1) = (s + 1) % 3 := by rw [hcv1]; grind
-    have hcvg1_s : c (v + g + 1) = (s + 2) % 3 := by rw [hcvg1]; grind
-    have wit := mod3_witness hs_lt hk
-    set d := (k.val + 3 - s) % 3
-    rcases show d = 0 ∨ d = 1 ∨ d = 2 from by grind with hd | hd | hd
-    · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
-    · exact ⟨1, by simp, by rw [hcv1_s]; exact wit.2.1 hd⟩
-    · exact ⟨g + 1, by simp, by
-        change c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
-  · by_cases hrg : r = g
-    · have hv1_modh : (v + 1) % h = 0 := by
-        rw [hv_eq, hrg,
-            show h * q + g + 1 = h * (q + 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; grind,
-            Nat.mul_mod_right]
-      have hv1_divh : (v + 1) / h = q + 1 := by
-        rw [hv_eq, hrg,
-            show h * q + g + 1 = h * (q + 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; grind,
-            Nat.mul_div_cancel_left _ hh_pos]
-      have hvg_modh : (v + g) % h = g - 1 := by
-        rw [hv_eq, hrg,
-            show h * q + g + g = h * (q + 1) + (g - 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; grind,
-            Nat.mul_add_mod, Nat.mod_eq_of_lt (by grind)]
-      have hvg_divh : (v + g) / h = q + 1 := by
-        rw [hv_eq, hrg,
-            show h * q + g + g = h * (q + 1) + (g - 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; grind,
-            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by grind), add_zero]
-      have hvg1_modh : (v + g + 1) % h = g := by
-        rw [hv_eq, hrg,
-            show h * q + g + g + 1 = h * (q + 1) + g from by
-              rw [show h * (q + 1) = h * q + h from by ring]; grind,
-            Nat.mul_add_mod, Nat.mod_eq_of_lt (by grind)]
-      have hvg1_divh : (v + g + 1) / h = q + 1 := by
-        rw [hv_eq, hrg,
-            show h * q + g + g + 1 = h * (q + 1) + g from by
-              rw [show h * (q + 1) = h * q + h from by ring]; grind,
-            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by grind), add_zero]
-      have hcv : c v = (3 - q % 3) % 3 := by
-        change (r % 3 + (3 - q % 3)) % 3 = _
-        rw [hrg, ht, Nat.mul_mod_right]; grind
-      have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
-        change ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
-        rw [hv1_modh, hv1_divh]; grind
-      have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
-        change ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
-        rw [hvg_modh, hvg_divh, ht]
-        have : (3 * t - 1) % 3 = 2 := by
-          rw [show 3 * t - 1 = 3 * (t - 1) + 2 from by grind, Nat.mul_add_mod]
-        rw [this]
-      have hcvg1 : c (v + g + 1) = (3 - (q + 1) % 3) % 3 := by
-        change ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
-        rw [hvg1_modh, hvg1_divh, ht, Nat.mul_mod_right]; grind
-      set s := (3 - q % 3) % 3 with hs_def
-      have hs_lt : s < 3 := Nat.mod_lt _ (by grind)
-      rw [hs_def] at hcv
-      have hcv1_s : c (v + 1) = (s + 2) % 3 := by rw [hcv1]; grind
-      have hcvg_s : c (v + g) = (s + 1) % 3 := by rw [hcvg]; grind
-      have wit := mod3_witness hs_lt hk
-      set d := (k.val + 3 - s) % 3
-      rcases show d = 0 ∨ d = 1 ∨ d = 2 from by grind with hd | hd | hd
-      · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
-      · exact ⟨g, by simp, by rw [hcvg_s]; exact wit.2.1 hd⟩
-      · exact ⟨1, by simp, by rw [hcv1_s]; exact wit.2.2 hd⟩
-    · have hr_pos : 0 < r := by grind
-      have hr_lt_g : r < g := by grind
-      have hv1_modh : (v + 1) % h = r + 1 := by
-        rw [hv_eq, show h * q + r + 1 = h * q + (r + 1) from by grind,
-            Nat.mul_add_mod, Nat.mod_eq_of_lt (by grind)]
-      have hv1_divh : (v + 1) / h = q := by
-        rw [hv_eq, show h * q + r + 1 = h * q + (r + 1) from by grind,
-            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by grind), add_zero]
-      have hvg_modh : (v + g) % h = r - 1 := by
-        rw [hv_eq,
-            show h * q + r + g = h * (q + 1) + (r - 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; grind,
-            Nat.mul_add_mod, Nat.mod_eq_of_lt (by grind)]
-      have hvg_divh : (v + g) / h = q + 1 := by
-        rw [hv_eq,
-            show h * q + r + g = h * (q + 1) + (r - 1) from by
-              rw [show h * (q + 1) = h * q + h from by ring]; grind,
-            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by grind), add_zero]
-      have hvg1_modh : (v + g + 1) % h = r := by
-        rw [hv_eq,
-            show h * q + r + g + 1 = h * (q + 1) + r from by
-              rw [show h * (q + 1) = h * q + h from by ring]; grind,
-            Nat.mul_add_mod, Nat.mod_eq_of_lt (by grind)]
-      have hvg1_divh : (v + g + 1) / h = q + 1 := by
-        rw [hv_eq,
-            show h * q + r + g + 1 = h * (q + 1) + r from by
-              rw [show h * (q + 1) = h * q + h from by ring]; grind,
-            Nat.mul_add_div hh_pos, Nat.div_eq_of_lt (by grind), add_zero]
-      have hcv : c v = (r % 3 + (3 - q % 3)) % 3 := rfl
-      have hcv1 : c (v + 1) = ((r + 1) % 3 + (3 - q % 3)) % 3 := by
-        change ((v + 1) % h % 3 + (3 - (v + 1) / h % 3)) % 3 = _
-        rw [hv1_modh, hv1_divh]
-      have hcvg : c (v + g) = ((r - 1) % 3 + (3 - (q + 1) % 3)) % 3 := by
-        change ((v + g) % h % 3 + (3 - (v + g) / h % 3)) % 3 = _
-        rw [hvg_modh, hvg_divh]
-      have hcvg1 : c (v + g + 1) = (r % 3 + (3 - (q + 1) % 3)) % 3 := by
-        change ((v + g + 1) % h % 3 + (3 - (v + g + 1) / h % 3)) % 3 = _
-        rw [hvg1_modh, hvg1_divh]
-      set s := (r % 3 + (3 - q % 3)) % 3 with hs_def
-      have hs_lt : s < 3 := Nat.mod_lt _ (by grind)
-      rw [hs_def] at hcv
-      have hcv1_s : c (v + 1) = (s + 1) % 3 := by rw [hcv1]; omega
-      have hcvg1_s : c (v + g + 1) = (s + 2) % 3 := by rw [hcvg1]; omega
-      have wit := mod3_witness hs_lt hk
-      set d := (k.val + 3 - s) % 3
-      rcases show d = 0 ∨ d = 1 ∨ d = 2 from by grind with hd | hd | hd
-      · exact ⟨0, by simp, by simp only [Nat.add_zero]; rw [hcv]; exact wit.1 hd⟩
-      · exact ⟨1, by simp, by rw [hcv1_s]; exact wit.2.1 hd⟩
-      · exact ⟨g + 1, by simp, by
-          change c (v + g + 1) = k.val; rw [hcvg1_s]; exact wit.2.2 hd⟩
+  have color_at : ∀ q' r', r' < h →
+      c (h * q' + r') = (r' % 3 + (3 - q' % 3)) % 3 := fun q' r' hr' => by
+    change ((h * q' + r') % h % 3 + (3 - (h * q' + r') / h % 3)) % 3 = _
+    rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hr',
+        Nat.mul_add_div hh_pos, Nat.div_eq_of_lt hr', add_zero]
+  by_cases hrg : r = g
+  · have hcv : c v = (3 - q % 3) % 3 := by
+      grind
+    have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
+      have h1 : v + g = h * (q + 1) + (g - 1) := by grind
+      have h2 : 3 * t - 1 = 3 * (t - 1) + 2 := by grind
+      rw [h1, color_at (q + 1) (g - 1) (by grind), ht, h2]; simp
+    have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
+      have : v + 1 = h * (q + 1) + 0 := by grind
+      rw [this, color_at (q + 1) 0 (by grind)]; grind
+    exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
+      (by simp) (by simp) (by simp)
+      hcv (by grind) (by grind)
+  · have hcv1 : c (v + 1) = ((r + 1) % 3 + (3 - q % 3)) % 3 := by
+      have : v + 1 = h * q + (r + 1) := by grind
+      rw [this, color_at q (r + 1) (by grind)]
+    have hcvg1 : c (v + g + 1) = (r % 3 + (3 - (q + 1) % 3)) % 3 := by
+      have : v + g + 1 = h * (q + 1) + r := by grind
+      rw [this, color_at (q + 1) r hr_lt]
+    exact endgame_witness (Nat.mod_lt _ (by grind)) 0 1 (g + 1)
+      (by simp) (by simp) (by simp) rfl
+      (by rw [hcv1]; exact color_shift_r r q)
+      (by have : v + (g + 1) = v + g + 1 := by ring
+          rw [this, hcvg1]; exact color_shift_q r q)
 
 /-- Subcase (1d) assembled: dispatches to the three sub-subcases above. -/
 lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3 * g + 3) :
@@ -693,33 +543,70 @@ lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3
     · exact case_one_div_3g3 m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)
   · exact case_one_div_g_not_three m g h_div hg3
 
-/-- Subcase (1b) with s=3: interval coloring for g > ⌈m/3⌉.
-    Same argument as case_one_interval but with 3 intervals of size ≈ m/3. -/
-lemma case_one_interval_large (g : ℕ) (h_ge : (m + 2) / 3 < g)
-    (h_le : g ≤ m / 2) :
-    HasPolychromColouring (Fin 3)
-      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
-        Finset (ZMod m)) := by
-  sorry
-
-/-- Combined dispatch: applies subcases (1a)–(1d) for 2 ≤ g ≤ m/2 and m ≥ 289. -/
+/-- Combined dispatch: applies subcases (1a)–(1d) for 2 ≤ g ≤ m/2 and m ≥ 289.
+    Let s be the smallest multiple of 3 such that g > ⌈m/s⌉.
+    - (1a): g ∈ {2,3,4}, handled by Table 1 entries
+    - (1b): 5 ≤ g < 2⌊m/s⌋, handled by the interval coloring
+    - (1c): 2⌊m/s⌋ ≤ g ≤ ⌈m/(s-3)⌉ with 3 ∤ m (paper shows s = 6 here),
+            handled by multiplying by 3 and reducing to Table 1
+    - (1d): 2⌊m/s⌋ ≤ g ≤ ⌈m/(s-3)⌉ with 3 ∣ m (paper shows s = 6 here),
+            handled by explicit periodic colorings -/
 lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
     (hg_le : g ≤ m / 2) :
     HasPolychromColouring (Fin 3)
       ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
         Finset (ZMod m)) := by
+  -- (1a): small g
   by_cases hg4 : g ≤ 4
-  · exact case_one_small_g m g hm (by simp; grind)
+  · exact case_one_small_g m g hm (by grind)
   · push_neg at hg4
-    by_cases hg_int : g < 2 * (m / 6)
-    · exact case_one_interval m g (by grind) hg_int
-    · push_neg at hg_int
-      by_cases hg_res : g ≤ (m + 2) / 3
-      · by_cases h3 : m % 3 = 0
+    -- For g ≥ 5, let s be the smallest multiple of 3 such that g > ⌈m/s⌉.
+    -- The paper shows: for m ≥ 289, either g < 2⌊m/s⌋ (subcase 1b) or
+    -- s = 6 and 2⌊m/6⌋ ≤ g ≤ ⌈m/3⌉ (subcases 1c/1d).
+    -- We split on whether g falls in the (1c)/(1d) range.
+    by_cases hg_lb6 : 2 * (m / 6) ≤ g
+    · by_cases hg_ub3 : g ≤ (m + 2) / 3
+      · -- s = 6: subcases (1c) and (1d)
+        by_cases h3 : m % 3 = 0
         · exact case_one_divisible m g hm (by grind)
-        · exact case_one_residues m g hm h3 ⟨hg_int, hg_res⟩
-      · push_neg at hg_res
-        exact case_one_interval_large m g hg_res hg_le
+        · exact case_one_residues m g hm h3 ⟨hg_lb6, hg_ub3⟩
+      · -- g > ⌈m/3⌉: (1b) with s = 3
+        push_neg at hg_ub3
+        exact case_one_interval m 3 g (by grind) ⟨1, rfl⟩
+          (by grind) (by grind : g < 2 * (m / 3))
+    · -- g < 2⌊m/6⌋: (1b), find appropriate s
+      push_neg at hg_lb6
+      -- s is the smallest multiple of 3 with g > ⌈m/s⌉.
+      -- The condition g < 2⌊m/s⌋ follows from g ≤ ⌈m/(s-3)⌉.
+      by_cases h6 : (m + 5) / 6 < g
+      · -- s = 6 works: ⌈m/6⌉ < g and g < 2⌊m/6⌋
+        exact case_one_interval m 6 g (by grind) ⟨2, rfl⟩ h6 hg_lb6
+      · -- s ≥ 9: use s = 3⌈m/(3(g-1))⌉
+        push_neg at h6
+        have h3g1 : 0 < 3 * (g - 1) := by grind
+        set q := (m - 1) / (3 * (g - 1))
+        have hq_lb : q * (3 * (g - 1)) ≤ m - 1 := Nat.div_mul_le_self _ _
+        have hq2 : q ≥ 2 := by
+          by_contra hlt; push_neg at hlt
+          exact absurd ((Nat.div_lt_iff_lt_mul h3g1).mp hlt) (by grind)
+        have hq_ub : m - 1 < 3 * (g - 1) * (q + 1) := Nat.lt_mul_div_succ _ h3g1
+        have hm_lb : m ≥ q * (3 * (g - 1)) + 1 := by
+          grind
+        exact case_one_interval m (3 * (q + 1)) g (by grind) ⟨q + 1, rfl⟩
+          (by -- ⌈m/s⌉ < g
+            rw [Nat.div_lt_iff_lt_mul (by grind : 0 < 3 * (q + 1))]
+            have : g * (3 * (q + 1)) = (g - 1 + 1) * (3 * (q + 1)) := by grind
+            grind)
+          (by -- g < 2⌊m/s⌋
+            suffices h : (g + 2) / 2 ≤ m / (3 * (q + 1)) by grind
+            rw [Nat.le_div_iff_mul_le (by grind : 0 < 3 * (q + 1))]
+            suffices (g + 2) * (3 * (q + 1)) ≤ 2 * m by
+              have := Nat.div_mul_le_self (g + 2) 2; nlinarith
+            by_cases hg10 : g ≥ 10
+            · have : g ≥ 1 := by grind
+              zify [this] at hm_lb ⊢; nlinarith
+            · have : g = 5 ∨ g = 6 ∨ g = 7 ∨ g = 8 ∨ g = 9 := by grind
+              rcases this with rfl | rfl | rfl | rfl | rfl <;> grind)
 
 /-- WLOG g ≤ m/2: in ZMod m, {0,1,m-g,m-g+1} = (-g) +ᵥ {0,1,g,g+1},
     so HasPolychromColouring is preserved. -/
@@ -733,7 +620,7 @@ lemma case_one_complement (g : ℕ) (hg : g < m) :
   rw [key, show ({0, 1, -(↑g : ZMod m), -(↑g : ZMod m) + 1} : Finset (ZMod m)) =
       (-(↑g : ZMod m)) +ᵥ ({0, 1, (↑g : ZMod m), (↑g : ZMod m) + 1} : Finset (ZMod m)) from by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add, neg_add_cancel]
-    ext x; simp; tauto]
+    grind]
   exact hasPolychromColouring_vadd
 
 private lemma isUnit_intCast_of_natAbs_coprime {n : ℕ} {b : ℤ}
@@ -774,7 +661,7 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     simp only [zmod_set, Finset.image_insert, Finset.image_singleton]
     simp only [mul_zero, mul_one, hbg', hbg'1]
     push_cast
-    ext x; simp only [Finset.mem_insert, Finset.mem_singleton]; tauto
+    grind
   have hval : (g'.val : ZMod m) = g' := ZMod.natCast_zmod_val g'
   have hinj : Function.Injective (bz * · : ZMod m → ZMod m) := by
     intro x y (hxy : bz * x = bz * y)
