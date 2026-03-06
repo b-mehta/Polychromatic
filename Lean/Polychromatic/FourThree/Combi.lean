@@ -213,9 +213,12 @@ lemma case_one_small_g (g : ℕ) (hm : m ≥ 289) (hg : g ∈ ({2, 3, 4} : Finse
   · exact table1_0134 m (by grind)
   · exact table1_0145 m (by grind)
 
-/-- Subcase (1b): 5 ≤ g < 2⌊m/s⌋ (specifically s=6 here).
-    Handled by the interval coloring strategy (01...12...20...). -/
-lemma case_one_interval (g : ℕ) (h_ge : 5 ≤ g) (h_lt : g < 2 * (m / 6)) :
+/-- Subcase (1b): interval coloring strategy.
+    Split Z_m into s intervals of lengths ⌊m/s⌋ and ⌈m/s⌉, colored in a repeating
+    01/12/20 pattern (repeated s/3 times). Works when ⌈m/s⌉ < g < 2⌊m/s⌋,
+    where s is any positive multiple of 3. -/
+lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
+    (hg : 5 ≤ g) (h_ub : g < 2 * (m / s)) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   sorry
 
@@ -556,15 +559,6 @@ lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3
     · exact case_one_div_3g3 m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)
   · exact case_one_div_g_not_three m g h_div hg3
 
-/-- Subcase (1b) with s=3: interval coloring for g > ⌈m/3⌉.
-    Same argument as case_one_interval but with 3 intervals of size ≈ m/3. -/
-lemma case_one_interval_large (g : ℕ) (h_ge : (m + 2) / 3 < g)
-    (h_le : g ≤ m / 2) :
-    HasPolychromColouring (Fin 3)
-      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
-        Finset (ZMod m)) := by
-  sorry
-
 /-- Combined dispatch: applies subcases (1a)–(1d) for 2 ≤ g ≤ m/2 and m ≥ 289. -/
 lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
     (hg_le : g ≤ m / 2) :
@@ -575,14 +569,14 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
   · exact case_one_small_g m g hm (by simp; grind)
   · push_neg at hg4
     by_cases hg_int : g < 2 * (m / 6)
-    · exact case_one_interval m g (by grind) hg_int
+    · exact case_one_interval m 6 g (by grind) ⟨3, rfl⟩ (by grind) hg_int
     · push_neg at hg_int
       by_cases hg_res : g ≤ (m + 2) / 3
       · by_cases h3 : m % 3 = 0
         · exact case_one_divisible m g hm (by grind)
         · exact case_one_residues m g hm h3 ⟨hg_int, hg_res⟩
       · push_neg at hg_res
-        exact case_one_interval_large m g hg_res hg_le
+        exact case_one_interval m 3 g (by grind) ⟨1, rfl⟩ (by grind) (by grind : g < 2 * (m / 3))
 
 /-- WLOG g ≤ m/2: in ZMod m, {0,1,m-g,m-g+1} = (-g) +ᵥ {0,1,g,g+1},
     so HasPolychromColouring is preserved. -/
