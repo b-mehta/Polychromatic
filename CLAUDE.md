@@ -80,6 +80,17 @@ Configured in `lakefile.toml`:
 
 Preserve `-- ANCHOR:` / `-- ANCHOR_END:` comments — they mark sections extracted for website documentation.
 
+### Antipatterns
+
+- **`show` inside `rw`** — `rw [show x = y from by ...]` is hard to read and only arises because `rw` can't match through `set` definitions. Extract the equation to a `have` first:
+  ```lean
+  -- Bad
+  rw [show v + g = g * (q + 1) + r from by rw [mul_add, mul_one]; grind]
+  -- Good
+  have : v + g = g * (q + 1) + r := by rw [mul_add, mul_one]; grind
+  rw [this]
+  ```
+
 ## Proof Golfing Tips
 
 When simplifying or shortening Lean proofs:
