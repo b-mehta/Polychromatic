@@ -15,14 +15,13 @@ cd Lean
 lake exe cache get        # REQUIRED before first build — downloads mathlib cache
 lake build                # Build all proofs
 lake build Polychromatic.Main  # Build a single module
-lake clean                # Clean build artifacts
 ```
 
 **Always run `lake exe cache get` before building.** Without it, mathlib builds from source (~60+ min).
 
 ### Other Components
 
-- **Verso docs**: First run `cd Lean && lake exe cache get`, then `cd Verso && lake exe docs`. The Verso project uses a different Lean toolchain — this is intentional. The docs build shells out to `../Lean` to run `subverso-extract-mod` using the Lean project's toolchain, so the Lean cache must be present. Lean code is pulled into the site via `` ```anchor name (module := Module.Name) `` blocks, which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
+- **Verso docs**: First run `cd Lean && lake exe cache get && lake build`, then `cd Verso && lake exe docs`. The Lean build must complete before building Verso docs, because the docs build shells out to `../Lean` to run `subverso-extract-mod` using the Lean project's toolchain. The Verso project uses a different Lean toolchain — this is intentional. Lean code is pulled into the site via `` ```anchor name (module := Module.Name) `` blocks, which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
 - **Jekyll site**: `cd site && bundle exec jekyll serve` (Ruby 3.1+)
 - **Generation**: C++ code in `Generation/` produces colouring log files consumed by `FourThree/Compute.lean`
 
