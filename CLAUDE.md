@@ -80,6 +80,23 @@ Configured in `lakefile.toml`:
 
 Preserve `-- ANCHOR:` / `-- ANCHOR_END:` comments — they mark sections extracted for website documentation.
 
+## Proof Golfing Tips
+
+When simplifying or shortening Lean proofs:
+
+- **`simp` with lemma lists** — a single `simp [h₁, h₂, h₃]` often replaces multiple `rw` steps. Use `simp only [...]` when `simp` is too aggressive or slow.
+- **`gcongr`** handles monotonicity/congruence goals (e.g. `a ≤ b → f a ≤ f b`) — avoids manual `apply` chains.
+- **`positivity`** closes positivity/nonnegativity goals automatically.
+- **`field_simp`** clears denominators — combine with `ring` or `linarith` to finish.
+- **`exact?` / `apply?` / `rw?`** — use these search tactics locally to find the right lemma, then inline the result.
+- **Merge `have`/`suffices` chains** — if a `have` is used exactly once right after, consider inlining it or using `suffices`.
+- **`calc` blocks** — replace long `have` chains with `calc` when proving a sequence of inequalities or equalities.
+- **`obtain ⟨a, b, h⟩ := ...`** — destructure in one step instead of separate `have` + `cases`.
+- **`refine ... ?_`** — partially apply a lemma and let Lean generate remaining goals, avoiding verbose `apply` + `intro` sequences.
+- **Avoid redundant hypotheses** — if a lemma's hypothesis can be closed by `inferInstance` or `by omega`, remove the explicit `have` that provides it.
+- **Combine `constructor` with `⟨..., ...⟩`** — use anonymous constructor syntax to close `And`/`Exists` goals concisely.
+- **`norm_num` extensions** — `norm_num [...]` can close goals involving specific numeric computations, including modular arithmetic.
+
 ## Commit Conventions
 
 - Author: Bhavik Mehta <b-mehta@users.noreply.github.com>
