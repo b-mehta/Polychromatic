@@ -589,8 +589,6 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
           (by -- ⌈m/s⌉ < g
             rw [Nat.div_lt_iff_lt_mul (by grind : 0 < 3 * (q + 1))]
             have : g * (3 * (q + 1)) = (g - 1 + 1) * (3 * (q + 1)) := by congr 1; grind
-            have : (g - 1 + 1) * (3 * (q + 1)) = (g - 1) * (3 * (q + 1)) + 3 * (q + 1) :=
-              by ring
             have : (g - 1) * (3 * (q + 1)) = 3 * (g - 1) * (q + 1) := by ring
             grind)
           (by -- g < 2⌊m/s⌋
