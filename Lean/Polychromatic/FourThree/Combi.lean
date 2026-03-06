@@ -756,14 +756,15 @@ private def case2d_v (e₁ : ℕ) : ℕ :=
   if e₁ % 3 = 1 then e₁ / 3 + 1 else e₁ / 3
 
 private lemma case2d_u_odd {e₁ : ℕ} (he : Odd e₁) : Odd (case2d_u e₁) := by
-  sorry
+  simp only [case2d_u]; obtain ⟨k, hk⟩ := he; rw [hk, Nat.odd_iff]; omega
 
 private lemma case2d_v_odd {e₁ : ℕ} (he : Odd e₁) : Odd (case2d_v e₁) := by
-  sorry
+  simp only [case2d_v]; obtain ⟨k, hk⟩ := he; rw [hk]; split_ifs <;> rw [Nat.odd_iff] <;> omega
 
 private lemma case2d_w_odd {e₁ : ℕ} (he : Odd e₁) :
     Odd (e₁ - case2d_u e₁ - case2d_v e₁) := by
-  sorry
+  simp only [case2d_u, case2d_v]; obtain ⟨k, hk⟩ := he; rw [hk]
+  split_ifs <;> rw [Nat.odd_iff] <;> omega
 
 private lemma case2d_uv_le {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19) :
     case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
