@@ -82,13 +82,18 @@ Preserve `-- ANCHOR:` / `-- ANCHOR_END:` comments — they mark sections extract
 
 ### Antipatterns
 
-- **`show` inside `rw`** — `rw [show x = y from by ...]` is hard to read and only arises because `rw` can't match through `set` definitions. Extract the equation to a `have` first:
+- **Avoid `show`** — use `have` to prove intermediate facts and `change` to adjust the goal type. `show` is less readable and mixes poorly with other tactics:
   ```lean
-  -- Bad
-  rw [show v + g = g * (q + 1) + r from by rw [mul_add, mul_one]; grind]
-  -- Good
-  have : v + g = g * (q + 1) + r := by rw [mul_add, mul_one]; grind
-  rw [this]
+  -- Bad: show as inline proof term
+  rcases show d = 0 ∨ d = 1 ∨ d = 2 from by grind with h | h | h
+  -- Good: extract to have
+  have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
+  rcases this with h | h | h
+
+  -- Bad: show to change goal type
+  show ((h * q' + r') % h % 3 + ...) % 3 = _
+  -- Good: use change instead
+  change ((h * q' + r') % h % 3 + ...) % 3 = _
   ```
 
 ## Proof Golfing Tips

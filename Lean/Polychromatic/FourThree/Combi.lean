@@ -402,7 +402,8 @@ private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ}
     ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by
   obtain ⟨h1, h2, h3⟩ := mod3_witness hs k.isLt
   set d := (k.val + 3 - s) % 3
-  rcases show d = 0 ∨ d = 1 ∨ d = 2 from by grind with h | h | h
+  have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
+  rcases this with h | h | h
   exacts [⟨a₀, ha₀, hc₀ ▸ h1 h⟩, ⟨a₁, ha₁, hc₁ ▸ h2 h⟩, ⟨a₂, ha₂, hc₂ ▸ h3 h⟩]
 
 /-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
@@ -465,7 +466,9 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
       rw [this, color_at (q + 1) (r + 1) (by grind)]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g (g + 1)
       (by simp) (by simp) (by simp)
-      hcv (by rw [hcvg]; grind) (show c (v + g + 1) = _ by rw [hcvg1]; grind)
+      hcv (by rw [hcvg]; grind)
+        (by have : v + (g + 1) = v + g + 1 := by ring
+            rw [this, hcvg1]; grind)
   · push_neg at hr_lt_gm1
     have hr_eq : r = g - 1 := by grind
     have hcv : c v = (2 + q) % 3 := by
@@ -506,7 +509,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   have hr_lt : r < h := Nat.mod_lt _ hh_pos
   have color_at : ∀ q' r', r' < h →
       c (h * q' + r') = (r' % 3 + (3 - q' % 3)) % 3 := fun q' r' hr' => by
-    show ((h * q' + r') % h % 3 + (3 - (h * q' + r') / h % 3)) % 3 = _
+    change ((h * q' + r') % h % 3 + (3 - (h * q' + r') / h % 3)) % 3 = _
     rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hr',
         Nat.mul_add_div hh_pos, Nat.div_eq_of_lt hr', add_zero]
   by_cases hrg : r = g
@@ -531,7 +534,8 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 1 (g + 1)
       (by simp) (by simp) (by simp) rfl
       (by rw [hcv1]; exact color_shift_r r q)
-      (show c (v + g + 1) = _ by rw [hcvg1]; exact color_shift_q r q)
+      (by have : v + (g + 1) = v + g + 1 := by ring
+          rw [this, hcvg1]; exact color_shift_q r q)
 
 /-- Subcase (1d) assembled: dispatches to the three sub-subcases above. -/
 lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3 * g + 3) :
@@ -606,8 +610,8 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
             by_cases hg10 : g ≥ 10
             · have : g ≥ 1 := by grind
               zify [this] at hm_lb ⊢; nlinarith
-            · rcases show g = 5 ∨ g = 6 ∨ g = 7 ∨ g = 8 ∨ g = 9 from by grind
-                with rfl | rfl | rfl | rfl | rfl <;> grind)
+            · have : g = 5 ∨ g = 6 ∨ g = 7 ∨ g = 8 ∨ g = 9 := by grind
+              rcases this with rfl | rfl | rfl | rfl | rfl <;> grind)
 
 /-- WLOG g ≤ m/2: in ZMod m, {0,1,m-g,m-g+1} = (-g) +ᵥ {0,1,g,g+1},
     so HasPolychromColouring is preserved. -/
