@@ -532,11 +532,12 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   have hc_period : ∀ p, c (p % m) = c p := by
     intro p; simp only [c, hm_eq]
     rw [Nat.mod_mod_of_dvd p (dvd_mul_right 3 g)]
+    have h1 : (3 * (p / (3 * g))) * g = 3 * g * (p / (3 * g)) := by ring
     have h2 : p = p % (3 * g) + (3 * (p / (3 * g))) * g := by
-      rw [(by ring : (3 * (p / (3 * g))) * g = 3 * g * (p / (3 * g)))]
-      exact (Nat.mod_add_div p (3 * g)).symm
-    conv_rhs => rw [(by conv_lhs => rw [h2]; exact Nat.add_mul_div_right _ _ hg :
-      p / g = p % (3 * g) / g + 3 * (p / (3 * g)))]
+      rw [h1]; exact (Nat.mod_add_div p (3 * g)).symm
+    have h3 : p / g = p % (3 * g) / g + 3 * (p / (3 * g)) := by
+      conv_lhs => rw [h2]; exact Nat.add_mul_div_right _ _ hg
+    conv_rhs => rw [h3]
     grind
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
     lift_coloring_witness (by grind) hc_lt3 hc_period ?_⟩
@@ -544,15 +545,18 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   have hv_eq : v = g * q + r := (Nat.div_add_mod v g).symm
   have hr_lt : r < g := Nat.mod_lt _ hg
   have gk_mod3 : ∀ k a, (g * k + a) % 3 = a % 3 := fun k a => by
-    rw [ht, (by ring : 3 * t * k + a = 3 * (t * k) + a), Nat.mul_add_mod]
+    have : 3 * t * k + a = 3 * (t * k) + a := by ring
+    rw [ht, this, Nat.mul_add_mod]
   have color_at : ∀ q' r', r' < g → c (g * q' + r') = (r' % 3 + q') % 3 := fun q' r' hr' => by
     simp only [c, gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr', add_zero]
   by_cases hr_lt_gm1 : r + 1 < g
   · have hcv : c v = (r % 3 + q) % 3 := hv_eq ▸ color_at q r hr_lt
     have hcvg : c (v + g) = (r % 3 + (q + 1)) % 3 := by
-      rw [(by grind : v + g = g * (q + 1) + r), color_at (q + 1) r hr_lt]
+      have : v + g = g * (q + 1) + r := by grind
+      rw [this, color_at (q + 1) r hr_lt]
     have hcvg1 : c (v + g + 1) = ((r + 1) % 3 + (q + 1)) % 3 := by
-      rw [(by grind : v + g + 1 = g * (q + 1) + (r + 1)), color_at (q + 1) (r + 1) (by grind)]
+      have : v + g + 1 = g * (q + 1) + (r + 1) := by grind
+      rw [this, color_at (q + 1) (r + 1) (by grind)]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g (g + 1)
       (by simp) (by simp) (by simp)
       hcv (by grind)
@@ -561,9 +565,11 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     have hr_eq : r = g - 1 := by grind
     have hcv : c v = (2 + q) % 3 := by grind
     have hcv1 : c (v + 1) = (q + 1) % 3 := by
-      rw [(by grind : v + 1 = g * (q + 1) + 0), color_at (q + 1) 0 hg]; grind
+      have : v + 1 = g * (q + 1) + 0 := by grind
+      rw [this, color_at (q + 1) 0 hg]; grind
     have hcvg : c (v + g) = (2 + (q + 1)) % 3 := by
-      rw [(by grind : v + g = g * (q + 1) + (g - 1))]; grind
+      have : v + g = g * (q + 1) + (g - 1) := by grind
+      rw [this]; grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
@@ -599,17 +605,21 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   by_cases hrg : r = g
   · have hcv : c v = (3 - q % 3) % 3 := by grind
     have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
-      rw [(by grind : v + g = h * (q + 1) + (g - 1)),
-        color_at (q + 1) (g - 1) (by grind), ht, (by grind : 3 * t - 1 = 3 * (t - 1) + 2)]; simp
+      have h1 : v + g = h * (q + 1) + (g - 1) := by grind
+      have h2 : 3 * t - 1 = 3 * (t - 1) + 2 := by grind
+      rw [h1, color_at (q + 1) (g - 1) (by grind), ht, h2]; simp
     have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
-      rw [(by grind : v + 1 = h * (q + 1) + 0), color_at (q + 1) 0 (by grind)]; grind
+      have : v + 1 = h * (q + 1) + 0 := by grind
+      rw [this, color_at (q + 1) 0 (by grind)]; grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
   · have hcv1 : c (v + 1) = ((r + 1) % 3 + (3 - q % 3)) % 3 := by
-      rw [(by grind : v + 1 = h * q + (r + 1)), color_at q (r + 1) (by grind)]
+      have : v + 1 = h * q + (r + 1) := by grind
+      rw [this, color_at q (r + 1) (by grind)]
     have hcvg1 : c (v + g + 1) = (r % 3 + (3 - (q + 1) % 3)) % 3 := by
-      rw [(by grind : v + g + 1 = h * (q + 1) + r), color_at (q + 1) r hr_lt]
+      have : v + g + 1 = h * (q + 1) + r := by grind
+      rw [this, color_at (q + 1) r hr_lt]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 1 (g + 1)
       (by simp) (by simp) (by simp) rfl
       (by rw [hcv1]; exact color_shift_r r q)
@@ -684,7 +694,8 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
             suffices (g + 2) * (3 * (q + 1)) ≤ 2 * m by
               have := Nat.div_mul_le_self (g + 2) 2; nlinarith
             by_cases hg10 : g ≥ 10
-            · zify [show g ≥ 1 by grind] at hm_lb ⊢; nlinarith
+            · have : g ≥ 1 := by grind
+              zify [this] at hm_lb ⊢; nlinarith
             · have : g = 5 ∨ g = 6 ∨ g = 7 ∨ g = 8 ∨ g = 9 := by grind
               rcases this with rfl | rfl | rfl | rfl | rfl <;> grind)
 
@@ -1190,7 +1201,9 @@ lemma hasPolychromColouring_of_zmod_set {a b c : ℤ} {m : ℕ}
   apply HasPolychromColouring.of_image (Int.castAddHom (ZMod m))
   change HasPolychromColouring (Fin 3)
     (({0, a, b, c} : Finset ℤ).image (Int.cast : ℤ → ZMod m))
-  exact hasPolychromColouring_fin_of_le (by simp) (polychromNumber_zmod hm_eq ▸ le_polychromNumber h)
+  apply hasPolychromColouring_fin_of_le (by simp)
+  rw [polychromNumber_zmod hm_eq]
+  exact le_polychromNumber h
 
 /-- The main theorem (paper §4): combines the reduction to `ZMod m` with the
     Case 1 / Case 2 split on `min(gcd(b, m), gcd(b-a, m))`. -/
@@ -1206,10 +1219,10 @@ theorem normal_bit :
   set d₁ := Nat.gcd b.natAbs m
   set d₂ := Nat.gcd (b - a).natAbs m
   by_cases hmin : min d₁ d₂ = 1
-  · have hd_pos : 0 < d₁ ∧ 0 < d₂ :=
-      ⟨Nat.gcd_pos_of_pos_right _ hm_pos, Nat.gcd_pos_of_pos_right _ hm_pos⟩
-    apply main_case_one m a b (by grind) hcard
+  · apply main_case_one m a b (by grind) hcard
+    have hd₁_pos : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
+    have hd₂_pos : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
     rcases min_choice d₁ d₂ with h | h <;> rw [h] at hmin <;> [left; right] <;> grind
-  · exact main_case_two m a b (by grind) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by
-      have : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
-      have : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos; grind)
+  · have : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
+    have : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
+    exact main_case_two m a b (by grind) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by grind)
