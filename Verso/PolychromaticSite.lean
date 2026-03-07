@@ -402,9 +402,9 @@ theorem final_result (S : Finset ℤ) (hS : S.card = 4) :
     HasPolychromColouring (Fin 3) S :=
 ```
 
-# Formalization Reflections
+# Formalisation Reflections
 
-The proof draws on probability, topology, and calculus — all formalized using
+The proof draws on probability, topology, and calculus — all formalised using
 [mathlib](https://github.com/leanprover-community/mathlib4), Lean's mathematical library.
 Probability theory, measure theory, and combinatorics all live in the same system and can be
 composed directly: we apply the Local Lemma to a uniform probability measure, use topological
