@@ -127,6 +127,8 @@ When simplifying or shortening Lean proofs:
   - **`have ...; grind [Nat.mod_self]`** → `grind [Nat.mod_self]` — works when the `have` provides a simple ℕ equality `grind` can derive.
 - **`grind` limitations** — `grind` CANNOT handle ZMod cast arithmetic with variable modulus `m`. For example, proving `(3 : ZMod m) * g = 2` when `m = 3*g - 2` requires manual `Nat.cast` steps (`simpa using show ((3 * g : ℕ) : ZMod m) = (m + 2 : ℕ) from by congr 1; grind`). The ℕ-level `congr 1; grind` works but the ZMod-level cast is invisible to `grind`.
 - **Extract repeated inline definitions** — when the same `let f := ...` appears in multiple helper lemmas, extract it as a `private def`. This removes duplication and makes call sites cleaner (e.g. `cycle_coloring` in Case 2).
+- **Check for existing lemmas before writing new ones** — before writing a private helper, search for an existing lemma with the same statement. For example, `case2d_ba_unit_d1` (proving `IsUnit` of an `Int.cast` from `Nat.Coprime`) was identical to `isUnit_intCast_of_natAbs_coprime` already defined earlier in the file. `Nat.Coprime a b` unfolds to `Nat.gcd a b = 1`, so lemmas taking one form accept the other.
+- **Use `suffices` to deduplicate symmetric case splits** — when a `by_cases` produces two branches with identical downstream proof structure (e.g. the same `rcases` dispatch), use `suffices ∃ ..., P ∧ Q` to extract the common proof into the `suffices` block, then have each branch of the `by_cases` only produce the witness. This avoids copy-pasting the dispatch logic. Applied in `case2d_coloring_works` to unify wrap/no-wrap branches.
 
 ## Commit Conventions
 
