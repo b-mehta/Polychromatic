@@ -123,6 +123,10 @@ When simplifying or shortening Lean proofs:
   - **`simp [h, Nat.add_mod, ...] <;> grind`** → `grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]` — passing the simp lemmas directly to `grind` works for modular arithmetic.
   - **`rw [Nat.mul_add_mod, ...]; grind`** → `grind [Nat.mul_add_mod, Nat.add_mul_div_left]` — passing lemmas about `%` and `/` to `grind` works.
   - **`rw [this, color_at (q + 1) 0 ...]; grind`** — does NOT simplify, even with `grind [color_at (q + 1) 0]`, when `color_at` is a local `have`.
+  - **`simp [Fin.ext_iff] <;> omega`** → `grind [Fin.ext_iff]` — works for Fin equality/inequality goals with arithmetic.
+  - **`have ...; grind [Nat.mod_self]`** → `grind [Nat.mod_self]` — works when the `have` provides a simple ℕ equality `grind` can derive.
+- **`grind` limitations** — `grind` CANNOT handle ZMod cast arithmetic with variable modulus `m`. For example, proving `(3 : ZMod m) * g = 2` when `m = 3*g - 2` requires manual `Nat.cast` steps (`simpa using show ((3 * g : ℕ) : ZMod m) = (m + 2 : ℕ) from by congr 1; grind`). The ℕ-level `congr 1; grind` works but the ZMod-level cast is invisible to `grind`.
+- **Extract repeated inline definitions** — when the same `let f := ...` appears in multiple helper lemmas, extract it as a `private def`. This removes duplication and makes call sites cleaner (e.g. `cycle_coloring` in Case 2).
 
 ## Commit Conventions
 
