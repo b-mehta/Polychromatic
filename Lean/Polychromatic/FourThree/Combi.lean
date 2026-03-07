@@ -336,8 +336,7 @@ lemma case_one_res_3g_sub_2 (g : ℕ) (hm : m ≥ 289)
   obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (show ¬3 ∣ m by grind)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * (g : ZMod m) = 2 := by
-    have : ((3 * g : ℕ) : ZMod m) = (m + 2 : ℕ) := by congr 1; grind
-    simpa using this
+    simpa using show ((3 * g : ℕ) : ZMod m) = (m + 2 : ℕ) from by congr 1; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 5 := by grind
   simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g_mod, image_singleton,
     h3g1_mod, insert_comm] using table1_0235 m (by grind)
@@ -349,8 +348,7 @@ lemma case_one_res_3g_sub_1 (g : ℕ) (hm : m ≥ 289)
   obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (show ¬3 ∣ m by grind)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * g = 1 := by
-    have : ((3 * g : ℕ) : ZMod m) = (m + 1 : ℕ) := by congr 1; grind
-    simpa using this
+    simpa using show ((3 * g : ℕ) : ZMod m) = (m + 1 : ℕ) from by congr 1; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 4 := by grind
   simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g_mod,
     image_singleton, h3g1_mod, insert_comm] using table1_0134 m (by grind)
@@ -364,8 +362,7 @@ lemma case_one_res_3g_add_1 (g : ℕ) (hm : m ≥ 289)
   have h3g_mod : (3 : ZMod m) * g = -1 := by
     have : ((3 * g + 1 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
     simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, Nat.cast_one,
-      ZMod.natCast_self] at this
-    grind
+      ZMod.natCast_self] at this; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 2 := by grind
   have : {0, (3 : ZMod m), -1, 2} = (-1 : ZMod m) +ᵥ ({0, 1, 3, 4} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
@@ -380,8 +377,7 @@ lemma case_one_res_3g_add_2 (g : ℕ) (hm : m ≥ 289)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * g = -2 := by
     have : ((3 * g + 2 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, ZMod.natCast_self] at this
-    grind
+    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, ZMod.natCast_self] at this; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 1 := by grind
   have : {0, (3 : ZMod m), -2, 1} = (-2 : ZMod m) +ᵥ ({0, 2, 3, 5} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
@@ -396,8 +392,7 @@ lemma case_one_res_3g_add_4 (g : ℕ) (hm : m ≥ 289)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * g = -4 := by
     have : ((3 * g + 4 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, ZMod.natCast_self] at this
-    grind
+    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, ZMod.natCast_self] at this; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = -1 := by grind
   have : {0, (3 : ZMod m), -4, -1} = (-4 : ZMod m) +ᵥ ({0, 3, 4, 7} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
@@ -412,8 +407,7 @@ lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * g = -5 := by
     have : ((3 * g + 5 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, ZMod.natCast_self] at this
-    grind
+    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, ZMod.natCast_self] at this; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = -2 := by grind
   have : {0, (3 : ZMod m), -5, -2} = (-5 : ZMod m) +ᵥ ({0, 3, 5, 8} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
@@ -547,18 +541,15 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   have hv_eq : v = g * q + r := (Nat.div_add_mod v g).symm
   have hr_lt : r < g := Nat.mod_lt _ hg
   have gk_mod3 : ∀ k a, (g * k + a) % 3 = a % 3 := fun k a => by
-    have : 3 * t * k + a = 3 * (t * k) + a := by ring
-    rw [ht, this, Nat.mul_add_mod]
+    rw [ht, show 3 * t * k + a = 3 * (t * k) + a from by ring, Nat.mul_add_mod]
   have color_at : ∀ q' r', r' < g → c (g * q' + r') = (r' % 3 + q') % 3 := fun q' r' hr' => by
     simp only [c, gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr', add_zero]
   by_cases hr_lt_gm1 : r + 1 < g
   · have hcv : c v = (r % 3 + q) % 3 := hv_eq ▸ color_at q r hr_lt
     have hcvg : c (v + g) = (r % 3 + (q + 1)) % 3 := by
-      have : v + g = g * (q + 1) + r := by grind
-      rw [this, color_at (q + 1) r hr_lt]
+      rw [show v + g = g * (q + 1) + r from by grind, color_at (q + 1) r hr_lt]
     have hcvg1 : c (v + g + 1) = ((r + 1) % 3 + (q + 1)) % 3 := by
-      have : v + g + 1 = g * (q + 1) + (r + 1) := by grind
-      rw [this, color_at (q + 1) (r + 1) (by grind)]
+      rw [show v + g + 1 = g * (q + 1) + (r + 1) from by grind, color_at (q + 1) (r + 1) (by grind)]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g (g + 1)
       (by simp) (by simp) (by simp)
       hcv (by grind)
@@ -568,11 +559,9 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     have hcv : c v = (2 + q) % 3 := by
       grind
     have hcv1 : c (v + 1) = (q + 1) % 3 := by
-      have : v + 1 = g * (q + 1) + 0 := by grind
-      rw [this, color_at (q + 1) 0 hg]; simp
+      rw [show v + 1 = g * (q + 1) + 0 from by grind, color_at (q + 1) 0 hg]; simp
     have hcvg : c (v + g) = (2 + (q + 1)) % 3 := by
-      have : v + g = g * (q + 1) + (g - 1) := by grind
-      grind
+      rw [show v + g = g * (q + 1) + (g - 1) from by grind]; grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
@@ -591,9 +580,8 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   have hc_period : ∀ p, c (p % m) = c p := by
     have hm3h : m = 3 * h := by grind
     intro p; simp only [c, hm3h]
-    have h1 : p = h * (3 * (p / (3 * h))) + p % (3 * h) := by
-      have := (Nat.mod_add_div p (3 * h)).symm; linarith
-    conv_rhs => rw [h1]
+    conv_rhs => rw [show p = h * (3 * (p / (3 * h))) + p % (3 * h) from by linarith
+      [(Nat.mod_add_div p (3 * h)).symm]]
     grind [Nat.mul_add_mod, Nat.add_mul_div_left]
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
     lift_coloring_witness (by grind) hc_lt3 hc_period ?_⟩
@@ -609,12 +597,11 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   · have hcv : c v = (3 - q % 3) % 3 := by
       grind
     have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
-      have h1 : v + g = h * (q + 1) + (g - 1) := by grind
-      have h2 : 3 * t - 1 = 3 * (t - 1) + 2 := by grind
-      rw [h1, color_at (q + 1) (g - 1) (by grind), ht, h2]; simp
+      rw [show v + g = h * (q + 1) + (g - 1) from by grind,
+        color_at (q + 1) (g - 1) (by grind), ht, show 3 * t - 1 = 3 * (t - 1) + 2 from by grind]
+      simp
     have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
-      have : v + 1 = h * (q + 1) + 0 := by grind
-      rw [this, color_at (q + 1) 0 (by grind)]; grind
+      rw [show v + 1 = h * (q + 1) + 0 from by grind, color_at (q + 1) 0 (by grind)]; grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
@@ -759,11 +746,8 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     push_cast
     grind
   have hval : (g'.val : ZMod m) = g' := ZMod.natCast_zmod_val g'
-  have hinj : Function.Injective (bz * · : ZMod m → ZMod m) := by
-    intro x y (hxy : bz * x = bz * y)
-    have h1 : bz⁻¹ * (bz * x) = bz⁻¹ * (bz * y) := congr_arg (bz⁻¹ * ·) hxy
-    simp only [← mul_assoc, ZMod.inv_mul_of_unit _ hub, one_mul] at h1
-    exact h1
+  have hinj : Function.Injective (bz * · : ZMod m → ZMod m) := fun x y h => by
+    simpa [← mul_assoc, ZMod.inv_mul_of_unit _ hub] using congr_arg (bz⁻¹ * ·) h
   have hcard4 : ({0, 1, g', g' + 1} : Finset (ZMod m)).card = 4 := by
     rwa [hset, Finset.card_image_of_injective _ hinj] at hcard
   refine ⟨g'.val, ?_, ?_, ?_⟩
@@ -978,18 +962,15 @@ lemma case_two_e1_even (hm : m ≥ 289)
   -- b/d₁ is coprime to e₁
   obtain ⟨q, hq⟩ := hd₁_dvd_b
   have hq_cop : Nat.Coprime q.natAbs e₁ := by
-    have hbn : b.natAbs = d₁ * q.natAbs := by
-      rw [hq, Int.natAbs_mul, Int.natAbs_natCast]
-    have hq_eq : q.natAbs = b.natAbs / d₁ := by
-      rw [hbn, Nat.mul_div_cancel_left _ hd₁_pos]
-    rw [hq_eq]; exact Nat.coprime_div_gcd_div_gcd hd₁_pos
+    rw [show q.natAbs = b.natAbs / d₁ from by
+      rw [hq, Int.natAbs_mul, Int.natAbs_natCast, Nat.mul_div_cancel_left _ hd₁_pos]]
+    exact Nat.coprime_div_gcd_div_gcd hd₁_pos
   -- e₁ * b ≡ 0 mod m
   have he₁b_zero : (e₁ : ZMod m) * (Int.cast b : ZMod m) = 0 := by
     rw [hq]; push_cast
-    have h1 : (e₁ : ZMod m) * ((d₁ : ZMod m) * (q : ZMod m)) =
-      ((e₁ * d₁ : ℕ) : ZMod m) * (q : ZMod m) := by push_cast; ring
-    have h2 : (e₁ * d₁ : ℕ) = m := by rw [Nat.mul_comm]; exact hm_eq.symm
-    rw [h1, h2]; simp
+    have : (e₁ * d₁ : ℕ) = m := by linarith [hm_eq]
+    rw [show (e₁ : ZMod m) * ((d₁ : ZMod m) * (q : ZMod m)) =
+      ((e₁ * d₁ : ℕ) : ZMod m) * (q : ZMod m) from by push_cast; ring, this]; simp
   -- Key lemma: congruence mod e₁ is invisible after ×b in ZMod m
   have hmod_b : ∀ n₁ n₂ : ℤ, (e₁ : ℤ) ∣ (n₁ - n₂) →
       (↑n₁ : ZMod m) * ↑b = (↑n₂ : ZMod m) * ↑b := by
@@ -1049,11 +1030,8 @@ lemma case_two_e1_even (hm : m ≥ 289)
       convert this using 1; push_cast; ring
     have h_dvd2 : (e₁ : ℤ) ∣ ((j₁.val : ℤ) - j₂.val) * q := by
       rw [hq] at h_dvd
-      have : (d₁ : ℤ) * (e₁ : ℤ) ∣ (d₁ : ℤ) * (((j₁.val : ℤ) - j₂.val) * q) := by
-        convert h_dvd using 1
-        · linarith [hm_eq]
-        · ring
-      exact (mul_dvd_mul_iff_left (by positivity : (d₁ : ℤ) ≠ 0)).mp this
+      exact (mul_dvd_mul_iff_left (by positivity : (d₁ : ℤ) ≠ 0)).mp (by
+        convert h_dvd using 1 <;> [linarith [hm_eq]; ring])
     have h_nat : e₁ ∣ ((j₁.val : ℤ) - j₂.val).natAbs := by
       have h1 : e₁ ∣ (((j₁.val : ℤ) - j₂.val) * q).natAbs := by
         rwa [← Int.natCast_dvd_natCast, Int.dvd_natAbs]
