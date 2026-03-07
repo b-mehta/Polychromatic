@@ -855,8 +855,7 @@ private lemma zmod_val_add_one (d : ℕ) [NeZero d] (hd : d ≥ 2) (i : ZMod d) 
   rw [hival]; split_ifs with h
   · exact Nat.mod_eq_of_lt h
   · have := i.val_lt (n := d)
-    have : i.val + 1 = d := by omega
-    rw [this, Nat.mod_self]
+    grind [Nat.mod_self]
 
 private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2)
     (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by
@@ -893,7 +892,7 @@ private lemma f_ne_missing_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     (i : ZMod d₁) (j : ZMod e₁) :
     cycle_coloring d₁ e₁ (i, j) ≠ missing_color d₁ i := by
   simp only [cycle_coloring, missing_color, Nat.even_iff]
-  split_ifs <;> simp [Fin.ext_iff] <;> omega
+  split_ifs <;> grind [Fin.ext_iff]
 
 -- Adjacent cycles have different missing colors.
 private lemma missing_color_ne_succ (d₁ : ℕ) [NeZero d₁] (hd₁ : d₁ ≥ 2)
@@ -908,7 +907,7 @@ private lemma missing_color_ne_succ (d₁ : ℕ) [NeZero d₁] (hd₁ : d₁ ≥
     · exact Or.inr ⟨rfl, by omega⟩
   rcases this with ⟨hi1_eq, _⟩ | ⟨hi1_eq, _⟩ <;>
   simp only [hi1_eq] <;>
-  (split_ifs <;> simp [Fin.ext_iff] <;> omega)
+  (split_ifs <;> grind [Fin.ext_iff])
 
 -- cycle_coloring(i,j) ≠ cycle_coloring(i,j+1) when parity flips.
 private lemma f_alt_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
@@ -917,7 +916,7 @@ private lemma f_alt_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     cycle_coloring d₁ e₁ (i, j) ≠ cycle_coloring d₁ e₁ (i, j + 1) := by
   simp only [cycle_coloring]
   have := hparity j
-  split_ifs <;> simp [Fin.ext_iff] <;> omega
+  split_ifs <;> grind [Fin.ext_iff]
 
 -- Coverage: adjacent cycles cover all 3 colors.
 private lemma color_covers_even (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
@@ -1156,8 +1155,7 @@ lemma main_case_two (hm : m ≥ 289)
     · exact case_two_d1_even_e1_odd m a b hm h_gcd_coprime h_min hd ho
     · by_cases he_le : m / Nat.gcd b.natAbs m ≤ 17
       · exact case_two_odd_small m a b hm h_gcd_coprime h_min hd ho he_le
-      · have : m / Nat.gcd b.natAbs m ≥ 19 := by
-          obtain ⟨k, hk⟩ := ho; omega
+      · have : m / Nat.gcd b.natAbs m ≥ 19 := by grind
         exact case_two_odd_large m a b hm h_gcd_coprime h_min hd ho this
 
 end Case2_MultipleCycles
