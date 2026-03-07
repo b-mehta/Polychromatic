@@ -2,6 +2,73 @@ import Polychromatic.Colouring
 import Polychromatic.PolychromNumber
 import Mathlib.Algebra.Ring.AddAut
 
+/-!
+# Combinatorial case analysis for the polychromatic coloring theorem
+
+This file contains the main combinatorial argument showing that every 4-element subset
+of ℤ admits a 3-polychromatic coloring, under the assumption that the set has been
+normalized (via `Main.lean`) to have `c ≥ 289` and `gcd(a,b,c) = 1`.
+
+The proof works in `ZMod m` (where `m = c - a + b`) and splits into two main cases
+based on the cycle structure of the group action:
+
+- **Case 1** (`main_case_one`): one of `gcd(b, m)` or `gcd(b-a, m)` equals 1
+  (single cycle). The set reduces to `{0, 1, g, g+1}` and is handled by interval
+  colorings, multiplication-by-3 reductions to Table 1, or explicit periodic colorings.
+
+- **Case 2** (`main_case_two`): both GCDs exceed 1 (multiple cycles). The set is
+  colored via a product decomposition `ZMod d₁ × ZMod e₁ ≅ ZMod m`, with subcases
+  based on the parity of `d₁` and `e₁`.
+
+The final assembly is `normal_bit`, which combines both cases.
+
+## Completion status
+
+### Table 1 (Subcase 1a/1c block colorings)
+| Lemma | Set | Status |
+|---|---|---|
+| `table1_0123` | {0,1,2,3} | complete |
+| `table1_0134` | {0,1,3,4} | sorry |
+| `table1_0235` | {0,2,3,5} | sorry |
+| `table1_0347` | {0,3,4,7} | sorry |
+| `table1_0358` | {0,3,5,8} | sorry |
+| `table1_0145` | {0,1,4,5} | sorry |
+
+### Case 1 — Single Cycle
+| Lemma | Subcase | Status |
+|---|---|---|
+| `case_one_small_g` | (1a) g ∈ {2,3,4} | complete (depends on Table 1) |
+| `case_one_interval` | (1b) interval coloring | sorry |
+| per-residue lemmas (×6) | (1c) 3 ∤ m | complete (depend on Table 1) |
+| `case_one_residues` | (1c) dispatch | complete |
+| `case_one_div_g_not_three` | (1d) g ≢ 0 mod 3 | complete |
+| `case_one_div_3g` | (1d) m = 3g, 3 ∣ g | complete |
+| `case_one_div_3g3` | (1d) m = 3g+3, 3 ∣ g | complete |
+| `case_one_divisible` | (1d) dispatch | complete |
+| `case_one_dispatch` | Case 1 dispatch | complete |
+| `case_one_complement` | WLOG g ≤ m/2 | complete |
+| `main_case_one` | Case 1 assembly | complete |
+
+### Case 2 — Multiple Cycles
+| Lemma | Subcase | Status |
+|---|---|---|
+| `case_two_e1_even` | (2a) e₁ even | complete |
+| `case_two_d1_even_e1_odd` | (2b) d₁ even, e₁ odd | sorry |
+| `case_two_odd_small` | (2c) both odd, e₁ ≤ 17 | sorry |
+| `case_two_odd_large` | (2d) both odd, e₁ ≥ 19 | sorry |
+| `main_case_two` | Case 2 dispatch | complete |
+
+### Assembly
+| Lemma | Status |
+|---|---|
+| `zmod_set_card_eq_four` | complete |
+| `gcd_coprime_of_gcd_abc` | complete |
+| `hasPolychromColouring_of_zmod_set` | complete |
+| `normal_bit` | complete (modulo sorry dependencies) |
+
+Total: 9 sorries (5 Table 1 + 1 interval + 3 Case 2)
+-/
+
 open Finset Pointwise
 
 /--
@@ -35,12 +102,14 @@ lemma zmod_set_swap (m : ℕ) (a b : ℤ) :
   simp only [zmod_set]
   grind
 
-/-! ## Table 1: Block concatenation colorings
+/-! ## Table 1: Block concatenation colorings (paper §4, Table 1)
 
 For each set S below, blocks of length r and r+1 (prepending 0 to the period-r block)
 can be concatenated in any order to produce an S-polychromatic 3-coloring of ℤ_m.
 The Frobenius coin problem ensures m can be so expressed when m > r² - r - 1.
 Since all uses have m ≥ 289, the bounds below always hold.
+
+These are used in subcases (1a) and (1c) of Main Case 1.
 -/
 
 section Table1
@@ -198,6 +267,20 @@ lemma table1_0145 (hm : m ≥ 42) :
 
 end Table1
 
+/-! ## Main Case 1: Single Cycle (paper §4.1)
+
+When one of `gcd(b, m)` or `gcd(b-a, m)` equals 1, the action of `b` (or `b-a`) on
+`ZMod m` is a single cycle. The set `zmod_set m a b` reduces to `{0, 1, g, g+1}` via
+multiplication by a unit (see `exists_g_of_coprime`). The proof then splits:
+
+- **(1a)** `g ∈ {2,3,4}`: reduces directly to Table 1 entries.
+- **(1b)** General `g`: an interval coloring of `ZMod m` into `s` blocks (smallest
+  multiple of 3 with `g > ⌈m/s⌉`) works when `g < 2⌊m/s⌋`.
+- **(1c)** `3 ∤ m`, `s = 6`: multiplication by 3 (a unit in `ZMod m`) maps `{0,1,g,g+1}`
+  to a translate of a Table 1 set. Six per-residue lemmas handle `m mod 3g`.
+- **(1d)** `3 ∣ m`, `s = 6`: explicit periodic colorings of period `g` or `g+1`.
+-/
+
 section Case1_SingleCycle
 
 variable (m : ℕ)
@@ -237,8 +320,12 @@ lemma hasPolychromColouring_mul_unit (u : (ZMod m)ˣ) (S : Finset (ZMod m)) :
   exact ⟨fun h => hasPolychromColouring_fin_of_le (by grind) (key ▸ le_polychromNumber h),
     fun h => hasPolychromColouring_fin_of_le (by grind) (key.symm ▸ le_polychromNumber h)⟩
 
--- Subcase (1c) per-residue lemmas: each reduces {0,1,g,g+1} to a Table 1 set
--- via multiplication by 3 (an automorphism of ZMod m when 3 ∤ m) and translation.
+/-! ### Subcase (1c): per-residue lemmas (paper §4.1, case 3 ∤ m)
+
+Each lemma reduces `{0, 1, g, g+1}` to a translate of a Table 1 set via
+multiplication by 3 (which is an automorphism of `ZMod m` when `3 ∤ m`).
+The six cases correspond to `m mod 3` and the value of `g` relative to `m/3`.
+-/
 
 /-- m = 3g - 2: ×3 maps {0,1,g,g+1} to {0,3,3g,3g+3} ≡ {0,2,3,5}. -/
 lemma case_one_res_3g_sub_2 (g : ℕ) (hm : m ≥ 289)
@@ -333,7 +420,8 @@ lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289)
     grind
   simpa [hu, h3g_mod, h3g1_mod, this] using table1_0358 m (by grind)
 
-/-- Subcase (1c) assembled: dispatches to the six per-residue lemmas above. -/
+/-- Subcase (1c) assembled: dispatches to the six per-residue lemmas above.
+    Covers the case `3 ∤ m` with `2⌊m/6⌋ ≤ g ≤ ⌈m/3⌉` (paper §4.1). -/
 lemma case_one_residues (g : ℕ) (hm : m ≥ 289) (h_res : m % 3 ≠ 0)
     (h_range : 2 * (m / 6) ≤ g ∧ g ≤ (m + 2) / 3) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
@@ -348,7 +436,13 @@ lemma case_one_residues (g : ℕ) (hm : m ≥ 289) (h_res : m % 3 ≠ 0)
   · exact case_one_res_3g_add_4 _ g hm rfl
   · exact case_one_res_3g_add_5 _ g hm rfl
 
--- Subcase (1d) sub-subcases, split by g mod 3.
+/-! ### Subcase (1d): 3 ∣ m, split by g mod 3 (paper §4.1, case 3 ∣ m)
+
+When `3 ∣ m`, multiplication by 3 is not available. Instead:
+- If `g ≢ 0 (mod 3)`: the uniform coloring `n ↦ n mod 3` works directly.
+- If `g ≡ 0 (mod 3)` and `m = 3g`: a diagonal coloring `n ↦ (n mod 3 + n/g) mod 3`.
+- If `g ≡ 0 (mod 3)` and `m = 3g+3`: a reversed diagonal coloring of period `g+1`.
+-/
 
 /-- (1d), g ≢ 0 (mod 3): the periodic coloring 012012...012 works because
     each translate of {0,1,g,g+1} hits all 3 residue classes mod 3. -/
@@ -426,6 +520,7 @@ private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
          rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt]
        rw [this, hc_period, hca]⟩
 
+/-- (1d), m = 3g, g ≡ 0 (mod 3): diagonal coloring `n ↦ (n%3 + n/g) % 3`. -/
 lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     (hg3 : 3 ∣ g) (hg : 0 < g) :
     HasPolychromColouring (Fin 3)
@@ -482,6 +577,7 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
 
+/-- (1d), m = 3g+3, g ≡ 0 (mod 3): reversed diagonal coloring of period `g+1`. -/
 lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0 < g) :
     HasPolychromColouring (Fin 3)
       ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
@@ -534,7 +630,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
       (by have : v + (g + 1) = v + g + 1 := by ring
           rw [this, hcvg1]; exact color_shift_q r q)
 
-/-- Subcase (1d) assembled: dispatches to the three sub-subcases above. -/
+/-- Subcase (1d) assembled: dispatches on `g % 3` and `m ∈ {3g, 3g+3}` (paper §4.1). -/
 lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3 * g + 3) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   by_cases hg3 : g % 3 = 0
@@ -725,6 +821,24 @@ lemma main_case_one (a b : ℤ) (hm : m ≥ 289)
 
 end Case1_SingleCycle
 
+/-! ## Main Case 2: Multiple Cycles (paper §4.2)
+
+When both `gcd(b, m) > 1` and `gcd(b-a, m) > 1`, the action of `b` on `ZMod m`
+decomposes into `d₁ = gcd(b, m)` cycles of length `e₁ = m / d₁`. We use the
+product decomposition `ZMod d₁ × ZMod e₁ ≅ ZMod m` to define colorings.
+
+Each translate of `{0, b-a, b, 2b-a}` touches two adjacent cycles (via `b-a`)
+and two consecutive positions within each cycle (via `b`). The coloring assigns
+each cycle a pair of colors that alternate along the cycle, chosen so that
+adjacent cycles collectively cover all three colors.
+
+- **(2a)** `e₁` even: parity alternation within each cycle gives two colors per
+  cycle; the three "missing color" categories (even/odd/last) ensure coverage.
+- **(2b)** `d₁` even, `e₁` odd: similar but with swapped roles.
+- **(2c)** Both odd, `e₁ ≤ 17`: handled by specific small patterns.
+- **(2d)** Both odd, `e₁ ≥ 19`: "rotating" colorings based on a partition `e₁ = u+v+w`.
+-/
+
 section Case2_MultipleCycles
 
 variable (m : ℕ) (a b : ℤ)
@@ -808,7 +922,7 @@ private lemma f_alt_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
 
 -- Coverage: adjacent cycles cover all 3 colors.
 private lemma color_covers_even (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
-    (hd₁_ge2 : d₁ ≥ 2) (he₁_ge2 : e₁ ≥ 2)
+    (hd₁_ge2 : d₁ ≥ 2) (_he₁_ge2 : e₁ ≥ 2)
     (hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2) :
     let f : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
       if i.val = d₁ - 1 ∧ ¬Even d₁ then ⟨1 + j.val % 2, by omega⟩
@@ -858,7 +972,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
   -- d₁ divides b (ℤ level)
   have hd₁_dvd_b : (d₁ : ℤ) ∣ b := by
     have := Int.gcd_dvd_left b (m : ℤ)
-    simp only [Int.gcd, Int.natAbs_cast] at this; exact this
+    simp only [Int.gcd, Int.natAbs_natCast] at this; exact this
   -- b ≡ 0 mod d₁
   have hb_zero : (Int.cast b : ZMod d₁) = 0 := by
     rw [ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hd₁_dvd_b
@@ -873,7 +987,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
   obtain ⟨q, hq⟩ := hd₁_dvd_b
   have hq_cop : Nat.Coprime q.natAbs e₁ := by
     have hbn : b.natAbs = d₁ * q.natAbs := by
-      rw [hq, Int.natAbs_mul, Int.natAbs_cast]
+      rw [hq, Int.natAbs_mul, Int.natAbs_natCast]
     have hq_eq : q.natAbs = b.natAbs / d₁ := by
       rw [hbn, Nat.mul_div_cancel_left _ hd₁_pos]
     rw [hq_eq]; exact Nat.coprime_div_gcd_div_gcd hd₁_pos
@@ -883,7 +997,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
     rw [show (e₁ : ZMod m) * ((d₁ : ZMod m) * (q : ZMod m)) =
       ((e₁ * d₁ : ℕ) : ZMod m) * (q : ZMod m) from by push_cast; ring]
     rw [show (e₁ * d₁ : ℕ) = m from by rw [Nat.mul_comm]; exact hm_eq.symm]
-    simp [ZMod.natCast_self]
+    simp
   -- Key lemma: congruence mod e₁ is invisible after ×b in ZMod m
   have hmod_b : ∀ n₁ n₂ : ℤ, (e₁ : ℤ) ∣ (n₁ - n₂) →
       (↑n₁ : ZMod m) * ↑b = (↑n₂ : ZMod m) * ↑b := by
@@ -953,7 +1067,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
       rw [hq] at h_dvd
       have : (d₁ : ℤ) * (e₁ : ℤ) ∣ (d₁ : ℤ) * (((j₁.val : ℤ) - j₂.val) * q) := by
         convert h_dvd using 1
-        · push_cast; linarith [hm_eq]
+        · linarith [hm_eq]
         · ring
       exact (mul_dvd_mul_iff_left (by positivity : (d₁ : ℤ) ≠ 0)).mp this
     have h_nat : e₁ ∣ ((j₁.val : ℤ) - j₂.val).natAbs := by
@@ -1095,6 +1209,13 @@ lemma main_case_two (hm : m ≥ 289)
 
 end Case2_MultipleCycles
 
+/-! ## Assembly
+
+The remaining lemmas connect the `ZMod m` analysis back to `ℤ`: cardinality of
+`zmod_set`, the GCD coprimality reduction, and the final theorem `normal_bit`
+which dispatches on `min(d₁, d₂) = 1` vs `> 1`.
+-/
+
 /-- The set zmod_set m a b has 4 elements when 0 < a < b and 2b - a < m. -/
 lemma zmod_set_card_eq_four {a b : ℤ} {m : ℕ}
     (ha : 0 < a) (hab : a < b) (hbm : 2 * b - a < ↑m) :
@@ -1168,7 +1289,8 @@ lemma hasPolychromColouring_of_zmod_set {a b c : ℤ} {m : ℕ}
   rw [polychromNumber_zmod hm_eq]
   exact le_polychromNumber h
 
-/-- The main theorem: combines the reduction to ZMod m with the case analysis on GCDs. -/
+/-- The main theorem (paper §4): combines the reduction to `ZMod m` with the
+    Case 1 / Case 2 split on `min(gcd(b, m), gcd(b-a, m))`. -/
 theorem normal_bit :
     ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → 289 ≤ c → Finset.gcd {a, b, c} id = 1 →
           HasPolychromColouring (Fin 3) {0, a, b, c} := by
