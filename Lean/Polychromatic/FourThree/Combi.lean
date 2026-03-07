@@ -860,12 +860,10 @@ private lemma zmod_val_add_one (d : ℕ) [NeZero d] (hd : d ≥ 2) (i : ZMod d) 
 
 private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2)
     (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by
-  have hval : (j + 1).val = (j.val + 1) % e := by
-    rw [ZMod.val_add]; congr 1
-    haveI : Fact (1 < e) := ⟨by omega⟩
-    simp [ZMod.val_one]
-  rw [hval, Nat.mod_mod_of_dvd _ (by exact he.two_dvd)]
-  omega
+  rw [zmod_val_add_one e he2 j]
+  obtain ⟨k, hk⟩ := he
+  have := j.val_lt (n := e)
+  split_ifs <;> omega
 
 -- The coloring function for the even-parity cycle decomposition (Case 2a).
 -- Each cycle uses two colors that alternate with parity; the last cycle (when d₁ is
@@ -957,9 +955,10 @@ lemma case_two_e1_even (hm : m ≥ 289)
   set e₁ := m / d₁ with he₁_def
   have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
   have hd₁_pos : 0 < d₁ := Nat.pos_of_ne_zero (by intro h; simp [h] at h_min)
-  have he₁_pos : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by omega) hd₁_dvd) hd₁_pos
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
-  have he₁_ge2 : e₁ ≥ 2 := by obtain ⟨k, hk⟩ := he1_even; omega
+  have he₁_ge2 : e₁ ≥ 2 := by
+    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by omega) hd₁_dvd) hd₁_pos
+    obtain ⟨k, hk⟩ := he1_even; omega
   haveI : NeZero m := ⟨by omega⟩
   haveI : NeZero d₁ := ⟨by omega⟩
   haveI : NeZero e₁ := ⟨by omega⟩
@@ -1008,32 +1007,23 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hφ_add_b : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
       φ (i, j + 1) = φ (i, j) + ↑b := by
     intro i j; simp only [φ]
-    suffices ((j + 1).val : ZMod m) * (↑b : ZMod m) =
-        (j.val : ZMod m) * ↑b + ↑b by
+    suffices ((j + 1).val : ZMod m) * (↑b : ZMod m) = (j.val : ZMod m) * ↑b + ↑b by
       rw [this]; ring
-    have : (j.val : ZMod m) * ↑b + ↑b = ((j.val : ℤ) + 1 : ZMod m) * ↑b := by
+    have hrhs : (j.val : ZMod m) * ↑b + ↑b = ((j.val : ℤ) + 1 : ZMod m) * ↑b := by
       push_cast; ring
-    rw [this]
+    rw [hrhs]
     have hval : (j + 1).val = (j.val + 1) % e₁ := by
       rw [ZMod.val_add]; congr 1
-      haveI : Fact (1 < e₁) := ⟨by omega⟩
-      simp [ZMod.val_one]
-    have key := Nat.div_add_mod (j.val + 1) e₁
-    have key_int : (↑e₁ : ℤ) * ↑((j.val + 1) / e₁) + ↑((j.val + 1) % e₁) =
-        ↑j.val + 1 := by exact_mod_cast key
-    have hdvd : (↑e₁ : ℤ) ∣ (↑(j + 1).val : ℤ) - ((↑j.val : ℤ) + 1) := by
-      refine ⟨-↑((j.val + 1) / e₁), ?_⟩
-      have : ((j + 1).val : ℤ) = ↑((j.val + 1) % e₁) := by
-        exact congr_arg (Nat.cast (R := ℤ)) hval
-      linarith
+      haveI : Fact (1 < e₁) := ⟨by omega⟩; simp [ZMod.val_one]
+    have hdvd : (↑e₁ : ℤ) ∣ (↑(j + 1).val : ℤ) - ((↑j.val : ℤ) + 1) :=
+      ⟨-↑((j.val + 1) / e₁), by
+        have := congr_arg (Nat.cast (R := ℤ)) hval
+        have := Nat.div_add_mod (j.val + 1) e₁; push_cast at *; linarith⟩
     exact_mod_cast hmod_b ((j + 1).val : ℤ) ((j.val : ℤ) + 1) hdvd
   -- Cycle index function α : ZMod m → ZMod d₁
   obtain ⟨u_ba, hu_ba⟩ := hba_unit
   let α : ZMod m → ZMod d₁ :=
     fun x => ZMod.castHom hd₁_dvd (ZMod d₁) x * u_ba⁻¹
-  -- α(x + b) = α(x)
-  have hα_b : ∀ x, α (x + ↑b) = α x := by
-    intro x; simp only [α, map_add, map_intCast, hb_zero, add_zero]
   -- α(x + (b-a)) = α(x) + 1
   have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 := by
     intro x; simp only [α, map_add, map_intCast, add_mul]
@@ -1070,14 +1060,10 @@ lemma case_two_e1_even (hm : m ≥ 289)
         rwa [← Int.natCast_dvd_natCast, Int.dvd_natAbs]
       rw [Int.natAbs_mul] at h1
       exact hq_cop.symm.dvd_of_dvd_mul_right h1
-    have h_bound : ((j₁.val : ℤ) - j₂.val).natAbs < e₁ := by
-      have := j₁.val_lt (n := e₁)
-      have := j₂.val_lt (n := e₁)
-      omega
-    have h_zero := Nat.eq_zero_of_dvd_of_lt h_nat h_bound
-    have h_eq : j₁.val = j₂.val := by
-      rwa [Int.natAbs_eq_zero, sub_eq_zero, Nat.cast_inj] at h_zero
-    exact ZMod.val_injective e₁ h_eq
+    apply ZMod.val_injective
+    have := Nat.eq_zero_of_dvd_of_lt h_nat (by
+      have := j₁.val_lt (n := e₁); have := j₂.val_lt (n := e₁); omega)
+    rwa [Int.natAbs_eq_zero, sub_eq_zero, Nat.cast_inj] at this
   -- φ is bijective
   have hφ_bij : Function.Bijective φ :=
     (Fintype.bijective_iff_injective_and_card φ).mpr
@@ -1085,22 +1071,16 @@ lemma case_two_e1_even (hm : m ≥ 289)
   let Φ := Equiv.ofBijective φ hφ_bij
   -- Φ.symm(x+b) = (same_i, j+1)
   have hΦ_add_b : ∀ x : ZMod m,
-      (Φ.symm (x + ↑b)).1 = (Φ.symm x).1 ∧
-      (Φ.symm (x + ↑b)).2 = (Φ.symm x).2 + 1 := by
-    intro x
+      Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := fun x => by
     have key := hφ_add_b (Φ.symm x).1 (Φ.symm x).2
     change Φ ((Φ.symm x).1, (Φ.symm x).2 + 1) = Φ (Φ.symm x) + ↑b at key
     rw [Equiv.apply_symm_apply] at key
-    suffices h : Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) from
-      ⟨(Prod.ext_iff.mp h).1, (Prod.ext_iff.mp h).2⟩
     rw [← key, Equiv.symm_apply_apply]
   -- (Φ.symm x).1 = α x
-  have hΦ_cycle : ∀ x : ZMod m, (Φ.symm x).1 = α x := by
-    intro x
+  have hΦ_cycle : ∀ x : ZMod m, (Φ.symm x).1 = α x := fun x => by
     have h := hα_φ (Φ.symm x).1 (Φ.symm x).2
-    change α (Φ (Φ.symm x)) = (Φ.symm x).1 at h
-    rw [Equiv.apply_symm_apply] at h
-    exact h.symm
+    change α (Φ (Φ.symm x)) = _ at h
+    rw [Equiv.apply_symm_apply] at h; exact h.symm
   have hd₁_ge2 : d₁ ≥ 2 := by
     have := Nat.min_le_left (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m)
     omega
@@ -1115,23 +1095,16 @@ lemma case_two_e1_even (hm : m ≥ 289)
   set p := Φ.symm n; set i := p.1; set j := p.2
   set j' := (Φ.symm (n + ↑(b - a))).2
   have hχ_n : χ n = f (i, j) := rfl
-  have hχ_nb : χ (n + ↑b) = f (i, j + 1) := by
-    change f (Φ.symm (n + ↑b)) = f (i, j + 1)
-    have h : Φ.symm (n + ↑b) = (i, j + 1) :=
-      Prod.ext (hΦ_add_b n).1 (hΦ_add_b n).2
-    rw [h]
-  have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') := by
-    change f (Φ.symm (n + ↑(b - a))) = f (i + 1, j')
-    have h : Φ.symm (n + ↑(b - a)) = (i + 1, j') :=
-      Prod.ext (by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]) rfl
-    rw [h]
+  have hχ_nb : χ (n + ↑b) = f (i, j + 1) := congr_arg f (hΦ_add_b n)
+  have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') :=
+    congr_arg f (Prod.ext (by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]) rfl)
   have hχ_n2ba : χ (n + ↑(2 * b - a)) = f (i + 1, j' + 1) := by
-    change f (Φ.symm (n + ↑(2 * b - a))) = f (i + 1, j' + 1)
-    have h2ba : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by push_cast; ring
-    rw [h2ba]
-    have h : Φ.symm ((n + ↑(b - a)) + ↑b) = (i + 1, j' + 1) :=
-      Prod.ext (by rw [(hΦ_add_b _).1, hΦ_cycle, hα_ba, ← hΦ_cycle]) (hΦ_add_b _).2
-    rw [h]
+    have : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by push_cast; ring
+    rw [congr_arg χ this]
+    have hΦ' := hΦ_add_b (n + ↑(b - a))
+    exact congr_arg f (Prod.ext
+      (by rw [Prod.ext_iff.mp hΦ' |>.1, hΦ_cycle, hα_ba, ← hΦ_cycle])
+      (Prod.ext_iff.mp hΦ' |>.2))
   rcases color_covers_even d₁ e₁ hd₁_ge2 he₁_ge2 hparity i j j' k with h | h | h | h
   · exact ⟨0, by simp, by rw [add_zero, hχ_n, h]⟩
   · exact ⟨↑b, by simp, by rw [hχ_nb, h]⟩
