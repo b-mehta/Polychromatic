@@ -843,12 +843,10 @@ private lemma zmod_val_add_one (d : ℕ) [NeZero d] (hd : d ≥ 2) (i : ZMod d) 
     (i + 1).val = if i.val + 1 < d then i.val + 1 else 0 := by
   have hival : (i + 1).val = (i.val + 1) % d := by
     rw [ZMod.val_add]; congr 1
-    haveI : Fact (1 < d) := ⟨by grind⟩
-    simp [ZMod.val_one]
+    haveI : Fact (1 < d) := ⟨by grind⟩; simp [ZMod.val_one]
   rw [hival]; split_ifs with h
   · exact Nat.mod_eq_of_lt h
-  · have := i.val_lt (n := d)
-    grind [Nat.mod_self]
+  · have := i.val_lt (n := d); grind [Nat.mod_self]
 
 private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2)
     (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by
@@ -890,17 +888,9 @@ private lemma f_ne_missing_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
 -- Adjacent cycles have different missing colors.
 private lemma missing_color_ne_succ (d₁ : ℕ) [NeZero d₁] (hd₁ : d₁ ≥ 2)
     (i : ZMod d₁) : missing_color d₁ i ≠ missing_color d₁ (i + 1) := by
-  simp only [missing_color]
+  simp only [missing_color, zmod_val_add_one d₁ hd₁ i]
   have hi := i.val_lt (n := d₁)
-  have hi1 := zmod_val_add_one d₁ hd₁ i
-  have : ((i + 1).val = i.val + 1 ∧ i.val + 1 < d₁) ∨
-      ((i + 1).val = 0 ∧ i.val + 1 = d₁) := by
-    rw [hi1]; split_ifs with h
-    · exact Or.inl ⟨rfl, h⟩
-    · exact Or.inr ⟨rfl, by grind⟩
-  rcases this with ⟨hi1_eq, _⟩ | ⟨hi1_eq, _⟩ <;>
-  simp only [hi1_eq] <;>
-  (split_ifs <;> grind [Fin.ext_iff])
+  split_ifs <;> grind [Fin.ext_iff]
 
 -- cycle_coloring(i,j) ≠ cycle_coloring(i,j+1) when parity flips.
 private lemma f_alt_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
@@ -913,7 +903,7 @@ private lemma f_alt_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
 
 -- Coverage: adjacent cycles cover all 3 colors.
 private lemma color_covers_even (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
-    (hd₁_ge2 : d₁ ≥ 2) (_he₁_ge2 : e₁ ≥ 2)
+    (hd₁_ge2 : d₁ ≥ 2)
     (hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2)
     (i : ZMod d₁) (j₁ j₂ : ZMod e₁) (k : Fin 3) :
     k = cycle_coloring d₁ e₁ (i, j₁) ∨
@@ -953,20 +943,17 @@ lemma case_two_e1_even (hm : m ≥ 289)
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
-  -- d₁ divides b (ℤ level)
-  have hd₁_dvd_b : (d₁ : ℤ) ∣ b := by
-    have := Int.gcd_dvd_left b (m : ℤ)
-    simp only [Int.gcd, Int.natAbs_natCast] at this; exact this
   -- b ≡ 0 mod d₁
+  have hd₁_dvd_b : (d₁ : ℤ) ∣ b := by
+    simpa [Int.gcd, d₁] using Int.gcd_dvd_left b (m : ℤ)
   have hb_zero : (Int.cast b : ZMod d₁) = 0 :=
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₁_dvd_b
   -- (b-a) is a unit in ZMod d₁
   have hba_unit : IsUnit (Int.cast (b - a) : ZMod d₁) :=
-    isUnit_intCast_of_natAbs_coprime (by
-      have h1 : (b - a).natAbs.gcd d₁ ∣ d₁ := Nat.gcd_dvd_right _ _
-      have h2 : (b - a).natAbs.gcd d₁ ∣ (b - a).natAbs.gcd m :=
-        Nat.dvd_gcd (Nat.gcd_dvd_left _ _) (dvd_trans (Nat.gcd_dvd_right _ _) hd₁_dvd)
-      exact Nat.eq_one_of_dvd_one (h_gcd_coprime ▸ Nat.dvd_gcd h1 h2))
+    isUnit_intCast_of_natAbs_coprime (Nat.eq_one_of_dvd_one (h_gcd_coprime ▸
+      Nat.dvd_gcd (Nat.gcd_dvd_right _ _)
+        (Nat.dvd_gcd (Nat.gcd_dvd_left _ _)
+          (dvd_trans (Nat.gcd_dvd_right _ _) hd₁_dvd))))
   -- b/d₁ is coprime to e₁
   obtain ⟨q, hq⟩ := hd₁_dvd_b
   have hq_cop : Nat.Coprime q.natAbs e₁ := by
@@ -997,13 +984,11 @@ lemma case_two_e1_even (hm : m ≥ 289)
     suffices ((j + 1).val : ZMod m) * (↑b : ZMod m) = (j.val : ZMod m) * ↑b + ↑b by
       rw [this]; ring
     rw [(by push_cast; ring : (j.val : ZMod m) * ↑b + ↑b = ((j.val : ℤ) + 1 : ZMod m) * ↑b)]
-    have hval : (j + 1).val = (j.val + 1) % e₁ := by
-      rw [ZMod.val_add]; congr 1
-      haveI : Fact (1 < e₁) := ⟨by grind⟩; simp [ZMod.val_one]
-    have hdvd : (↑e₁ : ℤ) ∣ (↑(j + 1).val : ℤ) - ((↑j.val : ℤ) + 1) :=
-      ⟨-↑((j.val + 1) / e₁), by
-        grind [Nat.div_add_mod]⟩
-    exact_mod_cast hmod_b ((j + 1).val : ℤ) ((j.val : ℤ) + 1) hdvd
+    exact_mod_cast hmod_b ((j + 1).val : ℤ) ((j.val : ℤ) + 1) ⟨-↑((j.val + 1) / e₁), by
+      have : (j + 1).val = (j.val + 1) % e₁ := by
+        rw [ZMod.val_add]; congr 1
+        haveI : Fact (1 < e₁) := ⟨by grind⟩; simp [ZMod.val_one]
+      grind [Nat.div_add_mod]⟩
   -- Cycle index function α : ZMod m → ZMod d₁
   obtain ⟨u_ba, hu_ba⟩ := hba_unit
   let α : ZMod m → ZMod d₁ :=
@@ -1029,11 +1014,11 @@ lemma case_two_e1_even (hm : m ≥ 289)
     have h_dvd : (m : ℤ) ∣ ((j₁.val : ℤ) - j₂.val) * b := by
       rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
       have := sub_eq_zero.mpr hj_eq
-      convert this using 1 <;> push_cast <;> ring
+      convert this using 1; all_goals (push_cast; ring)
     have h_dvd2 : (e₁ : ℤ) ∣ ((j₁.val : ℤ) - j₂.val) * q := by
       rw [hq] at h_dvd
       exact (mul_dvd_mul_iff_left (by positivity : (d₁ : ℤ) ≠ 0)).mp (by
-        convert h_dvd using 1 <;> [grind; ring])
+        convert h_dvd using 1 <;> { grind })
     have h_nat : e₁ ∣ ((j₁.val : ℤ) - j₂.val).natAbs := by
       have : e₁ ∣ (((j₁.val : ℤ) - j₂.val) * q).natAbs := by
         rwa [← Int.natCast_dvd_natCast, Int.dvd_natAbs]
@@ -1052,7 +1037,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
     have key := hφ_add_b (Φ.symm x).1 (Φ.symm x).2
     change Φ ((Φ.symm x).1, (Φ.symm x).2 + 1) = Φ (Φ.symm x) + ↑b at key
     rw [Equiv.apply_symm_apply] at key
-    rw [← key, Equiv.symm_apply_apply]
+    exact Φ.symm_apply_eq.mpr key.symm
   -- (Φ.symm x).1 = α x
   have hΦ_cycle : ∀ x : ZMod m, (Φ.symm x).1 = α x := fun x => by
     have h := hα_φ (Φ.symm x).1 (Φ.symm x).2
@@ -1080,7 +1065,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
     exact congr_arg f (Prod.ext
       (by rw [Prod.ext_iff.mp hΦ' |>.1, hΦ_cycle, hα_ba, ← hΦ_cycle])
       (Prod.ext_iff.mp hΦ' |>.2))
-  rcases color_covers_even d₁ e₁ hd₁_ge2 he₁_ge2 hparity i j j' k with h | h | h | h
+  rcases color_covers_even d₁ e₁ hd₁_ge2 hparity i j j' k with h | h | h | h
   · exact ⟨0, by simp, by rw [add_zero, hχ_n, h]⟩
   · exact ⟨↑b, by simp, by rw [hχ_nb, h]⟩
   · exact ⟨↑(b - a), by simp, by rw [hχ_nba, h]⟩
