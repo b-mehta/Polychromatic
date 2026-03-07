@@ -92,7 +92,7 @@ lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
         _ = (m : ℤ) := by rw [hm]
         _ = 0 := by simp
     rw [this, sub_add_eq_add_sub, ← two_mul]
-    ext i; simp; tauto
+    ext i; simp; grind
   rw [this, polychromNumber_vadd]
 
 /-- The set {0, b-a, b, 2b-a} is symmetric in the two repeated differences b and b-a:
@@ -580,7 +580,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   have hc_period : ∀ p, c (p % m) = c p := by
     have hm3h : m = 3 * h := by grind
     intro p; simp only [c, hm3h]
-    conv_rhs => rw [show p = h * (3 * (p / (3 * h))) + p % (3 * h) from by linarith
+    conv_rhs => rw [show p = h * (3 * (p / (3 * h))) + p % (3 * h) from by grind
       [(Nat.mod_add_div p (3 * h)).symm]]
     grind [Nat.mul_add_mod, Nat.add_mul_div_left]
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
@@ -757,11 +757,11 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     · have hg'0 : g' = 0 := by rw [← hval, h, Nat.cast_zero]
       have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1} := by
         rw [hg'0, zero_add]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]
-      linarith [Finset.card_le_card hsub, Finset.card_le_two (a := (0 : ZMod m)) (b := 1)]
+      grind [Finset.card_le_card hsub, Finset.card_le_two (a := (0 : ZMod m)) (b := 1)]
     · have hg'1 : g' = 1 := by rw [← hval, h, Nat.cast_one]
       have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1, (1 : ZMod m) + 1} := by
         rw [hg'1]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]
-      linarith [Finset.card_le_card hsub,
+      grind [Finset.card_le_card hsub,
         Finset.card_le_three (a := (0 : ZMod m)) (b := 1) (c := (1 : ZMod m) + 1)]
   · by_contra hgt; push_neg at hgt
     have hval_lt := ZMod.val_lt g'
@@ -770,8 +770,8 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
       rw [← hval, hgm1, Nat.cast_sub (by grind), Nat.cast_one, ZMod.natCast_self, zero_sub,
         neg_add_cancel]
     have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1, g'} := by
-      rw [hg'p1]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]; tauto
-    linarith [Finset.card_le_card hsub,
+      rw [hg'p1]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]; grind
+    grind [Finset.card_le_card hsub,
       Finset.card_le_three (a := (0 : ZMod m)) (b := 1) (c := g')]
   · conv at hset => rhs; rw [show g' = (g'.val : ZMod m) from hval.symm]
     exact hset
@@ -834,7 +834,7 @@ private lemma zmod_val_add_one (d : ℕ) [NeZero d] (hd : d ≥ 2) (i : ZMod d) 
     (i + 1).val = if i.val + 1 < d then i.val + 1 else 0 := by
   have hival : (i + 1).val = (i.val + 1) % d := by
     rw [ZMod.val_add]; congr 1
-    haveI : Fact (1 < d) := ⟨by omega⟩
+    haveI : Fact (1 < d) := ⟨by grind⟩
     simp [ZMod.val_one]
   rw [hival]; split_ifs with h
   · exact Nat.mod_eq_of_lt h
@@ -852,9 +852,9 @@ private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2
 -- Each cycle uses two colors that alternate with parity; the last cycle (when d₁ is
 -- odd) uses {1,2}, even-indexed cycles use {0,1}, odd-indexed cycles use {0,2}.
 private def cycle_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
-  if i.val = d₁ - 1 ∧ ¬Even d₁ then ⟨1 + j.val % 2, by omega⟩
-  else if i.val % 2 = 0 then ⟨j.val % 2, by omega⟩
-  else ⟨2 * (j.val % 2), by omega⟩
+  if i.val = d₁ - 1 ∧ ¬Even d₁ then ⟨1 + j.val % 2, by grind⟩
+  else if i.val % 2 = 0 then ⟨j.val % 2, by grind⟩
+  else ⟨2 * (j.val % 2), by grind⟩
 
 -- The "missing" color for each cycle category.
 -- Category A (even, not special last): misses 2
@@ -888,7 +888,7 @@ private lemma missing_color_ne_succ (d₁ : ℕ) [NeZero d₁] (hd₁ : d₁ ≥
       ((i + 1).val = 0 ∧ i.val + 1 = d₁) := by
     rw [hi1]; split_ifs with h
     · exact Or.inl ⟨rfl, h⟩
-    · exact Or.inr ⟨rfl, by omega⟩
+    · exact Or.inr ⟨rfl, by grind⟩
   rcases this with ⟨hi1_eq, _⟩ | ⟨hi1_eq, _⟩ <;>
   simp only [hi1_eq] <;>
   (split_ifs <;> grind [Fin.ext_iff])
@@ -940,11 +940,11 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hd₁_pos : 0 < d₁ := Nat.pos_of_ne_zero (by intro h; simp [h] at h_min)
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   have he₁_ge2 : e₁ ≥ 2 := by
-    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by omega) hd₁_dvd) hd₁_pos
+    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) hd₁_pos
     obtain ⟨k, hk⟩ := he1_even; grind
-  haveI : NeZero m := ⟨by omega⟩
-  haveI : NeZero d₁ := ⟨by omega⟩
-  haveI : NeZero e₁ := ⟨by omega⟩
+  haveI : NeZero m := ⟨by grind⟩
+  haveI : NeZero d₁ := ⟨by grind⟩
+  haveI : NeZero e₁ := ⟨by grind⟩
   -- d₁ divides b (ℤ level)
   have hd₁_dvd_b : (d₁ : ℤ) ∣ b := by
     have := Int.gcd_dvd_left b (m : ℤ)
@@ -968,7 +968,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
   -- e₁ * b ≡ 0 mod m
   have he₁b_zero : (e₁ : ZMod m) * (Int.cast b : ZMod m) = 0 := by
     rw [hq]; push_cast
-    have : (e₁ * d₁ : ℕ) = m := by linarith [hm_eq]
+    have : (e₁ * d₁ : ℕ) = m := by grind
     rw [show (e₁ : ZMod m) * ((d₁ : ZMod m) * (q : ZMod m)) =
       ((e₁ * d₁ : ℕ) : ZMod m) * (q : ZMod m) from by push_cast; ring, this]; simp
   -- Key lemma: congruence mod e₁ is invisible after ×b in ZMod m
@@ -994,11 +994,11 @@ lemma case_two_e1_even (hm : m ≥ 289)
     rw [hrhs]
     have hval : (j + 1).val = (j.val + 1) % e₁ := by
       rw [ZMod.val_add]; congr 1
-      haveI : Fact (1 < e₁) := ⟨by omega⟩; simp [ZMod.val_one]
+      haveI : Fact (1 < e₁) := ⟨by grind⟩; simp [ZMod.val_one]
     have hdvd : (↑e₁ : ℤ) ∣ (↑(j + 1).val : ℤ) - ((↑j.val : ℤ) + 1) :=
       ⟨-↑((j.val + 1) / e₁), by
         have := congr_arg (Nat.cast (R := ℤ)) hval
-        have := Nat.div_add_mod (j.val + 1) e₁; push_cast at *; linarith⟩
+        have := Nat.div_add_mod (j.val + 1) e₁; push_cast at *; grind⟩
     exact_mod_cast hmod_b ((j + 1).val : ℤ) ((j.val : ℤ) + 1) hdvd
   -- Cycle index function α : ZMod m → ZMod d₁
   obtain ⟨u_ba, hu_ba⟩ := hba_unit
@@ -1031,7 +1031,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
     have h_dvd2 : (e₁ : ℤ) ∣ ((j₁.val : ℤ) - j₂.val) * q := by
       rw [hq] at h_dvd
       exact (mul_dvd_mul_iff_left (by positivity : (d₁ : ℤ) ≠ 0)).mp (by
-        convert h_dvd using 1 <;> [linarith [hm_eq]; ring])
+        convert h_dvd using 1 <;> [grind; ring])
     have h_nat : e₁ ∣ ((j₁.val : ℤ) - j₂.val).natAbs := by
       have h1 : e₁ ∣ (((j₁.val : ℤ) - j₂.val) * q).natAbs := by
         rwa [← Int.natCast_dvd_natCast, Int.dvd_natAbs]
@@ -1039,7 +1039,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
       exact hq_cop.symm.dvd_of_dvd_mul_right h1
     apply ZMod.val_injective
     have := Nat.eq_zero_of_dvd_of_lt h_nat (by
-      have := j₁.val_lt (n := e₁); have := j₂.val_lt (n := e₁); omega)
+      have := j₁.val_lt (n := e₁); have := j₂.val_lt (n := e₁); grind)
     rwa [Int.natAbs_eq_zero, sub_eq_zero, Nat.cast_inj] at this
   -- φ is bijective
   have hφ_bij : Function.Bijective φ :=
@@ -1191,7 +1191,7 @@ lemma gcd_coprime_of_gcd_abc {a b c : ℤ} {m : ℕ}
     rw [this]; exact dvd_sub hd_b hd_ba
   -- d | c = m - b + a  (from m = c - a + b)
   have hd_c : (d : ℤ) ∣ c := by
-    have : (c : ℤ) = ↑m - b + a := by linarith
+    have : (c : ℤ) = ↑m - b + a := by grind
     rw [this]; exact dvd_add (dvd_sub hd_m hd_b) hd_a
   -- (d : ℤ) divides each element of {a, b, c}, hence divides Finset.gcd {a, b, c} id = 1
   have hd_dvd_gcd : (d : ℤ) ∣ Finset.gcd {a, b, c} id :=
@@ -1225,7 +1225,7 @@ theorem normal_bit :
           HasPolychromColouring (Fin 3) {0, a, b, c} := by
   intro a b c ha hab hbc hc hgcd
   set m := (c - a + b).toNat
-  have hm_eq : (m : ℤ) = c - a + b := Int.toNat_of_nonneg (by linarith)
+  have hm_eq : (m : ℤ) = c - a + b := Int.toNat_of_nonneg (by grind)
   have hm_pos : 0 < m := by grind
   have hcard := zmod_set_card_eq_four ha hab (by linarith)
   apply hasPolychromColouring_of_zmod_set hm_eq
