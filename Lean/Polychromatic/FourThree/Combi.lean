@@ -50,7 +50,6 @@ variable (m : ℕ)
 /-- {0,1,2,3}: blocks 012 (r=3), 0012 (r+1=4). Frobenius bound: m > 5. -/
 lemma table1_0123 (hm : m ≥ 6) :
     HasPolychromColouring (Fin 3) ({0, 1, 2, 3} : Finset (ZMod m)) := by
-  sorry /- TEMPORARILY SORRIED for faster iteration
   haveI : NeZero m := ⟨by grind⟩
   haveI : Fact (1 < m) := ⟨by grind⟩
   set bd := 4 * (m % 3) with hbd_def
@@ -176,7 +175,6 @@ lemma table1_0123 (hm : m ≥ 6) :
           rw [h3]; change c 2 = 1
           simp only [c]; split_ifs <;> lia
       · exact ⟨0, by grind, by rw [add_zero, hmod_v, hveq]; exact hc_m1⟩
--/
 
 /-- {0,1,3,4}: blocks 001212 (r=6), 0001212 (r+1=7). Frobenius bound: m > 29. -/
 lemma table1_0134 (hm : m ≥ 30) :
