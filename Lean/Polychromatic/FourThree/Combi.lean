@@ -940,8 +940,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hd₁_pos : 0 < d₁ := Nat.pos_of_ne_zero (by intro h; simp [h] at h_min)
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   have he₁_ge2 : e₁ ≥ 2 := by
-    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) hd₁_pos
-    grind
+    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) hd₁_pos; grind
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
@@ -950,8 +949,8 @@ lemma case_two_e1_even (hm : m ≥ 289)
     have := Int.gcd_dvd_left b (m : ℤ)
     simp only [Int.gcd, Int.natAbs_natCast] at this; exact this
   -- b ≡ 0 mod d₁
-  have hb_zero : (Int.cast b : ZMod d₁) = 0 := by
-    rw [ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hd₁_dvd_b
+  have hb_zero : (Int.cast b : ZMod d₁) = 0 :=
+    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₁_dvd_b
   -- (b-a) is a unit in ZMod d₁
   have hba_unit : IsUnit (Int.cast (b - a) : ZMod d₁) :=
     isUnit_intCast_of_natAbs_coprime (by
@@ -967,10 +966,9 @@ lemma case_two_e1_even (hm : m ≥ 289)
     exact Nat.coprime_div_gcd_div_gcd hd₁_pos
   -- e₁ * b ≡ 0 mod m
   have he₁b_zero : (e₁ : ZMod m) * (Int.cast b : ZMod m) = 0 := by
-    rw [hq]; push_cast
-    have : (e₁ * d₁ : ℕ) = m := by grind
-    rw [show (e₁ : ZMod m) * ((d₁ : ZMod m) * (q : ZMod m)) =
-      ((e₁ * d₁ : ℕ) : ZMod m) * (q : ZMod m) from by push_cast; ring, this]; simp
+    rw [hq]; push_cast; rw [show (e₁ : ZMod m) * ((d₁ : ZMod m) * (q : ZMod m)) =
+      ((e₁ * d₁ : ℕ) : ZMod m) * (q : ZMod m) from by push_cast; ring,
+      show (e₁ * d₁ : ℕ) = m from by grind]; simp
   -- Key lemma: congruence mod e₁ is invisible after ×b in ZMod m
   have hmod_b : ∀ n₁ n₂ : ℤ, (e₁ : ℤ) ∣ (n₁ - n₂) →
       (↑n₁ : ZMod m) * ↑b = (↑n₂ : ZMod m) * ↑b := by
@@ -1057,9 +1055,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
     have h := hα_φ (Φ.symm x).1 (Φ.symm x).2
     change α (Φ (Φ.symm x)) = _ at h
     rw [Equiv.apply_symm_apply] at h; exact h.symm
-  have hd₁_ge2 : d₁ ≥ 2 := by
-    have := Nat.min_le_left (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m)
-    grind
+  have hd₁_ge2 : d₁ ≥ 2 := by grind
   have hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2 :=
     parity_flip_even e₁ he1_even he₁_ge2
   -- Define coloring and prove polychromaticity
@@ -1132,8 +1128,7 @@ lemma main_case_two (hm : m ≥ 289)
     · exact case_two_d1_even_e1_odd m a b hm h_gcd_coprime h_min hd ho
     · by_cases he_le : m / Nat.gcd b.natAbs m ≤ 17
       · exact case_two_odd_small m a b hm h_gcd_coprime h_min hd ho he_le
-      · have : m / Nat.gcd b.natAbs m ≥ 19 := by grind
-        exact case_two_odd_large m a b hm h_gcd_coprime h_min hd ho this
+      · exact case_two_odd_large m a b hm h_gcd_coprime h_min hd ho (by grind)
 
 end Case2_MultipleCycles
 
