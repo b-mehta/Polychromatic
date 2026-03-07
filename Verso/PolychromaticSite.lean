@@ -371,8 +371,9 @@ any search code — we only need to verify that its output (explicit colourings)
 
 For quadruples with $`c < 289`, we first search for explicit periodic colourings using C++. This
 algorithm searches for colourings with period $`q` up to 30. For the vast majority of the 900,000
-sets, this succeeds. For the few hundred cases where a larger period is necessary, the C++ search becomes relatively
-slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find colourings instead.
+sets, this succeeds. For the few hundred cases where a larger period is necessary, the C++ search
+becomes relatively slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find
+colourings instead.
 
 Once witnesses are found, Lean verifies them all using three key steps:
 1. *Periodic colourings*: A colouring with period $`q` is represented as a function
