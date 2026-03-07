@@ -1119,7 +1119,7 @@ private lemma case2d_wrap_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
     (hord : addOrderOf (b : ZMod m) = e₁)
     (hm_eq : m = d₁ * e₁)
-    (he1_b_zero : e₁ • (b : ZMod m) = 0) :
+    (_he1_b_zero : e₁ • (b : ZMod m) = 0) :
     ∃ k₀ : Fin e₁,
       (d₁ : ℕ) • ((b - a : ℤ) : ZMod m) = (k₀.val : ℕ) • (b : ZMod m) := by
   haveI : NeZero e₁ :=
@@ -1133,7 +1133,7 @@ private lemma case2d_wrap_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     have hfφ : f (Φ q) = (q.1.val : ZMod d₁) * ((b - a : ℤ) : ZMod d₁) := by
       change f (case2d_orbitMap m a b d₁ e₁ q) = _
       simp only [case2d_orbitMap, map_add, map_mul, map_natCast, map_intCast,
-        ZMod.castHom_apply, hb_zero, mul_zero, add_zero]
+        hb_zero, mul_zero, add_zero]
     rw [hφq] at hfφ
     have hf0 : f (d₁ • ((b - a : ℤ) : ZMod m)) = 0 := by
       rw [nsmul_eq_mul, map_mul, map_natCast, map_intCast, ZMod.natCast_self, zero_mul]
@@ -1170,7 +1170,25 @@ private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
         ((b - a : ℤ) : ZMod m) =
         case2d_orbitMap m a b d₁ e₁
           (0, ⟨(j.val + k₀.val) % e₁, Nat.mod_lt _ (NeZero.pos e₁)⟩) := by
-  sorry
+  intro j
+  simp only [case2d_orbitMap, Fin.val_zero, Nat.cast_zero, zero_mul, zero_add]
+  have hpred : (d₁ - 1 + 1 : ℕ) = d₁ := Nat.succ_pred (NeZero.ne d₁)
+  -- Step 1: rearrange (d₁-1)*(b-a) + j*b + (b-a) = d₁*(b-a) + j*b
+  have hcast : (↑(d₁ - 1) : ZMod m) + 1 = (↑d₁ : ZMod m) := by
+    rw [← Nat.cast_one (R := ZMod m), ← Nat.cast_add, hpred]
+  have step1 : (↑(d₁ - 1) : ZMod m) * ((b - a : ℤ) : ZMod m) +
+      ↑↑j * ((b : ℤ) : ZMod m) + ((b - a : ℤ) : ZMod m) =
+      (↑d₁ : ZMod m) * ((b - a : ℤ) : ZMod m) + ↑↑j * ((b : ℤ) : ZMod m) := by
+    rw [← hcast]; ring
+  rw [step1]
+  -- Step 2: d₁*(b-a) = k₀*b via hk₀
+  rw [← nsmul_eq_mul (d₁), hk₀, nsmul_eq_mul]
+  -- Step 3: k₀*b + j*b = (k₀+j)*b, reorder, convert to nsmul
+  rw [← add_mul, ← Nat.cast_add (k₀.val) (j.val), ← nsmul_eq_mul, Nat.add_comm]
+  -- Step 4: reduce (j+k₀) • b mod e₁ using he1_b_zero
+  set n := j.val + k₀.val
+  conv_lhs => rw [show n = e₁ * (n / e₁) + n % e₁ from (Nat.div_add_mod n e₁).symm]
+  rw [add_nsmul, mul_nsmul, he1_b_zero, smul_zero, zero_add, nsmul_eq_mul]
 
 /-- Given d₁ ≥ 3 values each in [u, e₁-u] can sum to any target mod e₁,
     since the range has width ≥ e₁/3 and d₁ ≥ 3. -/
@@ -1200,14 +1218,40 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
   have hm_pos : 0 < m := by omega
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd1_dvd).symm
   have hd1_gt1 : d₁ > 1 := by omega
+  haveI : NeZero m := ⟨by omega⟩
+  haveI : NeZero d₁ := ⟨by omega⟩
+  haveI : NeZero e₁ := ⟨by omega⟩
+  have hord : addOrderOf (b : ZMod m) = e₁ := case2d_addOrderOf_b (by omega) hd1_def
+  have hb_zero : (b : ZMod d₁) = 0 := case2d_b_zero_mod_d1 hd1_def
+  have hba_coprime := case2d_ba_coprime_d1 hd1_dvd (by rwa [hd1_def])
+  have hba_unit := case2d_ba_unit_d1 hba_coprime
+  have he1_b_zero : e₁ • (b : ZMod m) = 0 := by
+    rw [← hord]; exact addOrderOf_nsmul_eq_zero _
+  have hbij := case2d_orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord
+  set Φ := Equiv.ofBijective _ hbij
+  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq he1_b_zero
   -- Case split on 3 ∣ d₁
   by_cases h3 : 3 ∣ d₁
   · -- Swap b ↔ (b-a): zmod_set m (-a) (b-a) = zmod_set m a b
-    -- After swap, new d₁' = gcd((b-a).natAbs, m) with ¬(3 ∣ d₁').
-    -- Dispatch to the appropriate case 2 sublemma on the swapped set.
     rw [← zmod_set_swap m a b]
     sorry
-  · sorry
+  · -- Main case: ¬(3 ∣ d₁)
+    -- d₁ is odd, > 1, and ¬(3∣d₁), so d₁ ≥ 5
+    have hd1_ge5 : d₁ ≥ 5 := by obtain ⟨k, hk⟩ := hd1_odd; omega
+    obtain ⟨vals, hvals_bound, hvals_sum⟩ :=
+      case2d_rotation_sum_exists hd1_ge5 he1_ge he1_odd k₀.val
+    -- Cumulative rotation: rot(i) = (Σ_{j<i} vals(j)) % e₁
+    let rot : Fin d₁ → ℕ := fun i =>
+      ((Finset.univ.filter (fun j : Fin d₁ => j.val < i.val)).sum vals) % e₁
+    -- Coloring: χ(x) = basePattern(e₁, (j-coord + rot(i-coord)) % e₁)
+    let χ : ZMod m → Fin 3 := fun x =>
+      let coord := Φ.symm x
+      basePattern e₁ ((coord.2.val + rot coord.1) % e₁)
+    refine ⟨χ, fun n k => ?_⟩
+    -- Need: ∃ s ∈ zmod_set m a b, χ (n + s) = k
+    -- The four translates give basePattern positions {p, p+1, p+r, p+r+1}
+    -- where r = vals(i) ∈ [u, e₁-u], so basePattern_rotation_covers applies.
+    sorry
 
 /-- Subcase (2d): d1 and e1 are both odd, with e1 ≥ 19.
     Uses "rotating" colorings based on partitioning e1 = u + v + w. -/
