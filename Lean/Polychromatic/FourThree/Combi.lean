@@ -955,6 +955,233 @@ private lemma exists_valid_wrap_rotation {e₁ : ℕ}
   · simp only [case2d_u]; omega
   · simp only [case2d_u]; omega
 
+/-- The orbit map φ(i,j) = i*(b-a) + j*b in ZMod m. -/
+private def case2d_orbitMap (m : ℕ) (a b : ℤ) (d₁ e₁ : ℕ) :
+    Fin d₁ × Fin e₁ → ZMod m :=
+  fun p => (p.1.val : ZMod m) * ↑(b - a) + (p.2.val : ZMod m) * ↑b
+
+private lemma case2d_addOrderOf_b {m : ℕ} {b : ℤ} {d₁ : ℕ} (hm : 0 < m)
+    (hd1_def : Nat.gcd b.natAbs m = d₁) :
+    addOrderOf (b : ZMod m) = m / d₁ := by
+  have key : addOrderOf (b.natAbs : ZMod m) = m / d₁ := by
+    rw [ZMod.addOrderOf_coe b.natAbs (by omega), Nat.gcd_comm, hd1_def]
+  rcases Int.natAbs_eq b with h | h
+  · have : (b : ZMod m) = (b.natAbs : ZMod m) := by
+      show Int.cast b = Nat.cast b.natAbs
+      conv_lhs => rw [h]; rw [Int.cast_natCast]
+    rw [this]; exact key
+  · have : (b : ZMod m) = -(b.natAbs : ZMod m) := by
+      show Int.cast b = -Nat.cast b.natAbs
+      conv_lhs => rw [h]; rw [Int.cast_neg, Int.cast_natCast]
+    rw [this, addOrderOf_neg]; exact key
+
+private lemma case2d_b_zero_mod_d1 {m : ℕ} {b : ℤ} {d₁ : ℕ}
+    (hd1_def : Nat.gcd b.natAbs m = d₁) [NeZero d₁] :
+    (b : ZMod d₁) = 0 := by
+  rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
+  have h1 : d₁ ∣ b.natAbs := hd1_def ▸ Nat.gcd_dvd_left b.natAbs m
+  rcases Int.natAbs_eq b with h | h <;> rw [h]
+  · exact_mod_cast h1
+  · exact dvd_neg.mpr (by exact_mod_cast h1)
+
+private lemma case2d_ba_coprime_d1 {m : ℕ} {a b : ℤ} {d₁ : ℕ}
+    (hd1_dvd : d₁ ∣ m)
+    (h_gcd_coprime : d₁.gcd (Nat.gcd (b - a).natAbs m) = 1) :
+    Nat.Coprime (b - a).natAbs d₁ := by
+  rw [Nat.Coprime]
+  refine Nat.dvd_one.mp ?_
+  calc Nat.gcd (b - a).natAbs d₁
+      _ ∣ Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) :=
+          Nat.dvd_gcd (Nat.gcd_dvd_right _ _)
+            (Nat.dvd_gcd (Nat.gcd_dvd_left _ _)
+              (dvd_trans (Nat.gcd_dvd_right _ _) hd1_dvd))
+      _ = 1 := h_gcd_coprime
+
+private lemma case2d_ba_unit_d1 {a b : ℤ} {d₁ : ℕ}
+    (hba_coprime : Nat.Coprime (b - a).natAbs d₁) :
+    IsUnit ((b - a : ℤ) : ZMod d₁) := by
+  have h1 : IsUnit ((b - a).natAbs : ZMod d₁) :=
+    (ZMod.isUnit_iff_coprime _ _).mpr hba_coprime
+  rcases Int.natAbs_eq (b - a) with h | h
+  · rwa [h, Int.cast_natCast]
+  · rwa [h, Int.cast_neg, Int.cast_natCast, IsUnit.neg_iff]
+
+private lemma case2d_orbitMap_i_eq {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁]
+    (hd1_dvd : d₁ ∣ m)
+    (hb_zero : (b : ZMod d₁) = 0)
+    (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
+    {i₁ i₂ : Fin d₁} {j₁ j₂ : Fin e₁}
+    (heq : case2d_orbitMap m a b d₁ e₁ (i₁, j₁) =
+           case2d_orbitMap m a b d₁ e₁ (i₂, j₂)) :
+    i₁ = i₂ := by
+  simp only [case2d_orbitMap] at heq
+  set f := ZMod.castHom hd1_dvd (ZMod d₁)
+  have : f ((i₁.val : ZMod m) * ↑(b - a) + (j₁.val : ZMod m) * ↑b) =
+      f ((i₂.val : ZMod m) * ↑(b - a) + (j₂.val : ZMod m) * ↑b) := congr_arg f heq
+  simp only [map_add, map_mul, map_natCast, map_intCast] at this
+  simp only [hb_zero, mul_zero, add_zero] at this
+  obtain ⟨u, hu⟩ := hba_unit
+  rw [← hu] at this
+  have key : (i₁.val : ZMod d₁) = (i₂.val : ZMod d₁) :=
+    calc (i₁.val : ZMod d₁)
+        = (i₁.val : ZMod d₁) * (↑u * ↑u⁻¹) := by rw [u.mul_inv, mul_one]
+      _ = ((i₁.val : ZMod d₁) * ↑u) * ↑u⁻¹ := (mul_assoc _ _ _).symm
+      _ = ((i₂.val : ZMod d₁) * ↑u) * ↑u⁻¹ := by rw [this]
+      _ = (i₂.val : ZMod d₁) * (↑u * ↑u⁻¹) := mul_assoc _ _ _
+      _ = (i₂.val : ZMod d₁) := by rw [u.mul_inv, mul_one]
+  ext
+  rw [← ZMod.val_natCast_of_lt i₁.isLt, ← ZMod.val_natCast_of_lt i₂.isLt]
+  exact congr_arg ZMod.val key
+
+private lemma case2d_orbitMap_j_eq {m : ℕ} {b : ℤ} {e₁ : ℕ}
+    (hord : addOrderOf (b : ZMod m) = e₁)
+    {j₁ j₂ : Fin e₁}
+    (hj_smul : (j₁.val : ℕ) • (b : ZMod m) = (j₂.val : ℕ) • (b : ZMod m)) :
+    j₁ = j₂ := by
+  rcases Nat.le_total j₁.val j₂.val with h | h
+  · have h3 : (j₂.val - j₁.val) • (b : ZMod m) = 0 :=
+      add_left_cancel (a := j₁.val • (b : ZMod m))
+        (by rw [add_zero, ← add_nsmul, Nat.add_sub_cancel' h]; exact hj_smul.symm)
+    have hdvd : e₁ ∣ (j₂.val - j₁.val) := by
+      have := addOrderOf_dvd_of_nsmul_eq_zero h3; rwa [hord] at this
+    have := Nat.eq_zero_of_dvd_of_lt hdvd (by omega)
+    ext; omega
+  · have h3 : (j₁.val - j₂.val) • (b : ZMod m) = 0 :=
+      add_left_cancel (a := j₂.val • (b : ZMod m))
+        (by rw [add_zero, ← add_nsmul, Nat.add_sub_cancel' h]; exact hj_smul)
+    have hdvd : e₁ ∣ (j₁.val - j₂.val) := by
+      have := addOrderOf_dvd_of_nsmul_eq_zero h3; rwa [hord] at this
+    have := Nat.eq_zero_of_dvd_of_lt hdvd (by omega)
+    ext; omega
+
+private lemma case2d_orbitMap_injective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁]
+    (hd1_dvd : d₁ ∣ m)
+    (hb_zero : (b : ZMod d₁) = 0)
+    (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
+    (hord : addOrderOf (b : ZMod m) = e₁) :
+    Function.Injective (case2d_orbitMap m a b d₁ e₁) := by
+  intro ⟨i₁, j₁⟩ ⟨i₂, j₂⟩ heq
+  have hi := case2d_orbitMap_i_eq hd1_dvd hb_zero hba_unit heq
+  subst hi
+  simp only [case2d_orbitMap] at heq
+  have hj_smul : (j₁.val : ℕ) • (b : ZMod m) = (j₂.val : ℕ) • (b : ZMod m) := by
+    simp only [nsmul_eq_mul]
+    exact add_left_cancel heq
+  exact Prod.ext rfl (case2d_orbitMap_j_eq hord hj_smul)
+
+private lemma case2d_orbitMap_bijective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁]
+    (hm_eq : m = d₁ * e₁)
+    (hd1_dvd : d₁ ∣ m)
+    (hb_zero : (b : ZMod d₁) = 0)
+    (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
+    (hord : addOrderOf (b : ZMod m) = e₁) :
+    Function.Bijective (case2d_orbitMap m a b d₁ e₁) :=
+  (Fintype.bijective_iff_injective_and_card _).mpr
+    ⟨case2d_orbitMap_injective hd1_dvd hb_zero hba_unit hord,
+     by simp [Fintype.card_prod, ZMod.card, hm_eq]⟩
+
+private lemma case2d_shift_b {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero e₁]
+    (he1_b_zero : e₁ • (b : ZMod m) = 0) :
+    ∀ p : Fin d₁ × Fin e₁,
+      case2d_orbitMap m a b d₁ e₁ p + (b : ZMod m) =
+        case2d_orbitMap m a b d₁ e₁ (p.1, p.2 + 1) := by
+  intro ⟨i, j⟩
+  simp only [case2d_orbitMap]
+  by_cases hj : j.val + 1 < e₁
+  · have he1_ge2 : 1 < e₁ := by omega
+    have hv : (j + 1 : Fin e₁).val = j.val + 1 := by
+      simp only [Fin.val_add, Fin.val_one', Nat.mod_eq_of_lt he1_ge2,
+        Nat.mod_eq_of_lt hj]
+    rw [hv]; push_cast; ring
+  · have hje : j.val + 1 = e₁ := by omega
+    have hv : (j + 1 : Fin e₁).val = 0 := by
+      simp [Fin.val_add, hje, Nat.mod_self]
+    have h1 : (j.val : ZMod m) * ↑b + ↑b = 0 := by
+      have : (j.val : ZMod m) * ↑b + ↑b = (j.val + 1 : ℕ) • (b : ZMod m) := by
+        rw [add_nsmul, one_nsmul, nsmul_eq_mul]
+      rw [this, hje, he1_b_zero]
+    rw [hv, Nat.cast_zero, zero_mul, add_zero, add_assoc, h1, add_zero]
+
+private lemma case2d_shift_ba_no_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    (i : Fin d₁) (j : Fin e₁) (hi : i.val + 1 < d₁) :
+    case2d_orbitMap m a b d₁ e₁ (i, j) + ((b - a : ℤ) : ZMod m) =
+      case2d_orbitMap m a b d₁ e₁ (⟨i.val + 1, by omega⟩, j) := by
+  simp only [case2d_orbitMap]; push_cast; ring
+
+private lemma case2d_wrap_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁]
+    (hd1_dvd : d₁ ∣ m)
+    (hb_zero : (b : ZMod d₁) = 0)
+    (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
+    (hord : addOrderOf (b : ZMod m) = e₁)
+    (hm_eq : m = d₁ * e₁)
+    (he1_b_zero : e₁ • (b : ZMod m) = 0) :
+    ∃ k₀ : Fin e₁,
+      (d₁ : ℕ) • ((b - a : ℤ) : ZMod m) = (k₀.val : ℕ) • (b : ZMod m) := by
+  haveI : NeZero e₁ :=
+    ⟨by intro h; rw [h, mul_zero] at hm_eq; exact (NeZero.ne m) hm_eq⟩
+  have hbij := case2d_orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord
+  set Φ := Equiv.ofBijective _ hbij
+  set q := Φ.symm ((d₁ : ℕ) • ((b - a : ℤ) : ZMod m))
+  have hq_i : q.1 = 0 := by
+    have hφq := Equiv.apply_symm_apply Φ ((d₁ : ℕ) • ((b - a : ℤ) : ZMod m))
+    set f := ZMod.castHom hd1_dvd (ZMod d₁)
+    have hfφ : f (Φ q) = (q.1.val : ZMod d₁) * ((b - a : ℤ) : ZMod d₁) := by
+      change f (case2d_orbitMap m a b d₁ e₁ q) = _
+      simp only [case2d_orbitMap, map_add, map_mul, map_natCast, map_intCast,
+        ZMod.castHom_apply, hb_zero, mul_zero, add_zero]
+    rw [hφq] at hfφ
+    have hf0 : f (d₁ • ((b - a : ℤ) : ZMod m)) = 0 := by
+      rw [nsmul_eq_mul, map_mul, map_natCast, map_intCast, ZMod.natCast_self, zero_mul]
+    rw [hf0] at hfφ
+    have hzmod_zero : (q.1.val : ZMod d₁) = 0 := by
+      obtain ⟨u, hu⟩ := hba_unit
+      have h : (q.1.val : ZMod d₁) * ↑u = 0 := by rw [hu]; exact hfφ.symm
+      calc (q.1.val : ZMod d₁)
+          = (q.1.val : ZMod d₁) * 1 := (mul_one _).symm
+        _ = (q.1.val : ZMod d₁) * (↑u * ↑u⁻¹) := by rw [u.mul_inv]
+        _ = ((q.1.val : ZMod d₁) * ↑u) * ↑u⁻¹ := (mul_assoc _ _ _).symm
+        _ = 0 * ↑u⁻¹ := by rw [h]
+        _ = 0 := zero_mul _
+    have hval := congr_arg ZMod.val hzmod_zero
+    rw [ZMod.val_natCast_of_lt q.1.isLt, ZMod.val_zero] at hval
+    exact Fin.ext hval
+  refine ⟨q.2, ?_⟩
+  have hφq := Equiv.apply_symm_apply Φ ((d₁ : ℕ) • ((b - a : ℤ) : ZMod m))
+  change case2d_orbitMap m a b d₁ e₁ q = _ at hφq
+  simp only [case2d_orbitMap] at hφq
+  rw [show q = (q.1, q.2) from (Prod.eta q).symm] at hφq
+  simp only [hq_i, Fin.val_zero, Nat.cast_zero, zero_mul, zero_add] at hφq
+  simp only [nsmul_eq_mul] at hφq ⊢
+  exact hφq.symm
+
+private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero e₁] [NeZero d₁]
+    (he1_b_zero : e₁ • (b : ZMod m) = 0)
+    (k₀ : Fin e₁)
+    (hk₀ : (d₁ : ℕ) • ((b - a : ℤ) : ZMod m) = (k₀.val : ℕ) • (b : ZMod m)) :
+    ∀ (j : Fin e₁),
+      case2d_orbitMap m a b d₁ e₁
+        (⟨d₁ - 1, Nat.sub_one_lt (NeZero.ne d₁)⟩, j) +
+        ((b - a : ℤ) : ZMod m) =
+        case2d_orbitMap m a b d₁ e₁
+          (0, ⟨(j.val + k₀.val) % e₁, Nat.mod_lt _ (NeZero.pos e₁)⟩) := by
+  sorry
+
+/-- Given d₁ ≥ 3 values each in [u, e₁-u] can sum to any target mod e₁,
+    since the range has width ≥ e₁/3 and d₁ ≥ 3. -/
+private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ}
+    (hd1_ge : d₁ ≥ 5) (he1_ge : e₁ ≥ 19) (he1_odd : Odd e₁)
+    (target : ℕ) :
+    ∃ vals : Fin d₁ → ℕ,
+      (∀ i, case2d_u e₁ ≤ vals i ∧ vals i ≤ e₁ - case2d_u e₁) ∧
+      (Finset.univ.sum vals) % e₁ = target % e₁ := by
+  sorry
+
 /-- The coloring for case (2d), connecting to ZMod m. Uses cycle coordinates
     c_{i,j} = i*(b-a) + j*b and the base pattern with rotations. -/
 private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
