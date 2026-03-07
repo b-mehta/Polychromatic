@@ -1338,14 +1338,6 @@ private lemma case2d_ba_coprime_d1 {m : ℕ} {a b : ℤ} {d₁ : ℕ}
               (dvd_trans (Nat.gcd_dvd_right _ _) hd1_dvd))
       _ = 1 := h_gcd_coprime
 
-private lemma case2d_ba_unit_d1 {a b : ℤ} {d₁ : ℕ}
-    (hba_coprime : Nat.Coprime (b - a).natAbs d₁) :
-    IsUnit ((b - a : ℤ) : ZMod d₁) := by
-  have h1 : IsUnit ((b - a).natAbs : ZMod d₁) :=
-    (ZMod.isUnit_iff_coprime _ _).mpr hba_coprime
-  rcases Int.natAbs_eq (b - a) with h | h
-  · rwa [h, Int.cast_natCast]
-  · rwa [h, Int.cast_neg, Int.cast_natCast, IsUnit.neg_iff]
 
 private lemma case2d_orbitMap_i_eq {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     [NeZero m] [NeZero d₁]
@@ -1703,7 +1695,7 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
   have hord : addOrderOf (b : ZMod m) = e₁ := case2d_addOrderOf_b (by omega) hd1_def
   have hb_zero : (b : ZMod d₁) = 0 := case2d_b_zero_mod_d1 hd1_def
   have hba_coprime := case2d_ba_coprime_d1 hd1_dvd (by rwa [hd1_def])
-  have hba_unit := case2d_ba_unit_d1 hba_coprime
+  have hba_unit := isUnit_intCast_of_natAbs_coprime hba_coprime
   have he1_b_zero : e₁ • (b : ZMod m) = 0 := by
     rw [← hord]; exact addOrderOf_nsmul_eq_zero _
   have hbij := case2d_orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord
@@ -1741,75 +1733,59 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
   have covers := basePattern_rotation_covers he1_odd he1_ge
     (hvals_bound i).1 (hvals_bound i).2 hp_lt k
   simp only [Finset.mem_insert, Finset.mem_singleton] at covers
-  -- (b-a) shift: case split on i
+  -- (b-a) shift: obtain shifted coordinates and position equality
+  suffices ∃ (i_new : Fin d₁) (j_new : Fin e₁),
+      Φ (i_new, j_new) = n + ((b - a : ℤ) : ZMod m) ∧
+      (j_new.val + rot i_new) % e₁ = (p + vals i) % e₁ by
+    obtain ⟨i_new, j_new, hΦ_ba, hpos⟩ := this
+    have hΦ_2ba : Φ (i_new, j_new + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
+      have : ((2 * b - a : ℤ) : ZMod m) =
+          ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by
+        push_cast; ring
+      rw [this, ← add_assoc, ← hΦ_ba]
+      exact (case2d_shift_b he1_b_zero (i_new, j_new)).symm
+    rcases covers with h | h | h | h
+    · exact ⟨0, zero_mem_zmod_set m a b, by rw [add_zero, ← hn, hij, hχ_eq, h]⟩
+    · exact ⟨((b : ℤ) : ZMod m), intCast_b_mem_zmod_set m a b,
+        by rw [← hΦ_b, hχ_eq, h]; congr 1; exact pos_shift_one j (rot i)⟩
+    · exact ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b,
+        by rw [← hΦ_ba, hχ_eq, h]; congr 1⟩
+    · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
+      rw [← hΦ_2ba, hχ_eq, h]; congr 1
+      calc ((j_new + 1 : Fin e₁).val + rot i_new) % e₁
+          = ((j_new.val + rot i_new) % e₁ + 1) % e₁ :=
+            pos_shift_one j_new (rot i_new)
+        _ = ((p + vals i) % e₁ + 1) % e₁ := by rw [hpos]
+        _ = (p + vals i + 1) % e₁ := mod_add_left' (p + vals i) 1 e₁
   by_cases hi : i.val + 1 < d₁
   · -- No-wrap case
     set i' : Fin d₁ := ⟨i.val + 1, hi⟩
-    have hΦ_ba : Φ (i', j) = n + ((b - a : ℤ) : ZMod m) := by
-      rw [← hn, hij]; exact (case2d_shift_ba_no_wrap i j hi).symm
-    have hΦ_2ba : Φ (i', j + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
-      have : ((2 * b - a : ℤ) : ZMod m) = ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by
-        push_cast; ring
-      rw [this, ← add_assoc, ← hΦ_ba]
-      exact (case2d_shift_b he1_b_zero (i', j)).symm
-    have hba : (j.val + rot i') % e₁ = (p + vals i) % e₁ := by
-      change (j.val + ((Finset.univ.filter
+    refine ⟨i', j, ?_, ?_⟩
+    · rw [← hn, hij]; exact (case2d_shift_ba_no_wrap i j hi).symm
+    · change (j.val + ((Finset.univ.filter
         (fun k : Fin d₁ => k.val < i'.val)).sum vals) % e₁) % e₁ =
         ((j.val + ((Finset.univ.filter
         (fun k : Fin d₁ => k.val < i.val)).sum vals) % e₁) % e₁ + vals i) % e₁
       rw [fin_filter_sum_succ vals i]
       exact pos_shift_succ' j.val _ (vals i) e₁
-    rcases covers with h | h | h | h
-    · exact ⟨0, zero_mem_zmod_set m a b, by rw [add_zero, ← hn, hij, hχ_eq, h]⟩
-    · exact ⟨((b : ℤ) : ZMod m), intCast_b_mem_zmod_set m a b,
-        by rw [← hΦ_b, hχ_eq, h]; congr 1; exact pos_shift_one j (rot i)⟩
-    · exact ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b,
-        by rw [← hΦ_ba, hχ_eq, h]; congr 1⟩
-    · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
-      rw [← hΦ_2ba, hχ_eq, h]; congr 1
-      calc ((j + 1 : Fin e₁).val + rot i') % e₁
-          = ((j.val + rot i') % e₁ + 1) % e₁ := pos_shift_one j (rot i')
-        _ = ((p + vals i) % e₁ + 1) % e₁ := by rw [hba]
-        _ = (p + vals i + 1) % e₁ := mod_add_left' (p + vals i) 1 e₁
   · -- Wrap case: i = d₁ - 1
     have hi_eq : i.val = d₁ - 1 := by omega
     have hi_fin : i = ⟨d₁ - 1, Nat.sub_one_lt (NeZero.ne d₁)⟩ := by ext; exact hi_eq
     set j' : Fin e₁ := ⟨(j.val + k₀.val) % e₁, Nat.mod_lt _ he1_pos⟩
-    have hΦ_ba : Φ (0, j') = n + ((b - a : ℤ) : ZMod m) := by
-      rw [← hn, hij, hi_fin]; exact (case2d_shift_ba_wrap he1_b_zero k₀ hk₀ j).symm
-    have hΦ_2ba : Φ (0, j' + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
-      have : ((2 * b - a : ℤ) : ZMod m) = ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by
-        push_cast; ring
-      rw [this, ← add_assoc, ← hΦ_ba]
-      exact (case2d_shift_b he1_b_zero (0, j')).symm
-    -- rot(0) = 0
-    have hrot0 : rot (0 : Fin d₁) = 0 := by
-      change (Finset.univ.filter (fun k : Fin d₁ => k.val < (0 : Fin d₁).val)).sum vals % e₁ = 0
-      simp
-    -- Total sum connects to k₀
-    have htotal :
-        (Finset.univ.filter (fun k : Fin d₁ => k.val < i.val)).sum vals + vals i =
-        Finset.univ.sum vals :=
-      fin_filter_sum_last vals i hi_eq (by omega)
-    -- Common wrap position result
-    have hwrap : (j'.val + rot (0 : Fin d₁)) % e₁ = (p + vals i) % e₁ := by
+    refine ⟨0, j', ?_, ?_⟩
+    · rw [← hn, hij, hi_fin]; exact (case2d_shift_ba_wrap he1_b_zero k₀ hk₀ j).symm
+    · have hrot0 : rot (0 : Fin d₁) = 0 := by
+        change (Finset.univ.filter
+          (fun k : Fin d₁ => k.val < (0 : Fin d₁).val)).sum vals % e₁ = 0
+        simp
+      have htotal :
+          (Finset.univ.filter (fun k : Fin d₁ => k.val < i.val)).sum vals + vals i =
+          Finset.univ.sum vals :=
+        fin_filter_sum_last vals i hi_eq (by omega)
       rw [hrot0, Nat.add_zero]
       change (j.val + k₀.val) % e₁ % e₁ = (p + vals i) % e₁
       rw [Nat.mod_mod_of_dvd _ (dvd_refl e₁)]
       exact pos_shift_wrap' j.val _ (vals i) k₀.val e₁ (by rw [htotal, hvals_sum])
-    rcases covers with h | h | h | h
-    · exact ⟨0, zero_mem_zmod_set m a b, by rw [add_zero, ← hn, hij, hχ_eq, h]⟩
-    · exact ⟨((b : ℤ) : ZMod m), intCast_b_mem_zmod_set m a b,
-        by rw [← hΦ_b, hχ_eq, h]; congr 1; exact pos_shift_one j (rot i)⟩
-    · exact ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b,
-        by rw [← hΦ_ba, hχ_eq, h]; congr 1⟩
-    · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
-      rw [← hΦ_2ba, hχ_eq, h]; congr 1
-      calc ((j' + 1 : Fin e₁).val + rot (0 : Fin d₁)) % e₁
-          = ((j'.val + rot (0 : Fin d₁)) % e₁ + 1) % e₁ :=
-            pos_shift_one j' (rot (0 : Fin d₁))
-        _ = ((p + vals i) % e₁ + 1) % e₁ := by rw [hwrap]
-        _ = (p + vals i + 1) % e₁ := mod_add_left' (p + vals i) 1 e₁
 
 /-- Subcase (2d): d1 and e1 are both odd, with e1 ≥ 19.
     Uses "rotating" colorings based on partitioning e1 = u + v + w. -/
