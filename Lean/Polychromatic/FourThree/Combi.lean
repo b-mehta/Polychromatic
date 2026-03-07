@@ -732,6 +732,112 @@ variable (m : ℕ) (a b : ℤ)
 -- In this section, we work directly with `zmod_set` using cycle decompositions.
 -- We inline d1 = gcd(b, m) and e1 = m / d1.
 
+private lemma zmod_val_add_one (d : ℕ) [NeZero d] (hd : d ≥ 2) (i : ZMod d) :
+    (i + 1).val = if i.val + 1 < d then i.val + 1 else 0 := by
+  have hival : (i + 1).val = (i.val + 1) % d := by
+    rw [ZMod.val_add]; congr 1
+    haveI : Fact (1 < d) := ⟨by omega⟩
+    simp [ZMod.val_one]
+  rw [hival]; split_ifs with h
+  · exact Nat.mod_eq_of_lt h
+  · have := i.val_lt (n := d)
+    have : i.val + 1 = d := by omega
+    rw [this, Nat.mod_self]
+
+private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2)
+    (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by
+  have hval : (j + 1).val = (j.val + 1) % e := by
+    rw [ZMod.val_add]; congr 1
+    haveI : Fact (1 < e) := ⟨by omega⟩
+    simp [ZMod.val_one]
+  rw [hval, Nat.mod_mod_of_dvd _ (by exact he.two_dvd)]
+  omega
+
+-- The "missing" color for each cycle category.
+-- Category A (even, not special last): misses 2
+-- Category B (odd, not special last): misses 1
+-- Category C (last cycle, d₁ odd): misses 0
+private def missing_color (d₁ : ℕ) (i : ZMod d₁) : Fin 3 :=
+  if i.val = d₁ - 1 ∧ d₁ % 2 = 1 then 0
+  else if i.val % 2 = 0 then 2
+  else 1
+
+-- Fin 3 fact: if a ≠ b, a ≠ c, b ≠ c, and k ≠ c, then k = a ∨ k = b.
+private lemma fin3_eq_of_ne {a b c k : Fin 3}
+    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hkc : k ≠ c) :
+    k = a ∨ k = b := by
+  fin_cases a <;> fin_cases b <;> fin_cases c <;> fin_cases k <;> simp_all
+
+-- f(i, j) never equals the missing color of cycle i.
+private lemma f_ne_missing_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
+    (i : ZMod d₁) (j : ZMod e₁) :
+    let f : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
+      if i.val = d₁ - 1 ∧ ¬Even d₁ then ⟨1 + j.val % 2, by omega⟩
+      else if i.val % 2 = 0 then ⟨j.val % 2, by omega⟩
+      else ⟨2 * (j.val % 2), by omega⟩
+    f (i, j) ≠ missing_color d₁ i := by
+  intro f; simp only [f, missing_color, Nat.even_iff]
+  split_ifs <;> simp [Fin.ext_iff] <;> omega
+
+-- Adjacent cycles have different missing colors.
+private lemma missing_color_ne_succ (d₁ : ℕ) [NeZero d₁] (hd₁ : d₁ ≥ 2)
+    (i : ZMod d₁) : missing_color d₁ i ≠ missing_color d₁ (i + 1) := by
+  simp only [missing_color]
+  have hi := i.val_lt (n := d₁)
+  have hi1 := zmod_val_add_one d₁ hd₁ i
+  rcases (show ((i + 1).val = i.val + 1 ∧ i.val + 1 < d₁) ∨
+      ((i + 1).val = 0 ∧ i.val + 1 = d₁) from by
+    rw [hi1]; split_ifs with h
+    · exact Or.inl ⟨rfl, h⟩
+    · exact Or.inr ⟨rfl, by omega⟩) with ⟨hi1_eq, _⟩ | ⟨hi1_eq, _⟩ <;>
+  simp only [hi1_eq] <;>
+  (split_ifs <;> simp [Fin.ext_iff] <;> omega)
+
+-- f(i,j) ≠ f(i,j+1) when parity flips.
+private lemma f_alt_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
+    (hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2)
+    (i : ZMod d₁) (j : ZMod e₁) :
+    let f : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
+      if i.val = d₁ - 1 ∧ ¬Even d₁ then ⟨1 + j.val % 2, by omega⟩
+      else if i.val % 2 = 0 then ⟨j.val % 2, by omega⟩
+      else ⟨2 * (j.val % 2), by omega⟩
+    f (i, j) ≠ f (i, j + 1) := by
+  intro f; simp only [f]
+  have := hparity j
+  split_ifs <;> simp [Fin.ext_iff] <;> omega
+
+-- Coverage: adjacent cycles cover all 3 colors.
+private lemma color_covers_even (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
+    (hd₁_ge2 : d₁ ≥ 2) (he₁_ge2 : e₁ ≥ 2)
+    (hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2) :
+    let f : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
+      if i.val = d₁ - 1 ∧ ¬Even d₁ then ⟨1 + j.val % 2, by omega⟩
+      else if i.val % 2 = 0 then ⟨j.val % 2, by omega⟩
+      else ⟨2 * (j.val % 2), by omega⟩
+    ∀ i : ZMod d₁, ∀ j₁ j₂ : ZMod e₁, ∀ k : Fin 3,
+      k = f (i, j₁) ∨ k = f (i, j₁ + 1) ∨
+      k = f (i + 1, j₂) ∨ k = f (i + 1, j₂ + 1) := by
+  intro f i j₁ j₂ k
+  -- Either k is not the missing color of cycle i, or it is.
+  by_cases hk : k = missing_color d₁ i
+  · -- k = missing_color(i), so k ≠ missing_color(i+1)
+    have hmiss_ne := missing_color_ne_succ d₁ hd₁_ge2 i
+    have hk_ne : k ≠ missing_color d₁ (i + 1) := by rwa [hk]
+    -- f(i+1, j₂) and f(i+1, j₂+1) are distinct and both ≠ missing_color(i+1)
+    have h_ne := f_alt_color d₁ e₁ hparity (i + 1) j₂
+    have h_ne1 := f_ne_missing_color d₁ e₁ (i + 1) j₂
+    have h_ne2 := f_ne_missing_color d₁ e₁ (i + 1) (j₂ + 1)
+    rcases fin3_eq_of_ne h_ne h_ne1 h_ne2 hk_ne with h | h
+    · exact Or.inr (Or.inr (Or.inl h))
+    · exact Or.inr (Or.inr (Or.inr h))
+  · -- k ≠ missing_color(i), so k appears in {f(i,j₁), f(i,j₁+1)}
+    have h_ne := f_alt_color d₁ e₁ hparity i j₁
+    have h_ne1 := f_ne_missing_color d₁ e₁ i j₁
+    have h_ne2 := f_ne_missing_color d₁ e₁ i (j₁ + 1)
+    rcases fin3_eq_of_ne h_ne h_ne1 h_ne2 hk with h | h
+    · exact Or.inl h
+    · exact Or.inr (Or.inl h)
+
 /-- Subcase (2a): e1 is even.
     Cycles are colored with alternating 01/02 patterns. -/
 lemma case_two_e1_even (hm : m ≥ 289)
@@ -739,7 +845,204 @@ lemma case_two_e1_even (hm : m ≥ 289)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
     (he1_even : Even (m / Nat.gcd b.natAbs m)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  sorry
+  set d₁ := Nat.gcd b.natAbs m with hd₁_def
+  set e₁ := m / d₁ with he₁_def
+  have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
+  have hd₁_pos : 0 < d₁ := Nat.pos_of_ne_zero (by intro h; simp [h] at h_min)
+  have he₁_pos : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by omega) hd₁_dvd) hd₁_pos
+  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
+  have he₁_ge2 : e₁ ≥ 2 := by obtain ⟨k, hk⟩ := he1_even; omega
+  haveI : NeZero m := ⟨by omega⟩
+  haveI : NeZero d₁ := ⟨by omega⟩
+  haveI : NeZero e₁ := ⟨by omega⟩
+  -- d₁ divides b (ℤ level)
+  have hd₁_dvd_b : (d₁ : ℤ) ∣ b := by
+    have := Int.gcd_dvd_left b (m : ℤ)
+    simp only [Int.gcd, Int.natAbs_cast] at this; exact this
+  -- b ≡ 0 mod d₁
+  have hb_zero : (Int.cast b : ZMod d₁) = 0 := by
+    rw [ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hd₁_dvd_b
+  -- (b-a) is a unit in ZMod d₁
+  have hba_unit : IsUnit (Int.cast (b - a) : ZMod d₁) :=
+    isUnit_intCast_of_natAbs_coprime (by
+      have h1 : (b - a).natAbs.gcd d₁ ∣ d₁ := Nat.gcd_dvd_right _ _
+      have h2 : (b - a).natAbs.gcd d₁ ∣ (b - a).natAbs.gcd m :=
+        Nat.dvd_gcd (Nat.gcd_dvd_left _ _) (dvd_trans (Nat.gcd_dvd_right _ _) hd₁_dvd)
+      exact Nat.eq_one_of_dvd_one (h_gcd_coprime ▸ Nat.dvd_gcd h1 h2))
+  -- b/d₁ is coprime to e₁
+  obtain ⟨q, hq⟩ := hd₁_dvd_b
+  have hq_cop : Nat.Coprime q.natAbs e₁ := by
+    have hbn : b.natAbs = d₁ * q.natAbs := by
+      rw [hq, Int.natAbs_mul, Int.natAbs_cast]
+    have hq_eq : q.natAbs = b.natAbs / d₁ := by
+      rw [hbn, Nat.mul_div_cancel_left _ hd₁_pos]
+    rw [hq_eq]; exact Nat.coprime_div_gcd_div_gcd hd₁_pos
+  -- e₁ * b ≡ 0 mod m
+  have he₁b_zero : (e₁ : ZMod m) * (Int.cast b : ZMod m) = 0 := by
+    rw [hq]; push_cast
+    rw [show (e₁ : ZMod m) * ((d₁ : ZMod m) * (q : ZMod m)) =
+      ((e₁ * d₁ : ℕ) : ZMod m) * (q : ZMod m) from by push_cast; ring]
+    rw [show (e₁ * d₁ : ℕ) = m from by rw [Nat.mul_comm]; exact hm_eq.symm]
+    simp [ZMod.natCast_self]
+  -- Key lemma: congruence mod e₁ is invisible after ×b in ZMod m
+  have hmod_b : ∀ n₁ n₂ : ℤ, (e₁ : ℤ) ∣ (n₁ - n₂) →
+      (↑n₁ : ZMod m) * ↑b = (↑n₂ : ZMod m) * ↑b := by
+    intro n₁ n₂ ⟨k, hk⟩
+    suffices ((n₁ - n₂ : ℤ) : ZMod m) * ↑b = 0 by
+      rwa [Int.cast_sub, sub_mul, sub_eq_zero] at this
+    rw [hk]; push_cast
+    rw [show (↑e₁ * k : ZMod m) * ↑b = k * ((e₁ : ZMod m) * ↑b) from by ring,
+      he₁b_zero, mul_zero]
+  -- Define the cycle map φ : ZMod d₁ × ZMod e₁ → ZMod m
+  let φ : ZMod d₁ × ZMod e₁ → ZMod m :=
+    fun ⟨i, j⟩ => (i.val : ZMod m) * ↑(b - a) + (j.val : ZMod m) * ↑b
+  -- φ(i, j+1) = φ(i, j) + b
+  have hφ_add_b : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
+      φ (i, j + 1) = φ (i, j) + ↑b := by
+    intro i j; simp only [φ]
+    suffices ((j + 1).val : ZMod m) * (↑b : ZMod m) =
+        (j.val : ZMod m) * ↑b + ↑b by
+      rw [this]; ring
+    rw [show (j.val : ZMod m) * ↑b + ↑b = ((j.val : ℤ) + 1 : ZMod m) * ↑b from by
+      push_cast; ring]
+    have hval : (j + 1).val = (j.val + 1) % e₁ := by
+      rw [ZMod.val_add]; congr 1
+      haveI : Fact (1 < e₁) := ⟨by omega⟩
+      simp [ZMod.val_one]
+    have key := Nat.div_add_mod (j.val + 1) e₁
+    have key_int : (↑e₁ : ℤ) * ↑((j.val + 1) / e₁) + ↑((j.val + 1) % e₁) =
+        ↑j.val + 1 := by exact_mod_cast key
+    have hdvd : (↑e₁ : ℤ) ∣ (↑(j + 1).val : ℤ) - ((↑j.val : ℤ) + 1) := by
+      refine ⟨-↑((j.val + 1) / e₁), ?_⟩
+      have : ((j + 1).val : ℤ) = ↑((j.val + 1) % e₁) := by
+        exact congr_arg (Nat.cast (R := ℤ)) hval
+      linarith
+    exact_mod_cast hmod_b ((j + 1).val : ℤ) ((j.val : ℤ) + 1) hdvd
+  -- Cycle index function α : ZMod m → ZMod d₁
+  obtain ⟨u_ba, hu_ba⟩ := hba_unit
+  let α : ZMod m → ZMod d₁ :=
+    fun x => ZMod.castHom hd₁_dvd (ZMod d₁) x * u_ba⁻¹
+  -- α(x + b) = α(x)
+  have hα_b : ∀ x, α (x + ↑b) = α x := by
+    intro x; simp only [α, map_add, map_intCast, hb_zero, add_zero]
+  -- α(x + (b-a)) = α(x) + 1
+  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 := by
+    intro x; simp only [α, map_add, map_intCast, add_mul]
+    rw [← hu_ba]; ring_nf; rw [u_ba.inv_mul]; ring
+  -- α(φ(i, j)) = i
+  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i := by
+    intro i j; simp only [α, φ]
+    rw [map_add, map_mul, map_mul, map_natCast, map_intCast, map_natCast, map_intCast,
+      hb_zero, mul_zero, add_zero, mul_assoc]
+    rw [← hu_ba]; rw [u_ba.mul_inv]; rw [mul_one]; simp [ZMod.natCast_val]
+  -- φ is injective
+  have hφ_inj : Function.Injective φ := by
+    intro ⟨i₁, j₁⟩ ⟨i₂, j₂⟩ h
+    have hi : i₁ = i₂ := by
+      have h1 := hα_φ i₁ j₁; have h2 := hα_φ i₂ j₂
+      rw [h] at h1; exact h1.symm.trans h2
+    subst hi; congr 1
+    have hj_eq : (↑j₁.val : ZMod m) * ↑b = (↑j₂.val : ZMod m) * ↑b :=
+      add_left_cancel (show (↑i₁.val : ZMod m) * ↑(b - a) + _ = _ + _ from h)
+    have h_dvd : (m : ℤ) ∣ ((j₁.val : ℤ) - j₂.val) * b := by
+      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+      have : ((j₁.val : ZMod m) - (j₂.val : ZMod m)) * (↑b : ZMod m) = 0 := by
+        rw [sub_mul]; exact sub_eq_zero.mpr hj_eq
+      convert this using 1; push_cast; ring
+    have h_dvd2 : (e₁ : ℤ) ∣ ((j₁.val : ℤ) - j₂.val) * q := by
+      rw [hq] at h_dvd
+      have : (d₁ : ℤ) * (e₁ : ℤ) ∣ (d₁ : ℤ) * (((j₁.val : ℤ) - j₂.val) * q) := by
+        convert h_dvd using 1
+        · push_cast; linarith [hm_eq]
+        · ring
+      exact (mul_dvd_mul_iff_left (by positivity : (d₁ : ℤ) ≠ 0)).mp this
+    have h_nat : e₁ ∣ ((j₁.val : ℤ) - j₂.val).natAbs := by
+      have h1 : e₁ ∣ (((j₁.val : ℤ) - j₂.val) * q).natAbs := by
+        rwa [← Int.natCast_dvd_natCast, Int.dvd_natAbs]
+      rw [Int.natAbs_mul] at h1
+      exact hq_cop.symm.dvd_of_dvd_mul_right h1
+    have h_bound : ((j₁.val : ℤ) - j₂.val).natAbs < e₁ := by
+      have := j₁.val_lt (n := e₁)
+      have := j₂.val_lt (n := e₁)
+      omega
+    have h_zero := Nat.eq_zero_of_dvd_of_lt h_nat h_bound
+    have h_eq : j₁.val = j₂.val := by
+      rwa [Int.natAbs_eq_zero, sub_eq_zero, Nat.cast_inj] at h_zero
+    exact ZMod.val_injective e₁ h_eq
+  -- φ is bijective
+  have hφ_bij : Function.Bijective φ :=
+    (Fintype.bijective_iff_injective_and_card φ).mpr
+      ⟨hφ_inj, by simp [Fintype.card_prod, ZMod.card, hm_eq]⟩
+  let Φ := Equiv.ofBijective φ hφ_bij
+  -- Φ.symm(x+b) = (same_i, j+1)
+  have hΦ_add_b : ∀ x : ZMod m,
+      (Φ.symm (x + ↑b)).1 = (Φ.symm x).1 ∧
+      (Φ.symm (x + ↑b)).2 = (Φ.symm x).2 + 1 := by
+    intro x
+    have key := hφ_add_b (Φ.symm x).1 (Φ.symm x).2
+    change Φ ((Φ.symm x).1, (Φ.symm x).2 + 1) = Φ (Φ.symm x) + ↑b at key
+    rw [Equiv.apply_symm_apply] at key
+    suffices h : Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) from
+      ⟨(Prod.ext_iff.mp h).1, (Prod.ext_iff.mp h).2⟩
+    rw [← key, Equiv.symm_apply_apply]
+  -- (Φ.symm x).1 = α x
+  have hΦ_cycle : ∀ x : ZMod m, (Φ.symm x).1 = α x := by
+    intro x
+    have h := hα_φ (Φ.symm x).1 (Φ.symm x).2
+    change α (Φ (Φ.symm x)) = (Φ.symm x).1 at h
+    rw [Equiv.apply_symm_apply] at h
+    exact h.symm
+  -- Color table: last odd cycle uses {1,2}, even cycles use {0,1}, odd non-last use {0,2}
+  have hd₁_ge2 : d₁ ≥ 2 := by
+    have := Nat.min_le_left (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m)
+    omega
+  let f : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
+    if i.val = d₁ - 1 ∧ ¬Even d₁ then ⟨1 + j.val % 2, by omega⟩
+    else if i.val % 2 = 0 then ⟨j.val % 2, by omega⟩
+    else ⟨2 * (j.val % 2), by omega⟩
+  -- Parity flips: j.val % 2 ≠ (j+1).val % 2
+  have hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2 :=
+    parity_flip_even e₁ he1_even he₁_ge2
+  -- f(i,j) ≠ f(i,j+1)
+  have hf_alt : ∀ i : ZMod d₁, ∀ j : ZMod e₁, f (i, j) ≠ f (i, j + 1) := by
+    intro i j; simp only [f]
+    have := hparity j
+    split_ifs <;> simp [Fin.ext_iff] <;> omega
+  -- Coverage: adjacent cycles cover all 3 colors
+  have hf_covers : ∀ i : ZMod d₁, ∀ j₁ j₂ : ZMod e₁, ∀ k : Fin 3,
+      k = f (i, j₁) ∨ k = f (i, j₁ + 1) ∨
+      k = f (i + 1, j₂) ∨ k = f (i + 1, j₂ + 1) :=
+    color_covers_even d₁ e₁ hd₁_ge2 he₁_ge2 hparity
+  -- Define coloring and prove polychromaticity
+  let χ : ZMod m → Fin 3 := f ∘ Φ.symm
+  refine ⟨χ, fun n k => ?_⟩
+  simp only [zmod_set, Finset.image_insert, Finset.image_singleton,
+    Finset.mem_insert, Finset.mem_singleton]
+  set p := Φ.symm n; set i := p.1; set j := p.2
+  set j' := (Φ.symm (n + ↑(b - a))).2
+  have hχ_n : χ n = f (i, j) := rfl
+  have hχ_nb : χ (n + ↑b) = f (i, j + 1) := by
+    change f (Φ.symm (n + ↑b)) = f (i, j + 1)
+    rw [show Φ.symm (n + ↑b) = (i, j + 1) from
+      Prod.ext (hΦ_add_b n).1 (hΦ_add_b n).2]
+  have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') := by
+    change f (Φ.symm (n + ↑(b - a))) = f (i + 1, j')
+    have h : Φ.symm (n + ↑(b - a)) = (i + 1, j') :=
+      Prod.ext (by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]) rfl
+    rw [h]
+  have hχ_n2ba : χ (n + ↑(2 * b - a)) = f (i + 1, j' + 1) := by
+    change f (Φ.symm (n + ↑(2 * b - a))) = f (i + 1, j' + 1)
+    have h2ba : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by push_cast; ring
+    rw [h2ba]
+    have h : Φ.symm ((n + ↑(b - a)) + ↑b) = (i + 1, j' + 1) :=
+      Prod.ext (by rw [(hΦ_add_b _).1, hΦ_cycle, hα_ba, ← hΦ_cycle])
+        (hΦ_add_b _).2
+    rw [h]
+  rcases hf_covers i j j' k with h | h | h | h
+  · exact ⟨0, by simp, by rw [add_zero, hχ_n, h]⟩
+  · exact ⟨↑b, by simp, by rw [hχ_nb, h]⟩
+  · exact ⟨↑(b - a), by simp, by rw [hχ_nba, h]⟩
+  · exact ⟨↑(2 * b - a), by simp, by rw [hχ_n2ba, h]⟩
 
 /-- Subcase (2b): d1 is even and e1 is odd.
     Cycles use modified alternating patterns (ending in 11 or 02). -/
