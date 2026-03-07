@@ -363,19 +363,16 @@ coprimality and the flip reduction.
 
 ## Computational Verification
 
-The original paper's included C++ code did not terminate after three days of running. A manual
-proof was reportedly written in John Goldwasser's notes, but was never published — it is said to be
-"in one of some non-trivial number of boxes."
+The original paper included a C++ program for verifying the small cases, and a manual proof was
+written in John Goldwasser's notes but was never published.
 
-For the formalisation, we took a different approach: certificate-based verification. We do not need
-to trust any search code — we only need to verify that its output (explicit colourings) actually
-works.
+For the formalisation, we took a certificate-based verification approach. We do not need to trust
+any search code — we only need to verify that its output (explicit colourings) actually works.
 
 For quadruples with $`c < 289`, we first search for explicit periodic colourings using C++. This
 algorithm searches for colourings with period $`q` up to 30. For the vast majority of the 900,000
 sets, this succeeds. For the few hundred stubborn cases where a period greater than 30 is necessary,
-the C++ search is too slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find
-colourings instead.
+we use Z3Py (a Python interface to the Z3 SMT solver) to find colourings instead.
 
 Once witnesses are found, Lean verifies them all using three key steps:
 1. *Periodic colourings*: A colouring with period $`q` is represented as a function
