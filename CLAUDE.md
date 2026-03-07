@@ -15,6 +15,7 @@ cd Lean
 lake exe cache get        # REQUIRED before first build — downloads mathlib cache
 lake build                # Build all proofs
 lake build Polychromatic.Main  # Build a single module
+lake env lean Polychromatic/FourThree/Combi.lean  # Fast single-file check (no linking)
 ```
 
 **Always run `lake exe cache get` before building.** Without it, mathlib builds from source (~60+ min).
@@ -125,5 +126,4 @@ When simplifying or shortening Lean proofs:
 
 ## Commit Conventions
 
-- Author: Bhavik Mehta <b-mehta@users.noreply.github.com>
 - Do not include Claude session URLs in commit messages
