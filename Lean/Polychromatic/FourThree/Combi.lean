@@ -465,17 +465,11 @@ lemma case_one_div_g_not_three (g : ℕ)
 
 private lemma color_shift_r (r q : ℕ) :
     ((r + 1) % 3 + (3 - q % 3)) % 3 =
-      ((r % 3 + (3 - q % 3)) % 3 + 1) % 3 := by
-  have : q % 3 = 0 ∨ q % 3 = 1 ∨ q % 3 = 2 := by grind
-  rcases this with h | h | h <;>
-    grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]
+      ((r % 3 + (3 - q % 3)) % 3 + 1) % 3 := by omega
 
 private lemma color_shift_q (r q : ℕ) :
     (r % 3 + (3 - (q + 1) % 3)) % 3 =
-      ((r % 3 + (3 - q % 3)) % 3 + 2) % 3 := by
-  have : q % 3 = 0 ∨ q % 3 = 1 ∨ q % 3 = 2 := by grind
-  rcases this with h | h | h <;>
-    grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]
+      ((r % 3 + (3 - q % 3)) % 3 + 2) % 3 := by omega
 
 private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
     ((k + 3 - s) % 3 = 0 → s = k) ∧
@@ -1590,14 +1584,7 @@ private lemma fin_filter_sum_succ {n : ℕ} (f : Fin n → ℕ) (i : Fin n) :
   have hsplit : Finset.univ.filter (fun k : Fin n => k.val < i.val + 1) =
       Finset.univ.filter (fun k : Fin n => k.val < i.val) ∪ {i} := by
     ext k; simp only [Finset.mem_filter, Finset.mem_univ, true_and,
-      Finset.mem_union, Finset.mem_singleton]
-    constructor
-    · intro hk; by_cases hk' : k.val < i.val
-      · left; exact hk'
-      · right; ext; omega
-    · rintro (hk | hk)
-      · omega
-      · rw [hk]; omega
+      Finset.mem_union, Finset.mem_singleton, Fin.ext_iff]; omega
   rw [hsplit, Finset.sum_union (by
     simp only [Finset.disjoint_left, Finset.mem_filter, Finset.mem_univ, true_and,
       Finset.mem_singleton]; intro k hk hk'; omega), Finset.sum_singleton]
@@ -1607,56 +1594,31 @@ private lemma fin_filter_sum_last {n : ℕ} (f : Fin n → ℕ) (i : Fin n) (hi 
     (hn : 0 < n) :
     (Finset.univ.filter (fun k : Fin n => k.val < i.val)).sum f + f i =
     Finset.univ.sum f := by
-  have hsplit : Finset.univ = Finset.univ.filter (fun k : Fin n => k.val < i.val) ∪ {i} := by
-    ext k; simp only [Finset.mem_univ, true_iff, Finset.mem_union, Finset.mem_filter,
-      Finset.mem_singleton]
-    by_cases hk : k.val < i.val
-    · left; exact ⟨trivial, hk⟩
-    · right; ext; omega
-  conv_rhs => rw [hsplit]
-  rw [Finset.sum_union (by
-    simp only [Finset.disjoint_left, Finset.mem_filter, Finset.mem_univ, true_and,
-      Finset.mem_singleton]; intro k hk hk'; omega), Finset.sum_singleton]
+  rw [← fin_filter_sum_succ f i]; congr 1; ext k; simp [Finset.mem_filter, hi]; omega
 
 -- Position arithmetic helpers for case2d_coloring_works
-
-/-- (a + b % n) % n = (a + b) % n -/
-private lemma mod_add_right' (a b n : ℕ) :
-    (a + b % n) % n = (a + b) % n := by
-  rw [Nat.add_mod, Nat.mod_mod_of_dvd b (dvd_refl n), ← Nat.add_mod]
-
-/-- (a % n + b) % n = (a + b) % n -/
-private lemma mod_add_left' (a b n : ℕ) :
-    (a % n + b) % n = (a + b) % n := by
-  rw [Nat.add_mod, Nat.mod_mod_of_dvd a (dvd_refl n), ← Nat.add_mod]
 
 /-- Position shift by 1: adding 1 to Fin coordinate shifts position by 1 mod e₁. -/
 private lemma pos_shift_one {n : ℕ} [NeZero n] (j : Fin n) (c : ℕ) :
     ((j + 1 : Fin n).val + c) % n = ((j.val + c) % n + 1) % n := by
   rw [Fin.val_add, Fin.val_one',
-    mod_add_right' _ 1, mod_add_left' (j.val + 1) c,
-    mod_add_left' (j.val + c) 1]
+    Nat.add_mod_mod _ 1, Nat.mod_add_mod (j.val + 1) n c,
+    Nat.mod_add_mod (j.val + c) n 1]
   congr 1; omega
 
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
     (j + (S + V) % n) % n = ((j + S % n) % n + V) % n := by
-  calc (j + (S + V) % n) % n
-      = (j + (S + V)) % n := mod_add_right' j (S + V) n
-    _ = (j + S + V) % n := by congr 1; omega
-    _ = ((j + S) % n + V) % n := (mod_add_left' (j + S) V n).symm
-    _ = ((j + S % n) % n + V) % n := by
-        congr 1; exact congrArg (· + V) (mod_add_right' j S n).symm
+  rw [Nat.add_mod_mod, show j + (S + V) = j + S + V from by omega,
+      ← Nat.mod_add_mod (j + S) n V,
+      show (j + S) % n = (j + S % n) % n from (Nat.add_mod_mod j S n).symm]
 
 /-- Wrap case: if (S + V) % n = k₀ % n, then
     (j + k₀) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_wrap' (j S V k₀ n : ℕ)
     (hsum : (S + V) % n = k₀ % n) :
     (j + k₀) % n = ((j + S % n) % n + V) % n := by
-  calc (j + k₀) % n
-      = (j + k₀ % n) % n := (mod_add_right' j k₀ n).symm
-    _ = (j + (S + V) % n) % n := by rw [hsum]
-    _ = ((j + S % n) % n + V) % n := pos_shift_succ' j S V n
+  rw [← Nat.add_mod_mod j k₀ n, ← hsum, pos_shift_succ']
 
 /-- The coloring for case (2d), connecting to ZMod m. Uses cycle coordinates
     c_{i,j} = i*(b-a) + j*b and the base pattern with rotations. -/
@@ -1741,7 +1703,7 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
           = ((j_new.val + rot i_new) % e₁ + 1) % e₁ :=
             pos_shift_one j_new (rot i_new)
         _ = ((p + vals i) % e₁ + 1) % e₁ := by rw [hpos]
-        _ = (p + vals i + 1) % e₁ := mod_add_left' (p + vals i) 1 e₁
+        _ = (p + vals i + 1) % e₁ := Nat.mod_add_mod (p + vals i) e₁ 1
   by_cases hi : i.val + 1 < d₁
   · -- No-wrap case
     set i' : Fin d₁ := ⟨i.val + 1, hi⟩

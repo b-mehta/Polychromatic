@@ -130,6 +130,18 @@ When simplifying or shortening Lean proofs:
 - **Check for existing lemmas before writing new ones** — before writing a private helper, search for an existing lemma with the same statement. For example, `case2d_ba_unit_d1` (proving `IsUnit` of an `Int.cast` from `Nat.Coprime`) was identical to `isUnit_intCast_of_natAbs_coprime` already defined earlier in the file. `Nat.Coprime a b` unfolds to `Nat.gcd a b = 1`, so lemmas taking one form accept the other.
 - **Use `suffices` to deduplicate symmetric case splits** — when a `by_cases` produces two branches with identical downstream proof structure (e.g. the same `rcases` dispatch), use `suffices ∃ ..., P ∧ Q` to extract the common proof into the `suffices` block, then have each branch of the `by_cases` only produce the witness. This avoids copy-pasting the dispatch logic. Applied in `case2d_coloring_works` to unify wrap/no-wrap branches.
 
+## Golfing Process Tips
+
+When golfing Lean proofs, the following approaches work best (ordered by impact):
+
+1. **Replace private helpers with mathlib lemmas** — use `lean_loogle` with the type signature to find exact matches. This eliminates definitions and simplifies all downstream callers. Example: `mod_add_right'` → `Nat.add_mod_mod`.
+2. **Derive lemmas from each other** — look at what's already proven nearby and build on it rather than reproving from scratch. Example: `fin_filter_sum_last` can be derived from `fin_filter_sum_succ` in one line.
+3. **Factor duplicated proof blocks** — read the code for identical multi-line blocks and hoist shared proofs. Example: identical `hba` proofs in two branches of a `rcases`.
+4. **`lean_multi_attempt` for tactic replacement** — test 2–3 alternatives at once. Works well for single-tactic replacements (e.g. `omega` replacing `have; rcases; grind`). Does NOT work for replacing multi-line `have`/`calc` blocks.
+5. **Remove unused parameters** — grep for `_h` prefix to find them quickly.
+6. **Unit cancellation in `ZMod`** — `mul_right_cancel₀` does NOT work on `ZMod d₁` (not an integral domain for composite `d₁`). Instead use `congr_arg (· * ↑u⁻¹)` then `simp [mul_assoc, u.mul_inv, mul_one]`.
+7. **Use the LSP, not `lake env lean`** — `lean_diagnostic_messages` is much faster for verifying individual edits than rebuilding the whole file.
+
 ## Commit Conventions
 
 - Do not include Claude session URLs in commit messages
