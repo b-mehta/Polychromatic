@@ -190,11 +190,9 @@ lemma exists_finite_of_le [DecidableEq G] {k m : ℕ} (X : Finset G) {S : Finset
 /-- If the set size satisfies the polychromatic colouring bound for `k` colours, then the set
 admits a `k`-polychromatic colouring. This combines the Local Lemma (for finite sets) with
 the Rado selection principle (to extend to all of `G`). -/
--- ANCHOR: exists_of_le
 lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (hk : k ≠ 0)
     (hkm : polychromColouringBound k m) :
     HasPolychromColouring (Fin k) S := by
--- ANCHOR_END: exists_of_le
   classical
   have (X : Finset G) : ∃ χ : G → Fin k, ∀ x ∈ X, ∀ (c : Fin k), ∃ i ∈ x +ᵥ S, χ i = c :=
     exists_finite_of_le X hm hm₂ hk hkm
@@ -310,10 +308,8 @@ lemma condition_of_mul_sq {k m : ℕ} (hm : 3 * k ^ 2 ≤ m) :
   norm_num
 
 /-- For sets of size at least `3k²`, a `k`-colouring exists. -/
--- ANCHOR: exists_colouring_of_sq_le
 theorem exists_colouring_of_sq_le {S : Finset G} {k : ℕ} (hk : k ≠ 0) (hm : 3 * k ^ 2 ≤ #S) :
     HasPolychromColouring (Fin k) S := by
--- ANCHOR_END: exists_colouring_of_sq_le
   refine exists_of_le rfl ?_ hk (condition_of_mul_sq hm)
   have : 1 ≤ k := by lia
   grw [← hm, ← this]

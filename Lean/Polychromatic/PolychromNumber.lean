@@ -38,10 +38,8 @@ open Finset Fintype Pointwise
 /-- The polychromatic number of a finite set `S`, defined as the supremum of all `n`
 such that there exists a `Fin n`-valued `S`-polychromatic colouring. -/
 noncomputable
--- ANCHOR: polychromNumber
 def polychromNumber (S : Finset G) : ℕ :=
   sSup {n | HasPolychromColouring (Fin n) S}
--- ANCHOR_END: polychromNumber
 
 /-- The polychromatic number is invariant under translation. -/
 lemma polychromNumber_vadd [DecidableEq G] {n : G} :
@@ -93,9 +91,7 @@ lemma hasPolychromColouring_fin_of_le {n : ℕ}
   hasPolychromColouring_of_card_le (hK := Fin.pos_iff_nonempty.1 (by grind)) <| by simpa
 
 /-- The polychromatic number is at most `|S|`. -/
--- ANCHOR: polychromNumber_le_card
 lemma polychromNumber_le_card : polychromNumber S ≤ #S := by
--- ANCHOR_END: polychromNumber_le_card
   obtain rfl | hS' := S.eq_empty_or_nonempty
   · simp
   simpa using (hasPolychromColouring_fin hS').card_le
@@ -236,10 +232,8 @@ private lemma polychromNumber_pair_aux [DecidableEq G] [IsAddTorsionFree G] {x :
   simp
 
 /-- A pair has polychromatic number 2 (in torsion-free groups). -/
--- ANCHOR: polychromNumber_pair
 @[simp] lemma polychromNumber_pair [DecidableEq G] [IsAddTorsionFree G] {x y : G} (hxy : x ≠ y) :
     polychromNumber {x, y} = 2 := by
--- ANCHOR_END: polychromNumber_pair
   have := polychromNumber_pair_aux (x := y - x) (by simpa [sub_eq_zero, eq_comm] using hxy)
   rwa [← polychromNumber_vadd (n := x), Finset.vadd_finset_insert, Finset.vadd_finset_singleton,
     vadd_eq_add, add_zero, vadd_eq_add, add_sub_cancel] at this
@@ -286,9 +280,7 @@ example : polychromNumber (G := ℤ) {0, 1, 5} = 3 := by
     simp
 
 /-- The specific set `{0, 1, 3}` has polychromatic number 2. -/
--- ANCHOR: polychromNumber_three_eq_two
 lemma polychromNumber_three_eq_two : polychromNumber (G := ℤ) {0, 1, 3} = 2 := by
--- ANCHOR_END: polychromNumber_three_eq_two
   set S : Finset ℤ := {0, 1, 3}
   refine le_antisymm ?hard ?easy
   case easy =>
