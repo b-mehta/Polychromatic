@@ -92,7 +92,7 @@ lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
         _ = (m : ℤ) := by rw [hm]
         _ = 0 := by simp
     rw [this, sub_add_eq_add_sub, ← two_mul]
-    ext i; simp; grind
+    ext i; grind
   rw [this, polychromNumber_vadd]
 
 /-- The set {0, b-a, b, 2b-a} is symmetric in the two repeated differences b and b-a:
@@ -291,7 +291,7 @@ variable (m : ℕ)
     Handled by the table constructions in subcase (1c). -/
 lemma case_one_small_g (g : ℕ) (hm : m ≥ 289) (hg : g ∈ ({2, 3, 4} : Finset ℕ)) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  fin_cases hg <;> push_cast <;> norm_num
+  fin_cases hg <;> push_cast <;> grind
   · exact table1_0123 m (by grind)
   · exact table1_0134 m (by grind)
   · exact table1_0145 m (by grind)
