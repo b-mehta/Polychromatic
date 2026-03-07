@@ -862,7 +862,7 @@ private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2
   rw [zmod_val_add_one e he2 j]
   obtain ⟨k, hk⟩ := he
   have := j.val_lt (n := e)
-  split_ifs <;> omega
+  split_ifs <;> grind
 
 -- The coloring function for the even-parity cycle decomposition (Case 2a).
 -- Each cycle uses two colors that alternate with parity; the last cycle (when d₁ is
@@ -957,7 +957,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   have he₁_ge2 : e₁ ≥ 2 := by
     have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by omega) hd₁_dvd) hd₁_pos
-    obtain ⟨k, hk⟩ := he1_even; omega
+    obtain ⟨k, hk⟩ := he1_even; grind
   haveI : NeZero m := ⟨by omega⟩
   haveI : NeZero d₁ := ⟨by omega⟩
   haveI : NeZero e₁ := ⟨by omega⟩
@@ -1082,7 +1082,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
     rw [Equiv.apply_symm_apply] at h; exact h.symm
   have hd₁_ge2 : d₁ ≥ 2 := by
     have := Nat.min_le_left (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m)
-    omega
+    grind
   have hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2 :=
     parity_flip_even e₁ he1_even he₁_ge2
   -- Define coloring and prove polychromaticity
