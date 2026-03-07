@@ -363,18 +363,16 @@ coprimality and the flip reduction.
 
 ## Computational Verification
 
-The original paper's included C++ code did not terminate after three days of running. A manual
-proof was reportedly written in John Goldwasser's notes, but was never published — it is said to be
-"in one of some non-trivial number of boxes."
+The original paper included a C++ program for verifying the small cases, and a manual proof was
+written in John Goldwasser's notes but was never published.
 
-For the formalisation, we took a different approach: certificate-based verification. We do not need
-to trust any search code — we only need to verify that its output (explicit colourings) actually
-works.
+For the formalisation, we took a certificate-based verification approach. We do not need to trust
+any search code — we only need to verify that its output (explicit colourings) actually works.
 
 For quadruples with $`c < 289`, we first search for explicit periodic colourings using C++. This
 algorithm searches for colourings with period $`q` up to 30. For the vast majority of the 900,000
-sets, this succeeds. For the few hundred stubborn cases where a period greater than 30 is necessary,
-the C++ search is too slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find
+sets, this succeeds. For the few hundred cases where a larger period is necessary, the C++ search
+becomes relatively slow, so we use Z3Py (a Python interface to the Z3 SMT solver) to find
 colourings instead.
 
 Once witnesses are found, Lean verifies them all using three key steps:
@@ -404,9 +402,9 @@ theorem final_result (S : Finset ℤ) (hS : S.card = 4) :
     HasPolychromColouring (Fin 3) S :=
 ```
 
-# Formalization Reflections
+# Formalisation Reflections
 
-The proof draws on probability, topology, and calculus — all formalized using
+The proof draws on probability, topology, and calculus — all formalised using
 [mathlib](https://github.com/leanprover-community/mathlib4), Lean's mathematical library.
 Probability theory, measure theory, and combinatorics all live in the same system and can be
 composed directly: we apply the Local Lemma to a uniform probability measure, use topological
