@@ -614,8 +614,8 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 1 (g + 1)
       (by simp) (by simp) (by simp) rfl
       (by rw [hcv1]; exact color_shift_r r q)
-      (by have : v + (g + 1) = v + g + 1 := by ring
-          rw [this, hcvg1]; exact color_shift_q r q)
+      (by rw [show v + (g + 1) = v + g + 1 from by ring, hcvg1]
+          exact color_shift_q r q)
 
 /-- Subcase (1d) assembled: dispatches on `g % 3` and `m ∈ {3g, 3g+3}` (paper §4.1). -/
 lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3 * g + 3) :
@@ -973,11 +973,10 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hmod_b : ∀ n₁ n₂ : ℤ, (e₁ : ℤ) ∣ (n₁ - n₂) →
       (↑n₁ : ZMod m) * ↑b = (↑n₂ : ZMod m) * ↑b := by
     intro n₁ n₂ ⟨k, hk⟩
-    suffices ((n₁ - n₂ : ℤ) : ZMod m) * ↑b = 0 by
-      rwa [Int.cast_sub, sub_mul, sub_eq_zero] at this
-    rw [hk]; push_cast
-    have : (↑e₁ * k : ZMod m) * ↑b = k * ((e₁ : ZMod m) * ↑b) := by ring
-    rw [this, he₁b_zero, mul_zero]
+    have : ((n₁ - n₂ : ℤ) : ZMod m) * ↑b = 0 := by
+      rw [hk]; push_cast; rw [show (↑e₁ * k : ZMod m) * ↑b =
+        k * ((e₁ : ZMod m) * ↑b) from by ring, he₁b_zero, mul_zero]
+    rwa [Int.cast_sub, sub_mul, sub_eq_zero] at this
   -- Define the cycle map φ : ZMod d₁ × ZMod e₁ → ZMod m
   let φ : ZMod d₁ × ZMod e₁ → ZMod m :=
     fun ⟨i, j⟩ => (i.val : ZMod m) * ↑(b - a) + (j.val : ZMod m) * ↑b
@@ -1022,9 +1021,8 @@ lemma case_two_e1_even (hm : m ≥ 289)
       add_left_cancel (h : (↑i₁.val : ZMod m) * ↑(b - a) + _ = _ + _)
     have h_dvd : (m : ℤ) ∣ ((j₁.val : ℤ) - j₂.val) * b := by
       rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-      have : ((j₁.val : ZMod m) - (j₂.val : ZMod m)) * (↑b : ZMod m) = 0 := by
-        rw [sub_mul]; exact sub_eq_zero.mpr hj_eq
-      convert this using 1; push_cast; ring
+      have := sub_eq_zero.mpr hj_eq
+      convert this using 1 <;> push_cast <;> ring
     have h_dvd2 : (e₁ : ℤ) ∣ ((j₁.val : ℤ) - j₂.val) * q := by
       rw [hq] at h_dvd
       exact (mul_dvd_mul_iff_left (by positivity : (d₁ : ℤ) ≠ 0)).mp (by
@@ -1146,10 +1144,9 @@ lemma zmod_set_card_eq_four {a b : ℤ} {m : ℕ}
   unfold zmod_set
   -- Helper: two integers in [0, m) that cast to the same ZMod m element must be equal
   have hne : ∀ x y : ℤ, 0 ≤ x → x < ↑m → 0 ≤ y → y < ↑m → x ≠ y →
-      (x : ZMod m) ≠ (y : ZMod m) := by
-    intro x y hx1 hx2 hy1 hy2 hxy h
-    exact hxy (by rwa [ZMod.intCast_eq_intCast_iff', Int.emod_eq_of_lt hx1 hx2,
-                        Int.emod_eq_of_lt hy1 hy2] at h)
+      (x : ZMod m) ≠ (y : ZMod m) := fun _ _ hx1 hx2 hy1 hy2 hxy h =>
+    hxy (by rwa [ZMod.intCast_eq_intCast_iff', Int.emod_eq_of_lt hx1 hx2,
+                  Int.emod_eq_of_lt hy1 hy2] at h)
   have ne01 := hne 0 (b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
   have ne02 := hne 0 b (by grind) (by grind) (by grind) (by grind) (by grind)
   have ne03 := hne 0 (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
@@ -1168,26 +1165,20 @@ lemma gcd_coprime_of_gcd_abc {a b c : ℤ} {m : ℕ}
     (hm : (m : ℤ) = c - a + b) (hgcd : Finset.gcd {a, b, c} id = 1) :
     (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1 := by
   set d := (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) with hd_def
-  -- d divides b.natAbs, (b-a).natAbs, and m (as natural numbers)
-  have hd_dvd_b : d ∣ b.natAbs :=
-    (Nat.gcd_dvd_left _ (Nat.gcd _ _)).trans (Nat.gcd_dvd_left _ _)
-  have hd_dvd_m : d ∣ m :=
-    (Nat.gcd_dvd_left _ (Nat.gcd _ _)).trans (Nat.gcd_dvd_right _ _)
-  have hd_dvd_ba : d ∣ (b - a).natAbs :=
-    (Nat.gcd_dvd_right (Nat.gcd _ _) _).trans (Nat.gcd_dvd_left _ _)
-  -- Lift to integer divisibility
-  have hd_b : (d : ℤ) ∣ b := Int.natCast_dvd.mpr hd_dvd_b
-  have hd_m : (d : ℤ) ∣ ↑m := Int.natCast_dvd_natCast.mpr hd_dvd_m
-  have hd_ba : (d : ℤ) ∣ (b - a) := Int.natCast_dvd.mpr hd_dvd_ba
-  -- d | a = b - (b - a)
+  -- d divides b, (b-a), and m (lifted to ℤ)
+  have hd_b : (d : ℤ) ∣ b := Int.natCast_dvd.mpr
+    ((Nat.gcd_dvd_left _ (Nat.gcd _ _)).trans (Nat.gcd_dvd_left _ _))
+  have hd_m : (d : ℤ) ∣ ↑m := Int.natCast_dvd_natCast.mpr
+    ((Nat.gcd_dvd_left _ (Nat.gcd _ _)).trans (Nat.gcd_dvd_right _ _))
+  have hd_ba : (d : ℤ) ∣ (b - a) := Int.natCast_dvd.mpr
+    ((Nat.gcd_dvd_right (Nat.gcd _ _) _).trans (Nat.gcd_dvd_left _ _))
+  -- d | a and d | c follow from d | b, d | (b-a), d | m
   have hd_a : (d : ℤ) ∣ a := by
     have : a = b - (b - a) := by ring
     rw [this]; exact dvd_sub hd_b hd_ba
-  -- d | c = m - b + a  (from m = c - a + b)
   have hd_c : (d : ℤ) ∣ c := by
     have : (c : ℤ) = ↑m - b + a := by grind
     rw [this]; exact dvd_add (dvd_sub hd_m hd_b) hd_a
-  -- (d : ℤ) divides each element of {a, b, c}, hence divides Finset.gcd {a, b, c} id = 1
   have hd_dvd_gcd : (d : ℤ) ∣ Finset.gcd {a, b, c} id :=
     Finset.dvd_gcd (fun x hx => by
       simp only [Finset.mem_insert, Finset.mem_singleton] at hx
