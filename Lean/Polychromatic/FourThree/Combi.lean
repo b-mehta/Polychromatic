@@ -874,7 +874,19 @@ private lemma basePattern_consec_pair {e₁ j : ℕ}
     (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁) :
     intervalColors (whichInterval e₁ j) ⊆
       {basePattern e₁ j, basePattern e₁ ((j + 1) % e₁)} := by
-  sorry
+  by_cases hsame : whichInterval e₁ j = whichInterval e₁ ((j + 1) % e₁)
+  · -- Same interval: j+1 < e₁ (otherwise wrap changes interval)
+    have hj1 : j + 1 < e₁ := by
+      by_contra h
+      push_neg at h
+      have : j = e₁ - 1 := by omega
+      subst this
+      rw [show e₁ - 1 + 1 = e₁ from by omega, Nat.mod_self] at hsame
+      simp only [whichInterval, case2d_u, case2d_v] at hsame
+      split_ifs at hsame <;> omega
+    rw [Nat.mod_eq_of_lt hj1]
+    exact (basePattern_consec_same_interval (by rwa [Nat.mod_eq_of_lt hj1] at hsame)).ge
+  · exact (basePattern_consec_boundary he hge hj hsame).ge
 
 /-- A rotation by r ∈ [u, e₁-u] moves to a different interval:
     whichInterval(j) ≠ whichInterval((j + r) % e₁). -/
@@ -953,7 +965,22 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
     (he1_odd : Odd (m / Nat.gcd b.natAbs m))
     (he1_ge : m / Nat.gcd b.natAbs m ≥ 19) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  sorry
+  set d₁ := Nat.gcd b.natAbs m with hd1_def
+  set e₁ := m / d₁ with he1_def
+  have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
+  have hd1_pos : 0 < d₁ := by omega
+  have he1_pos : 0 < e₁ := by omega
+  have hm_pos : 0 < m := by omega
+  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd1_dvd).symm
+  have hd1_gt1 : d₁ > 1 := by omega
+  -- Case split on 3 ∣ d₁
+  by_cases h3 : 3 ∣ d₁
+  · -- Swap b ↔ (b-a): zmod_set m (-a) (b-a) = zmod_set m a b
+    -- After swap, new d₁' = gcd((b-a).natAbs, m) with ¬(3 ∣ d₁').
+    -- Dispatch to the appropriate case 2 sublemma on the swapped set.
+    rw [← zmod_set_swap m a b]
+    sorry
+  · sorry
 
 /-- Subcase (2d): d1 and e1 are both odd, with e1 ≥ 19.
     Uses "rotating" colorings based on partitioning e1 = u + v + w. -/
