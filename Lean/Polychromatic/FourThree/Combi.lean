@@ -1094,7 +1094,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
     have h := hα_φ (Φ.symm x).1 (Φ.symm x).2
     change α (Φ (Φ.symm x)) = _ at h
     rw [Equiv.apply_symm_apply] at h; exact h.symm
-  have hd₁_ge2 : d₁ ≥ 2 := by grind
+  have hd₁_ge2 : d₁ ≥ 2 := by omega
   have hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2 :=
     parity_flip_even e₁ he1_even he₁_ge2
   -- Define coloring and prove polychromaticity
