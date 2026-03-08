@@ -1,193 +1,165 @@
-# Case 1b: Interval Coloring — Detailed Informal Proof
+# Case 1b: Interval Coloring — Detailed Proof for Formalization
 
 ## Setup
 
-We work in Z_m = {0, 1, ..., m-1} with the set S = {0, 1, g, g+1}.
+We work in `ℕ` with positions in `[0, m)`. The set is `S = {0, 1, g, g+1}`.
 
-**Hypotheses:**
-- s > 0 is a multiple of 3
-- ceil(m/s) < g (i.e., (m + s - 1) / s < g)
-- g < 2 * floor(m/s)
+**Parameters:**
+- `s > 0` with `3 ∣ s`
+- `q = m / s`, `r = m % s`, so `m = s*q + r` with `0 ≤ r < s`
+- `⌈m/s⌉ = (m + s - 1) / s < g` (lower bound)
+- `g < 2q` (upper bound)
+- These imply: `q ≥ 1`, `s ≥ 3`, `g + 1 < m`
 
-**Goal:** Construct a 3-polychromatic coloring of Z_m for the set S.
+**Interval partition:**
+- `bd = r * (q + 1)` (boundary between long and short intervals)
+- First `r` intervals have length `q + 1`, remaining `s - r` have length `q`
+- `bd ≤ m` since `r*(q+1) + (s-r)*q = sq + r = m`
 
-## Definitions
+**Interval index and offset for position `p < m`:**
+- If `p < bd`: `idx(p) = p / (q+1)`, `off(p) = p % (q+1)`
+- If `p ≥ bd`: `idx(p) = r + (p - bd) / q`, `off(p) = (p - bd) % q`
 
-Let q = floor(m/s) and r = m mod s. We partition {0, ..., m-1} into s consecutive
-intervals: the first r intervals have length q+1, the remaining s-r have length q.
-We have m = r*(q+1) + (s-r)*q = s*q + r.
+**Coloring:**
+- `c(p) = (idx(p % m) + off(p % m) % 2) % 3`
 
-**Interval start positions:**
-- Interval j starts at position `start(j) = j*q + min(j, r)`.
+**Goal:** For all `v < m` and `k < 3`, there exists `a ∈ {0, 1, g, g+1}` with `c(v + a) = k`.
 
-**Interval index function:**
-- `idx(p)` = the unique j in {0, ..., s-1} such that start(j) <= p < start(j+1).
-- Concretely: if p < r*(q+1), then idx(p) = p/(q+1); else idx(p) = r + (p - r*(q+1))/q.
+Since `c` is periodic mod `m` (by definition), `c(v + a) = c((v + a) % m)`.
 
-**Coloring function:**
-- `color(p) = (idx(p) + offset(p) mod 2) mod 3`
-  where `offset(p) = p - start(idx(p))` is the position within the interval.
+## Detailed Proof
 
-This produces the pattern described in the paper:
-- Interval 0: alternating colors 0, 1, 0, 1, ...
-- Interval 1: alternating colors 1, 2, 1, 2, ...
-- Interval 2: alternating colors 2, 0, 2, 0, ...
-- Interval 3: alternating colors 0, 1, 0, 1, ... (repeats since s is a multiple of 3)
+### Step 1: Top-level case split on `v < bd`
 
-## Lemma Sequence
+We split on whether `v < bd` (v is in the long-interval region) or `v ≥ bd` (short-interval region). In each branch, `idx(v)` and `off(v)` simplify to concrete division/mod expressions.
 
-### Lemma 1: Basic interval arithmetic
+### Step 2: Within each branch, determine straddling of pair 1
 
-**Statement:** Under the hypotheses, m >= s, q >= 1, and g >= 2. Moreover,
-ceil(m/s) = q + (if r > 0 then 1 else 0), so ceil(m/s) <= q + 1.
+Pair 1 is `{v, v+1}`. It straddles iff `v` is the last element of its interval:
+- Long interval case (`v < bd`): straddles iff `off(v) = q`, i.e., `v % (q+1) = q`
+- Short interval case (`v ≥ bd`): straddles iff `off(v) = q - 1`, i.e., `(v - bd) % q = q - 1`
 
-**Proof:** From g < 2q we get q >= 1. From g > ceil(m/s) >= 1 we get g >= 2.
-Since m = sq + r and s > 0, m >= s*1 = s. The ceiling formula is standard. ∎
+When NOT straddling: `v+1` is in the same interval, `off(v+1) = off(v) + 1`, and the two colors `c(v)`, `c(v+1)` are `{j₀ % 3, (j₀+1) % 3}` (both consecutive phases).
 
-### Lemma 2: Coloring is well-defined and 3-valued
+When straddling: `v+1` starts the next interval with `off = 0`, so `c(v+1) = (j₀+1) % 3`.
 
-**Statement:** For all p in {0, ..., m-1}, color(p) is in {0, 1, 2}.
+### Step 3: Compute `idx` for the second pair
 
-**Proof:** color(p) is defined as (...) mod 3, which is always in {0, 1, 2}. ∎
+The second pair is `{(v+g) % m, (v+g+1) % m}`.
 
-### Lemma 3: Coloring is periodic mod m
+**Sub-case split on wrapping:** Since `v < m` and `g < 2q ≤ 2m/3 < m` (because `s ≥ 3`), we have `v + g < 2m`. So `(v+g) % m = v+g` if `v+g < m`, or `v+g-m` if `v+g ≥ m`.
 
-**Statement:** For all p in N, color(p mod m) = color(p) when we extend
-the interval structure cyclically.
+### Step 4: Gap bound (the key arithmetic)
 
-**Proof:** Since the intervals partition {0, ..., m-1}, positions are taken mod m.
-The coloring depends only on the position mod m. More precisely, for the
-formalization we define color on {0, ..., m-1} and evaluate at p mod m. ∎
+We need: `idx((v+g) % m)` differs from `idx(v)` by 1 or 2 (cyclically mod s).
 
-### Lemma 4: Same-interval pair gets both colors
+**Proof sketch:** The start position of interval `j` is `start(j) = j*q + min(j, r)`.
+- `start(j+1) - start(j) = q + (1 if j < r else 0)` = length of interval `j`.
+- Max interval length = `q + 1` (when `r > 0`), min = `q`.
 
-**Statement:** If p and p+1 are both in interval j (i.e., idx(p) = idx(p+1) = j),
-then {color(p), color(p+1)} = {j mod 3, (j+1) mod 3}.
+Since `g > ⌈m/s⌉ ≥ q + (1 if r > 0 else 0) ≥ len(j₀)`:
+  - `v + g ≥ start(j₀) + g > start(j₀) + len(j₀) - 1 = start(j₀+1) - 1`
+  - So `v + g ≥ start(j₀ + 1)`, meaning `(v+g) % m` is NOT in interval `j₀`.
 
-**Proof:** Let d = offset(p). Then offset(p+1) = d+1 (since both are in the
-same interval). We have:
-- color(p) = (j + d mod 2) mod 3
-- color(p+1) = (j + (d+1) mod 2) mod 3 = (j + (1 - d mod 2)) mod 3
+Since `g < 2q ≤ len(j₀+1) + len(j₀+2)` (sum of any 2 interval lengths ≥ 2q):
+  - `v + g < start(j₀+1) + len(j₀+1) + len(j₀+2) - 1 = start(j₀+3) - 1`... wait.
 
-Since d mod 2 and 1 - d mod 2 are 0 and 1 in some order, the two colors are
-j mod 3 and (j+1) mod 3. ∎
+More precisely: `v < start(j₀+1)`, so `v + g < start(j₀+1) + g ≤ start(j₀+1) + 2q - 1`. And `start(j₀+3) - start(j₀+1) = len(j₀+1) + len(j₀+2) ≥ 2q`. So `v + g < start(j₀+1) + 2q ≤ start(j₀+3) + 1`... hmm, need to be more careful.
 
-### Lemma 5: Boundary pair analysis
+Actually: `v + g ≤ (start(j₀+1) - 1) + (2q - 1) = start(j₀+1) + 2q - 2`. And `start(j₀+3) = start(j₀+1) + len(j₀+1) + len(j₀+2) ≥ start(j₀+1) + 2q`. So `v + g ≤ start(j₀+1) + 2q - 2 < start(j₀+3)`. ✓
 
-**Statement:** If p is the last element of interval j (idx(p) = j) and p+1 is
-the first element of interval j+1 (idx(p+1) = (j+1) mod s), then:
-- color(p+1) = ((j+1) mod s) mod 3 = (j+1) mod 3 (since s is a multiple of 3)
-- color(p) = (j + (len_j - 1) mod 2) mod 3, where len_j is the length of interval j.
+Combined: `start(j₀+1) ≤ (v+g) % m < start(j₀+3)` (cyclically). So `idx((v+g) % m) ∈ {(j₀+1) % s, (j₀+2) % s}`.
 
-In particular, the pair {p, p+1} always includes color (j+1) mod 3. If len_j is
-odd, the pair gets both {j mod 3, (j+1) mod 3}; if len_j is even, both elements
-have color (j+1) mod 3.
+### Step 5: Phase difference from `3 | s`
 
-**Proof:** At position p+1 = start(j+1), the offset is 0, so color = ((j+1) + 0) mod 3.
-At position p = start(j) + len_j - 1, the offset is len_j - 1, so
-color = (j + (len_j - 1) mod 2) mod 3.
-- If len_j is odd: (len_j - 1) mod 2 = 0, color(p) = j mod 3.
-- If len_j is even: (len_j - 1) mod 2 = 1, color(p) = (j+1) mod 3. ∎
+Since `idx((v+g) % m) ∈ {(j₀+1) % s, (j₀+2) % s}` and `3 | s`:
+- `((j₀+1) % s) % 3 = (j₀+1) % 3 ≠ j₀ % 3` (by `Nat.mod_mod_of_dvd`)
+- `((j₀+2) % s) % 3 = (j₀+2) % 3 ≠ j₀ % 3`
 
-### Lemma 6: Separation — pairs are in different intervals
+So `idx(v) % 3 ≠ idx((v+g) % m) % 3`.
 
-**Statement:** For any position v in {0, ..., m-1}, the interval indices of
-v and (v + g) mod m differ. More precisely, if v and v+1 are in intervals j0
-(and possibly j0+1), then (v+g) mod m and (v+g+1) mod m are NOT in interval j0.
+### Step 6: No double straddling
 
-**Proof:** Each interval has length at most ceil(m/s) = q + (1 if r > 0 else 0).
-Since g > ceil(m/s), the distance g exceeds the length of any single interval.
-Thus, v and v + g cannot be in the same interval (they are more than one full
-interval length apart). ∎
+Claim: At most one of the two pairs straddles.
 
-### Lemma 7: Gap bound — second pair within 2 intervals of first
+**Proof:** Suppose pair 1 straddles at boundary j₀/j₀+1. Then `v = start(j₀+1) - 1` and `v+1 = start(j₀+1)`.
 
-**Statement:** If v is in interval j0, then (v+g) mod m is in interval j0+1
-or j0+2 (indices mod s), provided v + g < m (non-wrapping case). The same
-holds cyclically when wrapping.
+Now `(v+g) % m = (start(j₀+1) - 1 + g) % m`. Since `g > ceil(m/s) ≥ len(j₀+1)`, we have:
+- `v + g ≥ start(j₀+1) - 1 + len(j₀+1) = start(j₀+2) - 1`
+- `v + g + 1 ≥ start(j₀+2)`
 
-**Proof:** Since g < 2q, the position v + g is at most 2q - 1 positions ahead
-of v. Since v is in interval j0 (starting at start(j0)), v + g < start(j0) +
-ceil(m/s) + 2q - 1. We need to show this is before start(j0 + 3).
+And from step 4, `(v+g+1) % m < start(j₀+3)`. Since `start(j₀+2) ≤ (v+g) % m` and `(v+g+1) % m < start(j₀+3)`, and `start(j₀+2)` to `start(j₀+3)` is exactly interval `j₀+2`, both elements of pair 2 are in interval `(j₀+2) % s`. So pair 2 does NOT straddle.
 
-start(j0+3) - start(j0) = sum of 3 interval lengths >= 3q.
-And ceil(m/s) + 2q - 1 <= (q+1) + 2q - 1 = 3q.
+(Symmetric argument for pair 2 straddling implies pair 1 doesn't.)
 
-So v + g < start(j0) + 3q <= start(j0 + 3), meaning (v+g) mod m is in
-I_{j0}, I_{j0+1}, or I_{j0+2}. By Lemma 6, it's not in I_{j0}.
-So it's in I_{j0+1} or I_{j0+2}. ∎
+### Step 7: Coverage — Case A (neither pair straddles)
 
-### Lemma 8: No simultaneous straddling
+Pair 1 in interval `j₀` gives colors `{j₀ % 3, (j₀+1) % 3}` (by Step 2).
+Pair 2 in interval `jg` gives colors `{jg % 3, (jg+1) % 3}`.
+Since `j₀ % 3 ≠ jg % 3` (Step 5), the union of two sets of consecutive mod-3 values with different phases covers `{0, 1, 2}`.
 
-**Statement:** The pairs {v, v+1} and {(v+g) mod m, (v+g+1) mod m} cannot
-both straddle interval boundaries.
+**Proof of coverage fact:** If `a % 3 ≠ b % 3`, then `{a%3, (a+1)%3} ∪ {b%3, (b+1)%3} = {0,1,2}`. This is `two_pairs_cover` — proven by case-splitting on `a%3 ∈ {0,1,2}`, `b%3 ∈ {0,1,2}`, `k ∈ {0,1,2}`.
 
-**Proof:** Suppose pair 1 ({v, v+1}) straddles I_j and I_{j+1}, meaning v is
-the last element of I_j and v+1 is the first element of I_{j+1}.
+### Step 8: Coverage — Case B (pair 1 straddles)
 
-Then (v+1) + (g-1) = v + g. Since g > ceil(m/s) >= len(I_{j+1}), we have
-g - 1 >= len(I_{j+1}), so v + g >= (v+1) + len(I_{j+1}) = start(I_{j+2}).
+Pair 1 contributes at least `(j₀+1) % 3` (Step 2, straddling case).
+By Step 6, pair 2 doesn't straddle and is in interval `(j₀+2) % s`.
+Pair 2 gives `{(j₀+2) % 3, (j₀+3) % 3} = {(j₀+2) % 3, j₀ % 3}`.
+Together: `{j₀ % 3, (j₀+1) % 3, (j₀+2) % 3} = {0, 1, 2}`. ✓
 
-Also, v + g + 1 <= v + 2q = (v+1) + 2q - 1. And
-start(I_{j+3}) = start(I_{j+1}) + len(I_{j+1}) + len(I_{j+2}) >= (v+1) + 2q.
-So v + g + 1 <= start(I_{j+3}) - 1 + 1 = start(I_{j+3}).
+### Step 9: Coverage — Case C (pair 2 straddles)
 
-More precisely, v + g + 1 <= (v+1) + 2q - 1 < (v+1) + len(I_{j+1}) + len(I_{j+2})
-= start(I_{j+3}), since len(I_{j+1}) + len(I_{j+2}) >= 2q.
+Symmetric to Case B. Pair 2 contributes `(jg+1) % 3`. Pair 1 doesn't straddle and gives `{j₀ % 3, (j₀+1) % 3}`. Since `jg ∈ {j₀+1, j₀+2}` (mod s), `(jg+1) % 3` completes the coverage.
 
-So both v+g and v+g+1 are in interval I_{j+2}. Pair 2 does NOT straddle.
+### Step 10: Assembly via `endgame_witness`
 
-By a symmetric argument (subtracting g), if pair 2 straddles, pair 1 doesn't. ∎
+In each case, identify 3 witnesses `a₀, a₁, a₂ ∈ {0, 1, g, g+1}` giving colors `s`, `(s+1)%3`, `(s+2)%3` for some `s < 3`. Apply `endgame_witness` to get the existential.
 
-### Lemma 9: Color coverage in each case
+## Proposed Lemma Decomposition for Lean
 
-**Statement:** For any v in {0, ..., m-1}, the set
-  {color(v), color(v+1 mod m), color(v+g mod m), color(v+g+1 mod m)}
-contains all of {0, 1, 2}.
+### Lemma 1: `idx_lt` — idx is in range
+For `p < m`: `idx(p) < s`.
 
-**Proof:** We split into three cases.
+### Lemma 2: `off_lt` — off is bounded by interval length
+For `p < m`: if `p < bd` then `off(p) < q + 1`, else `off(p) < q`.
 
-**Case A: Neither pair straddles.**
-Pair 1 = {v, v+1} is within interval I_{j0}, contributing both colors
-{j0 mod 3, (j0+1) mod 3} (by Lemma 4).
-Pair 2 = {v+g, v+g+1} is within interval I_{j_g}, contributing both colors
-{j_g mod 3, (j_g+1) mod 3} (by Lemma 4).
-By Lemma 7, j_g in {j0+1, j0+2} (mod s).
-- If j_g = j0+1: colors = {j0, j0+1} ∪ {j0+1, j0+2} = {j0, j0+1, j0+2} mod 3 = {0,1,2}. ✓
-- If j_g = j0+2: colors = {j0, j0+1} ∪ {j0+2, j0+3} = {j0, j0+1, j0+2, j0} mod 3.
-  Since j0+3 ≡ j0 (mod 3), this is {j0, j0+1, j0+2} mod 3 = {0,1,2}. ✓
+### Lemma 3: `idx_succ_same` — consecutive in same interval
+If `p < m`, `p + 1 < m`, and `off(p) + 1 < len(idx(p))`, then `idx(p+1) = idx(p)` and `off(p+1) = off(p) + 1`.
 
-**Case B: Pair 1 straddles I_j / I_{j+1}, pair 2 doesn't.**
-By Lemma 8, pair 2 is within I_{j+2}.
-Pair 2 contributes {(j+2) mod 3, (j+3) mod 3} = {(j+2) mod 3, j mod 3}.
-Pair 1 contributes at least (j+1) mod 3 (by Lemma 5).
-Union = {j, j+1, j+2} mod 3 = {0,1,2}. ✓
+### Lemma 4: `idx_succ_boundary` — consecutive straddling
+If `p < m` and `off(p) + 1 = len(idx(p))`, then `idx((p+1) % m) = (idx(p) + 1) % s` and `off((p+1) % m) = 0`.
 
-**Case C: Pair 2 straddles, pair 1 doesn't.**
-By the symmetric argument in Lemma 8, pair 1 is within I_{k-1} (where pair 2
-straddles I_k / I_{k+1}).
-Pair 1 contributes {(k-1) mod 3, k mod 3}.
-Pair 2 contributes at least (k+1) mod 3 (by Lemma 5 applied to pair 2).
-Union = {k-1, k, k+1} mod 3 = {0,1,2}. ✓ ∎
+### Lemma 5: `gap_lower` — gap skips at least one interval
+For `v < m`: `idx((v+g) % m) ≠ idx(v)` (mod s).
+
+### Lemma 6: `gap_upper` — gap skips at most two intervals
+For `v < m`: `idx((v+g) % m) ∈ {(idx(v)+1) % s, (idx(v)+2) % s}`.
+
+### Lemma 7: `phase_ne` — phases differ mod 3
+If `j₁ ∈ {(j₀+1)%s, (j₀+2)%s}` and `3 | s`, then `j₁ % 3 ≠ j₀ % 3`.
+
+### Lemma 8: `no_double_straddle` — at most one pair straddles
+If pair 1 straddles at `j₀/j₀+1`, then `idx((v+g) % m) = idx((v+g+1) % m) = (j₀+2) % s`.
+
+### Lemma 9: `two_pairs_cover` — coverage from two non-straddling pairs
+If `a % 3 ≠ b % 3` and `k < 3`, then `k ∈ {a%3, (a+1)%3, b%3, (b+1)%3}`.
 
 ### Lemma 10: Assembly
+Combine lemmas 1–9 via `endgame_witness` + `lift_coloring_witness`.
 
-**Statement:** `HasPolychromColouring (Fin 3) ({0, 1, g, g+1} : Finset (ZMod m))`
+## Key Implementation Notes
 
-**Proof:** Define chi : ZMod m -> Fin 3 by chi(x) = ⟨color(x.val), ...⟩.
-For any n : ZMod m and k : Fin 3, by Lemma 9 applied to v = n.val, there
-exists a in {0, 1, g, g+1} such that color((n.val + a) mod m) = k.val.
-Using the `lift_coloring_witness` infrastructure (already in Combi.lean),
-this lifts to the ZMod m statement. ∎
+1. **The `by_cases h : v < bd` split** should come FIRST in the proof, before reasoning about idx/off. This resolves the conditional in idx/off and makes everything concrete arithmetic.
 
-## Summary of Dependencies
+2. **Within each branch**, idx(v) and off(v) become simple expressions (`v / (q+1)` or `r + (v-bd)/q`) that omega/grind can handle.
 
-```
-Lemma 1 (arithmetic) ─────────────────────────────────┐
-Lemma 2 (well-defined) ───────────────────────────────┤
-Lemma 3 (periodicity) ────────────────────────────────┤
-Lemma 4 (same-interval pair) ─── Lemma 9 (case A) ───┤
-Lemma 5 (boundary pair) ──────── Lemma 9 (case B,C) ──┤── Lemma 10 (assembly)
-Lemma 6 (separation) ─────────── Lemma 7 (gap bound) ─┤
-                                  Lemma 8 (no double) ─┘
-```
+3. **Wrapping:** `v + g < 2m` always (since `g < m`), so `(v+g) % m = v+g` or `v+g-m`. Need a sub-case-split on this.
+
+4. **The gap bound (Lemmas 5-6) is the hardest part.** It requires showing:
+   - Lower bound: the distance `g` exceeds any single interval length (`q+1`)
+   - Upper bound: the distance `g` is less than 2 times the minimum interval length (`2q`)
+   - Converting these to interval index bounds via the start position formula
+
+5. **`omega` struggles with `3 ∣ s`** in context. Use `obtain ⟨t, ht⟩ := hs3; subst ht` only at the moment needed (e.g., Lemma 7), not globally. For arithmetic that doesn't need `3|s`, keep `hs3` abstract.
+
+6. **Lemma 7 (`phase_ne`)** needs special care: for the wrapping case where `(j₀+1)%s` wraps around (j₀ = s-1), use `Nat.mul_add_mod` after rewriting `s-1 = 3*(t-1) + 2` etc.

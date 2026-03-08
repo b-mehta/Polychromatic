@@ -295,6 +295,47 @@ lemma case_one_small_g (g : ℕ) (hm : m ≥ 289) (hg : g ∈ ({2, 3, 4} : Finse
   · exact table1_0134 m (by grind)
   · exact table1_0145 m (by grind)
 
+private lemma mod3_witness' {s k : ℕ} (hs : s < 3) (hk : k < 3) :
+    ((k + 3 - s) % 3 = 0 → s = k) ∧
+    ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
+    ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by grind
+
+private lemma endgame_witness' {g : ℕ} {c : ℕ → ℕ}
+    {v s : ℕ} {k : Fin 3} (hs : s < 3)
+    (a₀ a₁ a₂ : ℕ)
+    (ha₀ : a₀ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (ha₁ : a₁ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (ha₂ : a₂ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (hc₀ : c (v + a₀) = s)
+    (hc₁ : c (v + a₁) = (s + 1) % 3)
+    (hc₂ : c (v + a₂) = (s + 2) % 3) :
+    ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by
+  obtain ⟨h1, h2, h3⟩ := mod3_witness' hs k.isLt
+  set d := (k.val + 3 - s) % 3
+  have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
+  rcases this with h | h | h
+  exacts [⟨a₀, ha₀, hc₀ ▸ h1 h⟩, ⟨a₁, ha₁, hc₁ ▸ h2 h⟩, ⟨a₂, ha₂, hc₂ ▸ h3 h⟩]
+
+/-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
+private lemma lift_coloring_witness' {m g : ℕ} [NeZero m] [Fact (1 < m)]
+    (hg_lt : g + 1 < m) {c : ℕ → ℕ} (hc_lt : ∀ p, c p < 3)
+    (hc_period : ∀ p, c (p % m) = c p)
+    {n : ZMod m} {k : Fin 3}
+    (h : ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (n.val + a) = k.val) :
+    ∃ s ∈ ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)),
+      (⟨c (n + s).val, hc_lt _⟩ : Fin 3) = k := by
+  obtain ⟨a, ha, hca⟩ := h
+  have ha_lt : a < m := by
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
+    rcases ha with rfl | rfl | rfl | rfl <;> grind
+  exact ⟨(a : ZMod m),
+    by simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
+       rcases ha with rfl | rfl | rfl | rfl <;> simp,
+    by ext; change c (n + (a : ZMod m)).val = k.val
+       have : (n + (a : ZMod m)).val = (n.val + a) % m := by
+         rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt]
+       rw [this, hc_period, hca]⟩
+
 /-- Subcase (1b): interval coloring strategy.
     Let s be the smallest multiple of 3 such that g > ⌈m/s⌉. Split Z_m into s
     intervals of lengths ⌊m/s⌋ and ⌈m/s⌉, colored in a repeating 01/12/20
@@ -332,10 +373,15 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
   have hc_period : ∀ p, c (p % m) = c p := by
     intro p; simp only [c]; rw [Nat.mod_mod_of_dvd p (dvd_refl m)]
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
-    lift_coloring_witness hg1_lt_m hc_lt3 hc_period ?_⟩
+    lift_coloring_witness' hg1_lt_m hc_lt3 hc_period ?_⟩
   set v := n.val
   have hv_lt : v < m := ZMod.val_lt n
-  -- We need: ∃ a ∈ {0,1,g,g+1}, c(v+a) = k.val
+  -- The proof requires showing all 3 colors appear in {c(v+a) | a ∈ {0,1,g,g+1}}.
+  -- We handle this via gap bounds and interval phase analysis.
+  -- The key facts (proven with sorry for now, to be filled in):
+  -- 1. Each consecutive pair contributes ≥ 1 color from consecutive phases
+  -- 2. The gap g separates the pairs into different-phase intervals
+  -- 3. Together, all 3 colors are covered
   sorry
 
 /-- Multiplication by a unit in ZMod m is an additive automorphism,
