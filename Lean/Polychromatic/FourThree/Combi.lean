@@ -465,13 +465,11 @@ lemma case_one_div_g_not_three (g : ℕ)
 
 private lemma color_shift_r (r q : ℕ) :
     ((r + 1) % 3 + (3 - q % 3)) % 3 =
-      ((r % 3 + (3 - q % 3)) % 3 + 1) % 3 := by
-  simp only [Nat.add_mod, Nat.mod_mod]; norm_num; grind
+      ((r % 3 + (3 - q % 3)) % 3 + 1) % 3 := by omega
 
 private lemma color_shift_q (r q : ℕ) :
     (r % 3 + (3 - (q + 1) % 3)) % 3 =
-      ((r % 3 + (3 - q % 3)) % 3 + 2) % 3 := by
-  simp only [Nat.add_mod, Nat.mod_mod]; norm_num; grind
+      ((r % 3 + (3 - q % 3)) % 3 + 2) % 3 := by omega
 
 private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
     ((k + 3 - s) % 3 = 0 → s = k) ∧
