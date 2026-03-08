@@ -218,8 +218,14 @@ private lemma ge_mul_of_mod_add_ge {i s r n : ℕ} (hr : 0 < r) (hn : 0 < n)
   have : n - 1 ≤ i / r := by rw [Nat.le_div_iff_mul_le hr]; linarith [mul_comm r (n - 1)]
   nlinarith [Nat.mul_le_mul_left r (show n ≤ i / r + 1 by omega)]
 
-/-! ### Bridge lemmas: connect list indexing to blockColorVal -/
+/-! ### Bridge lemmas
 
+These connect list indexing (`XY[js]?`) to `blockColorVal`: if the list element
+equals the appropriate block element, the list element equals the coloring value.
+-/
+
+/-- If `XY[js]? = A[idx]?` and `p` is in the A-region with `p % |A| = idx`,
+    then `XY[js]? = some (blockColorVal A B h k p)`. -/
 private lemma bcv_eq_A (A B : List (Fin 3)) (h k : ℕ)
     (XY : List (Fin 3)) (js p idx : ℕ)
     (hjs : js < XY.length) (hp : p < A.length * h)
@@ -231,6 +237,8 @@ private lemma bcv_eq_A (A B : List (Fin 3)) (h k : ℕ)
   rw [show p % A.length = idx from hmod, List.getElem?_eq_getElem hidx,
     Option.getD_some]
 
+/-- If `XY[js]? = B[idx]?` and `p` is in the B-region with
+    `(p - |A|*h) % |B| = idx`, then `XY[js]? = some (blockColorVal A B h k p)`. -/
 private lemma bcv_eq_B (A B : List (Fin 3)) (h k : ℕ)
     (XY : List (Fin 3)) (js p idx : ℕ)
     (hjs : js < XY.length) (hp : ¬(p < A.length * h))
@@ -266,8 +274,15 @@ private lemma sub_region_eq {i s r h : ℕ} (hr : 0 < r)
   rw [hQr]
   exact sub_add_eq hjs_ge hdiv
 
-/-! ### Common goal type for each case -/
+/-! ### Common goal type for each case
 
+`CaseGoal A B offsets h k m i` asserts that there exists a block pair `XY` and
+a starting index `j` in `XY` such that `checkLinearPolychrom` passes and every
+offset `s` maps to the correct `blockColorVal` value. Each case lemma below
+produces a `CaseGoal`, and the main theorem dispatches to them.
+-/
+
+/-- The common proof obligation for each case of `blockColor_polychrom`. -/
 private def CaseGoal (A B : List (Fin 3)) (offsets : List ℕ) (h k m i : ℕ) :
     Prop :=
   ∃ (XY : List (Fin 3)) (j : ℕ),
@@ -595,7 +610,7 @@ theorem blockColor_polychrom
 For each set S below, blocks of length r and r+1 are concatenated to produce
 an S-polychromatic 3-coloring of ℤ_m. The Frobenius coin problem ensures
 m can be so expressed when m ≥ r². Polychromaticity follows from
-`blockColor_polychrom` after checking block-pair boundaries by `native_decide`.
+`blockColor_polychrom` after checking block-pair boundaries by `decide`.
 
 These are used in subcases (1a) and (1c) of Main Case 1.
 -/
@@ -634,7 +649,7 @@ private lemma table1_of_blockColor (A B : List (Fin 3)) (offsets : List ℕ)
 lemma table1_0123 (hm : m ≥ 6) :
     HasPolychromColouring (Fin 3) ({0, 1, 2, 3} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,1,2] [0,0,1,2] [0,1,2,3]
-    {0, 1, 2, 3} (by simp) (by simp) (by native_decide) (by native_decide)
+    {0, 1, 2, 3} (by simp) (by simp) (by decide) (by decide)
     hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
     (by intro a; simp; tauto)
 
@@ -642,7 +657,7 @@ lemma table1_0123 (hm : m ≥ 6) :
 lemma table1_0134 (hm : m ≥ 30) :
     HasPolychromColouring (Fin 3) ({0, 1, 3, 4} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,1,2,1,2] [0,0,0,1,2,1,2] [0,1,3,4]
-    {0, 1, 3, 4} (by simp) (by simp) (by native_decide) (by native_decide)
+    {0, 1, 3, 4} (by simp) (by simp) (by decide) (by decide)
     hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
     (by intro a; simp; tauto)
 
@@ -650,7 +665,7 @@ lemma table1_0134 (hm : m ≥ 30) :
 lemma table1_0235 (hm : m ≥ 30) :
     HasPolychromColouring (Fin 3) ({0, 2, 3, 5} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,1,1,2,2] [0,0,0,1,1,2,2] [0,2,3,5]
-    {0, 2, 3, 5} (by simp) (by simp) (by native_decide) (by native_decide)
+    {0, 2, 3, 5} (by simp) (by simp) (by decide) (by decide)
     hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
     (by intro a; simp; tauto)
 
@@ -659,7 +674,7 @@ lemma table1_0235 (hm : m ≥ 30) :
 lemma table1_0347 (hm : m ≥ 72) :
     HasPolychromColouring (Fin 3) ({0, 3, 4, 7} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,0,1,1,1,2,2,2] [0,0,0,0,1,1,1,2,2,2] [0,3,4,7]
-    {0, 3, 4, 7} (by simp) (by simp) (by native_decide) (by native_decide)
+    {0, 3, 4, 7} (by simp) (by simp) (by decide) (by decide)
     hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
     (by intro a; simp; tauto)
 
@@ -668,7 +683,7 @@ lemma table1_0347 (hm : m ≥ 72) :
 lemma table1_0358 (hm : m ≥ 72) :
     HasPolychromColouring (Fin 3) ({0, 3, 5, 8} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,0,1,1,1,2,2,2] [0,0,0,0,1,1,1,2,2,2] [0,3,5,8]
-    {0, 3, 5, 8} (by simp) (by simp) (by native_decide) (by native_decide)
+    {0, 3, 5, 8} (by simp) (by simp) (by decide) (by decide)
     hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
     (by intro a; simp; tauto)
 
@@ -677,13 +692,12 @@ lemma table1_0358 (hm : m ≥ 72) :
 lemma table1_0145 (hm : m ≥ 42) :
     HasPolychromColouring (Fin 3) ({0, 1, 4, 5} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,0,1,2,1,2] [0,0,0,0,1,2,1,2] [0,1,4,5]
-    {0, 1, 4, 5} (by simp) (by simp) (by native_decide) (by native_decide)
+    {0, 1, 4, 5} (by simp) (by simp) (by decide) (by decide)
     hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
     (by intro a; simp; tauto)
 
 end Table1
 
-#exit
 
 /-! ## Main Case 1: Single Cycle (paper §4.1)
 
