@@ -55,7 +55,7 @@ The final assembly is `normal_bit`, which combines both cases.
 | `case_two_e1_even` | (2a) e₁ even | complete |
 | `case_two_d1_even_e1_odd` | (2b) d₁ even, e₁ odd | complete |
 | `case_two_odd_small` | (2c) both odd, e₁ ≤ 17 | sorry |
-| `case_two_odd_large` | (2d) both odd, e₁ ≥ 19 | sorry |
+| `case2d_coloring_works` | (2d) both odd, e₁ ≥ 19 | sorry |
 | `main_case_two` | Case 2 dispatch | complete |
 
 ### Assembly
@@ -876,24 +876,19 @@ private lemma fin3_eq_of_ne {a b c k : Fin 3}
 private lemma f_ne_missing_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     (i : ZMod d₁) (j : ZMod e₁) :
     cycle_coloring d₁ e₁ (i, j) ≠ missing_color d₁ i := by
-  simp only [cycle_coloring, missing_color, Nat.even_iff]
-  split_ifs <;> grind [Fin.ext_iff]
+  grind [cycle_coloring, missing_color, Fin.ext_iff]
 
 -- Adjacent cycles have different missing colors.
 private lemma missing_color_ne_succ (d₁ : ℕ) [NeZero d₁] (hd₁ : d₁ ≥ 2)
     (i : ZMod d₁) : missing_color d₁ i ≠ missing_color d₁ (i + 1) := by
-  simp only [missing_color, zmod_val_add_one d₁ hd₁ i]
-  have hi := i.val_lt (n := d₁)
-  split_ifs <;> grind [Fin.ext_iff]
+  simp only [missing_color, zmod_val_add_one d₁ hd₁ i]; grind [Fin.ext_iff]
 
 -- cycle_coloring(i,j) ≠ cycle_coloring(i,j+1) when parity flips.
 private lemma f_alt_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     (hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2)
     (i : ZMod d₁) (j : ZMod e₁) :
     cycle_coloring d₁ e₁ (i, j) ≠ cycle_coloring d₁ e₁ (i, j + 1) := by
-  simp only [cycle_coloring]
-  have := hparity j
-  split_ifs <;> grind [Fin.ext_iff]
+  grind [cycle_coloring, Fin.ext_iff]
 
 -- Coverage: adjacent cycles cover all 3 colors.
 private lemma color_covers_even (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
@@ -1156,37 +1151,27 @@ private def case2b_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3
 private lemma case2b_even_ne_two (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     (i : ZMod d₁) (j : ZMod e₁) (hi : i.val % 2 = 0) :
     case2b_coloring d₁ e₁ (i, j) ≠ 2 := by
-  simp only [case2b_coloring, hi, ↓reduceIte]
-  split_ifs <;> grind [Fin.ext_iff]
+  grind [case2b_coloring, Fin.ext_iff]
 
 -- Lemma 2: Odd cycles never produce color 1.
 private lemma case2b_odd_ne_one (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     (i : ZMod d₁) (j : ZMod e₁) (hi : i.val % 2 = 1) :
     case2b_coloring d₁ e₁ (i, j) ≠ 1 := by
-  simp only [case2b_coloring]
-  split_ifs <;> grind [Fin.ext_iff]
+  grind [case2b_coloring, Fin.ext_iff]
 
 -- Lemma 3: Every consecutive pair on an even cycle contains color 1.
 private lemma case2b_even_has_one (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     (he₁ : e₁ ≥ 2)
     (i : ZMod d₁) (j : ZMod e₁) (hi : i.val % 2 = 0) :
     case2b_coloring d₁ e₁ (i, j) = 1 ∨ case2b_coloring d₁ e₁ (i, j + 1) = 1 := by
-  simp only [case2b_coloring, hi, ↓reduceIte]
-  have hj := j.val_lt (n := e₁)
-  have hj1 := zmod_val_add_one e₁ he₁ j
-  rw [show (j + 1).val = if j.val + 1 < e₁ then j.val + 1 else 0 from hj1]
-  split_ifs <;> (first | left; grind [Fin.ext_iff] | right; grind [Fin.ext_iff])
+  grind [case2b_coloring, zmod_val_add_one e₁ he₁ j, Fin.ext_iff]
 
 -- Lemma 4: Every consecutive pair on an odd cycle contains color 2.
 private lemma case2b_odd_has_two (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     (he₁ : e₁ ≥ 2)
     (i : ZMod d₁) (j : ZMod e₁) (hi : i.val % 2 = 1) :
     case2b_coloring d₁ e₁ (i, j) = 2 ∨ case2b_coloring d₁ e₁ (i, j + 1) = 2 := by
-  simp only [case2b_coloring]
-  have hj := j.val_lt (n := e₁)
-  have hj1 := zmod_val_add_one e₁ he₁ j
-  rw [show (j + 1).val = if j.val + 1 < e₁ then j.val + 1 else 0 from hj1]
-  split_ifs <;> (first | left; grind [Fin.ext_iff] | right; grind [Fin.ext_iff])
+  grind [case2b_coloring, zmod_val_add_one e₁ he₁ j, Fin.ext_iff]
 
 -- Lemma 5: Even pair is {1,1} only at j = e₁ − 2.
 private lemma case2b_even_degenerate_pos (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
@@ -1195,10 +1180,7 @@ private lemma case2b_even_degenerate_pos (d₁ e₁ : ℕ) [NeZero d₁] [NeZero
     (h1 : case2b_coloring d₁ e₁ (i, j) = 1)
     (h2 : case2b_coloring d₁ e₁ (i, j + 1) = 1) :
     j.val = e₁ - 2 := by
-  simp only [case2b_coloring, hi, ↓reduceIte] at h1 h2
-  have hj := j.val_lt (n := e₁)
-  rw [zmod_val_add_one e₁ (by omega) j] at h2
-  split_ifs at h1 h2 <;> grind [Fin.ext_iff]
+  grind [case2b_coloring, zmod_val_add_one e₁ (by omega : e₁ ≥ 2) j, Fin.ext_iff]
 
 -- Lemma 6: Odd pair is {2,2} only at j = 0. Requires Odd e₁.
 private lemma case2b_odd_degenerate_pos (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
@@ -2030,18 +2012,6 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
       rw [hrot0, Nat.add_zero, ZMod.val_add, Nat.mod_mod_of_dvd _ (dvd_refl e₁)]
       exact pos_shift_wrap' j.val _ (vals i) k₀.val e₁ (by rw [htotal, hvals_sum])
 
-/-- Subcase (2d): d1 and e1 are both odd, with e1 ≥ 19.
-    Uses "rotating" colorings based on partitioning e1 = u + v + w. -/
-lemma case_two_odd_large (hm : m ≥ 289)
-    (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (hd1_odd : Odd (Nat.gcd b.natAbs m))
-    (he1_odd : Odd (m / Nat.gcd b.natAbs m))
-    (he1_ge : m / Nat.gcd b.natAbs m ≥ 19)
-    (h3 : ¬ (3 ∣ Nat.gcd b.natAbs m)) :
-    HasPolychromColouring (Fin 3) (zmod_set m a b) :=
-  case2d_coloring_works hm h_gcd_coprime h_min hd1_odd he1_odd he1_ge h3
-
 -- Mod 3 arithmetic: (a % e₁ + b) % 3 = (a + b) % 3 when 3 ∣ e₁
 private lemma case2c_mod3 {e₁ : ℕ} (h3e : 3 ∣ e₁) (x y : ℕ) :
     (x % e₁ + y) % 3 = (x + y) % 3 := by
@@ -2310,10 +2280,10 @@ lemma main_case_two (hm : m ≥ 289)
                 rw [Nat.gcd_comm] at hcop
                 exact no_both_e_small hm hcop hd₂_gt1 hd₁_gt1
                   hd₂_dvd hd₁_dvd hle he_le
-              exact case_two_odd_large m a'' b'' hm hcop' hmin' hd' ho'
+              exact case2d_coloring_works hm hcop' hmin' hd' ho'
                 he₁'_ge h3d₂
       · have he₁_ge : e₁ ≥ 19 := by grind
-        exact case_two_odd_large m a' b' hm hcop hmin hd₁_odd he₁_odd
+        exact case2d_coloring_works hm hcop hmin hd₁_odd he₁_odd
           he₁_ge h3_nd₁
 
 end Case2_MultipleCycles
