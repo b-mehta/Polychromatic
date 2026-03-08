@@ -130,6 +130,7 @@ When simplifying or shortening Lean proofs:
 - **Check for existing lemmas before writing new ones** — before writing a private helper, search for an existing lemma with the same statement. For example, `case2d_ba_unit_d1` (proving `IsUnit` of an `Int.cast` from `Nat.Coprime`) was identical to `isUnit_intCast_of_natAbs_coprime` already defined earlier in the file. `Nat.Coprime a b` unfolds to `Nat.gcd a b = 1`, so lemmas taking one form accept the other.
 - **Use `suffices` to deduplicate symmetric case splits** — when a `by_cases` produces two branches with identical downstream proof structure (e.g. the same `rcases` dispatch), use `suffices ∃ ..., P ∧ Q` to extract the common proof into the `suffices` block, then have each branch of the `by_cases` only produce the witness. This avoids copy-pasting the dispatch logic. Applied in `case2d_coloring_works` to unify wrap/no-wrap branches.
 
+
 ## Golfing Process Tips
 
 When golfing Lean proofs, the following approaches work best (ordered by impact):
@@ -139,8 +140,9 @@ When golfing Lean proofs, the following approaches work best (ordered by impact)
 3. **Factor duplicated proof blocks** — read the code for identical multi-line blocks and hoist shared proofs. Example: identical `hba` proofs in two branches of a `rcases`.
 4. **`lean_multi_attempt` for tactic replacement** — test 2–3 alternatives at once. Works well for single-tactic replacements (e.g. `omega` replacing `have; rcases; grind`). Does NOT work for replacing multi-line `have`/`calc` blocks.
 5. **Remove unused parameters** — grep for `_h` prefix to find them quickly.
-6. **Unit cancellation in `ZMod`** — `mul_right_cancel₀` does NOT work on `ZMod d₁` (not an integral domain for composite `d₁`). Instead use `congr_arg (· * ↑u⁻¹)` then `simp [mul_assoc, u.mul_inv, mul_one]`.
+6. **Unit cancellation in `ZMod`** — `mul_right_cancel₀` does NOT work on `ZMod d₁` (not an integral domain for composite `d₁`). Instead use `IsUnit.mul_right_cancel` or `IsUnit.mul_left_eq_zero` — these work without integral domain.
 7. **Use the LSP, not `lake env lean`** — `lean_diagnostic_messages` is much faster for verifying individual edits than rebuilding the whole file.
+8. **Use `wlog` for symmetric cases** — when two branches of a case split have identical proof structure with swapped variables, `wlog h : P with H` followed by `exact (H ...).symm` eliminates one branch entirely. Applied in `case2d_orbitMap_j_eq`.
 
 ## Commit Conventions
 
