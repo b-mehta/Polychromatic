@@ -1164,7 +1164,6 @@ private lemma case2b_odd_ne_one (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     (i : ZMod d₁) (j : ZMod e₁) (hi : i.val % 2 = 1) :
     case2b_coloring d₁ e₁ (i, j) ≠ 1 := by
   simp only [case2b_coloring]
-  have : ¬ (i.val % 2 = 0) := by omega
   split_ifs <;> grind [Fin.ext_iff]
 
 -- Lemma 3: Every consecutive pair on an even cycle contains color 1.
@@ -1184,7 +1183,6 @@ private lemma case2b_odd_has_two (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     (i : ZMod d₁) (j : ZMod e₁) (hi : i.val % 2 = 1) :
     case2b_coloring d₁ e₁ (i, j) = 2 ∨ case2b_coloring d₁ e₁ (i, j + 1) = 2 := by
   simp only [case2b_coloring]
-  have : ¬ (i.val % 2 = 0) := by omega
   have hj := j.val_lt (n := e₁)
   have hj1 := zmod_val_add_one e₁ he₁ j
   rw [show (j + 1).val = if j.val + 1 < e₁ then j.val + 1 else 0 from hj1]
@@ -1217,9 +1215,9 @@ private lemma case2b_odd_degenerate_pos (d₁ e₁ : ℕ) [NeZero d₁] [NeZero 
 
 -- Fin 3 helpers for Case 2b.
 private lemma case2b_fin3_eq_one {a : Fin 3} (h0 : a ≠ 0) (h2 : a ≠ 2) : a = 1 := by
-  fin_cases a <;> simp_all
+  grind [Fin.ext_iff]
 private lemma case2b_fin3_eq_two {a : Fin 3} (h0 : a ≠ 0) (h1 : a ≠ 1) : a = 2 := by
-  fin_cases a <;> simp_all
+  grind [Fin.ext_iff]
 
 -- Lemma 9: Coverage — any 2×2 block covers all 3 colors.
 -- Generalized for independent j₁, j₂ with compatibility constraints.
@@ -1503,7 +1501,7 @@ private lemma cover_mod3_general (p₁ p₂ : Fin 3)
     k = ⟨(j₂ + 1 + p₂.val) % 3, Nat.mod_lt _ (by omega)⟩ := by
   by_contra hall; push_neg at hall
   obtain ⟨h1, h2, h3, h4⟩ := hall
-  simp [Fin.ext_iff] at h1 h2 h3 h4; omega
+  grind [Fin.ext_iff]
 
 -- Non-wrap coverage hypothesis: j₁ = j₂, patterns differ → hypothesis holds.
 private lemma case2c_nonwrap_hyp (d₁ k₀ i j : ℕ) (hd₁ : d₁ ≥ 3)
