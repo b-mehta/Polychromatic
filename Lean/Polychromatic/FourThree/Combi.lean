@@ -935,14 +935,9 @@ private lemma addOrderOf_b_eq {m : ℕ} {b : ℤ} {d₁ : ℕ} (hm : 0 < m)
   have key : addOrderOf (b.natAbs : ZMod m) = m / d₁ := by
     rw [ZMod.addOrderOf_coe b.natAbs (by omega), Nat.gcd_comm, hd1_def]
   rcases Int.natAbs_eq b with h | h
-  · have : (b : ZMod m) = (b.natAbs : ZMod m) := by
-      show Int.cast b = Nat.cast b.natAbs
-      conv_lhs => rw [h]; rw [Int.cast_natCast]
-    rw [this]; exact key
-  · have : (b : ZMod m) = -(b.natAbs : ZMod m) := by
-      show Int.cast b = -Nat.cast b.natAbs
-      conv_lhs => rw [h]; rw [Int.cast_neg, Int.cast_natCast]
-    rw [this, addOrderOf_neg]; exact key
+  · rw [show (b : ZMod m) = (b.natAbs : ZMod m) from by rw [h]; simp]; exact key
+  · rw [show (b : ZMod m) = -(b.natAbs : ZMod m) from by rw [h]; simp,
+        addOrderOf_neg]; exact key
 
 private lemma b_zero_mod_d1 {m : ℕ} {b : ℤ} {d₁ : ℕ}
     (hd1_def : Nat.gcd b.natAbs m = d₁) [NeZero d₁] :
@@ -956,15 +951,11 @@ private lemma b_zero_mod_d1 {m : ℕ} {b : ℤ} {d₁ : ℕ}
 private lemma ba_coprime_d1 {m : ℕ} {a b : ℤ} {d₁ : ℕ}
     (hd1_dvd : d₁ ∣ m)
     (h_gcd_coprime : d₁.gcd (Nat.gcd (b - a).natAbs m) = 1) :
-    Nat.Coprime (b - a).natAbs d₁ := by
-  rw [Nat.Coprime]
-  refine Nat.dvd_one.mp ?_
-  calc Nat.gcd (b - a).natAbs d₁
-      _ ∣ Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) :=
-          Nat.dvd_gcd (Nat.gcd_dvd_right _ _)
-            (Nat.dvd_gcd (Nat.gcd_dvd_left _ _)
-              (dvd_trans (Nat.gcd_dvd_right _ _) hd1_dvd))
-      _ = 1 := h_gcd_coprime
+    Nat.Coprime (b - a).natAbs d₁ :=
+  Nat.dvd_one.mp (h_gcd_coprime ▸
+    Nat.dvd_gcd (Nat.gcd_dvd_right _ _)
+      (Nat.dvd_gcd (Nat.gcd_dvd_left _ _)
+        (dvd_trans (Nat.gcd_dvd_right _ _) hd1_dvd)))
 
 private lemma orbitMap_i_eq {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     [NeZero m] [NeZero d₁]
@@ -1331,18 +1322,13 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     Nat.div_pos (Nat.le_of_dvd (by omega) hd₁_dvd) hd₁_pos
   have he₁_ge3 : e₁ ≥ 3 := by
     by_contra h; push_neg at h
-    have he₁_cases : e₁ = 1 ∨ e₁ = 2 := by omega
-    rcases he₁_cases with he₁_eq | he₁_eq
-    · -- e₁ = 1: d₁ = m, so gcd(b-a, m) | d₁, contradicting coprimality
-      have hd₁_eq_m : d₁ = m := by rw [hm_eq, he₁_eq, mul_one]
-      have hba_dvd_d₁ : Nat.gcd (b - a).natAbs m ∣ d₁ :=
-        hd₁_eq_m ▸ Nat.gcd_dvd_right _ _
+    rcases (by omega : e₁ = 1 ∨ e₁ = 2) with he | he
+    · have hba_dvd_d₁ : Nat.gcd (b - a).natAbs m ∣ d₁ := by
+        rw [hm_eq, he, mul_one]; exact Nat.gcd_dvd_right _ _
       have : Nat.gcd (b - a).natAbs m = 1 :=
-        Nat.eq_one_of_dvd_one
-          (h_gcd_coprime ▸ Nat.dvd_gcd hba_dvd_d₁ (dvd_refl _))
+        Nat.eq_one_of_dvd_one (h_gcd_coprime ▸ Nat.dvd_gcd hba_dvd_d₁ (dvd_refl _))
       have := h_min; omega
-    · -- e₁ = 2 contradicts Odd e₁
-      obtain ⟨l, hl⟩ := he1_odd; omega
+    · obtain ⟨l, hl⟩ := he1_odd; omega
   haveI : NeZero m := ⟨by omega⟩
   haveI : NeZero d₁ := ⟨by omega⟩
   haveI : NeZero e₁ := ⟨by omega⟩
@@ -1406,17 +1392,13 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   -- Projection: π(φ(i,j)) = j.val * π(b) since π(b-a) = 0
   haveI : NeZero d₂ := ⟨by omega⟩
   let π : ZMod m → ZMod d₂ := ZMod.castHom hd₂_dvd (ZMod d₂)
-  have hπ_ba_zero : π (↑(b - a)) = 0 := by
-    simp only [π, map_intCast]
-    exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba
   have hπ_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
       π (φ (i, j)) = (j.val : ZMod d₂) * π (↑b) := by
     intro i j; simp only [φ, orbitMap, π, map_add, map_mul, map_natCast, map_intCast]
-    rw [show ((b - a : ℤ) : ZMod d₂) = 0 from by
-      simp only [π, map_intCast] at hπ_ba_zero; exact hπ_ba_zero]; ring
+    rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba]; ring
   -- π(b) is a unit in ZMod d₂
   have hπ_b_unit : IsUnit (π (↑b)) := by
-    show IsUnit ((ZMod.castHom hd₂_dvd (ZMod d₂)) (↑b))
+    change IsUnit ((ZMod.castHom hd₂_dvd (ZMod d₂)) (↑b))
     rw [map_intCast]
     apply isUnit_intCast_of_natAbs_coprime
     -- gcd(b.natAbs, d₂) = 1: since d₂ coprime to d₁, and b = d₁*q with gcd(q,e₁)=1
@@ -1457,14 +1439,9 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     have hd₂_dvd_diff : d₂ ∣ (e₁ - 2) :=
       (ZMod.natCast_eq_zero_iff _ _).mp hval_eq.symm
     have hd₂_dvd_2 : d₂ ∣ 2 := by
-      have h1 : (d₂ : ℤ) ∣ ↑e₁ := Int.natCast_dvd_natCast.mpr hd₂_dvd_e₁
-      have h2 : (d₂ : ℤ) ∣ ↑(e₁ - 2) := Int.natCast_dvd_natCast.mpr hd₂_dvd_diff
-      have h3 := dvd_sub h1 h2
-      have h4 : (↑e₁ : ℤ) - ↑(e₁ - 2) = 2 := by omega
-      rw [h4] at h3; exact Int.natCast_dvd_natCast.mp h3
-    have hd₂_eq2 : d₂ = 2 := by
-      have := Nat.le_of_dvd (by omega) hd₂_dvd_2; omega
-    -- d₂ = 2 divides e₁ → Even e₁. But e₁ is odd: contradiction.
+      have := Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
+      rwa [show e₁ - (e₁ - 2) = 2 from by omega] at this
+    have hd₂_eq2 : d₂ = 2 := by have := Nat.le_of_dvd (by omega) hd₂_dvd_2; omega
     obtain ⟨k, hk⟩ := hd₂_dvd_e₁; obtain ⟨l, hl⟩ := he1_odd
     rw [hd₂_eq2] at hk; omega
   -- π(n) and π(n+(b-a)) give the same ZMod d₂ value
