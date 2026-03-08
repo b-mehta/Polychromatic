@@ -1548,28 +1548,24 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
 -- Pattern assignment for Case 2c, parametrized by k₀ (the wrap shift).
 -- Variant A (k₀ % 3 ≠ 2): even→0, odd→1, last→2.
 -- Variant B (k₀ % 3 = 2): even→0, odd→2, last→1.
-private def case2c_pattern (d₁ k₀ : ℕ) (i : Fin d₁) : Fin 3 :=
-  if i.val = d₁ - 1 ∧ d₁ % 2 = 1 then
+private def case2c_pattern (d₁ k₀ i : ℕ) : Fin 3 :=
+  if i = d₁ - 1 ∧ d₁ % 2 = 1 then
     if k₀ % 3 = 2 then 1 else 2
-  else if i.val % 2 = 0 then 0
+  else if i % 2 = 0 then 0
   else if k₀ % 3 = 2 then 2 else 1
 
 -- Adjacent cycles get different patterns.
-private lemma case2c_pattern_ne_succ (d₁ k₀ : ℕ) (hd₁ : d₁ ≥ 3)
-    (hd₁_odd : Odd d₁) (i : Fin d₁) :
-    case2c_pattern d₁ k₀ i ≠
-    case2c_pattern d₁ k₀ ⟨(i.val + 1) % d₁, Nat.mod_lt _ (by omega)⟩ := by
+private lemma case2c_pattern_ne_succ (d₁ k₀ i : ℕ) (hd₁ : d₁ ≥ 3)
+    (hd₁_odd : Odd d₁) (hi : i < d₁) :
+    case2c_pattern d₁ k₀ i ≠ case2c_pattern d₁ k₀ ((i + 1) % d₁) := by
   simp only [case2c_pattern]
   obtain ⟨k, hk⟩ := hd₁_odd; subst hk
-  have hi := i.isLt
   have hk03 : k₀ % 3 = 0 ∨ k₀ % 3 = 1 ∨ k₀ % 3 = 2 := by omega
-  by_cases hw : i.val + 1 < 2 * k + 1
-  · -- Non-wrap: eliminate nested mod
-    have hmod := Nat.mod_eq_of_lt hw
+  by_cases hw : i + 1 < 2 * k + 1
+  · have hmod := Nat.mod_eq_of_lt hw
     rcases hk03 with h | h | h <;> simp only [h, hmod] <;>
       split_ifs <;> simp [Fin.ext_iff] <;> omega
-  · -- Wrap: i.val = 2k, (i+1) % (2k+1) = 0
-    have hi_eq : i.val = 2 * k := by omega
+  · have hi_eq : i = 2 * k := by omega
     have hmod_self : (2 * k + 1) % (2 * k + 1) = 0 := Nat.mod_self _
     simp only [hi_eq, hmod_self]
     split_ifs <;> simp [Fin.ext_iff] <;> omega
@@ -1588,20 +1584,19 @@ private lemma cover_mod3_general (p₁ p₂ : Fin 3)
   simp [Fin.ext_iff] at h1 h2 h3 h4; omega
 
 -- Non-wrap coverage hypothesis: j₁ = j₂, patterns differ → hypothesis holds.
-private lemma case2c_nonwrap_hyp (d₁ k₀ : ℕ) (hd₁ : d₁ ≥ 3)
-    (hd₁_odd : Odd d₁) (i : Fin d₁) (j : ℕ)
-    (hi : i.val + 1 < d₁) :
+private lemma case2c_nonwrap_hyp (d₁ k₀ i j : ℕ) (hd₁ : d₁ ≥ 3)
+    (hd₁_odd : Odd d₁) (hi : i + 1 < d₁) :
     (j + (case2c_pattern d₁ k₀ i).val) % 3 ≠
-    (j + (case2c_pattern d₁ k₀ ⟨i.val + 1, by omega⟩).val) % 3 := by
+    (j + (case2c_pattern d₁ k₀ (i + 1)).val) % 3 := by
   simp only [case2c_pattern]
   obtain ⟨k, hk⟩ := hd₁_odd; subst hk
   split_ifs <;> simp_all <;> omega
 
 -- Wrap coverage hypothesis: j₂ = j₁ + k₀, pattern chosen to avoid conflict.
-private lemma case2c_wrap_hyp (d₁ k₀ : ℕ) (hd₁ : d₁ ≥ 3)
-    (hd₁_odd : Odd d₁) (j : ℕ) :
-    (j + (case2c_pattern d₁ k₀ ⟨d₁ - 1, by omega⟩).val) % 3 ≠
-    (j + k₀ + (case2c_pattern d₁ k₀ ⟨0, by omega⟩).val) % 3 := by
+private lemma case2c_wrap_hyp (d₁ k₀ j : ℕ) (hd₁ : d₁ ≥ 3)
+    (hd₁_odd : Odd d₁) :
+    (j + (case2c_pattern d₁ k₀ (d₁ - 1)).val) % 3 ≠
+    (j + k₀ + (case2c_pattern d₁ k₀ 0).val) % 3 := by
   obtain ⟨k, hk⟩ := hd₁_odd; subst hk
   simp only [case2c_pattern]
   split_ifs <;> simp_all <;> omega
@@ -2167,25 +2162,24 @@ lemma case_two_odd_small (hm : m ≥ 289)
   haveI : NeZero m := ⟨by omega⟩
   haveI : NeZero d₁ := ⟨by omega⟩
   haveI : NeZero e₁ := ⟨by omega⟩
-  have hord : addOrderOf (b : ZMod m) = e₁ := case2d_addOrderOf_b (by omega) hd1_def
-  have hb_zero : (b : ZMod d₁) = 0 := case2d_b_zero_mod_d1 hd1_def
-  have hba_coprime := case2d_ba_coprime_d1 hd1_dvd (by rwa [hd1_def])
+  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by omega) hd1_def
+  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 hd1_def
+  have hba_coprime := ba_coprime_d1 hd1_dvd (by rwa [hd1_def])
   have hba_unit := isUnit_intCast_of_natAbs_coprime hba_coprime
-  have he1_b_zero : e₁ • (b : ZMod m) = 0 := by
-    rw [← hord]; exact addOrderOf_nsmul_eq_zero _
-  have hbij := case2d_orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord
+  have he1_b_zero : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
+  have hbij := orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord
   set Φ := Equiv.ofBijective _ hbij
   obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq
   have hd1_ge3 : d₁ ≥ 3 := by obtain ⟨k, hk⟩ := hd1_odd; omega
   -- Coloring: χ(x) = (j + pattern(i)) mod 3 where (i,j) = Φ⁻¹(x)
   let χ : ZMod m → Fin 3 := fun x =>
     let coord := Φ.symm x
-    ⟨(coord.2.val + (case2c_pattern d₁ k₀.val coord.1).val) % 3,
+    ⟨(coord.2.val + (case2c_pattern d₁ k₀.val coord.1.val).val) % 3,
      Nat.mod_lt _ (by omega)⟩
   refine ⟨χ, fun n k => ?_⟩
   -- χ at orbit coordinates
-  have hχ_eq : ∀ (i' : Fin d₁) (j' : Fin e₁),
-      χ (Φ (i', j')) = ⟨(j'.val + (case2c_pattern d₁ k₀.val i').val) % 3,
+  have hχ_eq : ∀ (i' : ZMod d₁) (j' : ZMod e₁),
+      χ (Φ (i', j')) = ⟨(j'.val + (case2c_pattern d₁ k₀.val i'.val).val) % 3,
         Nat.mod_lt _ (by omega)⟩ := by
     intro i' j'; simp only [χ, Equiv.symm_apply_apply]
   -- Coordinates of n
@@ -2194,65 +2188,67 @@ lemma case_two_odd_small (hm : m ≥ 289)
   set i := ij.1 with hi_def
   set j := ij.2 with hj_def
   have hij : ij = (i, j) := (Prod.eta ij).symm
-  set p := case2c_pattern d₁ k₀.val i
-  -- Fin e₁ successor: (jj + 1).val = (jj.val + 1) % e₁
-  have hfin_succ : ∀ (jj : Fin e₁),
-      (jj + 1 : Fin e₁).val = (jj.val + 1) % e₁ := by
-    intro jj
-    rw [Fin.val_add, Fin.val_one', Nat.mod_eq_of_lt (by omega : 1 < e₁)]
+  set p := case2c_pattern d₁ k₀.val i.val
+  -- ZMod e₁ successor: (jj + 1).val = (jj.val + 1) % e₁
+  have hzmod_succ : ∀ (jj : ZMod e₁),
+      (jj + 1 : ZMod e₁).val = (jj.val + 1) % e₁ := fun jj => ZMod.val_add_one jj
   -- Shift: n + b = Φ(i, j+1)
   have hΦ_b : Φ (i, j + 1) = n + ((b : ℤ) : ZMod m) := by
-    rw [← hn, hij]; exact (case2d_shift_b he1_b_zero (i, j)).symm
+    rw [← hn, hij]; exact (orbitMap_shift_b he1_b_zero (i, j)).symm
   -- Case split: wrap or non-wrap
   by_cases hi : i.val + 1 < d₁
   · -- Non-wrap case: i+1 < d₁
-    set i' : Fin d₁ := ⟨i.val + 1, hi⟩
-    set p' := case2c_pattern d₁ k₀.val i'
+    set i' := i + 1
+    set p' := case2c_pattern d₁ k₀.val i'.val
     -- Shift: n + (b-a) = Φ(i', j)
     have hΦ_ba : Φ (i', j) = n + ((b - a : ℤ) : ZMod m) := by
-      rw [← hn, hij]; exact (case2d_shift_ba_no_wrap i j hi).symm
+      rw [← hn, hij]; exact (orbitMap_shift_ba i j hi).symm
     -- Shift: n + (2b-a) = Φ(i', j+1)
     have hΦ_2ba : Φ (i', j + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
       have : ((2 * b - a : ℤ) : ZMod m) =
           ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by push_cast; ring
       rw [this, ← add_assoc, ← hΦ_ba]
-      exact (case2d_shift_b he1_b_zero (i', j)).symm
+      exact (orbitMap_shift_b he1_b_zero (i', j)).symm
     -- Coverage hypothesis
-    have hhyp := case2c_nonwrap_hyp d₁ k₀.val hd1_ge3 hd1_odd i j.val hi
+    have hi'_eq : i'.val = i.val + 1 := by
+      rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
+    have hhyp : (j.val + p.val) % 3 ≠ (j.val + p'.val) % 3 := by
+      change (j.val + (case2c_pattern d₁ k₀.val i.val).val) % 3 ≠
+        (j.val + (case2c_pattern d₁ k₀.val i'.val).val) % 3
+      rw [hi'_eq]
+      exact case2c_nonwrap_hyp d₁ k₀.val i.val j.val hd1_ge3 hd1_odd hi
     -- Apply cover_mod3_general
     rcases cover_mod3_general p p' j.val j.val hhyp k with h | h | h | h
     · exact ⟨0, zero_mem_zmod_set m a b,
         by rw [add_zero, ← hn, hij, hχ_eq, h]⟩
     · refine ⟨((b : ℤ) : ZMod m), intCast_b_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_b, hχ_eq, h]; congr 1
-      rw [hfin_succ, case2c_mod3 he1_div3]
+      rw [hzmod_succ, case2c_mod3 he1_div3]
     · exact ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b,
         by rw [← hΦ_ba, hχ_eq, h]⟩
     · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_2ba, hχ_eq, h]; congr 1
-      rw [hfin_succ, case2c_mod3 he1_div3]
+      rw [hzmod_succ, case2c_mod3 he1_div3]
   · -- Wrap case: i = d₁ - 1
-    have hi_eq : i.val = d₁ - 1 := by omega
-    have hi_fin : i = ⟨d₁ - 1, Nat.sub_one_lt (NeZero.ne d₁)⟩ := by
-      ext; exact hi_eq
-    set j' : Fin e₁ := ⟨(j.val + k₀.val) % e₁, Nat.mod_lt _ he1_pos⟩
-    set p₀ := case2c_pattern d₁ k₀.val (0 : Fin d₁)
+    have hi_eq : i.val = d₁ - 1 := by
+      have := i.val_lt (n := d₁); omega
+    set j' : ZMod e₁ := j + k₀
+    set p₀ := case2c_pattern d₁ k₀.val 0
     -- Shift: n + (b-a) = Φ(0, j')
     have hΦ_ba : Φ (0, j') = n + ((b - a : ℤ) : ZMod m) := by
-      rw [← hn, hij, hi_fin]
-      exact (case2d_shift_ba_wrap he1_b_zero k₀ hk₀ j).symm
+      rw [← hn, hij]
+      exact (case2d_shift_ba_wrap he1_b_zero k₀ hk₀ i hi_eq j).symm
     -- Shift: n + (2b-a) = Φ(0, j'+1)
     have hΦ_2ba : Φ (0, j' + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
       have : ((2 * b - a : ℤ) : ZMod m) =
           ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by push_cast; ring
       rw [this, ← add_assoc, ← hΦ_ba]
-      exact (case2d_shift_b he1_b_zero (0, j')).symm
+      exact (orbitMap_shift_b he1_b_zero (0, j')).symm
     -- Coverage hypothesis: (j + p_last) % 3 ≠ (j + k₀ + p₀) % 3
-    have hp_eq : p = case2c_pattern d₁ k₀.val
-        ⟨d₁ - 1, by omega⟩ :=
-      congrArg (case2c_pattern d₁ k₀.val) hi_fin
+    have hp_eq : p = case2c_pattern d₁ k₀.val (d₁ - 1) := by
+      change case2c_pattern d₁ k₀.val i.val = _; rw [hi_eq]
     have hhyp : (j.val + p.val) % 3 ≠ (j.val + k₀.val + p₀.val) % 3 := by
-      rw [hp_eq]; exact case2c_wrap_hyp d₁ k₀.val hd1_ge3 hd1_odd j.val
+      rw [hp_eq]; exact case2c_wrap_hyp d₁ k₀.val j.val hd1_ge3 hd1_odd
     -- Apply cover_mod3_general
     rcases cover_mod3_general p p₀ j.val (j.val + k₀.val) hhyp k
       with h | h | h | h
@@ -2260,13 +2256,19 @@ lemma case_two_odd_small (hm : m ≥ 289)
         by rw [add_zero, ← hn, hij, hχ_eq, h]⟩
     · refine ⟨((b : ℤ) : ZMod m), intCast_b_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_b, hχ_eq, h]; congr 1
-      rw [hfin_succ, case2c_mod3 he1_div3]
+      rw [hzmod_succ, case2c_mod3 he1_div3]
     · refine ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_ba, hχ_eq, h]; congr 1
+      change (j'.val + (case2c_pattern d₁ k₀.val (ZMod.val 0)).val) % 3 =
+        (j.val + k₀.val + p₀.val) % 3
+      rw [ZMod.val_zero, show j'.val = (j.val + k₀.val) % e₁ from ZMod.val_add j k₀]
       exact case2c_mod3 he1_div3 (j.val + k₀.val) p₀.val
     · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_2ba, hχ_eq, h]; congr 1
-      rw [hfin_succ]
+      change ((j' + 1).val + (case2c_pattern d₁ k₀.val (ZMod.val 0)).val) % 3 =
+        (j.val + k₀.val + 1 + p₀.val) % 3
+      rw [ZMod.val_zero, hzmod_succ,
+          show j'.val = (j.val + k₀.val) % e₁ from ZMod.val_add j k₀]
       rw [case2c_mod3 he1_div3 ((j.val + k₀.val) % e₁ + 1) p₀.val]
       rw [show (j.val + k₀.val) % e₁ + 1 + p₀.val =
             (j.val + k₀.val) % e₁ + (1 + p₀.val) by omega,
