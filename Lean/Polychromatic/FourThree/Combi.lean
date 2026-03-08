@@ -1599,8 +1599,7 @@ private lemma basePattern_consec_boundary {e₁ j : ℕ}
   by_cases hj1_wrap : j + 1 < e₁
   · rw [Nat.mod_eq_of_lt hj1_wrap] at hdiff ⊢
     simp only [basePattern, intervalColors]
-    split_ifs at hdiff ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9
-    all_goals grind
+    grind
   · -- Wrap: j = e₁ - 1
     push_neg at hj1_wrap
     have hj_eq : j = e₁ - 1 := by grind
@@ -1608,8 +1607,7 @@ private lemma basePattern_consec_boundary {e₁ j : ℕ}
     have : e₁ - 1 + 1 = e₁ := by grind
     rw [this, Nat.mod_self] at hdiff ⊢
     simp only [basePattern, intervalColors]
-    split_ifs at hdiff ⊢ with h1 h2 h3 h4 h5 h6 h7 h8 h9
-    all_goals grind
+    grind
 
 /-- Combined: for any j, {basePattern(j), basePattern(j+1 mod e₁)} is the
     interval pair of whichInterval(j). -/
