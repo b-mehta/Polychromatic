@@ -294,13 +294,11 @@ private def CaseGoal (A B : List (Fin 3)) (offsets : List ℕ) (h k m i : ℕ) :
 /-! ### Case 1: No wrap, AA interior -/
 private lemma case_no_wrap_AA (A B : List (Fin 3)) (offsets : List ℕ)
     (h k m i : ℕ)
-    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hA : 0 < A.length)
     (hmaxOff : offsets.foldr max 0 ≤ A.length)
     (hAA : checkLinearPolychrom offsets (A ++ A) = true)
     (hm : A.length * h + B.length * k = m)
-    (hi : i < m)
     (h_no_wrap : i + offsets.foldr max 0 < m)
-    (hA_region : i < A.length * h)
     (h_AA : i + offsets.foldr max 0 < A.length * h) :
     CaseGoal A B offsets h k m i := by
   set maxOff := offsets.foldr max 0
@@ -326,11 +324,9 @@ private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
     (hmaxOff : offsets.foldr max 0 ≤ A.length)
     (hAB : checkLinearPolychrom offsets (A ++ B) = true)
     (hm : A.length * h + B.length * k = m)
-    (hi : i < m)
     (h_no_wrap : i + offsets.foldr max 0 < m)
     (hA_region : i < A.length * h)
-    (h_cross : A.length * h ≤ i + offsets.foldr max 0)
-    (hk_pos : 0 < k) :
+    (h_cross : A.length * h ≤ i + offsets.foldr max 0) :
     CaseGoal A B offsets h k m i := by
   set maxOff := offsets.foldr max 0
   set j := i % A.length
@@ -361,11 +357,10 @@ private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
 /-! ### Case 3: No wrap, BB -/
 private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     (h k m i : ℕ)
-    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hBlen : B.length = A.length + 1)
     (hmaxOff : offsets.foldr max 0 ≤ A.length)
     (hBB : checkLinearPolychrom offsets (B ++ B) = true)
     (hm : A.length * h + B.length * k = m)
-    (hi : i < m)
     (h_no_wrap : i + offsets.foldr max 0 < m)
     (hB_region : A.length * h ≤ i) :
     CaseGoal A B offsets h k m i := by
@@ -393,7 +388,7 @@ private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
 /-! ### Case 4: Wrap, A region (k = 0) -/
 private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
     (h m i : ℕ)
-    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hA : 0 < A.length)
     (hmaxOff : offsets.foldr max 0 ≤ A.length)
     (hAA : checkLinearPolychrom offsets (A ++ A) = true)
     (hm : A.length * h = m)
@@ -497,7 +492,7 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
 /-! ### Case 6: Wrap, B region, h = 0 → BB -/
 private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     (k m i : ℕ)
-    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hBlen : B.length = A.length + 1)
     (hmaxOff : offsets.foldr max 0 ≤ A.length)
     (hBB : checkLinearPolychrom offsets (B ++ B) = true)
     (hm : B.length * k = m)
@@ -518,8 +513,8 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
       add_lt_of_mod_add_lt (by grind) (by grind) hjs_lt
     rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
     exact bcv_eq_B A B 0 k _ _ _ _ (by simp; grind)
-      (by simp [mul_zero])
-      (by simp [mul_zero]; exact add_mod_of_lt (by grind) hjs_lt)
+      (by omega)
+      (by simp only [mul_zero, tsub_zero]; exact add_mod_of_lt (by grind) hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
   · push_neg at hjs_lt
     have his_ge : m ≤ i + s := by
@@ -535,8 +530,8 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
       exact sub_region_eq (by grind) hk_lo (by grind) hjs_lt
     have hjs_idx : j + s - B.length < B.length := by grind
     refine bcv_eq_B A B 0 k _ _ _ _ (by simp; grind)
-      (by simp [mul_zero])
-      (by simp [mul_zero]
+      (by omega)
+      (by simp only [mul_zero, tsub_zero]
           rw [hmod, Nat.mod_eq_of_lt
             (by grind : i + s - m < B.length), hsub_eq])
       hjs_idx ?_
@@ -570,17 +565,17 @@ theorem blockColor_polychrom
   by_cases h_wrap : i + maxOff < m
   · by_cases hA_region : i < A.length * h
     · by_cases h_cross : i + maxOff < A.length * h
-      · exact case_no_wrap_AA A B offsets h k m i hA hBlen hmaxOff
-          hAA hm hi h_wrap hA_region h_cross
+      · exact case_no_wrap_AA A B offsets h k m i hA hmaxOff
+          hAA hm h_wrap h_cross
       · push_neg at h_cross
         have hk_pos : 0 < k := by
           by_contra hle; push_neg at hle; have : k = 0 := by grind
           subst this; simp [mul_zero] at hm; grind
         exact case_no_wrap_AB A B offsets h k m i hA hBlen hmaxOff
-          hAB hm hi h_wrap hA_region h_cross hk_pos
+          hAB hm h_wrap hA_region h_cross
     · push_neg at hA_region
-      exact case_no_wrap_BB A B offsets h k m i hA hBlen hmaxOff
-        hBB hm hi h_wrap hA_region
+      exact case_no_wrap_BB A B offsets h k m i hBlen hmaxOff
+        hBB hm h_wrap hA_region
   · push_neg at h_wrap
     by_cases hA_region : i < A.length * h
     · have hk0 : k = 0 := by
@@ -589,7 +584,7 @@ theorem blockColor_polychrom
         have : B.length ≤ B.length * k :=
           Nat.le_mul_of_pos_right _ this; grind
       subst hk0; simp only [mul_zero, add_zero] at hm
-      exact case_wrap_A A B offsets h m i hA hBlen hmaxOff hAA hm
+      exact case_wrap_A A B offsets h m i hA hmaxOff hAA hm
         hi h_wrap hA_region
     · push_neg at hA_region
       have hk_pos : 0 < k := by
@@ -601,7 +596,7 @@ theorem blockColor_polychrom
       · have hh0 : h = 0 := by grind
         subst hh0
         simp only [mul_zero, zero_add] at hm
-        exact case_wrap_BB A B offsets k m i hA hBlen hmaxOff
+        exact case_wrap_BB A B offsets k m i hBlen hmaxOff
           hBB hm hi h_wrap hk_pos
 
 /-! ## Table 1: Block concatenation colorings (paper §4, Table 1)
