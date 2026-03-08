@@ -170,14 +170,8 @@ private lemma hasPolychromColouring_of_cyclic {m : ℕ} [NeZero m] [Fact (1 < m)
 
 /-- Key: offsets in a list are bounded by foldr max. -/
 private lemma le_foldr_max {offsets : List ℕ} {s : ℕ} (hs : s ∈ offsets) :
-    s ≤ offsets.foldr max 0 := by
-  induction offsets with
-  | nil => simp at hs
-  | cons a l ih =>
-    simp only [List.foldr, List.mem_cons] at hs ⊢
-    rcases hs with rfl | hs
-    · exact le_max_left _ _
-    · exact le_trans (ih hs) (le_max_right _ _)
+    s ≤ offsets.foldr max 0 :=
+  List.le_max_of_le' 0 hs le_rfl
 
 /-- If `i % r + s < r`, then `(i + s) % r = i % r + s`. -/
 private lemma add_mod_of_lt {i s r : ℕ} (_hr : 0 < r) (h : i % r + s < r) :
