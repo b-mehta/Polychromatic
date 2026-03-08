@@ -840,7 +840,7 @@ private lemma zmod_val_add_one (d : ℕ) [NeZero d] (hd : d ≥ 2) (i : ZMod d) 
     haveI : Fact (1 < d) := ⟨by grind⟩; simp [ZMod.val_one]
   rw [hival]; split_ifs with h
   · exact Nat.mod_eq_of_lt h
-  · have := i.val_lt (n := d); grind [Nat.mod_self]
+  · grind [Nat.mod_self]
 
 private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2)
     (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by
@@ -870,7 +870,7 @@ private def missing_color (d₁ : ℕ) (i : ZMod d₁) : Fin 3 :=
 private lemma fin3_eq_of_ne {a b c k : Fin 3}
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (hkc : k ≠ c) :
     k = a ∨ k = b := by
-  fin_cases a <;> fin_cases b <;> fin_cases c <;> fin_cases k <;> simp_all
+  grind [Fin.ext_iff]
 
 -- cycle_coloring(i, j) never equals the missing color of cycle i.
 private lemma f_ne_missing_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
@@ -1539,15 +1539,14 @@ private def case2d_v (e₁ : ℕ) : ℕ :=
   if e₁ % 3 = 1 then e₁ / 3 + 1 else e₁ / 3
 
 private lemma case2d_u_odd {e₁ : ℕ} (he : Odd e₁) : Odd (case2d_u e₁) := by
-  simp only [case2d_u]; obtain ⟨k, hk⟩ := he; rw [hk, Nat.odd_iff]; omega
+  simp only [case2d_u]; obtain ⟨k, hk⟩ := he; grind
 
 private lemma case2d_v_odd {e₁ : ℕ} (he : Odd e₁) : Odd (case2d_v e₁) := by
-  simp only [case2d_v]; obtain ⟨k, hk⟩ := he; rw [hk]; split_ifs <;> rw [Nat.odd_iff] <;> omega
+  simp only [case2d_v]; obtain ⟨k, hk⟩ := he; grind
 
 private lemma case2d_w_odd {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 3) :
     Odd (e₁ - case2d_u e₁ - case2d_v e₁) := by
-  simp only [case2d_u, case2d_v]; obtain ⟨k, hk⟩ := he; rw [hk]
-  split_ifs <;> rw [Nat.odd_iff] <;> omega
+  simp only [case2d_u, case2d_v]; obtain ⟨k, hk⟩ := he; grind
 
 private lemma case2d_uv_le {e₁ : ℕ} (hge : e₁ ≥ 19) :
     case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
