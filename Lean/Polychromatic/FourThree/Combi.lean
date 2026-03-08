@@ -102,12 +102,500 @@ lemma zmod_set_swap (m : ℕ) (a b : ℤ) :
   simp only [zmod_set]
   grind
 
+/-! ## Block coloring infrastructure for Table 1
+
+For each set S in Table 1 (paper §4), we define a block-based coloring:
+given blocks A (length r) and B (length r+1), concatenate h copies of A
+followed by k copies of B to color Z_m where m = r·h + (r+1)·k.
+
+The polychromaticity reduces to checking 4 block-pair boundaries (AA, AB, BA, BB),
+which is decidable for concrete blocks. The general theorem `blockColor_polychrom`
+proves that passing these checks implies cyclic polychromaticity.
+-/
+
+/-- Check that every starting position in L (where all offsets fit) hits all 3 colors. -/
+def checkLinearPolychrom (offsets : List ℕ) (L : List (Fin 3)) : Bool :=
+  let maxOff := offsets.foldr max 0
+  (List.range (L.length - maxOff)).all fun i =>
+    ([0, 1, 2] : List (Fin 3)).all fun c =>
+      offsets.any fun s => L[i + s]? == some c
+
+/-- Check all 4 block-pair boundaries for polychromaticity. -/
+def checkBlockPairs (offsets : List ℕ) (A B : List (Fin 3)) : Bool :=
+  checkLinearPolychrom offsets (A ++ A) &&
+  checkLinearPolychrom offsets (A ++ B) &&
+  checkLinearPolychrom offsets (B ++ A) &&
+  checkLinearPolychrom offsets (B ++ B)
+
+/-- Block-based coloring: first `h·|A|` positions use pattern A (cyclically),
+    remaining `k·|B|` positions use pattern B (cyclically). -/
+def blockColorVal (A B : List (Fin 3)) (h k : ℕ) (p : ℕ) : Fin 3 :=
+  if p < A.length * h then
+    (A[p % A.length]?).getD 0
+  else
+    (B[(p - A.length * h) % B.length]?).getD 0
+
+
+private lemma checkLinearPolychrom_spec {offsets : List ℕ} {L : List (Fin 3)}
+    (hcheck : checkLinearPolychrom offsets L = true)
+    {i : ℕ} (hi : i + offsets.foldr max 0 < L.length) (c : Fin 3) :
+    ∃ s ∈ offsets, L[i + s]? = some c := by
+  simp only [checkLinearPolychrom, List.all_eq_true, List.mem_range, List.any_eq_true,
+    beq_iff_eq] at hcheck
+  exact hcheck i (by omega) c (by fin_cases c <;> simp)
+
+/-- Frobenius representation for consecutive block sizes r, r+1:
+    any m ≥ r(r-1) can be written as r·h + (r+1)·k. -/
+private lemma frobenius_consec {rA m : ℕ} (hrA : 1 < rA) (hm : m ≥ rA * (rA - 1)) :
+    ∃ h k, rA * h + (rA + 1) * k = m ∧ 0 < h + k := by
+  obtain ⟨a, b, hab⟩ := Nat.exists_add_mul_eq_of_gcd_dvd_of_mul_pred_le rA (rA + 1) m
+    (by rw [(Nat.coprime_self_add_right.mpr (Nat.coprime_one_right _)).gcd_eq_one]; exact one_dvd _)
+    (by simp [Nat.pred_eq_sub_one]; nlinarith [mul_comm rA (rA - 1)])
+  refine ⟨a, b, by linarith [mul_comm a rA, mul_comm b (rA + 1)], ?_⟩
+  -- a + b = 0 → a = b = 0 → m = 0, but m ≥ rA * (rA - 1) > 0
+  by_contra hle; push_neg at hle
+  have ha0 : a = 0 := by omega
+  have hb0 : b = 0 := by omega
+  subst ha0; subst hb0; simp at hab; subst hab
+  have : 0 < rA * (rA - 1) := Nat.mul_pos (by omega) (by omega)
+  omega
+
+/-- Bridge: a cyclic coloring function yields HasPolychromColouring. -/
+private lemma hasPolychromColouring_of_cyclic {m : ℕ} [NeZero m] [Fact (1 < m)]
+    (c : ℕ → Fin 3) (S : Finset (ZMod m))
+    (hpoly : ∀ n : ZMod m, ∀ k : Fin 3, ∃ a ∈ S, c (n + a).val = k) :
+    HasPolychromColouring (Fin 3) S :=
+  ⟨fun x => c x.val, fun n k => by
+    obtain ⟨a, ha, heq⟩ := hpoly n k
+    exact ⟨a, ha, by change c (n + a).val = k; exact heq⟩⟩
+
+/-- Key: offsets in a list are bounded by foldr max. -/
+private lemma le_foldr_max {offsets : List ℕ} {s : ℕ} (hs : s ∈ offsets) :
+    s ≤ offsets.foldr max 0 := by
+  induction offsets with
+  | nil => simp at hs
+  | cons a l ih =>
+    simp only [List.foldr, List.mem_cons] at hs ⊢
+    rcases hs with rfl | hs
+    · exact le_max_left _ _
+    · exact le_trans (ih hs) (le_max_right _ _)
+
+/-- If `i % r + s < r`, then `(i + s) % r = i % r + s`. -/
+private lemma add_mod_of_lt {i s r : ℕ} (hr : 0 < r) (h : i % r + s < r) :
+    (i + s) % r = i % r + s := by
+  have hs : s < r := by omega
+  rw [Nat.add_mod]
+  rw [Nat.mod_eq_of_lt hs]
+  exact Nat.mod_eq_of_lt h
+
+/-- If `r ≤ i % r + s < 2r`, then `(i + s) % r = i % r + s - r`. -/
+private lemma add_mod_sub {i s r : ℕ} (hr : 0 < r) (hge : r ≤ i % r + s)
+    (hlt : i % r + s < 2 * r) :
+    (i + s) % r = i % r + s - r := by
+  have h1 := Nat.mod_add_div i r
+  have h2 := Nat.mod_lt i hr
+  have key : i + s = (i % r + s - r) + (i / r + 1) * r := by
+    nlinarith [Nat.sub_add_cancel hge, mul_comm r (i / r)]
+  conv_lhs => rw [key]
+  rw [Nat.add_mul_mod_self_right]
+  exact Nat.mod_eq_of_lt (by omega)
+
+/-- If `i < r * n` and `i % r + s < r`, then `i + s < r * n`. -/
+private lemma add_lt_of_mod_add_lt {i s r n : ℕ} (hr : 0 < r)
+    (hi : i < r * n) (h : i % r + s < r) :
+    i + s < r * n := by
+  have h1 := Nat.mod_add_div i r
+  have h2 := Nat.mod_lt i hr
+  have h3 : i / r < n := Nat.div_lt_of_lt_mul hi
+  nlinarith [Nat.mul_le_mul_left r (show i / r + 1 ≤ n by omega)]
+
+/-- If `r * (n-1) ≤ i` and `r ≤ i % r + s`, then `r * n ≤ i + s`. -/
+private lemma ge_mul_of_mod_add_ge {i s r n : ℕ} (hr : 0 < r) (hn : 0 < n)
+    (hi_lo : r * (n - 1) ≤ i) (hge : r ≤ i % r + s) :
+    r * n ≤ i + s := by
+  have := Nat.mod_add_div i r
+  have := Nat.mod_lt i hr
+  have : n - 1 ≤ i / r := by rw [Nat.le_div_iff_mul_le hr]; linarith [mul_comm r (n - 1)]
+  nlinarith [Nat.mul_le_mul_left r (show n ≤ i / r + 1 by omega)]
+
+/-! ### Bridge lemmas: connect list indexing to blockColorVal -/
+
+private lemma bcv_eq_A (A B : List (Fin 3)) (h k : ℕ)
+    (XY : List (Fin 3)) (js p idx : ℕ)
+    (hjs : js < XY.length) (hp : p < A.length * h)
+    (hmod : p % A.length = idx) (hidx : idx < A.length)
+    (hxy : XY[js]? = A[idx]?) :
+    XY[js]? = some (blockColorVal A B h k p) := by
+  rw [hxy, List.getElem?_eq_getElem hidx]
+  simp only [blockColorVal, if_pos hp]
+  rw [show p % A.length = idx from hmod, List.getElem?_eq_getElem hidx,
+    Option.getD_some]
+
+private lemma bcv_eq_B (A B : List (Fin 3)) (h k : ℕ)
+    (XY : List (Fin 3)) (js p idx : ℕ)
+    (hjs : js < XY.length) (hp : ¬(p < A.length * h))
+    (hmod : (p - A.length * h) % B.length = idx) (hidx : idx < B.length)
+    (hxy : XY[js]? = B[idx]?) :
+    XY[js]? = some (blockColorVal A B h k p) := by
+  rw [hxy, List.getElem?_eq_getElem hidx]
+  simp only [blockColorVal, if_neg hp]
+  rw [show (p - A.length * h) % B.length = idx from hmod,
+    List.getElem?_eq_getElem hidx, Option.getD_some]
+
+/-- When `i = j + q` and `j + s ≥ r`, then `i + s - (q + r) = j + s - r`. -/
+private lemma sub_add_eq {i j s r q : ℕ} (hge : r ≤ j + s)
+    (hi : j + q = i) :
+    i + s - (q + r) = j + s - r := by grind
+
+/-- When i is in the last block before boundary `r*h`, and j = i%r:
+    `i + s - r*h = j + s - r`. -/
+private lemma sub_region_eq {i s r h : ℕ} (hr : 0 < r)
+    (hi_lo : r * (h - 1) ≤ i) (hi_hi : i < r * h)
+    (hjs_ge : r ≤ i % r + s) :
+    i + s - r * h = i % r + s - r := by
+  have hmod := Nat.mod_lt i hr
+  have hdiv := Nat.mod_add_div i r
+  have hle : h - 1 ≤ i / r := by
+    rw [Nat.le_div_iff_mul_le hr]; linarith [mul_comm r (h - 1)]
+  have hlt : i / r < h := Nat.div_lt_of_lt_mul (by linarith [mul_comm r h])
+  have hq : i / r = h - 1 := by grind
+  set Q := r * (i / r) with hQ_def
+  have hQr : r * h = Q + r := by
+    rw [hQ_def, hq]
+    conv_lhs => rw [show h = (h - 1) + 1 from by grind, Nat.mul_add, Nat.mul_one]
+  rw [hQr]
+  exact sub_add_eq hjs_ge hdiv
+
+/-! ### Common goal type for each case -/
+
+private def CaseGoal (A B : List (Fin 3)) (offsets : List ℕ) (h k m i : ℕ) :
+    Prop :=
+  ∃ (XY : List (Fin 3)) (j : ℕ),
+    checkLinearPolychrom offsets XY = true ∧
+    j + offsets.foldr max 0 < XY.length ∧
+    ∀ s, s ≤ offsets.foldr max 0 →
+      (XY[j + s]? : Option (Fin 3)) =
+        some (blockColorVal A B h k ((i + s) % m))
+
+/-! ### Case 1: No wrap, AA interior -/
+private lemma case_no_wrap_AA (A B : List (Fin 3)) (offsets : List ℕ)
+    (h k m i : ℕ)
+    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hAA : checkLinearPolychrom offsets (A ++ A) = true)
+    (hm : A.length * h + B.length * k = m)
+    (hi : i < m)
+    (h_no_wrap : i + offsets.foldr max 0 < m)
+    (hA_region : i < A.length * h)
+    (h_AA : i + offsets.foldr max 0 < A.length * h) :
+    CaseGoal A B offsets h k m i := by
+  set maxOff := offsets.foldr max 0
+  set j := i % A.length
+  have hj_lt : j < A.length := Nat.mod_lt _ hA
+  refine ⟨A ++ A, j, hAA, by simp; grind, fun s hsle => ?_⟩
+  rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
+  have his_A : i + s < A.length * h := by grind
+  by_cases hjs_lt : j + s < A.length
+  · exact bcv_eq_A A B h k _ _ _ _ (by simp; grind) his_A
+      (add_mod_of_lt hA hjs_lt) hjs_lt (List.getElem?_append_left hjs_lt)
+  · push_neg at hjs_lt
+    have hjs_sub : j + s - A.length < A.length := by grind
+    have hjs_2r : i % A.length + s < 2 * A.length := by grind
+    exact bcv_eq_A A B h k _ _ _ _ (by simp; grind) his_A
+      (add_mod_sub hA hjs_lt hjs_2r) hjs_sub
+      (by rw [List.getElem?_append_right (by grind : A.length ≤ j + s)])
+
+/-! ### Case 2: No wrap, AB boundary -/
+private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
+    (h k m i : ℕ)
+    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hAB : checkLinearPolychrom offsets (A ++ B) = true)
+    (hm : A.length * h + B.length * k = m)
+    (hi : i < m)
+    (h_no_wrap : i + offsets.foldr max 0 < m)
+    (hA_region : i < A.length * h)
+    (h_cross : A.length * h ≤ i + offsets.foldr max 0)
+    (hk_pos : 0 < k) :
+    CaseGoal A B offsets h k m i := by
+  set maxOff := offsets.foldr max 0
+  set j := i % A.length
+  have hj_lt : j < A.length := Nat.mod_lt _ hA
+  have hh_pos : 0 < h := by
+    by_contra hle; push_neg at hle
+    have : h = 0 := by grind
+    subst this; simp at hA_region
+  have hi_lo : A.length * (h - 1) ≤ i := by
+    rw [Nat.mul_sub, mul_one]; grind
+  refine ⟨A ++ B, j, hAB, by simp; grind, fun s hsle => ?_⟩
+  rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
+  by_cases hjs_lt : j + s < A.length
+  · exact bcv_eq_A A B h k _ _ _ _
+      (by simp; grind) (add_lt_of_mod_add_lt hA hA_region hjs_lt)
+      (add_mod_of_lt hA hjs_lt) hjs_lt
+      (List.getElem?_append_left hjs_lt)
+  · push_neg at hjs_lt
+    have hjs_B : j + s - A.length < B.length := by grind
+    have his_ge : A.length * h ≤ i + s :=
+      ge_mul_of_mod_add_ge hA hh_pos hi_lo hjs_lt
+    have hnot_A : ¬(i + s < A.length * h) := by grind
+    refine bcv_eq_B A B h k _ _ _ _ (by simp; grind) hnot_A ?_ hjs_B ?_
+    · rw [sub_region_eq hA hi_lo hA_region hjs_lt,
+        Nat.mod_eq_of_lt (by grind)]
+    · rw [List.getElem?_append_right (by grind : A.length ≤ j + s)]
+
+/-! ### Case 3: No wrap, BB -/
+private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
+    (h k m i : ℕ)
+    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hBB : checkLinearPolychrom offsets (B ++ B) = true)
+    (hm : A.length * h + B.length * k = m)
+    (hi : i < m)
+    (h_no_wrap : i + offsets.foldr max 0 < m)
+    (hB_region : A.length * h ≤ i) :
+    CaseGoal A B offsets h k m i := by
+  set maxOff := offsets.foldr max 0
+  set j := (i - A.length * h) % B.length
+  have hj_lt : j < B.length := Nat.mod_lt _ (by grind)
+  refine ⟨B ++ B, j, hBB, by simp; grind, fun s hsle => ?_⟩
+  rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
+  by_cases hjs_lt : j + s < B.length
+  · exact bcv_eq_B A B h k _ _ _ _ (by simp; grind) (by grind)
+      (by rw [show i + s - A.length * h = (i - A.length * h) + s
+            from by grind]
+          exact add_mod_of_lt (by grind) hjs_lt)
+      hjs_lt (List.getElem?_append_left hjs_lt)
+  · push_neg at hjs_lt
+    have hjs_sub : j + s - B.length < B.length := by grind
+    exact bcv_eq_B A B h k _ _ _ _ (by simp; grind) (by grind)
+      (by rw [show i + s - A.length * h = (i - A.length * h) + s
+            from by grind]
+          exact add_mod_sub (by grind) hjs_lt (by grind))
+      hjs_sub
+      (by rw [List.getElem?_append_right
+            (by grind : B.length ≤ j + s)])
+
+/-! ### Case 4: Wrap, A region (k = 0) -/
+private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
+    (h m i : ℕ)
+    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hAA : checkLinearPolychrom offsets (A ++ A) = true)
+    (hm : A.length * h = m)
+    (hi : i < m)
+    (h_wrap : m ≤ i + offsets.foldr max 0)
+    (hA_region : i < A.length * h) :
+    CaseGoal A B offsets h 0 m i := by
+  set maxOff := offsets.foldr max 0
+  subst hm
+  set j := i % A.length
+  have hj_lt : j < A.length := Nat.mod_lt _ hA
+  have hh_pos : 0 < h := by
+    by_contra hle; push_neg at hle
+    have : h = 0 := by grind
+    subst this; simp at hA_region
+  have hi_lo : A.length * (h - 1) ≤ i := by
+    rw [Nat.mul_sub, mul_one]; grind
+  have hAh : A.length ≤ A.length * h :=
+    Nat.le_mul_of_pos_right _ hh_pos
+  refine ⟨A ++ A, j, hAA, by simp; grind, fun s hsle => ?_⟩
+  by_cases hjs_lt : j + s < A.length
+  · have his_lt : i + s < A.length * h :=
+      add_lt_of_mod_add_lt hA (by grind) hjs_lt
+    rw [Nat.mod_eq_of_lt his_lt]
+    exact bcv_eq_A A B h 0 _ _ _ _ (by simp; grind) his_lt
+      (add_mod_of_lt hA hjs_lt) hjs_lt (List.getElem?_append_left hjs_lt)
+  · push_neg at hjs_lt
+    have his_ge : A.length * h ≤ i + s :=
+      ge_mul_of_mod_add_ge hA hh_pos hi_lo hjs_lt
+    have hmod : (i + s) % (A.length * h) = i + s - A.length * h :=
+      by
+      conv_lhs =>
+        rw [show i + s = (i + s - A.length * h) + A.length * h
+          from (Nat.sub_add_cancel his_ge).symm]
+      rw [Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
+    have hsub_eq := sub_region_eq hA hi_lo (by grind) hjs_lt
+    have hsub_lt : i + s - A.length * h < A.length := by grind
+    have hjs_idx : j + s - A.length < A.length := by grind
+    refine bcv_eq_A A B h 0 _ _ _ _ (by simp; grind) (by grind)
+      (by rw [hmod, Nat.mod_eq_of_lt hsub_lt, hsub_eq])
+      hjs_idx ?_
+    rw [List.getElem?_append_right
+      (by grind : A.length ≤ j + s)]
+
+/-! ### Case 5: Wrap, B region, h > 0 → BA -/
+private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
+    (h k m i : ℕ)
+    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hBA : checkLinearPolychrom offsets (B ++ A) = true)
+    (hm : A.length * h + B.length * k = m)
+    (hi : i < m)
+    (h_wrap : m ≤ i + offsets.foldr max 0)
+    (hB_region : A.length * h ≤ i)
+    (hh_pos : 0 < h) (hk_pos : 0 < k) :
+    CaseGoal A B offsets h k m i := by
+  set maxOff := offsets.foldr max 0
+  have hAh : A.length ≤ A.length * h :=
+    Nat.le_mul_of_pos_right _ hh_pos
+  have hBk : B.length ≤ B.length * k :=
+    Nat.le_mul_of_pos_right _ hk_pos
+  set j := (i - A.length * h) % B.length
+  have hj_lt : j < B.length := Nat.mod_lt _ (by grind)
+  have hi_B : i - A.length * h < B.length * k := by grind
+  have hk_lo : B.length * (k - 1) ≤ i - A.length * h := by
+    rw [Nat.mul_sub, mul_one]; grind
+  refine ⟨B ++ A, j, hBA, by simp; grind, fun s hsle => ?_⟩
+  by_cases hjs_lt : j + s < B.length
+  · -- Still in B
+    have his_lt : (i - A.length * h) + s < B.length * k :=
+      add_lt_of_mod_add_lt (by grind) hi_B hjs_lt
+    rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
+    exact bcv_eq_B A B h k _ _ _ _ (by simp; grind) (by grind)
+      (by rw [show i + s - A.length * h =
+            (i - A.length * h) + s from by grind]
+          exact add_mod_of_lt (by grind) hjs_lt)
+      hjs_lt (List.getElem?_append_left hjs_lt)
+  · -- Wrapped to A region
+    push_neg at hjs_lt
+    have his_ge : m ≤ i + s := by
+      have := ge_mul_of_mod_add_ge (by grind : 0 < B.length)
+        hk_pos hk_lo hjs_lt; grind
+    have hmod : (i + s) % m = i + s - m := by
+      conv_lhs =>
+        rw [show i + s = (i + s - m) + m
+          from (Nat.sub_add_cancel his_ge).symm]
+      rw [Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
+    have hsub_eq : i + s - m = j + s - B.length := by
+      have key : (i - A.length * h) + s - B.length * k =
+          j + s - B.length :=
+        sub_region_eq (by grind) hk_lo hi_B hjs_lt
+      grind
+    have hsub_lt : i + s - m < A.length := by grind
+    have hjs_idx : j + s - B.length < A.length := by grind
+    refine bcv_eq_A A B h k _ _ _ _ (by simp; grind) (by grind)
+      (by rw [hmod, Nat.mod_eq_of_lt hsub_lt, hsub_eq])
+      hjs_idx ?_
+    rw [List.getElem?_append_right
+      (by grind : B.length ≤ j + s)]
+
+/-! ### Case 6: Wrap, B region, h = 0 → BB -/
+private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
+    (k m i : ℕ)
+    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hBB : checkLinearPolychrom offsets (B ++ B) = true)
+    (hm : B.length * k = m)
+    (hi : i < m)
+    (h_wrap : m ≤ i + offsets.foldr max 0)
+    (hk_pos : 0 < k) :
+    CaseGoal A B offsets 0 k m i := by
+  set maxOff := offsets.foldr max 0
+  have hBk : B.length ≤ B.length * k :=
+    Nat.le_mul_of_pos_right _ hk_pos
+  set j := i % B.length
+  have hj_lt : j < B.length := Nat.mod_lt _ (by grind)
+  have hk_lo : B.length * (k - 1) ≤ i := by
+    rw [Nat.mul_sub, mul_one]; grind
+  refine ⟨B ++ B, j, hBB, by simp; grind, fun s hsle => ?_⟩
+  by_cases hjs_lt : j + s < B.length
+  · have his_lt : i + s < B.length * k :=
+      add_lt_of_mod_add_lt (by grind) (by grind) hjs_lt
+    rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
+    exact bcv_eq_B A B 0 k _ _ _ _ (by simp; grind)
+      (by simp [mul_zero])
+      (by simp [mul_zero]; exact add_mod_of_lt (by grind) hjs_lt)
+      hjs_lt (List.getElem?_append_left hjs_lt)
+  · push_neg at hjs_lt
+    have his_ge : m ≤ i + s := by
+      have := ge_mul_of_mod_add_ge (by grind : 0 < B.length)
+        hk_pos hk_lo hjs_lt; grind
+    have hmod : (i + s) % m = i + s - m := by
+      conv_lhs =>
+        rw [show i + s = (i + s - m) + m
+          from (Nat.sub_add_cancel his_ge).symm]
+      rw [Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
+    have hsub_eq : i + s - m = j + s - B.length := by
+      rw [← hm]
+      exact sub_region_eq (by grind) hk_lo (by grind) hjs_lt
+    have hjs_idx : j + s - B.length < B.length := by grind
+    refine bcv_eq_B A B 0 k _ _ _ _ (by simp; grind)
+      (by simp [mul_zero])
+      (by simp [mul_zero]
+          rw [hmod, Nat.mod_eq_of_lt
+            (by grind : i + s - m < B.length), hsub_eq])
+      hjs_idx ?_
+    rw [List.getElem?_append_right
+      (by grind : B.length ≤ j + s)]
+
+/-! ### Main theorem: combine all cases -/
+/-- The main theorem: if all block-pair checks pass, the block coloring is
+    polychromatic for any m expressible as rA·h + rB·k. -/
+theorem blockColor_polychrom
+    (A B : List (Fin 3)) (offsets : List ℕ)
+    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hpairs : checkBlockPairs offsets A B = true)
+    {h k : ℕ} (hhk : 0 < h + k) {m : ℕ}
+    (hm : A.length * h + B.length * k = m)
+    {i : ℕ} (hi : i < m) (c : Fin 3) :
+    ∃ s ∈ offsets, blockColorVal A B h k ((i + s) % m) = c := by
+  set maxOff := offsets.foldr max 0
+  simp only [checkBlockPairs, Bool.and_eq_true] at hpairs
+  obtain ⟨⟨⟨hAA, hAB⟩, hBA⟩, hBB⟩ := hpairs
+  -- Reduce to CaseGoal
+  suffices hg : CaseGoal A B offsets h k m i by
+    obtain ⟨XY, j, hXY_check, hj_bound, hcorr⟩ := hg
+    obtain ⟨s, hs_mem, hs_eq⟩ :=
+      checkLinearPolychrom_spec hXY_check hj_bound c
+    refine ⟨s, hs_mem, ?_⟩
+    have := hcorr s (le_foldr_max hs_mem)
+    rw [hs_eq] at this; exact Option.some.inj this.symm
+  -- Dispatch to case lemmas
+  by_cases h_wrap : i + maxOff < m
+  · by_cases hA_region : i < A.length * h
+    · by_cases h_cross : i + maxOff < A.length * h
+      · exact case_no_wrap_AA A B offsets h k m i hA hBlen hmaxOff
+          hAA hm hi h_wrap hA_region h_cross
+      · push_neg at h_cross
+        have hk_pos : 0 < k := by
+          by_contra hle; push_neg at hle; have : k = 0 := by grind
+          subst this; simp [mul_zero] at hm; grind
+        exact case_no_wrap_AB A B offsets h k m i hA hBlen hmaxOff
+          hAB hm hi h_wrap hA_region h_cross hk_pos
+    · push_neg at hA_region
+      exact case_no_wrap_BB A B offsets h k m i hA hBlen hmaxOff
+        hBB hm hi h_wrap hA_region
+  · push_neg at h_wrap
+    by_cases hA_region : i < A.length * h
+    · have hk0 : k = 0 := by
+        by_contra hle; push_neg at hle
+        have : 0 < k := by grind
+        have : B.length ≤ B.length * k :=
+          Nat.le_mul_of_pos_right _ this; grind
+      subst hk0; simp only [mul_zero, add_zero] at hm
+      exact case_wrap_A A B offsets h m i hA hBlen hmaxOff hAA hm
+        hi h_wrap hA_region
+    · push_neg at hA_region
+      have hk_pos : 0 < k := by
+        by_contra hle; push_neg at hle; have : k = 0 := by grind
+        subst this; simp [mul_zero] at hm; grind
+      by_cases hh_pos : 0 < h
+      · exact case_wrap_BA A B offsets h k m i hA hBlen hmaxOff
+          hBA hm hi h_wrap hA_region hh_pos hk_pos
+      · have hh0 : h = 0 := by grind
+        subst hh0
+        simp only [mul_zero, zero_add] at hm
+        exact case_wrap_BB A B offsets k m i hA hBlen hmaxOff
+          hBB hm hi h_wrap hk_pos
+
 /-! ## Table 1: Block concatenation colorings (paper §4, Table 1)
 
-For each set S below, blocks of length r and r+1 (prepending 0 to the period-r block)
-can be concatenated in any order to produce an S-polychromatic 3-coloring of ℤ_m.
-The Frobenius coin problem ensures m can be so expressed when m > r² - r - 1.
-Since all uses have m ≥ 289, the bounds below always hold.
+For each set S below, blocks of length r and r+1 are concatenated to produce
+an S-polychromatic 3-coloring of ℤ_m. The Frobenius coin problem ensures
+m can be so expressed when m ≥ r². Polychromaticity follows from
+`blockColor_polychrom` after checking block-pair boundaries by `native_decide`.
 
 These are used in subcases (1a) and (1c) of Main Case 1.
 -/
@@ -116,156 +604,86 @@ section Table1
 
 variable (m : ℕ)
 
-/-- {0,1,2,3}: blocks 012 (r=3), 0012 (r+1=4). Frobenius bound: m > 5. -/
+/-- Helper to convert block coloring polychromaticity into HasPolychromColouring
+    for a specific finset of offsets in ZMod m. -/
+private lemma table1_of_blockColor (A B : List (Fin 3)) (offsets : List ℕ)
+    (S : Finset (ZMod m))
+    (hA : 1 < A.length) (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hpairs : checkBlockPairs offsets A B = true)
+    (hm : m ≥ A.length * (A.length - 1))
+    (hoff_lt : ∀ s ∈ offsets, s < m)
+    (hS : ∀ a : ZMod m, a ∈ S ↔ ∃ s ∈ offsets, (s : ZMod m) = a) :
+    HasPolychromColouring (Fin 3) S := by
+  have hm_pos : 0 < m := Nat.lt_of_lt_of_le (Nat.mul_pos (by omega) (by omega)) hm
+  haveI : NeZero m := ⟨by omega⟩
+  have : 1 < A.length * (A.length - 1) := Nat.lt_of_lt_of_le (by omega)
+    (Nat.mul_le_mul (by omega : 2 ≤ A.length) (by omega : 1 ≤ A.length - 1))
+  haveI : Fact (1 < m) := ⟨by omega⟩
+  obtain ⟨h, k, hm_eq, hhk⟩ := frobenius_consec hA hm
+  have hm_eq' : A.length * h + B.length * k = m := by rw [hBlen]; exact hm_eq
+  apply hasPolychromColouring_of_cyclic (blockColorVal A B h k) S
+  intro n target
+  obtain ⟨s, hs_mem, hs_eq⟩ := blockColor_polychrom A B offsets (by omega) hBlen hmaxOff
+    hpairs hhk hm_eq' (ZMod.val_lt n) target
+  refine ⟨(s : ZMod m), (hS _).mpr ⟨s, hs_mem, rfl⟩, ?_⟩
+  rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt (hoff_lt s hs_mem)]
+  exact hs_eq
+
+/-- {0,1,2,3}: blocks [0,1,2] (r=3), [0,0,1,2] (r+1=4). Frobenius bound: m ≥ 6. -/
 lemma table1_0123 (hm : m ≥ 6) :
-    HasPolychromColouring (Fin 3) ({0, 1, 2, 3} : Finset (ZMod m)) := by
-  haveI : NeZero m := ⟨by grind⟩
-  haveI : Fact (1 < m) := ⟨by grind⟩
-  set bd := 4 * (m % 3) with hbd_def
-  have hbd_le : bd ≤ m := by grind
-  let c (p : ℕ) : ℕ :=
-    if p < bd then (if p % 4 ≤ 1 then 0 else p % 4 - 1) else (p - bd) % 3
-  have hc_lt3 : ∀ p, c p < 3 := by intro p; simp only [c]; split_ifs <;> lia
-  have hc0 : c 0 = 0 := by simp only [c]; split_ifs <;> lia
-  have hc_m1 : c (m - 1) = 2 := by simp only [c]; split_ifs <;> lia
-  have hc_m2 : c (m - 2) = 1 := by simp only [c]; split_ifs <;> lia
-  have hc_m3 : c (m - 3) = 0 := by simp only [c]; split_ifs <;> lia
-  refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k => ?_⟩
-  have hv : n.val < m := ZMod.val_lt n
-  suffices ∃ a : ℕ, a ≤ 3 ∧ c ((n.val + a) % m) = k.val by
-    obtain ⟨a, ha_le, hca⟩ := this
-    have ha_lt_m : a < m := by grind
-    refine ⟨(a : ZMod m), ?_, ?_⟩
-    · simp only [Finset.mem_insert, Finset.mem_singleton]
-      have : a = 0 ∨ a = 1 ∨ a = 2 ∨ a = 3 := by grind
-      rcases this with rfl | rfl | rfl | rfl <;> simp
-    · ext
-      change c (n + (a : ZMod m)).val = k.val
-      have : (n + (a : ZMod m)).val = (n.val + a) % m := by
-        rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt_m]
-      rw [this, hca]
-  set v := n.val with hv_def
-  by_cases hwrap : v + 3 < m
-  · have no_wrap : ∀ a, a ≤ 3 → (v + a) % m = v + a :=
-      fun a ha => Nat.mod_eq_of_lt (by grind)
-    by_cases hzone : v ≥ bd
-    · set r := (v - bd) % 3
-      have hr_lt : r < 3 := Nat.mod_lt _ (by grind)
-      set a := (k.val + 3 - r) % 3
-      have ha_lt : a < 3 := Nat.mod_lt _ (by grind)
-      refine ⟨a, by grind, ?_⟩
-      rw [no_wrap a (by grind)]
-      simp only [c]
-      have : ¬ (v + a < bd) := by grind
-      rw [if_neg this]
-      change (v + a - bd) % 3 = k.val
-      have := k.isLt; lia
-    · push_neg at hzone
-      by_cases hzone2 : v + 3 < bd
-      · have h_in_bd : ∀ a, a ≤ 3 → v + a < bd := fun a ha => by grind
-        set q := v % 4
-        have find_a : ∀ kv : ℕ, kv < 3 → ∃ a, a ≤ 3 ∧ c (v + a) = kv := by
-          intro kv hkv
-          have : kv = 0 ∨ kv = 1 ∨ kv = 2 := by grind
-          rcases this with rfl | rfl | rfl
-          · refine ⟨(4 - q) % 4, by grind, ?_⟩
-            have hmod : (v + (4 - q) % 4) % 4 = 0 := by grind
-            simp only [c]
-            rw [if_pos (h_in_bd _ (by grind)), if_pos (by grind)]
-          · refine ⟨(6 - q) % 4, by grind, ?_⟩
-            have hmod : (v + (6 - q) % 4) % 4 = 2 := by grind
-            simp only [c]
-            rw [if_pos (h_in_bd _ (by grind)), if_neg (by grind)]
-            grind
-          · refine ⟨(7 - q) % 4, by grind, ?_⟩
-            have hmod : (v + (7 - q) % 4) % 4 = 3 := by grind
-            simp only [c]
-            rw [if_pos (h_in_bd _ (by grind)), if_neg (by grind)]
-            grind
-        obtain ⟨a, ha_le, ha_eq⟩ := find_a k.val k.isLt
-        exact ⟨a, ha_le, by rw [no_wrap a ha_le]; exact ha_eq⟩
-      · push_neg at hzone2
-        have hbd_pos : 0 < bd := by grind
-        have hc_boundary : ∀ j, j ≤ 5 → c (bd - 3 + j) = j % 3 := by
-          intro j hj
-          simp only [c]
-          have : j = 0 ∨ j = 1 ∨ j = 2 ∨ j = 3 ∨ j = 4 ∨ j = 5 := by grind
-          rcases this with rfl | rfl | rfl | rfl | rfl | rfl <;> split_ifs <;> lia
-        set j := v - (bd - 3)
-        have hj_le : j ≤ 2 := by grind
-        set a := (k.val + 3 - j % 3) % 3
-        have ha_lt : a < 3 := Nat.mod_lt _ (by grind)
-        refine ⟨a, by grind, ?_⟩
-        rw [no_wrap a (by grind)]
-        have hva : v + a = bd - 3 + (j + a) := by grind
-        rw [hva, hc_boundary (j + a) (by grind)]
-        have : j = 0 ∨ j = 1 ∨ j = 2 := by grind
-        rcases this with h | h | h <;> fin_cases k <;> simp [a, h]
-  · push_neg at hwrap
-    have hmod_v : v % m = v := Nat.mod_eq_of_lt hv
-    have : v = m - 3 ∨ v = m - 2 ∨ v = m - 1 := by grind
-    rcases this with hveq | hveq | hveq
-    · have h1 : (v + 1) % m = m - 2 := by
-        have : v + 1 = m - 2 := by grind
-        rw [this]; exact Nat.mod_eq_of_lt (by grind)
-      have h2 : (v + 2) % m = m - 1 := by
-        have : v + 2 = m - 1 := by grind
-        rw [this]; exact Nat.mod_eq_of_lt (by grind)
-      fin_cases k
-      · exact ⟨0, by grind, by rw [add_zero, hmod_v, hveq]; exact hc_m3⟩
-      · exact ⟨1, by grind, by rw [h1]; exact hc_m2⟩
-      · exact ⟨2, by grind, by rw [h2]; exact hc_m1⟩
-    · have h1 : (v + 1) % m = m - 1 := by
-        have : v + 1 = m - 1 := by grind
-        rw [this]; exact Nat.mod_eq_of_lt (by grind)
-      have h2 : (v + 2) % m = 0 := by
-        have : v + 2 = m := by grind
-        rw [this, Nat.mod_self]
-      fin_cases k
-      · exact ⟨2, by grind, by rw [h2]; exact hc0⟩
-      · exact ⟨0, by grind, by rw [add_zero, hmod_v, hveq]; exact hc_m2⟩
-      · exact ⟨1, by grind, by rw [h1]; exact hc_m1⟩
-    · have h1 : (v + 1) % m = 0 := by
-        have : v + 1 = m := by grind
-        rw [this, Nat.mod_self]
-      have h2 : (v + 2) % m = 1 := by
-        have : v + 2 = 1 + m := by grind
-        rw [this, Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
-      have h3 : (v + 3) % m = 2 := by
-        have : v + 3 = 2 + m := by grind
-        rw [this, Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
-      fin_cases k
-      · exact ⟨1, by grind, by rw [h1]; exact hc0⟩
-      · by_cases hmod : m % 3 = 0
-        · refine ⟨2, by grind, ?_⟩
-          rw [h2]; change c 1 = 1
-          simp only [c, hbd_def, hmod]; norm_num
-        · refine ⟨3, by grind, ?_⟩
-          rw [h3]; change c 2 = 1
-          simp only [c]; split_ifs <;> lia
-      · exact ⟨0, by grind, by rw [add_zero, hmod_v, hveq]; exact hc_m1⟩
+    HasPolychromColouring (Fin 3) ({0, 1, 2, 3} : Finset (ZMod m)) :=
+  table1_of_blockColor m [0,1,2] [0,0,1,2] [0,1,2,3]
+    {0, 1, 2, 3} (by simp) (by simp) (by native_decide) (by native_decide)
+    hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
+    (by intro a; simp; tauto)
 
-/-- {0,1,3,4}: blocks 001212 (r=6), 0001212 (r+1=7). Frobenius bound: m > 29. -/
+/-- {0,1,3,4}: blocks [0,0,1,2,1,2] (r=6), [0,0,0,1,2,1,2] (r+1=7). Frobenius: m ≥ 30. -/
 lemma table1_0134 (hm : m ≥ 30) :
-    HasPolychromColouring (Fin 3) ({0, 1, 3, 4} : Finset (ZMod m)) := by sorry
+    HasPolychromColouring (Fin 3) ({0, 1, 3, 4} : Finset (ZMod m)) :=
+  table1_of_blockColor m [0,0,1,2,1,2] [0,0,0,1,2,1,2] [0,1,3,4]
+    {0, 1, 3, 4} (by simp) (by simp) (by native_decide) (by native_decide)
+    hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
+    (by intro a; simp; tauto)
 
-/-- {0,2,3,5}: blocks 001122 (r=6), 0001122 (r+1=7). Frobenius bound: m > 29. -/
+/-- {0,2,3,5}: blocks [0,0,1,1,2,2] (r=6), [0,0,0,1,1,2,2] (r+1=7). Frobenius: m ≥ 30. -/
 lemma table1_0235 (hm : m ≥ 30) :
-    HasPolychromColouring (Fin 3) ({0, 2, 3, 5} : Finset (ZMod m)) := by sorry
+    HasPolychromColouring (Fin 3) ({0, 2, 3, 5} : Finset (ZMod m)) :=
+  table1_of_blockColor m [0,0,1,1,2,2] [0,0,0,1,1,2,2] [0,2,3,5]
+    {0, 2, 3, 5} (by simp) (by simp) (by native_decide) (by native_decide)
+    hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
+    (by intro a; simp; tauto)
 
-/-- {0,3,4,7}: blocks 000111222 (r=9), 0000111222 (r+1=10). Frobenius bound: m > 71. -/
+/-- {0,3,4,7}: blocks [0,0,0,1,1,1,2,2,2] (r=9), [0,0,0,0,1,1,1,2,2,2] (r+1=10).
+    Frobenius: m ≥ 72. -/
 lemma table1_0347 (hm : m ≥ 72) :
-    HasPolychromColouring (Fin 3) ({0, 3, 4, 7} : Finset (ZMod m)) := by sorry
+    HasPolychromColouring (Fin 3) ({0, 3, 4, 7} : Finset (ZMod m)) :=
+  table1_of_blockColor m [0,0,0,1,1,1,2,2,2] [0,0,0,0,1,1,1,2,2,2] [0,3,4,7]
+    {0, 3, 4, 7} (by simp) (by simp) (by native_decide) (by native_decide)
+    hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
+    (by intro a; simp; tauto)
 
-/-- {0,3,5,8}: blocks 000111222 (r=9), 0000111222 (r+1=10). Frobenius bound: m > 71. -/
+/-- {0,3,5,8}: blocks [0,0,0,1,1,1,2,2,2] (r=9), [0,0,0,0,1,1,1,2,2,2] (r+1=10).
+    Frobenius: m ≥ 72. -/
 lemma table1_0358 (hm : m ≥ 72) :
-    HasPolychromColouring (Fin 3) ({0, 3, 5, 8} : Finset (ZMod m)) := by sorry
+    HasPolychromColouring (Fin 3) ({0, 3, 5, 8} : Finset (ZMod m)) :=
+  table1_of_blockColor m [0,0,0,1,1,1,2,2,2] [0,0,0,0,1,1,1,2,2,2] [0,3,5,8]
+    {0, 3, 5, 8} (by simp) (by simp) (by native_decide) (by native_decide)
+    hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
+    (by intro a; simp; tauto)
 
-/-- {0,1,4,5}: blocks 0001212 (r=7), 00001212 (r+1=8). Frobenius bound: m > 41. -/
+/-- {0,1,4,5}: blocks [0,0,0,1,2,1,2] (r=7), [0,0,0,0,1,2,1,2] (r+1=8).
+    Frobenius: m ≥ 42. -/
 lemma table1_0145 (hm : m ≥ 42) :
-    HasPolychromColouring (Fin 3) ({0, 1, 4, 5} : Finset (ZMod m)) := by sorry
+    HasPolychromColouring (Fin 3) ({0, 1, 4, 5} : Finset (ZMod m)) :=
+  table1_of_blockColor m [0,0,0,1,2,1,2] [0,0,0,0,1,2,1,2] [0,1,4,5]
+    {0, 1, 4, 5} (by simp) (by simp) (by native_decide) (by native_decide)
+    hm (by intro s hs; simp at hs; rcases hs with rfl | rfl | rfl | rfl <;> omega)
+    (by intro a; simp; tauto)
 
 end Table1
+
+#exit
 
 /-! ## Main Case 1: Single Cycle (paper §4.1)
 
