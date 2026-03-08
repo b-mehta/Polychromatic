@@ -967,9 +967,7 @@ private lemma orbitMap_i_eq {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
            orbitMap m a b d₁ e₁ (i₂, j₂)) :
     i₁ = i₂ := by
   simp only [orbitMap] at heq
-  set f := ZMod.castHom hd1_dvd (ZMod d₁)
-  have : f ((i₁.val : ZMod m) * ↑(b - a) + (j₁.val : ZMod m) * ↑b) =
-      f ((i₂.val : ZMod m) * ↑(b - a) + (j₂.val : ZMod m) * ↑b) := congr_arg f heq
+  have := congr_arg (ZMod.castHom hd1_dvd (ZMod d₁)) heq
   simp only [map_add, map_mul, map_natCast, map_intCast] at this
   simp only [hb_zero, mul_zero, add_zero, ZMod.natCast_val, ZMod.cast_id] at this
   exact hba_unit.mul_right_cancel this
@@ -1817,7 +1815,7 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
   let f : ZMod d₁ → ℕ := fun i =>
     if i.val < q then e₁ - u else if i.val = q then u + r else u
   refine ⟨f, fun i => ?_, ?_⟩
-  · show u ≤ f i ∧ f i ≤ e₁ - u
+  · change u ≤ f i ∧ f i ≤ e₁ - u
     simp only [f]; split_ifs <;> omega
   · let g : ZMod d₁ → ℕ := fun i =>
       if i.val < q then w else if i.val = q then r else 0
