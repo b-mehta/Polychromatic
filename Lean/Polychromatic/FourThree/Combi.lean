@@ -1149,15 +1149,6 @@ private lemma case2b_odd_degenerate_pos (d₁ e₁ : ℕ) [NeZero d₁] [NeZero 
   rw [zmod_val_add_one e₁ (by omega) j] at h2
   split_ifs at h1 h2 <;> grind
 
--- Adjacent cycles have different parities when d₁ is even.
-private lemma case2b_parity_ne_succ (d₁ : ℕ) [NeZero d₁] (hd₁ : Even d₁)
-    (i : ZMod d₁) : i.val % 2 ≠ (i + 1).val % 2 := by
-  have hd₁_ge2 : d₁ ≥ 2 := by obtain ⟨k, hk⟩ := hd₁; have := NeZero.ne d₁; omega
-  have hi := i.val_lt (n := d₁)
-  obtain ⟨k, hk⟩ := hd₁
-  rw [zmod_val_add_one d₁ hd₁_ge2 i]
-  split_ifs <;> grind
-
 -- Fin 3 helpers for Case 2b.
 private lemma case2b_fin3_eq_one {a : Fin 3} (h0 : a ≠ 0) (h2 : a ≠ 2) : a = 1 := by
   fin_cases a <;> simp_all
@@ -1179,7 +1170,8 @@ private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     k = case2b_coloring d₁ e₁ (i + 1, j₂) ∨
     k = case2b_coloring d₁ e₁ (i + 1, j₂ + 1) := by
   have he₁_ge2 : e₁ ≥ 2 := by omega
-  have hi_parity := case2b_parity_ne_succ d₁ hd₁_even i
+  have hd₁_ge2 : d₁ ≥ 2 := by obtain ⟨k, hk⟩ := hd₁_even; have := NeZero.ne d₁; omega
+  have hi_parity := parity_flip_even d₁ hd₁_even hd₁_ge2 i
   rcases Nat.even_or_odd i.val with ⟨_, hi_even⟩ | ⟨_, hi_odd⟩
   · -- i is even, i+1 is odd
     have hi : i.val % 2 = 0 := by omega
