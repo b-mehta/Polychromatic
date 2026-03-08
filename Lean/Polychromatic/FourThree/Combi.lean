@@ -600,8 +600,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   · have hcv : c v = (3 - q % 3) % 3 := by grind
     have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
       have h1 : v + g = h * (q + 1) + (g - 1) := by grind
-      have h2 : 3 * t - 1 = 3 * (t - 1) + 2 := by grind
-      rw [h1, color_at (q + 1) (g - 1) (by grind), ht, h2]; simp
+      rw [h1, color_at (q + 1) (g - 1) (by grind), ht, show 3 * t - 1 = 3 * (t - 1) + 2 from by grind]; simp
     have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
       have : v + 1 = h * (q + 1) + 0 := by grind
       rw [this, color_at (q + 1) 0 (by grind)]; grind
@@ -844,10 +843,7 @@ private lemma zmod_val_add_one (d : ℕ) [NeZero d] (hd : d ≥ 2) (i : ZMod d) 
 
 private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2)
     (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by
-  rw [zmod_val_add_one e he2 j]
-  obtain ⟨k, hk⟩ := he
-  have := j.val_lt (n := e)
-  split_ifs <;> grind
+  grind [zmod_val_add_one e he2 j]
 
 -- The coloring function for the even-parity cycle decomposition (Case 2a).
 -- Each cycle uses two colors that alternate with parity; the last cycle (when d₁ is
@@ -1490,9 +1486,8 @@ private lemma case2c_nonwrap_hyp (d₁ k₀ i j : ℕ) (hd₁ : d₁ ≥ 3)
     (hd₁_odd : Odd d₁) (hi : i + 1 < d₁) :
     (j + (case2c_pattern d₁ k₀ i).val) % 3 ≠
     (j + (case2c_pattern d₁ k₀ (i + 1)).val) % 3 := by
-  simp only [case2c_pattern]
   obtain ⟨k, hk⟩ := hd₁_odd; subst hk
-  split_ifs <;> simp_all <;> omega
+  grind [case2c_pattern]
 
 -- Wrap coverage hypothesis: j₂ = j₁ + k₀, pattern chosen to avoid conflict.
 private lemma case2c_wrap_hyp (d₁ k₀ j : ℕ) (hd₁ : d₁ ≥ 3)
@@ -1500,8 +1495,7 @@ private lemma case2c_wrap_hyp (d₁ k₀ j : ℕ) (hd₁ : d₁ ≥ 3)
     (j + (case2c_pattern d₁ k₀ (d₁ - 1)).val) % 3 ≠
     (j + k₀ + (case2c_pattern d₁ k₀ 0).val) % 3 := by
   obtain ⟨k, hk⟩ := hd₁_odd; subst hk
-  simp only [case2c_pattern]
-  split_ifs <;> simp_all <;> omega
+  grind [case2c_pattern]
 
 /-! ### Case (2d): d₁, e₁ both odd, e₁ ≥ 19
 
