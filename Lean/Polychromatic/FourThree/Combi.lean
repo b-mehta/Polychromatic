@@ -920,6 +920,10 @@ private lemma color_covers_even (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     · exact Or.inl h
     · exact Or.inr (Or.inl h)
 
+private lemma ZMod.val_add_one {n : ℕ} [NeZero n] (x : ZMod n) :
+    (x + 1).val = (x.val + 1) % n := by
+  rw [ZMod.val_add, ZMod.val_one_eq_one_mod, Nat.add_mod_mod]
+
 /-- The orbit map φ(i,j) = i*(b-a) + j*b in ZMod m. -/
 private def orbitMap (m : ℕ) (a b : ℤ) (d₁ e₁ : ℕ) :
     ZMod d₁ × ZMod e₁ → ZMod m :=
@@ -1031,14 +1035,12 @@ private lemma orbitMap_shift_b {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
         orbitMap m a b d₁ e₁ (p.1, p.2 + 1) := by
   intro ⟨i, j⟩
   simp only [orbitMap]
-  have hval1 : (1 : ZMod e₁).val = 1 % e₁ := ZMod.val_one_eq_one_mod e₁
   by_cases hj : j.val + 1 < e₁
   · have hv : (j + 1).val = j.val + 1 := by
-      rw [ZMod.val_add, hval1, Nat.add_mod_mod]; exact Nat.mod_eq_of_lt hj
+      rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hj
     rw [hv]; push_cast; ring
   · have hje : j.val + 1 = e₁ := by have := j.val_lt (n := e₁); omega
-    have hv : (j + 1).val = 0 := by
-      rw [ZMod.val_add, hval1, Nat.add_mod_mod, hje, Nat.mod_self]
+    have hv : (j + 1).val = 0 := by rw [ZMod.val_add_one, hje, Nat.mod_self]
     have h1 : (j.val : ZMod m) * ↑b + ↑b = 0 := by
       have : (j.val : ZMod m) * ↑b + ↑b = (j.val + 1 : ℕ) • (b : ZMod m) := by
         rw [add_nsmul, one_nsmul, nsmul_eq_mul]
@@ -1051,8 +1053,7 @@ private lemma orbitMap_shift_ba {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero 
     orbitMap m a b d₁ e₁ (i, j) + ((b - a : ℤ) : ZMod m) =
       orbitMap m a b d₁ e₁ (i + 1, j) := by
   simp only [orbitMap]
-  have : (i + 1).val = i.val + 1 := by
-    rw [ZMod.val_add, ZMod.val_one_eq_one_mod, Nat.add_mod_mod]; exact Nat.mod_eq_of_lt hi
+  have : (i + 1).val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
   rw [this]; push_cast; ring
 
 /-- Subcase (2a): e1 is even.
@@ -1065,10 +1066,10 @@ lemma case_two_e1_even (hm : m ≥ 289)
   set d₁ := Nat.gcd b.natAbs m with hd₁_def
   set e₁ := m / d₁ with he₁_def
   have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
-  have hd₁_pos : 0 < d₁ := Nat.pos_of_ne_zero (by intro h; simp [h] at h_min)
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   have he₁_ge2 : e₁ ≥ 2 := by
-    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) hd₁_pos; grind
+    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd)
+      (Nat.pos_of_ne_zero (by intro h; simp [h] at h_min)); grind
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
@@ -2000,9 +2001,7 @@ private lemma zmod_filter_sum_last {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i 
 /-- Position shift by 1: adding 1 to ZMod coordinate shifts position by 1 mod n. -/
 private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
     ((j + 1).val + c) % n = ((j.val + c) % n + 1) % n := by
-  rw [ZMod.val_add, ZMod.val_one_eq_one_mod, Nat.add_mod_mod,
-    Nat.mod_add_mod, Nat.mod_add_mod]
-  congr 1; omega
+  rw [ZMod.val_add_one, Nat.mod_add_mod, Nat.mod_add_mod]; congr 1; omega
 
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
@@ -2041,8 +2040,7 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
   have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 hd1_def
   have hba_coprime := ba_coprime_d1 hd1_dvd (by rwa [hd1_def])
   have hba_unit := isUnit_intCast_of_natAbs_coprime hba_coprime
-  have he1_b_zero : e₁ • (b : ZMod m) = 0 := by
-    rw [← hord]; exact addOrderOf_nsmul_eq_zero _
+  have he1_b_zero : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
   have hbij := orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord
   set Φ := Equiv.ofBijective _ hbij
   obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq
@@ -2111,8 +2109,7 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
         ((j.val + ((Finset.univ.filter
         (fun k : ZMod d₁ => k.val < i.val)).sum vals) % e₁) % e₁ + vals i) % e₁
       have : (i + 1).val = i.val + 1 := by
-        rw [ZMod.val_add, ZMod.val_one_eq_one_mod, Nat.add_mod_mod]
-        exact Nat.mod_eq_of_lt hi
+        rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
       rw [this, zmod_filter_sum_succ vals i]
       exact pos_shift_succ' j.val _ (vals i) e₁
   · -- Wrap case: i = d₁ - 1
