@@ -1888,13 +1888,7 @@ private lemma zmod_filter_sum_succ {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i 
       Finset.univ.filter (fun k : ZMod n => k.val < i.val) ∪ {i} := by
     ext k; simp only [Finset.mem_filter, Finset.mem_univ, true_and,
       Finset.mem_union, Finset.mem_singleton]
-    constructor
-    · intro hk; by_cases hk' : k.val < i.val
-      · left; exact hk'
-      · right; exact ZMod.val_injective _ (by omega)
-    · rintro (hk | hk)
-      · omega
-      · grind
+    grind [ZMod.val_injective]
   rw [hsplit, Finset.sum_union (by
     simp only [Finset.disjoint_left, Finset.mem_filter, Finset.mem_univ, true_and,
       Finset.mem_singleton]; intro k hk hk'; rw [hk'] at hk; omega),
