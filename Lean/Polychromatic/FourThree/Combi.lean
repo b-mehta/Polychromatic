@@ -99,8 +99,7 @@ lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
     swapping them (replacing a by -a, b by b-a) gives the same set. -/
 lemma zmod_set_swap (m : ℕ) (a b : ℤ) :
     zmod_set m (-a) (b - a) = zmod_set m a b := by
-  simp only [zmod_set]
-  grind
+  grind [zmod_set]
 
 /-! ## Table 1: Block concatenation colorings (paper §4, Table 1)
 
@@ -927,9 +926,10 @@ private lemma addOrderOf_b_eq {m : ℕ} {b : ℤ} {d₁ : ℕ} (hm : 0 < m)
   have key : addOrderOf (b.natAbs : ZMod m) = m / d₁ := by
     rw [ZMod.addOrderOf_coe b.natAbs (by grind), Nat.gcd_comm, hd1_def]
   rcases Int.natAbs_eq b with h | h
-  · rw [show (b : ZMod m) = (b.natAbs : ZMod m) from by rw [h]; simp]; exact key
-  · rw [show (b : ZMod m) = -(b.natAbs : ZMod m) from by rw [h]; simp,
-        addOrderOf_neg]; exact key
+  · have : (b : ZMod m) = (b.natAbs : ZMod m) := by rw [h]; simp
+    rw [this]; exact key
+  · have : (b : ZMod m) = -(b.natAbs : ZMod m) := by rw [h]; simp
+    rw [this, addOrderOf_neg]; exact key
 
 private lemma b_zero_mod_d1 {m : ℕ} {b : ℤ} {d₁ : ℕ}
     (hd1_def : Nat.gcd b.natAbs m = d₁) [NeZero d₁] :
@@ -1317,9 +1317,9 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hb_zero
   obtain ⟨q, hq⟩ := hd₁_dvd_b
   have hq_cop : Nat.Coprime q.natAbs e₁ := by
-    rw [(by rw [hq, Int.natAbs_mul, Int.natAbs_natCast, Nat.mul_div_cancel_left _ hd₁_pos] :
-      q.natAbs = b.natAbs / d₁)]
-    exact Nat.coprime_div_gcd_div_gcd hd₁_pos
+    have : q.natAbs = b.natAbs / d₁ := by
+      rw [hq, Int.natAbs_mul, Int.natAbs_natCast, Nat.mul_div_cancel_left _ hd₁_pos]
+    rw [this]; exact Nat.coprime_div_gcd_div_gcd hd₁_pos
   -- Define the cycle map φ = orbitMap and derive bijectivity from shared infrastructure
   let φ := orbitMap m a b d₁ e₁
   let Φ := Equiv.ofBijective φ
@@ -1425,12 +1425,13 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     simp only [π, map_add, map_intCast]
     rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba, add_zero]
   have hπn : π n = (j.val : ZMod d₂) * π (↑b) := by
-    conv_lhs => rw [show n = Φ p from (Equiv.apply_symm_apply Φ n).symm]
+    have : n = Φ p := (Equiv.apply_symm_apply Φ n).symm
+    conv_lhs => rw [this]
     exact hπ_φ i j
   have hπn' : π n = (j'.val : ZMod d₂) * π (↑b) := by
     rw [← hπ_eq]
-    conv_lhs => rw [show n + ↑(b - a) = Φ (Φ.symm (n + ↑(b - a))) from
-      (Equiv.apply_symm_apply Φ _).symm]
+    have : n + ↑(b - a) = Φ (Φ.symm (n + ↑(b - a))) := (Equiv.apply_symm_apply Φ _).symm
+    conv_lhs => rw [this]
     exact hπ_φ _ j'
   have hπ_jj' : (j.val : ZMod d₂) * π (↑b) = (j'.val : ZMod d₂) * π (↑b) :=
     hπn.symm.trans hπn'
@@ -1676,7 +1677,8 @@ private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : 
   have h2 := basePattern_consec_pair he hge hjr
   -- Rewrite ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁
   have hmod : ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁ := by
-    conv_rhs => rw [show j + r + 1 = (j + r) + 1 from by ring]
+    have : j + r + 1 = (j + r) + 1 := by ring
+    conv_rhs => rw [this]
     rw [Nat.add_mod, Nat.mod_mod_of_dvd _ (dvd_refl _), ← Nat.add_mod]
   rw [hmod] at h2
   have hcov := intervalColors_union_covers hI k
@@ -1718,7 +1720,8 @@ private lemma case2d_wrap_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   have hφq := Equiv.apply_symm_apply Φ ((d₁ : ℕ) • ((b - a : ℤ) : ZMod m))
   change orbitMap m a b d₁ e₁ q = _ at hφq
   simp only [orbitMap] at hφq
-  rw [show q = (q.1, q.2) from (Prod.eta q).symm] at hφq
+  have hq_eta : q = (q.1, q.2) := (Prod.eta q).symm
+  rw [hq_eta] at hφq
   simp only [hq_i, ZMod.val_zero, Nat.cast_zero, zero_mul, zero_add] at hφq
   simp only [nsmul_eq_mul] at hφq ⊢
   exact hφq.symm
@@ -1752,7 +1755,8 @@ private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   have : (j + k₀).val = n % e₁ := by
     rw [ZMod.val_add]
   rw [this]
-  conv_lhs => rw [show n = e₁ * (n / e₁) + n % e₁ from (Nat.div_add_mod n e₁).symm]
+  have : n = e₁ * (n / e₁) + n % e₁ := (Nat.div_add_mod n e₁).symm
+  conv_lhs => rw [this]
   rw [add_nsmul, mul_nsmul, he1_b_zero, smul_zero, zero_add, nsmul_eq_mul]
 
 /-- Given d₁ ≥ 3 values each in [u, e₁-u] can sum to any target mod e₁,
@@ -1811,28 +1815,28 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
         trans (Finset.image ZMod.val
           (Finset.univ.filter (fun i : ZMod d₁ => i.val < q))).card
         · rw [Finset.card_image_of_injective _ (ZMod.val_injective _)]
-        · rw [show Finset.image ZMod.val
+        · have : Finset.image ZMod.val
               (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)) =
-              Finset.range q from by
+              Finset.range q := by
             ext j; simp only [mem_image, mem_filter, mem_univ, true_and, mem_range]
             constructor
             · rintro ⟨i, hi, rfl⟩; exact hi
             · intro hj
               exact ⟨(j : ZMod d₁),
                 by rwa [ZMod.val_natCast_of_lt (lt_trans hj hq_lt)],
-                ZMod.val_natCast_of_lt (lt_trans hj hq_lt)⟩]
-          exact Finset.card_range q
+                ZMod.val_natCast_of_lt (lt_trans hj hq_lt)⟩
+          rw [this]; exact Finset.card_range q
       · rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const, smul_eq_mul]
         have : (Finset.univ.filter (fun i : ZMod d₁ => i.val = q)).card = 1 := by
-          rw [show Finset.univ.filter (fun i : ZMod d₁ => i.val = q) =
-              {(q : ZMod d₁)} from by
+          have : Finset.univ.filter (fun i : ZMod d₁ => i.val = q) =
+              {(q : ZMod d₁)} := by
             ext i; simp only [Finset.mem_filter, Finset.mem_univ, true_and,
               Finset.mem_singleton]
             constructor
             · intro h; exact ZMod.val_injective _ (by
                 rwa [ZMod.val_natCast_of_lt hq_lt])
-            · intro h; rw [h, ZMod.val_natCast_of_lt hq_lt]]
-          exact Finset.card_singleton _
+            · intro h; rw [h, ZMod.val_natCast_of_lt hq_lt]
+          rw [this]; exact Finset.card_singleton _
         rw [this, one_mul]
     rw [hsum_f, hsum_g, Nat.mul_comm q w, hqr]
     simp only [deficit]
@@ -1892,10 +1896,9 @@ private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
     (j + (S + V) % n) % n = ((j + S % n) % n + V) % n := by
-  have : j + (S + V) = j + S + V := by grind
-  rw [Nat.add_mod_mod, this,
-      ← Nat.mod_add_mod (j + S) n V,
-      show (j + S) % n = (j + S % n) % n from (Nat.add_mod_mod j S n).symm]
+  have h1 : j + (S + V) = j + S + V := by grind
+  have h2 : (j + S) % n = (j + S % n) % n := (Nat.add_mod_mod j S n).symm
+  rw [Nat.add_mod_mod, h1, ← Nat.mod_add_mod (j + S) n V, h2]
 
 /-- Wrap case: if (S + V) % n = k₀ % n, then
     (j + k₀) % n = ((j + S % n) % n + V) % n -/
@@ -2139,19 +2142,21 @@ lemma case_two_odd_small (hm : m ≥ 289)
       rw [← hΦ_ba, hχ_eq, h]; congr 1
       change (j'.val + (case2c_pattern d₁ k₀.val (ZMod.val 0)).val) % 3 =
         (j.val + k₀.val + p₀.val) % 3
-      rw [ZMod.val_zero, show j'.val = (j.val + k₀.val) % e₁ from ZMod.val_add j k₀]
+      have hj'val : j'.val = (j.val + k₀.val) % e₁ := ZMod.val_add j k₀
+      rw [ZMod.val_zero, hj'val]
       exact case2c_mod3 he1_div3 (j.val + k₀.val) p₀.val
     · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_2ba, hχ_eq, h]; congr 1
       change ((j' + 1).val + (case2c_pattern d₁ k₀.val (ZMod.val 0)).val) % 3 =
         (j.val + k₀.val + 1 + p₀.val) % 3
-      rw [ZMod.val_zero, hzmod_succ,
-          show j'.val = (j.val + k₀.val) % e₁ from ZMod.val_add j k₀]
+      have hj'val : j'.val = (j.val + k₀.val) % e₁ := ZMod.val_add j k₀
+      rw [ZMod.val_zero, hzmod_succ, hj'val]
       rw [case2c_mod3 he1_div3 ((j.val + k₀.val) % e₁ + 1) p₀.val]
-      rw [show (j.val + k₀.val) % e₁ + 1 + p₀.val =
-            (j.val + k₀.val) % e₁ + (1 + p₀.val) by grind,
-          show j.val + k₀.val + 1 + p₀.val =
-            j.val + k₀.val + (1 + p₀.val) by grind]
+      have h1 : (j.val + k₀.val) % e₁ + 1 + p₀.val =
+            (j.val + k₀.val) % e₁ + (1 + p₀.val) := by grind
+      have h2 : j.val + k₀.val + 1 + p₀.val =
+            j.val + k₀.val + (1 + p₀.val) := by grind
+      rw [h1, h2]
       exact case2c_mod3 he1_div3 (j.val + k₀.val) (1 + p₀.val)
 
 /-- When gcd(d₁,d₂) = 1, both d₁,d₂ > 1, both d₁,d₂ divide m,
