@@ -307,6 +307,35 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s)) :
     HasPolychromColouring (Fin 3)
       ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
+  set q := m / s
+  set r := m % s
+  have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
+  have hr_lt : r < s := Nat.mod_lt m hs
+  have hq_pos : 0 < q := by
+    have : q * s ≤ m := Nat.div_mul_le_self m s
+    have : q ≤ (m + s - 1) / s := by rw [Nat.le_div_iff_mul_le hs]; omega
+    omega
+  have hg1_lt_m : g + 1 < m := by
+    nlinarith [Nat.div_mul_le_self m s, Nat.le_of_dvd hs hs3]
+  haveI : NeZero m := ⟨by omega⟩
+  haveI : Fact (1 < m) := ⟨by omega⟩
+  set bd := r * (q + 1)
+  -- Coloring: partition [0,m) into s intervals. First r have length q+1,
+  -- remaining s-r have length q. Color within interval j alternates
+  -- between j%3 and (j+1)%3.
+  let idx (p : ℕ) : ℕ :=
+    if p < bd then p / (q + 1) else r + (p - bd) / q
+  let off (p : ℕ) : ℕ :=
+    if p < bd then p % (q + 1) else (p - bd) % q
+  let c (p : ℕ) : ℕ := (idx (p % m) + off (p % m) % 2) % 3
+  have hc_lt3 : ∀ p, c p < 3 := fun p => Nat.mod_lt _ (by omega)
+  have hc_period : ∀ p, c (p % m) = c p := by
+    intro p; simp only [c]; rw [Nat.mod_mod_of_dvd p (dvd_refl m)]
+  refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
+    lift_coloring_witness hg1_lt_m hc_lt3 hc_period ?_⟩
+  set v := n.val
+  have hv_lt : v < m := ZMod.val_lt n
+  -- We need: ∃ a ∈ {0,1,g,g+1}, c(v+a) = k.val
   sorry
 
 /-- Multiplication by a unit in ZMod m is an additive automorphism,
