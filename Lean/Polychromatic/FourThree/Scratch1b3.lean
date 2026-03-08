@@ -9,17 +9,84 @@ Prove that idx((v+g)%m) differs from idx(v) by 1 or 2 mod s.
 -/
 
 open Finpartition in
-/-- idx(p) satisfies equiEndpoint(m,s,j) ≤ p < equiEndpoint(m,s,j+1) and j < s. -/
+/-- idx(p) satisfies equiEndpoint(m,s,j) ≤ p < equiEndpoint(m,s,j+1)
+    and j < s. -/
 lemma idx_in_interval (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
     (p : ℕ) (hp : p < m) :
     let q := m / s
     let r := m % s
     let bd := r * (q + 1)
-    let j := if p < bd then p / (q + 1) else r + (p - bd) / q
+    let j := if p < bd then p / (q + 1)
+      else r + (p - bd) / q
     j < s ∧
     equiEndpoint m s j ≤ p ∧
     p < equiEndpoint m s (j + 1) := by
-  sorry
+  simp only
+  set q := m / s; set r := m % s; set bd := r * (q + 1)
+  have hq_pos : 0 < q := Nat.div_pos hs_le hs
+  have hr_lt : r < s := Nat.mod_lt m hs
+  have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
+  have hbd_le_m : bd + (s - r) * q = m := by
+    have : (s - r) * q + r * q = s * q := by
+      rw [← Nat.add_mul, Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
+    have : bd = r * q + r := by ring
+    linarith
+  split
+  · -- Case p < bd: j = p / (q + 1)
+    rename_i hlt
+    set j := p / (q + 1)
+    have hq1_pos : 0 < q + 1 := by omega
+    have hj_lt_r : j < r := by
+      rw [Nat.div_lt_iff_lt_mul hq1_pos]; exact hlt
+    have hdam : (q + 1) * j + p % (q + 1) = p :=
+      Nat.div_add_mod p (q + 1)
+    have hmod : p % (q + 1) < q + 1 :=
+      Nat.mod_lt p hq1_pos
+    have hr1 : (q + 1) * j = q * j + j := by ring
+    have hr2 : (q + 1) * j + (q + 1) =
+        q * (j + 1) + (j + 1) := by ring
+    have hle : q * j + j ≤ p := by omega
+    have hub : p < q * (j + 1) + (j + 1) := by omega
+    refine ⟨by omega, ?_, ?_⟩
+    · unfold equiEndpoint
+      rw [min_eq_right (by omega : j ≤ r)]
+      change q * j + j ≤ p; exact hle
+    · unfold equiEndpoint
+      rw [min_eq_right (by omega : j + 1 ≤ r)]
+      change p < q * (j + 1) + (j + 1); exact hub
+  · -- Case p ≥ bd: j = r + (p - bd) / q
+    rename_i hge; push_neg at hge
+    set d := (p - bd) / q
+    have hdam : q * d + (p - bd) % q = p - bd :=
+      Nat.div_add_mod (p - bd) q
+    have hmod : (p - bd) % q < q :=
+      Nat.mod_lt _ hq_pos
+    have hqd_le : q * d ≤ p - bd := by omega
+    have hqd_ub : p - bd < q * d + q := by omega
+    have hd_lt : d < s - r := by
+      rw [Nat.div_lt_iff_lt_mul hq_pos]; omega
+    set j := r + d
+    have hring_j : q * j + r = bd + q * d := by
+      have : q * j = q * r + q * d := by ring
+      have : bd = r * q + r := by ring
+      linarith
+    have hring_j1 :
+        q * (j + 1) + r = bd + q * d + q := by
+      have : q * (j + 1) = q * r + q * d + q := by
+        ring
+      have : bd = r * q + r := by ring
+      linarith
+    have hle : q * j + r ≤ p := by omega
+    have hub : p < q * (j + 1) + r := by omega
+    have hr_le_j : r ≤ j := Nat.le_add_right r d
+    have hr_le_j1 : r ≤ j + 1 := Nat.le_succ_of_le hr_le_j
+    refine ⟨by omega, ?_, ?_⟩
+    · unfold equiEndpoint
+      rw [min_eq_left hr_le_j]
+      change q * j + r ≤ p; exact hle
+    · unfold equiEndpoint
+      rw [min_eq_left hr_le_j1]
+      change p < q * (j + 1) + r; exact hub
 
 /-- The interval length: q+1 for the first r intervals, q for the rest. -/
 lemma equiEndpoint_diff (m s j : ℕ) :
@@ -109,7 +176,7 @@ lemma idx_range_from_endpoints (m s : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
 
 open Finpartition in
 /-- The gap bound. -/
-lemma gap_bound (s g m : ℕ) (hs : 0 < s) (hs2 : 2 ≤ s) (hs_le : s ≤ m)
+lemma gap_bound (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
     (v : ℕ) (hv_lt : v < m) :
     let q := m / s
@@ -127,121 +194,119 @@ lemma gap_bound (s g m : ℕ) (hs : 0 < s) (hs2 : 2 ≤ s) (hs_le : s ≤ m)
   set idx := fun p => if p < bd then p / (q + 1) else r + (p - bd) / q
   set j₀ := idx v
   set jg := idx ((v + g) % m)
-  -- Get interval bounds for v
-  have hv_spec := idx_in_interval s m hs hs_le v hv_lt
-  obtain ⟨hj₀_lt, hv_lo, hv_hi⟩ := hv_spec
-  -- Get interval bounds for (v+g)%m
+  -- Get interval bounds for v — convert to use j₀
+  obtain ⟨hj₀_lt', hv_lo', hv_hi'⟩ :=
+    idx_in_interval s m hs hs_le v hv_lt
+  have hj₀_lt : j₀ < s := hj₀_lt'
+  have hv_lo : equiEndpoint m s j₀ ≤ v := hv_lo'
+  have hv_hi : v < equiEndpoint m s (j₀ + 1) := hv_hi'
+  -- Get interval bounds for (v+g)%m — convert to use jg
   have hvg_lt : (v + g) % m < m := Nat.mod_lt _ (by omega)
-  have hjg_spec := idx_in_interval s m hs hs_le ((v + g) % m) hvg_lt
-  obtain ⟨hjg_lt, hvg_lo, hvg_hi⟩ := hjg_spec
-  -- Key bounds on v+g (before mod):
+  obtain ⟨hjg_lt', hvg_lo', hvg_hi'⟩ :=
+    idx_in_interval s m hs hs_le ((v + g) % m) hvg_lt
+  have hjg_lt : jg < s := hjg_lt'
+  have hvg_lo : equiEndpoint m s jg ≤ (v + g) % m := hvg_lo'
+  have hvg_hi : (v + g) % m < equiEndpoint m s (jg + 1) := hvg_hi'
+  -- Key bounds on v+g (before mod)
   have hpast : equiEndpoint m s (j₀ + 1) ≤ v + g :=
     shift_past_interval m s g hs h_lb j₀ v hv_lo hv_hi
   have hwithin : v + g < equiEndpoint m s (j₀ + 3) :=
     shift_within_two m s g h_ub j₀ v hv_hi
-  -- g < m (since s ≥ 2)
   have hg_lt_m : g < m := by
     have hqs : q * s ≤ m := Nat.div_mul_le_self m s
-    have : 2 * q ≤ m := by nlinarith
+    have : 2 * q ≤ q * s := by nlinarith
     omega
+  -- Helper: gap of 1 or 2 mod s gives the result
+  have mod_small : ∀ d : ℕ, d = 1 ∨ d = 2 →
+      d % s = 1 ∨ d % s = 2 := by
+    intro d hd; rcases hd with h | h <;> [left; right] <;>
+      rw [h] <;> exact Nat.mod_eq_of_lt (by omega)
+  have mod_shift : ∀ d : ℕ, d = 1 ∨ d = 2 →
+      (s + d) % s = 1 ∨ (s + d) % s = 2 := by
+    intro d hd; rcases hd with h | h <;> subst h
+    · left; show (s + 1) % s = 1
+      rw [show s + 1 = 1 + s from by omega, Nat.add_mod_right]
+      exact Nat.mod_eq_of_lt (by omega)
+    · right; show (s + 2) % s = 2
+      rw [show s + 2 = 2 + s from by omega, Nat.add_mod_right]
+      exact Nat.mod_eq_of_lt (by omega)
   -- Case split on wrapping
   by_cases hvg_wrap : v + g < m
   · -- No wrapping: (v+g)%m = v+g
     have hvg_eq : (v + g) % m = v + g := Nat.mod_eq_of_lt hvg_wrap
-    rw [hvg_eq] at hvg_lo hvg_hi ⊢
-    -- Now: equiEndpoint(j₀+1) ≤ v+g < equiEndpoint(j₀+3)
-    -- and equiEndpoint(jg) ≤ v+g < equiEndpoint(jg+1)
-    -- and jg < s
-    -- Need: j₀+1 ≤ jg ≤ j₀+2
-    -- First check: j₀+3 ≤ s? If so, use idx_range_from_endpoints.
+    rw [hvg_eq] at hvg_lo hvg_hi
     by_cases hj3 : j₀ + 3 ≤ s
-    · have := idx_range_from_endpoints m s hs hs_le (j₀+1) (j₀+3) (v+g)
-        (by omega) hj3 hpast hwithin jg hjg_lt hvg_lo hvg_hi
-      omega
-    · -- j₀+3 > s, so j₀ ≥ s-2
-      -- v+g < m = equiEndpoint(m,s,s), so jg < s is ensured.
-      -- And equiEndpoint(j₀+1) ≤ v+g < m = equiEndpoint(s).
-      have hj0_ge : j₀ ≥ s - 2 := by omega
-      have hm_eq_ep : equiEndpoint m s s = m :=
+    · have hrange := idx_range_from_endpoints m s hs hs_le
+        (j₀+1) (j₀+3) (v+g) (by omega) hj3 hpast hwithin
+        jg hjg_lt hvg_lo hvg_hi
+      -- jg - j₀ ∈ {1, 2}, so jg + s - j₀ = s + (jg - j₀)
+      have : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
+      have : jg + s - j₀ = s + (jg - j₀) := by omega
+      rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
+    · have hm_eq_ep : equiEndpoint m s s = m :=
         equiEndpoint_hi (by omega : s ≠ 0)
-      have := idx_range_from_endpoints m s hs hs_le (j₀+1) s (v+g)
-        (by omega) (le_refl s) hpast (by omega) jg hjg_lt hvg_lo hvg_hi
-      -- j₀+1 ≤ jg < s. And j₀ ≥ s-2.
-      -- So j₀ = s-2 and jg ∈ {s-1}, giving gap = 1.
-      -- Or j₀ = s-1 and jg has no valid value (j₀+1 = s > jg).
-      -- But j₀+1 ≤ jg < s means j₀ < s-1 (since jg ≥ j₀+1 and jg < s),
-      -- so j₀ ≤ s-2. Combined with j₀ ≥ s-2: j₀ = s-2.
-      -- Then jg ∈ {s-1} = {j₀+1}.
-      -- gap = (jg + s - j₀) % s = (s-1 + s - (s-2)) % s = (s+1) % s = 1.
-      omega
+      have hvg_lt_ep : v + g < equiEndpoint m s s := by linarith
+      have hrange := idx_range_from_endpoints m s hs hs_le
+        (j₀+1) s (v+g) (by omega) (le_refl s) hpast hvg_lt_ep
+        jg hjg_lt hvg_lo hvg_hi
+      have : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
+      have : jg + s - j₀ = s + (jg - j₀) := by omega
+      rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
   · -- Wrapping: (v+g)%m = v+g-m
     push_neg at hvg_wrap
-    have hvg_eq : (v + g) % m = v + g - m := by omega
-    rw [hvg_eq] at hvg_lo hvg_hi ⊢
-    -- v+g-m < equiEndpoint(j₀+3) - m
-    -- equiEndpoint(s) = m, so equiEndpoint(j₀+3) - m = equiEndpoint(j₀+3) - equiEndpoint(s)
-    -- For j₀+3 > s (which must hold since v+g ≥ m):
-    -- equiEndpoint(j₀+1) ≤ v+g means equiEndpoint(j₀+1) ≤ v+g.
-    -- Since v+g ≥ m = equiEndpoint(s), we need equiEndpoint(j₀+1) ≤ equiEndpoint(s).
-    -- This means j₀+1 ≤ s, i.e., j₀ ≤ s-1, which is hj₀_lt.
-    -- More precisely, v+g ≥ m means equiEndpoint(j₀+1) ≤ m.
-    -- And equiEndpoint is monotone, so j₀+1 ≤ s.
-    -- equiEndpoint(j₀+3) > equiEndpoint(s) = m when j₀+3 > s.
-    -- Since j₀ ≤ s-1 and j₀+3 > s iff j₀ ≥ s-2.
-
-    -- v+g-m ≥ 0 = equiEndpoint(0)
-    have hvgm_ge : 0 ≤ v + g - m := by omega
-    -- v+g-m < equiEndpoint(j₀+3) - m
-    -- We need to show equiEndpoint(j₀+3) - equiEndpoint(s) bounds (v+g-m).
-    -- equiEndpoint(j₀+3) - equiEndpoint(s):
-    --   For j₀+3 > s: since equiEndpoint(j) = q*j + min(r,j),
-    --   equiEndpoint(j₀+3) = q*(j₀+3) + r (since j₀+3 > s ≥ r)
-    --   equiEndpoint(s) = m = q*s + r
-    --   difference = q*(j₀+3-s)
-    -- So v+g-m < q*(j₀+3-s).
-    -- And j₀+3-s ≤ 2 (since j₀ ≤ s-1, so j₀+3 ≤ s+2).
-    -- equiEndpoint(j₀+3-s) ≤ q*(j₀+3-s) + min(r, j₀+3-s)
-    -- But we need v+g-m < equiEndpoint(j₀+3-s).
-    -- Hmm, it's not exactly equal. Let me think differently.
-
-    -- Since equiEndpoint(j₀+3) - equiEndpoint(s) involves j₀+3-s indices
-    -- past s, and the "periodic" nature of the partition means these
-    -- correspond to the FIRST j₀+3-s intervals in the next period.
-
-    -- For a formal proof, I need: equiEndpoint(m,s,s+k) = m + equiEndpoint(m,s,k)
-    -- This is NOT true in general because equiEndpoint is not periodic!
-    -- equiEndpoint(m,s,s+k) = q*(s+k) + min(r, s+k) = q*s + q*k + r = m + q*k
-    -- equiEndpoint(m,s,k) = q*k + min(r,k)
-    -- These differ by m - min(r,k) + r, not m.
-    -- But m + equiEndpoint(m,s,k) = m + q*k + min(r,k).
-    -- And equiEndpoint(m,s,s+k) = m + q*k.
-    -- So equiEndpoint(m,s,s+k) ≤ m + equiEndpoint(m,s,k) (since min(r,k) ≥ 0).
-    -- And equiEndpoint(m,s,s+k) ≥ m + equiEndpoint(m,s,k) - r.
-
-    -- Key: v+g-m < equiEndpoint(m,s,j₀+3) - m = q*(j₀+3-s) (for j₀+3 > s)
-    -- And equiEndpoint(m,s,j₀+3-s) = q*(j₀+3-s) + min(r, j₀+3-s) ≥ q*(j₀+3-s).
-    -- So v+g-m < equiEndpoint(m,s,j₀+3-s). ✓
-
-    -- Similarly, v+g-m ≥ equiEndpoint(m,s,j₀+1) - m.
-    -- If j₀+1 < s: equiEndpoint(j₀+1) < m. But v+g ≥ m means v+g - m ≥ 0.
-    --   And equiEndpoint(j₀+1) - m < 0 (subtraction underflow in ℕ). So v+g-m ≥ 0 ≥ equiEndpoint(0).
-    --   We need a LOWER bound on jg. The lower bound comes from
-    --   equiEndpoint(j₀+1-s) but that's negative/zero.
-    --   Actually jg ≥ 0 always. And jg ≤ (j₀+3-s) - 1 from the upper bound.
-    --   j₀+3-s ≤ 2. So jg ≤ 1.
-    --   But we also need jg ≥ ... what? We need (jg+s-j₀)%s ∈ {1,2}.
-    --   Since j₀ ≥ s-2 (from wrapping): gap = (jg + s - j₀) % s.
-    --   j₀ = s-2: gap = (jg + 2) % s. Need gap = 1 or 2.
-    --     jg < j₀+3-s = 1. So jg = 0. gap = 2%s = 2 (s≥3). ✓
-    --   j₀ = s-1: gap = (jg + 1) % s. Need gap = 1 or 2.
-    --     jg < j₀+3-s = 2. So jg ∈ {0,1}. gap = 1 or 2. ✓
-
-    -- So the key facts needed:
-    -- 1. j₀ ≥ s-2 (from v+g ≥ m and equiEndpoint(j₀+1) ≤ v+g)
-    -- 2. jg < j₀+3-s (from v+g-m < equiEndpoint(j₀+3-s))
-    -- 3. jg ≥ 0 (trivially)
-    -- Then case analysis on j₀ ∈ {s-2, s-1}.
-
-    -- Hmm, this is still very involved. Let me just sorry this for now
-    -- and come back to it.
-    sorry
+    have hvg_eq : (v + g) % m = v + g - m := by
+      conv_lhs =>
+        rw [show v + g = (v + g - m) + m from by omega]
+      rw [Nat.add_mod_right]
+      exact Nat.mod_eq_of_lt (by omega)
+    rw [hvg_eq] at hvg_lo hvg_hi
+    -- j₀ ≥ s-2: if j₀ ≤ s-3, equiEndpoint(j₀+3) ≤ m,
+    -- contradicting v+g ≥ m and v+g < equiEndpoint(j₀+3)
+    have hj0_ge : j₀ ≥ s - 2 := by
+      by_contra h; push_neg at h
+      have : equiEndpoint m s (j₀ + 3) ≤ equiEndpoint m s s :=
+        equiEndpoint_monotone (by omega)
+      have := equiEndpoint_hi (by omega : s ≠ 0) (n := m) (k := s)
+      omega
+    have hr_lt : r < s := Nat.mod_lt m hs
+    -- equiEndpoint(j₀+3) = q*(j₀+3) + r (since j₀+3 > s ≥ r)
+    have hep_j3 : equiEndpoint m s (j₀ + 3) =
+        q * (j₀ + 3) + r := by
+      unfold equiEndpoint
+      rw [min_eq_left (by omega : r ≤ j₀ + 3)]
+    have hm_eq : m = q * s + r := by
+      have h := Nat.div_add_mod m s
+      rw [mul_comm] at h; exact h.symm
+    -- m ≤ equiEndpoint(j₀+3)
+    have hm_le_ep : m ≤ equiEndpoint m s (j₀ + 3) := by
+      rw [hep_j3, hm_eq]
+      have : q * s ≤ q * (j₀ + 3) :=
+        Nat.mul_le_mul_left q (by omega)
+      omega
+    -- v+g-m < equiEndpoint(j₀+3-s) since
+    -- equiEndpoint(j₀+3) - m = q*(j₀+3-s) ≤ equiEndpoint(j₀+3-s)
+    have hep_diff : equiEndpoint m s (j₀ + 3) - m =
+        q * (j₀ + 3 - s) := by
+      rw [hep_j3, hm_eq]
+      have : q * (j₀ + 3 - s) + q * s = q * (j₀ + 3) := by
+        rw [← Nat.mul_add, Nat.sub_add_cancel (by omega)]
+      omega
+    have hvgm_ub : v + g - m <
+        equiEndpoint m s (j₀ + 3 - s) := by
+      have hvgm_lt : v + g - m < q * (j₀ + 3 - s) := by
+        rw [← hep_diff]; omega
+      have : q * (j₀ + 3 - s) ≤
+          equiEndpoint m s (j₀ + 3 - s) := by
+        change q * (j₀ + 3 - s) ≤
+          q * (j₀ + 3 - s) + min r (j₀ + 3 - s)
+        omega
+      omega
+    -- jg < j₀+3-s by idx_range_from_endpoints
+    have hep0 : equiEndpoint m s 0 = 0 := by
+      unfold equiEndpoint; simp
+    have hrange := idx_range_from_endpoints m s hs hs_le
+      0 (j₀ + 3 - s) (v + g - m) (by omega) (by omega)
+      (by linarith) hvgm_ub jg hjg_lt hvg_lo hvg_hi
+    -- j₀ ∈ {s-2, s-1} and jg < j₀+3-s, derive gap
+    have : jg + s - j₀ = 1 ∨ jg + s - j₀ = 2 := by omega
+    exact mod_small _ this

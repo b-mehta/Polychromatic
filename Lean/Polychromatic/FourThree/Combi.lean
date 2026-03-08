@@ -1,5 +1,6 @@
 import Polychromatic.Colouring
 import Polychromatic.PolychromNumber
+import Polychromatic.ForMathlib.Misc
 import Mathlib.Algebra.Ring.AddAut
 
 /-!
@@ -386,9 +387,155 @@ private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
   · have : jg = j₀ + 2 := by omega
     rw [this]; omega
 
+open Finpartition in
+private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
+    (p : ℕ) (hp : p < m) :
+    let q := m / s
+    let r := m % s
+    let bd := r * (q + 1)
+    let j := if p < bd then p / (q + 1)
+      else r + (p - bd) / q
+    j < s ∧
+    equiEndpoint m s j ≤ p ∧
+    p < equiEndpoint m s (j + 1) := by
+  simp only
+  set q := m / s; set r := m % s; set bd := r * (q + 1)
+  have hq_pos : 0 < q := Nat.div_pos hs_le hs
+  have hr_lt : r < s := Nat.mod_lt m hs
+  have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
+  have hbd_le_m : bd + (s - r) * q = m := by
+    have : (s - r) * q + r * q = s * q := by
+      rw [← Nat.add_mul, Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
+    have : bd = r * q + r := by ring
+    linarith
+  split
+  · rename_i hlt
+    set j := p / (q + 1)
+    have hq1_pos : 0 < q + 1 := by omega
+    have hj_lt_r : j < r := by
+      rw [Nat.div_lt_iff_lt_mul hq1_pos]; exact hlt
+    have hdam : (q + 1) * j + p % (q + 1) = p :=
+      Nat.div_add_mod p (q + 1)
+    have hmod : p % (q + 1) < q + 1 :=
+      Nat.mod_lt p hq1_pos
+    have hr1 : (q + 1) * j = q * j + j := by ring
+    have hr2 : (q + 1) * j + (q + 1) =
+        q * (j + 1) + (j + 1) := by ring
+    have hle : q * j + j ≤ p := by omega
+    have hub : p < q * (j + 1) + (j + 1) := by omega
+    refine ⟨by omega, ?_, ?_⟩
+    · unfold equiEndpoint
+      rw [min_eq_right (by omega : j ≤ r)]
+      change q * j + j ≤ p; exact hle
+    · unfold equiEndpoint
+      rw [min_eq_right (by omega : j + 1 ≤ r)]
+      change p < q * (j + 1) + (j + 1); exact hub
+  · rename_i hge; push_neg at hge
+    set d := (p - bd) / q
+    have hdam : q * d + (p - bd) % q = p - bd :=
+      Nat.div_add_mod (p - bd) q
+    have hmod : (p - bd) % q < q :=
+      Nat.mod_lt _ hq_pos
+    have hqd_le : q * d ≤ p - bd := by omega
+    have hqd_ub : p - bd < q * d + q := by omega
+    have hd_lt : d < s - r := by
+      rw [Nat.div_lt_iff_lt_mul hq_pos]; omega
+    set j := r + d
+    have hring_j : q * j + r = bd + q * d := by
+      have : q * j = q * r + q * d := by ring
+      have : bd = r * q + r := by ring
+      linarith
+    have hring_j1 :
+        q * (j + 1) + r = bd + q * d + q := by
+      have : q * (j + 1) = q * r + q * d + q := by
+        ring
+      have : bd = r * q + r := by ring
+      linarith
+    have hle : q * j + r ≤ p := by omega
+    have hub : p < q * (j + 1) + r := by omega
+    have hr_le_j : r ≤ j := Nat.le_add_right r d
+    have hr_le_j1 : r ≤ j + 1 :=
+      Nat.le_succ_of_le hr_le_j
+    refine ⟨by omega, ?_, ?_⟩
+    · unfold equiEndpoint
+      rw [min_eq_left hr_le_j]
+      change q * j + r ≤ p; exact hle
+    · unfold equiEndpoint
+      rw [min_eq_left hr_le_j1]
+      change p < q * (j + 1) + r; exact hub
+
+private lemma equiEndpoint_diff' (m s j : ℕ) :
+    Finpartition.equiEndpoint m s (j + 1) -
+      Finpartition.equiEndpoint m s j =
+      if j < m % s then m / s + 1 else m / s :=
+  Finpartition.card_of_mem_equipartitionToIco_parts_aux
+
+open Finpartition in
+private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s)
+    (h_lb : (m + s - 1) / s < g) (j : ℕ) :
+    equiEndpoint m s (j + 1) - equiEndpoint m s j < g := by
+  rw [equiEndpoint_diff']
+  set q := m / s; set r := m % s
+  by_cases hr : j < r
+  · simp [hr]
+    have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
+    have : (q + 1) * s = s * q + s := by ring
+    have : (q + 1) * s ≤ m + s - 1 := by omega
+    have := Nat.le_div_iff_mul_le hs |>.mpr this
+    omega
+  · simp [hr]
+    have : q * s ≤ m := Nat.div_mul_le_self m s
+    have : q * s ≤ m + s - 1 := by omega
+    have := Nat.le_div_iff_mul_le hs |>.mpr this
+    omega
+
+open Finpartition in
+private lemma shift_past_interval' (m s g : ℕ) (hs : 0 < s)
+    (h_lb : (m + s - 1) / s < g)
+    (j p : ℕ) (hlo : equiEndpoint m s j ≤ p)
+    (hhi : p < equiEndpoint m s (j + 1)) :
+    equiEndpoint m s (j + 1) ≤ p + g := by
+  have := gap_exceeds_ilen m s g hs h_lb j; omega
+
+open Finpartition in
+private lemma shift_within_two' (m s g : ℕ)
+    (h_ub : g < 2 * (m / s))
+    (j p : ℕ) (hhi : p < equiEndpoint m s (j + 1)) :
+    p + g < equiEndpoint m s (j + 3) := by
+  have hm1 : equiEndpoint m s (j + 2) -
+      equiEndpoint m s (j + 1) ≥ m / s := by
+    rw [equiEndpoint_diff']; split <;> omega
+  have hm2 : equiEndpoint m s (j + 3) -
+      equiEndpoint m s (j + 2) ≥ m / s := by
+    rw [equiEndpoint_diff']; split <;> omega
+  have hmono : equiEndpoint m s (j + 1) ≤
+      equiEndpoint m s (j + 2) :=
+    equiEndpoint_monotone (by omega)
+  omega
+
+open Finpartition in
+private lemma idx_range_from_endpoints' (m s : ℕ)
+    (a b p : ℕ)
+    (ha_le : equiEndpoint m s a ≤ p)
+    (hp_lt : p < equiEndpoint m s b)
+    (j : ℕ)
+    (hj_lo : equiEndpoint m s j ≤ p)
+    (hj_hi : p < equiEndpoint m s (j + 1)) :
+    a ≤ j ∧ j < b := by
+  constructor
+  · by_contra h; push_neg at h
+    have : equiEndpoint m s (j + 1) ≤ equiEndpoint m s a :=
+      equiEndpoint_monotone (by omega)
+    omega
+  · by_contra h; push_neg at h
+    have : equiEndpoint m s b ≤ equiEndpoint m s j :=
+      equiEndpoint_monotone (by omega)
+    omega
+
 /-- Gap bound: idx of (v+g)%m differs from idx(v) by 1 or 2 mod s.
     This is the key arithmetic fact for interval colorings. -/
-private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
+private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
+    (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
     (v : ℕ) (hv_lt : v < m) :
     let bd := (m % s) * (m / s + 1)
@@ -398,7 +545,136 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
     let j₀ := idx v
     let jg := idx ((v + g) % m)
     (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2 := by
-  sorry
+  simp only
+  set q := m / s
+  set r := m % s
+  set bd := r * (q + 1)
+  set idx := fun p ↦
+    if p < bd then p / (q + 1) else r + (p - bd) / q
+  set j₀ := idx v
+  set jg := idx ((v + g) % m)
+  obtain ⟨hj₀_lt', hv_lo', hv_hi'⟩ :=
+    idx_in_interval' s m hs hs_le v hv_lt
+  have hj₀_lt : j₀ < s := hj₀_lt'
+  have hv_lo : Finpartition.equiEndpoint m s j₀ ≤ v :=
+    hv_lo'
+  have hv_hi : v <
+      Finpartition.equiEndpoint m s (j₀ + 1) := hv_hi'
+  have hvg_lt : (v + g) % m < m :=
+    Nat.mod_lt _ (by omega)
+  obtain ⟨hjg_lt', hvg_lo', hvg_hi'⟩ :=
+    idx_in_interval' s m hs hs_le ((v + g) % m) hvg_lt
+  have hjg_lt : jg < s := hjg_lt'
+  have hvg_lo : Finpartition.equiEndpoint m s jg ≤
+      (v + g) % m := hvg_lo'
+  have hvg_hi : (v + g) % m <
+      Finpartition.equiEndpoint m s (jg + 1) := hvg_hi'
+  have hpast : Finpartition.equiEndpoint m s (j₀ + 1) ≤
+      v + g :=
+    shift_past_interval' m s g hs h_lb j₀ v hv_lo hv_hi
+  have hwithin : v + g <
+      Finpartition.equiEndpoint m s (j₀ + 3) :=
+    shift_within_two' m s g h_ub j₀ v hv_hi
+  have hg_lt_m : g < m := by
+    have hqs : q * s ≤ m := Nat.div_mul_le_self m s
+    have : 2 * q ≤ q * s := by nlinarith
+    omega
+  have mod_small : ∀ d : ℕ, d = 1 ∨ d = 2 →
+      d % s = 1 ∨ d % s = 2 := by
+    intro d hd; rcases hd with h | h <;> [left; right] <;>
+      rw [h] <;> exact Nat.mod_eq_of_lt (by omega)
+  have mod_shift : ∀ d : ℕ, d = 1 ∨ d = 2 →
+      (s + d) % s = 1 ∨ (s + d) % s = 2 := by
+    intro d hd; rcases hd with h | h <;> subst h
+    · left
+      rw [show s + 1 = 1 + s from by omega,
+        Nat.add_mod_right]
+      exact Nat.mod_eq_of_lt (by omega)
+    · right
+      rw [show s + 2 = 2 + s from by omega,
+        Nat.add_mod_right]
+      exact Nat.mod_eq_of_lt (by omega)
+  by_cases hvg_wrap : v + g < m
+  · have hvg_eq : (v + g) % m = v + g :=
+      Nat.mod_eq_of_lt hvg_wrap
+    rw [hvg_eq] at hvg_lo hvg_hi
+    by_cases hj3 : j₀ + 3 ≤ s
+    · have hrange := idx_range_from_endpoints' m s
+        (j₀+1) (j₀+3) (v+g) hpast hwithin
+        jg hvg_lo hvg_hi
+      have : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
+      have : jg + s - j₀ = s + (jg - j₀) := by omega
+      rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
+    · have hm_eq_ep :
+          Finpartition.equiEndpoint m s s = m :=
+        Finpartition.equiEndpoint_hi (by omega : s ≠ 0)
+      have hvg_lt_ep : v + g <
+          Finpartition.equiEndpoint m s s := by
+        linarith
+      have hrange := idx_range_from_endpoints' m s
+        (j₀+1) s (v+g) hpast hvg_lt_ep
+        jg hvg_lo hvg_hi
+      have : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
+      have : jg + s - j₀ = s + (jg - j₀) := by omega
+      rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
+  · push_neg at hvg_wrap
+    have hvg_eq : (v + g) % m = v + g - m := by
+      conv_lhs =>
+        rw [show v + g = (v + g - m) + m from by omega]
+      rw [Nat.add_mod_right]
+      exact Nat.mod_eq_of_lt (by omega)
+    rw [hvg_eq] at hvg_lo hvg_hi
+    have hj0_ge : j₀ ≥ s - 2 := by
+      by_contra h; push_neg at h
+      have : Finpartition.equiEndpoint m s (j₀ + 3) ≤
+          Finpartition.equiEndpoint m s s :=
+        Finpartition.equiEndpoint_monotone (by omega)
+      have := Finpartition.equiEndpoint_hi
+        (by omega : s ≠ 0) (n := m) (k := s)
+      omega
+    have hr_lt : r < s := Nat.mod_lt m hs
+    have hep_j3 : Finpartition.equiEndpoint m s
+        (j₀ + 3) = q * (j₀ + 3) + r := by
+      unfold Finpartition.equiEndpoint
+      rw [min_eq_left (by omega : r ≤ j₀ + 3)]
+    have hm_eq : m = q * s + r := by
+      have h := Nat.div_add_mod m s
+      rw [mul_comm] at h; exact h.symm
+    have hm_le_ep : m ≤
+        Finpartition.equiEndpoint m s (j₀ + 3) := by
+      rw [hep_j3, hm_eq]
+      have : q * s ≤ q * (j₀ + 3) :=
+        Nat.mul_le_mul_left q (by omega)
+      omega
+    have hep_diff :
+        Finpartition.equiEndpoint m s (j₀ + 3) - m =
+        q * (j₀ + 3 - s) := by
+      rw [hep_j3, hm_eq]
+      have : q * (j₀ + 3 - s) + q * s =
+          q * (j₀ + 3) := by
+        rw [← Nat.mul_add,
+          Nat.sub_add_cancel (by omega)]
+      omega
+    have hvgm_ub : v + g - m <
+        Finpartition.equiEndpoint m s
+          (j₀ + 3 - s) := by
+      have hvgm_lt : v + g - m <
+          q * (j₀ + 3 - s) := by
+        rw [← hep_diff]; omega
+      have : q * (j₀ + 3 - s) ≤
+          Finpartition.equiEndpoint m s
+            (j₀ + 3 - s) := by
+        change q * (j₀ + 3 - s) ≤
+          q * (j₀ + 3 - s) + min r (j₀ + 3 - s)
+        omega
+      omega
+    have hrange := idx_range_from_endpoints' m s
+      0 (j₀ + 3 - s) (v + g - m)
+      (by unfold Finpartition.equiEndpoint; simp)
+      hvgm_ub jg hvg_lo hvg_hi
+    have : jg + s - j₀ = 1 ∨ jg + s - j₀ = 2 := by
+      omega
+    exact mod_small _ this
 
 /-- Subcase (1b): interval coloring strategy.
     Let s be the smallest multiple of 3 such that g > ⌈m/s⌉. Split Z_m into s
@@ -447,7 +723,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
   -- Gap bound: idx((v+g)%m) differs from idx(v) by 1 or 2 mod s
   set j₀ := idx v with hj₀_def
   set jg := idx ((v + g) % m) with hjg_def
-  have hgap := gap_bound_interval s g m hs hs_le h_lb h_ub v hv_lt
+  have hs3_le : 3 ≤ s := Nat.le_of_dvd hs hs3
+  have hgap := gap_bound_interval s g m hs hs3_le hs_le
+    h_lb h_ub v hv_lt
   -- idx ranges
   have hidx_lt : ∀ p, p < m → idx p < s := by
     intro p hp; simp only [idx]; split
