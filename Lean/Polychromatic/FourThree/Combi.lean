@@ -1550,14 +1550,14 @@ private lemma case2d_w_odd {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 3) :
 
 private lemma case2d_uv_le {e₁ : ℕ} (hge : e₁ ≥ 19) :
     case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
-  simp only [case2d_u, case2d_v]; split_ifs <;> omega
+  simp only [case2d_u, case2d_v]; grind
 
 private lemma case2d_v_le_u {e₁ : ℕ} : case2d_v e₁ ≤ case2d_u e₁ := by
-  simp only [case2d_u, case2d_v]; split_ifs <;> omega
+  simp only [case2d_u, case2d_v]; grind
 
 private lemma case2d_w_le_u {e₁ : ℕ} (hge : e₁ ≥ 19) :
     e₁ - (case2d_u e₁ + case2d_v e₁) ≤ case2d_u e₁ := by
-  simp only [case2d_u, case2d_v]; split_ifs <;> omega
+  simp only [case2d_u, case2d_v]; grind
 
 /-- The base pattern: three alternating bicolor intervals on {0,...,e₁-1}.
     Positions 0..u-1: alternating 0,1 (starts and ends with 0 since u is odd)
@@ -1812,19 +1812,18 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
   let f : ZMod d₁ → ℕ := fun i =>
     if i.val < q then e₁ - u else if i.val = q then u + r else u
   refine ⟨f, fun i => ?_, ?_⟩
-  · change u ≤ f i ∧ f i ≤ e₁ - u
-    simp only [f]; split_ifs <;> omega
+  · simp only [f]; split_ifs <;> omega
   · let g : ZMod d₁ → ℕ := fun i =>
       if i.val < q then w else if i.val = q then r else 0
     have hfg : ∀ i : ZMod d₁, f i = u + g i := by
-      intro i; simp only [f, g]; split_ifs <;> omega
+      intro i; simp only [f, g]; grind
     have hsum_f : Finset.univ.sum f = d₁ * u + Finset.univ.sum g := by
       conv_lhs => arg 2; ext i; rw [hfg i]
       simp [Finset.sum_add_distrib, Finset.card_univ, ZMod.card]
     have hsum_g : Finset.univ.sum g = q * w + r := by
       have hg_split : ∀ i : ZMod d₁,
           g i = (if i.val < q then w else 0) + (if i.val = q then r else 0) := by
-        intro i; simp only [g]; split_ifs <;> omega
+        intro i; simp only [g]; grind
       rw [Finset.sum_congr rfl (fun i _ => hg_split i), Finset.sum_add_distrib]
       congr 1
       · simp only [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const,
