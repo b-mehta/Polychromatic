@@ -1028,7 +1028,7 @@ private lemma orbitMap_shift_b {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   · have hv : (j + 1).val = j.val + 1 := by
       rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hj
     rw [hv]; push_cast; ring
-  · have hje : j.val + 1 = e₁ := by have := j.val_lt (n := e₁); omega
+  · have hje : j.val + 1 = e₁ := by grind [ZMod.val_lt]
     have hv : (j + 1).val = 0 := by rw [ZMod.val_add_one, hje, Nat.mod_self]
     have h1 : (j.val : ZMod m) * ↑b + ↑b = 0 := by
       have : (j.val : ZMod m) * ↑b + ↑b = (j.val + 1 : ℕ) • (b : ZMod m) := by
@@ -1323,8 +1323,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
         rw [hm_eq, he, mul_one]; exact Nat.gcd_dvd_right _ _
       have : Nat.gcd (b - a).natAbs m = 1 :=
         Nat.eq_one_of_dvd_one (h_gcd_coprime ▸ Nat.dvd_gcd hba_dvd_d₁ (dvd_refl _))
-      have := h_min; omega
-    · obtain ⟨l, hl⟩ := he1_odd; omega
+      grind
+    · grind
   haveI : NeZero m := ⟨by omega⟩
   haveI : NeZero d₁ := ⟨by omega⟩
   haveI : NeZero e₁ := ⟨by omega⟩
@@ -1783,9 +1783,8 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
     ∃ vals : ZMod d₁ → ℕ,
       (∀ i, case2d_u e₁ ≤ vals i ∧ vals i ≤ e₁ - case2d_u e₁) ∧
       (Finset.univ.sum vals) % e₁ = target % e₁ := by
-  have hu_lt : case2d_u e₁ < e₁ := by unfold case2d_u; omega
-  have h2u : 2 * case2d_u e₁ < e₁ := by
-    unfold case2d_u; obtain ⟨k, hk⟩ := he1_odd; omega
+  have hu_lt : case2d_u e₁ < e₁ := by grind [case2d_u]
+  have h2u : 2 * case2d_u e₁ < e₁ := by grind [case2d_u]
   have hdw' : d₁ * (e₁ - 2 * case2d_u e₁) ≥ e₁ := by
     change d₁ * (e₁ - 2 * (e₁ / 3 + e₁ % 3)) ≥ e₁
     obtain ⟨k, hk⟩ := he1_odd; subst hk
@@ -1952,9 +1951,7 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
   set Φ := Equiv.ofBijective _ hbij
   obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq
   -- d₁ is odd, > 1, and ¬(3∣d₁), so d₁ ≥ 5
-  have hd1_ge5 : d₁ ≥ 5 := by
-    have : d₁ > 1 := by omega
-    obtain ⟨k, hk⟩ := hd1_odd; omega
+  have hd1_ge5 : d₁ ≥ 5 := by grind
   obtain ⟨vals, hvals_bound, hvals_sum⟩ :=
     case2d_rotation_sum_exists hd1_ge5 he1_ge he1_odd k₀.val
   -- Cumulative rotation: rot(i) = (Σ_{j<i} vals(j)) % e₁
@@ -2022,7 +2019,7 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
       exact pos_shift_succ' j.val _ (vals i) e₁
   · -- Wrap case: i = d₁ - 1
     have hi_eq : i.val = d₁ - 1 := by
-      have := i.val_lt (n := d₁); omega
+      grind [ZMod.val_lt]
     refine ⟨0, j + k₀, ?_, ?_⟩
     · rw [← hn, hij]; exact (case2d_shift_ba_wrap he1_b_zero k₀ hk₀ i hi_eq j).symm
     · have hrot0 : rot (0 : ZMod d₁) = 0 := by simp [rot, ZMod.val_zero]
@@ -2068,7 +2065,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
   have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
   have hd1_gt1 : d₁ > 1 := by omega
   have he1_ge3 : e₁ ≥ 3 := by
-    obtain ⟨k, hk⟩ := he1_div3; obtain ⟨j, hj⟩ := he1_odd; omega
+    grind
   have he1_pos : 0 < e₁ := by omega
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd1_dvd).symm
   haveI : NeZero m := ⟨by omega⟩
@@ -2082,7 +2079,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
   have hbij := orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord
   set Φ := Equiv.ofBijective _ hbij
   obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq
-  have hd1_ge3 : d₁ ≥ 3 := by obtain ⟨k, hk⟩ := hd1_odd; omega
+  have hd1_ge3 : d₁ ≥ 3 := by grind
   -- Coloring: χ(x) = (j + pattern(i)) mod 3 where (i,j) = Φ⁻¹(x)
   let χ : ZMod m → Fin 3 := fun x =>
     let coord := Φ.symm x
@@ -2143,7 +2140,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
       rw [hzmod_succ, case2c_mod3 he1_div3]
   · -- Wrap case: i = d₁ - 1
     have hi_eq : i.val = d₁ - 1 := by
-      have := i.val_lt (n := d₁); omega
+      grind [ZMod.val_lt]
     set j' : ZMod e₁ := j + k₀
     set p₀ := case2c_pattern d₁ k₀.val 0
     -- Shift: n + (b-a) = Φ(0, j')
@@ -2307,8 +2304,7 @@ lemma main_case_two (hm : m ≥ 289)
             · -- Both odd after swap. Show e₁' ≥ 19 by contradiction.
               have he₁'_ge : m / Nat.gcd b''.natAbs m ≥ 19 := by
                 by_contra hlt; push_neg at hlt
-                have hle : m / Nat.gcd b''.natAbs m ≤ 17 := by
-                  obtain ⟨k', hk'⟩ := ho'; omega
+                have hle : m / Nat.gcd b''.natAbs m ≤ 17 := by grind
                 have hd₁_gt1 : d₁ > 1 := by omega
                 have hd₂_gt1 : d₂ > 1 := by omega
                 rw [Nat.gcd_comm] at hcop
@@ -2316,8 +2312,7 @@ lemma main_case_two (hm : m ≥ 289)
                   hd₂_dvd hd₁_dvd hle he_le
               exact case_two_odd_large m a'' b'' hm hcop' hmin' hd' ho'
                 he₁'_ge h3d₂
-      · have he₁_ge : e₁ ≥ 19 := by
-          obtain ⟨k, hk⟩ := he₁_odd; omega
+      · have he₁_ge : e₁ ≥ 19 := by grind
         exact case_two_odd_large m a' b' hm hcop hmin hd₁_odd he₁_odd
           he₁_ge h3_nd₁
 
