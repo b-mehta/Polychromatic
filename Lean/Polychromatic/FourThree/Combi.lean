@@ -2045,8 +2045,9 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
   set Φ := Equiv.ofBijective _ hbij
   obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq
   -- d₁ is odd, > 1, and ¬(3∣d₁), so d₁ ≥ 5
-  have hd1_gt1 : d₁ > 1 := by omega
-  have hd1_ge5 : d₁ ≥ 5 := by obtain ⟨k, hk⟩ := hd1_odd; omega
+  have hd1_ge5 : d₁ ≥ 5 := by
+    have : d₁ > 1 := by omega
+    obtain ⟨k, hk⟩ := hd1_odd; omega
   obtain ⟨vals, hvals_bound, hvals_sum⟩ :=
     case2d_rotation_sum_exists hd1_ge5 he1_ge he1_odd k₀.val
   -- Cumulative rotation: rot(i) = (Σ_{j<i} vals(j)) % e₁
@@ -2117,17 +2118,12 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
       have := i.val_lt (n := d₁); omega
     refine ⟨0, j + k₀, ?_, ?_⟩
     · rw [← hn, hij]; exact (case2d_shift_ba_wrap he1_b_zero k₀ hk₀ i hi_eq j).symm
-    · have hrot0 : rot (0 : ZMod d₁) = 0 := by
-        change (Finset.univ.filter
-          (fun k : ZMod d₁ => k.val < (0 : ZMod d₁).val)).sum vals % e₁ = 0
-        simp [ZMod.val_zero]
+    · have hrot0 : rot (0 : ZMod d₁) = 0 := by simp [rot, ZMod.val_zero]
       have htotal :
           (Finset.univ.filter (fun k : ZMod d₁ => k.val < i.val)).sum vals +
             vals i = Finset.univ.sum vals :=
         zmod_filter_sum_last vals i hi_eq
-      rw [hrot0, Nat.add_zero]
-      have : (j + k₀).val = (j.val + k₀.val) % e₁ := ZMod.val_add j k₀
-      rw [this, Nat.mod_mod_of_dvd _ (dvd_refl e₁)]
+      rw [hrot0, Nat.add_zero, ZMod.val_add, Nat.mod_mod_of_dvd _ (dvd_refl e₁)]
       exact pos_shift_wrap' j.val _ (vals i) k₀.val e₁ (by rw [htotal, hvals_sum])
 
 /-- Subcase (2d): d1 and e1 are both odd, with e1 ≥ 19.
