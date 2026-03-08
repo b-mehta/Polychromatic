@@ -1075,16 +1075,66 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   sorry
 
-/-- Subcase (2c): d1 and e1 are both odd, with e1 ≤ 17.
-    Uses three specific patterns distributed across the cycles. -/
-lemma case_two_odd_small (hm : m ≥ 289)
-    (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (hd1_odd : Odd (Nat.gcd b.natAbs m))
-    (he1_odd : Odd (m / Nat.gcd b.natAbs m))
-    (he1_le : m / Nat.gcd b.natAbs m ≤ 17) :
-    HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  sorry
+-- Pattern assignment for Case 2c, parametrized by k₀ (the wrap shift).
+-- Variant A (k₀ % 3 ≠ 2): even→0, odd→1, last→2.
+-- Variant B (k₀ % 3 = 2): even→0, odd→2, last→1.
+private def case2c_pattern (d₁ k₀ : ℕ) (i : Fin d₁) : Fin 3 :=
+  if i.val = d₁ - 1 ∧ d₁ % 2 = 1 then
+    if k₀ % 3 = 2 then 1 else 2
+  else if i.val % 2 = 0 then 0
+  else if k₀ % 3 = 2 then 2 else 1
+
+-- Adjacent cycles get different patterns.
+private lemma case2c_pattern_ne_succ (d₁ k₀ : ℕ) (hd₁ : d₁ ≥ 3)
+    (hd₁_odd : Odd d₁) (i : Fin d₁) :
+    case2c_pattern d₁ k₀ i ≠
+    case2c_pattern d₁ k₀ ⟨(i.val + 1) % d₁, Nat.mod_lt _ (by omega)⟩ := by
+  simp only [case2c_pattern]
+  obtain ⟨k, hk⟩ := hd₁_odd; subst hk
+  have hi := i.isLt
+  have hk03 : k₀ % 3 = 0 ∨ k₀ % 3 = 1 ∨ k₀ % 3 = 2 := by omega
+  by_cases hw : i.val + 1 < 2 * k + 1
+  · -- Non-wrap: eliminate nested mod
+    have hmod := Nat.mod_eq_of_lt hw
+    rcases hk03 with h | h | h <;> simp only [h, hmod] <;>
+      split_ifs <;> simp [Fin.ext_iff] <;> omega
+  · -- Wrap: i.val = 2k, (i+1) % (2k+1) = 0
+    have hi_eq : i.val = 2 * k := by omega
+    have hmod_self : (2 * k + 1) % (2 * k + 1) = 0 := Nat.mod_self _
+    simp only [hi_eq, hmod_self]
+    split_ifs <;> simp [Fin.ext_iff] <;> omega
+
+-- General coverage: if (j₁ + p₁) % 3 ≠ (j₂ + p₂) % 3, all 3 colors appear.
+private lemma cover_mod3_general (p₁ p₂ : Fin 3)
+    (j₁ j₂ : ℕ)
+    (hne : (j₁ + p₁.val) % 3 ≠ (j₂ + p₂.val) % 3)
+    (k : Fin 3) :
+    k = ⟨(j₁ + p₁.val) % 3, Nat.mod_lt _ (by omega)⟩ ∨
+    k = ⟨(j₁ + 1 + p₁.val) % 3, Nat.mod_lt _ (by omega)⟩ ∨
+    k = ⟨(j₂ + p₂.val) % 3, Nat.mod_lt _ (by omega)⟩ ∨
+    k = ⟨(j₂ + 1 + p₂.val) % 3, Nat.mod_lt _ (by omega)⟩ := by
+  by_contra hall; push_neg at hall
+  obtain ⟨h1, h2, h3, h4⟩ := hall
+  simp [Fin.ext_iff] at h1 h2 h3 h4; omega
+
+-- Non-wrap coverage hypothesis: j₁ = j₂, patterns differ → hypothesis holds.
+private lemma case2c_nonwrap_hyp (d₁ k₀ : ℕ) (hd₁ : d₁ ≥ 3)
+    (hd₁_odd : Odd d₁) (i : Fin d₁) (j : ℕ)
+    (hi : i.val + 1 < d₁) :
+    (j + (case2c_pattern d₁ k₀ i).val) % 3 ≠
+    (j + (case2c_pattern d₁ k₀ ⟨i.val + 1, by omega⟩).val) % 3 := by
+  simp only [case2c_pattern]
+  obtain ⟨k, hk⟩ := hd₁_odd; subst hk
+  split_ifs <;> simp_all <;> omega
+
+-- Wrap coverage hypothesis: j₂ = j₁ + k₀, pattern chosen to avoid conflict.
+private lemma case2c_wrap_hyp (d₁ k₀ : ℕ) (hd₁ : d₁ ≥ 3)
+    (hd₁_odd : Odd d₁) (j : ℕ) :
+    (j + (case2c_pattern d₁ k₀ ⟨d₁ - 1, by omega⟩).val) % 3 ≠
+    (j + k₀ + (case2c_pattern d₁ k₀ ⟨0, by omega⟩).val) % 3 := by
+  obtain ⟨k, hk⟩ := hd₁_odd; subst hk
+  simp only [case2c_pattern]
+  split_ifs <;> simp_all <;> omega
 
 /-! ### Case (2d): d₁, e₁ both odd, e₁ ≥ 19
 
@@ -1746,9 +1796,179 @@ lemma case_two_odd_large (hm : m ≥ 289)
     HasPolychromColouring (Fin 3) (zmod_set m a b) :=
   case2d_coloring_works hm h_gcd_coprime h_min hd1_odd he1_odd he1_ge h3
 
+-- Mod 3 arithmetic: (a % e₁ + b) % 3 = (a + b) % 3 when 3 ∣ e₁
+private lemma case2c_mod3 {e₁ : ℕ} (h3e : 3 ∣ e₁) (x y : ℕ) :
+    (x % e₁ + y) % 3 = (x + y) % 3 := by
+  rw [Nat.add_mod, Nat.mod_mod_of_dvd x h3e, ← Nat.add_mod]
+
+/-- Subcase (2c): d₁ and e₁ are both odd, with e₁ ≤ 17 and 3 ∣ e₁.
+    Each cycle Cᵢ is colored with one of three shifted 012-patterns:
+      Pattern p: position j gets color (j + p) mod 3.
+    Adjacent cycles use different patterns, ensuring all 2×2 blocks
+    (translates of S) contain all 3 colors. -/
+lemma case_two_odd_small (hm : m ≥ 289)
+    (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
+    (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
+    (hd1_odd : Odd (Nat.gcd b.natAbs m))
+    (he1_odd : Odd (m / Nat.gcd b.natAbs m))
+    (he1_le : m / Nat.gcd b.natAbs m ≤ 17)
+    (he1_div3 : 3 ∣ m / Nat.gcd b.natAbs m) :
+    HasPolychromColouring (Fin 3) (zmod_set m a b) := by
+  set d₁ := Nat.gcd b.natAbs m with hd1_def
+  set e₁ := m / d₁ with he1_def
+  have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
+  have hd1_gt1 : d₁ > 1 := by omega
+  have he1_ge3 : e₁ ≥ 3 := by
+    obtain ⟨k, hk⟩ := he1_div3; obtain ⟨j, hj⟩ := he1_odd; omega
+  have he1_pos : 0 < e₁ := by omega
+  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd1_dvd).symm
+  haveI : NeZero m := ⟨by omega⟩
+  haveI : NeZero d₁ := ⟨by omega⟩
+  haveI : NeZero e₁ := ⟨by omega⟩
+  have hord : addOrderOf (b : ZMod m) = e₁ := case2d_addOrderOf_b (by omega) hd1_def
+  have hb_zero : (b : ZMod d₁) = 0 := case2d_b_zero_mod_d1 hd1_def
+  have hba_coprime := case2d_ba_coprime_d1 hd1_dvd (by rwa [hd1_def])
+  have hba_unit := isUnit_intCast_of_natAbs_coprime hba_coprime
+  have he1_b_zero : e₁ • (b : ZMod m) = 0 := by
+    rw [← hord]; exact addOrderOf_nsmul_eq_zero _
+  have hbij := case2d_orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord
+  set Φ := Equiv.ofBijective _ hbij
+  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq
+  have hd1_ge3 : d₁ ≥ 3 := by obtain ⟨k, hk⟩ := hd1_odd; omega
+  -- Coloring: χ(x) = (j + pattern(i)) mod 3 where (i,j) = Φ⁻¹(x)
+  let χ : ZMod m → Fin 3 := fun x =>
+    let coord := Φ.symm x
+    ⟨(coord.2.val + (case2c_pattern d₁ k₀.val coord.1).val) % 3,
+     Nat.mod_lt _ (by omega)⟩
+  refine ⟨χ, fun n k => ?_⟩
+  -- χ at orbit coordinates
+  have hχ_eq : ∀ (i' : Fin d₁) (j' : Fin e₁),
+      χ (Φ (i', j')) = ⟨(j'.val + (case2c_pattern d₁ k₀.val i').val) % 3,
+        Nat.mod_lt _ (by omega)⟩ := by
+    intro i' j'; simp only [χ, Equiv.symm_apply_apply]
+  -- Coordinates of n
+  set ij := Φ.symm n with hij_def
+  have hn : Φ ij = n := Equiv.apply_symm_apply Φ n
+  set i := ij.1 with hi_def
+  set j := ij.2 with hj_def
+  have hij : ij = (i, j) := (Prod.eta ij).symm
+  set p := case2c_pattern d₁ k₀.val i
+  -- Fin e₁ successor: (jj + 1).val = (jj.val + 1) % e₁
+  have hfin_succ : ∀ (jj : Fin e₁),
+      (jj + 1 : Fin e₁).val = (jj.val + 1) % e₁ := by
+    intro jj
+    rw [Fin.val_add, Fin.val_one', Nat.mod_eq_of_lt (by omega : 1 < e₁)]
+  -- Shift: n + b = Φ(i, j+1)
+  have hΦ_b : Φ (i, j + 1) = n + ((b : ℤ) : ZMod m) := by
+    rw [← hn, hij]; exact (case2d_shift_b he1_b_zero (i, j)).symm
+  -- Case split: wrap or non-wrap
+  by_cases hi : i.val + 1 < d₁
+  · -- Non-wrap case: i+1 < d₁
+    set i' : Fin d₁ := ⟨i.val + 1, hi⟩
+    set p' := case2c_pattern d₁ k₀.val i'
+    -- Shift: n + (b-a) = Φ(i', j)
+    have hΦ_ba : Φ (i', j) = n + ((b - a : ℤ) : ZMod m) := by
+      rw [← hn, hij]; exact (case2d_shift_ba_no_wrap i j hi).symm
+    -- Shift: n + (2b-a) = Φ(i', j+1)
+    have hΦ_2ba : Φ (i', j + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
+      have : ((2 * b - a : ℤ) : ZMod m) =
+          ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by push_cast; ring
+      rw [this, ← add_assoc, ← hΦ_ba]
+      exact (case2d_shift_b he1_b_zero (i', j)).symm
+    -- Coverage hypothesis
+    have hhyp := case2c_nonwrap_hyp d₁ k₀.val hd1_ge3 hd1_odd i j.val hi
+    -- Apply cover_mod3_general
+    rcases cover_mod3_general p p' j.val j.val hhyp k with h | h | h | h
+    · exact ⟨0, zero_mem_zmod_set m a b,
+        by rw [add_zero, ← hn, hij, hχ_eq, h]⟩
+    · refine ⟨((b : ℤ) : ZMod m), intCast_b_mem_zmod_set m a b, ?_⟩
+      rw [← hΦ_b, hχ_eq, h]; congr 1
+      rw [hfin_succ, case2c_mod3 he1_div3]
+    · exact ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b,
+        by rw [← hΦ_ba, hχ_eq, h]⟩
+    · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
+      rw [← hΦ_2ba, hχ_eq, h]; congr 1
+      rw [hfin_succ, case2c_mod3 he1_div3]
+  · -- Wrap case: i = d₁ - 1
+    have hi_eq : i.val = d₁ - 1 := by omega
+    have hi_fin : i = ⟨d₁ - 1, Nat.sub_one_lt (NeZero.ne d₁)⟩ := by
+      ext; exact hi_eq
+    set j' : Fin e₁ := ⟨(j.val + k₀.val) % e₁, Nat.mod_lt _ he1_pos⟩
+    set p₀ := case2c_pattern d₁ k₀.val (0 : Fin d₁)
+    -- Shift: n + (b-a) = Φ(0, j')
+    have hΦ_ba : Φ (0, j') = n + ((b - a : ℤ) : ZMod m) := by
+      rw [← hn, hij, hi_fin]
+      exact (case2d_shift_ba_wrap he1_b_zero k₀ hk₀ j).symm
+    -- Shift: n + (2b-a) = Φ(0, j'+1)
+    have hΦ_2ba : Φ (0, j' + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
+      have : ((2 * b - a : ℤ) : ZMod m) =
+          ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by push_cast; ring
+      rw [this, ← add_assoc, ← hΦ_ba]
+      exact (case2d_shift_b he1_b_zero (0, j')).symm
+    -- Coverage hypothesis: (j + p_last) % 3 ≠ (j + k₀ + p₀) % 3
+    have hp_eq : p = case2c_pattern d₁ k₀.val
+        ⟨d₁ - 1, by omega⟩ :=
+      congrArg (case2c_pattern d₁ k₀.val) hi_fin
+    have hhyp : (j.val + p.val) % 3 ≠ (j.val + k₀.val + p₀.val) % 3 := by
+      rw [hp_eq]; exact case2c_wrap_hyp d₁ k₀.val hd1_ge3 hd1_odd j.val
+    -- Apply cover_mod3_general
+    rcases cover_mod3_general p p₀ j.val (j.val + k₀.val) hhyp k
+      with h | h | h | h
+    · exact ⟨0, zero_mem_zmod_set m a b,
+        by rw [add_zero, ← hn, hij, hχ_eq, h]⟩
+    · refine ⟨((b : ℤ) : ZMod m), intCast_b_mem_zmod_set m a b, ?_⟩
+      rw [← hΦ_b, hχ_eq, h]; congr 1
+      rw [hfin_succ, case2c_mod3 he1_div3]
+    · refine ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b, ?_⟩
+      rw [← hΦ_ba, hχ_eq, h]; congr 1
+      exact case2c_mod3 he1_div3 (j.val + k₀.val) p₀.val
+    · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
+      rw [← hΦ_2ba, hχ_eq, h]; congr 1
+      rw [hfin_succ]
+      rw [case2c_mod3 he1_div3 ((j.val + k₀.val) % e₁ + 1) p₀.val]
+      rw [show (j.val + k₀.val) % e₁ + 1 + p₀.val =
+            (j.val + k₀.val) % e₁ + (1 + p₀.val) by omega,
+          show j.val + k₀.val + 1 + p₀.val =
+            j.val + k₀.val + (1 + p₀.val) by omega]
+      exact case2c_mod3 he1_div3 (j.val + k₀.val) (1 + p₀.val)
+
+/-- When gcd(d₁,d₂) = 1, both d₁,d₂ > 1, both d₁,d₂ divide m,
+    and m/d₁ ≤ 17 and m/d₂ ≤ 17, we get m ≤ 289. Combined with
+    m ≥ 289 this forces m = 289 = 17², but then gcd(d₁,d₂) = 1 with
+    d₁,d₂ | 17² and d₁,d₂ > 1 is impossible. -/
+private lemma no_both_e_small {m d₁ d₂ : ℕ}
+    (hm : m ≥ 289)
+    (hcop : Nat.gcd d₁ d₂ = 1)
+    (hd₁_gt1 : d₁ > 1) (hd₂_gt1 : d₂ > 1)
+    (hd₁_dvd : d₁ ∣ m) (hd₂_dvd : d₂ ∣ m)
+    (he₁_le : m / d₁ ≤ 17) (he₂_le : m / d₂ ≤ 17) : False := by
+  have hd₁_bound : m ≤ d₁ * 17 := by
+    calc m = d₁ * (m / d₁) := (Nat.mul_div_cancel' hd₁_dvd).symm
+      _ ≤ d₁ * 17 := Nat.mul_le_mul_left d₁ he₁_le
+  have hd₂_bound : m ≤ d₂ * 17 := by
+    calc m = d₂ * (m / d₂) := (Nat.mul_div_cancel' hd₂_dvd).symm
+      _ ≤ d₂ * 17 := Nat.mul_le_mul_left d₂ he₂_le
+  have hprod_le : d₁ * d₂ ≤ m :=
+    Nat.le_of_dvd (by omega)
+      (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by rwa [Nat.Coprime]) hd₁_dvd hd₂_dvd)
+  -- d₁*d₂ ≤ m ≤ d₁*17 → d₂ ≤ 17; similarly d₁ ≤ 17
+  have hd₂_le : d₂ ≤ 17 :=
+    Nat.le_of_mul_le_mul_left (hprod_le.trans hd₁_bound) (by omega)
+  have hd₁_le : d₁ ≤ 17 := by
+    have : d₁ * d₂ ≤ d₂ * 17 := hprod_le.trans hd₂_bound
+    rw [mul_comm d₁ d₂] at this
+    exact Nat.le_of_mul_le_mul_left this (by omega)
+  -- 289 ≤ m ≤ d₁*17 → d₁ ≥ 17; similarly d₂ ≥ 17
+  -- So d₁ = d₂ = 17, gcd(17,17) = 17 ≠ 1.
+  have hd₁_eq : d₁ = 17 := by omega
+  have hd₂_eq : d₂ = 17 := by omega
+  rw [hd₁_eq, hd₂_eq] at hcop; simp at hcop
+
 /-- Aggregation of Main Case 2.
     Assumption: min(gcd(b, m), gcd(b-a, m)) > 1.
-    Splits into the four subcases based on parity and size of e1. -/
+    Matches the paper's proof structure: first WLOG swap so that 3 ∤ d₁
+    (choosing the smallest non-multiple-of-3), then split into subcases
+    (2a)–(2d). -/
 lemma main_case_two (hm : m ≥ 289)
     (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1) :
@@ -1757,40 +1977,93 @@ lemma main_case_two (hm : m ≥ 289)
   · exact case_two_e1_even m a b hm h_gcd_coprime h_min he
   · rcases Nat.even_or_odd (Nat.gcd b.natAbs m) with hd | hd
     · exact case_two_d1_even_e1_odd m a b hm h_gcd_coprime h_min hd ho
-    · by_cases he_le : m / Nat.gcd b.natAbs m ≤ 17
-      · exact case_two_odd_small m a b hm h_gcd_coprime h_min hd ho he_le
-      · have he1_ge : m / Nat.gcd b.natAbs m ≥ 19 := by
-          obtain ⟨k, hk⟩ := ho; grind
+    · -- Both d₁ and e₁ odd.
+      -- Paper: "Choose the smallest of d₁,d₂ not a multiple of 3, WLOG d₁."
+      -- Swap if 3 ∣ d₁, then dispatch with 3 ∤ d₁.
+      suffices dispatch : ∀ (a' b' : ℤ),
+          (Nat.gcd b'.natAbs m).gcd (Nat.gcd (b' - a').natAbs m) = 1 →
+          min (Nat.gcd b'.natAbs m) (Nat.gcd (b' - a').natAbs m) > 1 →
+          Odd (Nat.gcd b'.natAbs m) →
+          Odd (m / Nat.gcd b'.natAbs m) →
+          ¬ (3 ∣ Nat.gcd b'.natAbs m) →
+          HasPolychromColouring (Fin 3) (zmod_set m a' b') by
         by_cases h3 : 3 ∣ Nat.gcd b.natAbs m
-        · -- Swap: zmod_set m a b = zmod_set m (-a) (b-a)
+        · -- Swap roles of b and b-a
           rw [← zmod_set_swap m a b]
-          -- After swap, d₁' = gcd((b-a).natAbs, m), and the hypotheses transform
           set a' := (-a : ℤ); set b' := (b - a : ℤ)
           have hba_eq : (b' - a').natAbs = b.natAbs := by
             change (b - a - -a).natAbs = b.natAbs; congr 1; ring
-          have h_gcd_coprime' : (Nat.gcd b'.natAbs m).gcd
+          have hcop' : (Nat.gcd b'.natAbs m).gcd
               (Nat.gcd (b' - a').natAbs m) = 1 := by
             rw [hba_eq]; rwa [Nat.gcd_comm]
-          have h_min' : min (Nat.gcd b'.natAbs m)
+          have hmin' : min (Nat.gcd b'.natAbs m)
               (Nat.gcd (b' - a').natAbs m) > 1 := by
             rw [hba_eq]; rwa [min_comm]
-          -- Dispatch on swapped parameters' parity/size
+          have h3' : ¬ (3 ∣ Nat.gcd b'.natAbs m) := by
+            intro h3d'; have := Nat.dvd_gcd h3 h3d'
+            rw [h_gcd_coprime] at this; omega
           rcases Nat.even_or_odd (m / Nat.gcd b'.natAbs m) with he' | ho'
-          · exact case_two_e1_even m a' b' hm h_gcd_coprime' h_min' he'
+          · exact case_two_e1_even m a' b' hm hcop' hmin' he'
           · rcases Nat.even_or_odd (Nat.gcd b'.natAbs m) with hd' | hd'
-            · exact case_two_d1_even_e1_odd m a' b' hm h_gcd_coprime' h_min' hd' ho'
-            · by_cases he_le' : m / Nat.gcd b'.natAbs m ≤ 17
-              · exact case_two_odd_small m a' b' hm h_gcd_coprime' h_min' hd' ho' he_le'
-              · have he1_ge' : m / Nat.gcd b'.natAbs m ≥ 19 := by
-                  obtain ⟨k', hk'⟩ := ho'; grind
-                -- gcd(d₁, d₁') = 1 and 3∣d₁ implies ¬(3∣d₁')
-                have h3' : ¬ (3 ∣ Nat.gcd b'.natAbs m) := by
-                  intro h3d'
-                  have h3gcd := Nat.dvd_gcd h3 h3d'
-                  rw [h_gcd_coprime] at h3gcd
-                  omega
-                exact case_two_odd_large m a' b' hm h_gcd_coprime' h_min' hd' ho' he1_ge' h3'
-        · exact case_two_odd_large m a b hm h_gcd_coprime h_min hd ho he1_ge h3
+            · exact case_two_d1_even_e1_odd m a' b' hm hcop' hmin' hd' ho'
+            · exact dispatch a' b' hcop' hmin' hd' ho' h3'
+        · exact dispatch a b h_gcd_coprime h_min hd ho h3
+      -- Prove dispatch: given ¬(3 ∣ d₁), split on e₁ size
+      intro a' b' hcop hmin hd₁_odd he₁_odd h3_nd₁
+      set d₁ := Nat.gcd b'.natAbs m
+      set d₂ := Nat.gcd (b' - a').natAbs m
+      set e₁ := m / d₁
+      have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
+      have hd₂_dvd : d₂ ∣ m := Nat.gcd_dvd_right _ _
+      have hd₂_pos : 0 < d₂ :=
+        Nat.pos_of_ne_zero (by intro h; simp [h] at hmin)
+      by_cases he_le : e₁ ≤ 17
+      · -- Case 2c: prove 3 ∣ e₁
+        -- Since gcd(d₁,d₂)=1 and 3 ∤ d₁, if 3 ∣ d₂ then 3 ∣ m hence 3 ∣ e₁.
+        -- If 3 ∤ d₂: swap and show e₂ ≥ 19 (contradiction with both ≤ 17).
+        by_cases h3d₂ : 3 ∣ d₂
+        · have h3m : 3 ∣ m := dvd_trans h3d₂ hd₂_dvd
+          have h3e₁ : 3 ∣ e₁ := by
+            have h3de : 3 ∣ d₁ * e₁ :=
+              (Nat.mul_div_cancel' hd₁_dvd).symm ▸ h3m
+            have hcop3 : Nat.Coprime 3 d₁ :=
+              (Nat.Prime.coprime_iff_not_dvd (by decide)).mpr h3_nd₁
+            exact hcop3.dvd_of_dvd_mul_left h3de
+          exact case_two_odd_small m a' b' hm hcop hmin hd₁_odd he₁_odd
+            he_le h3e₁
+        · -- 3 ∤ d₁ and 3 ∤ d₂ and e₁ ≤ 17: swap and show new e₁ ≥ 19.
+          -- After swap, new e₁' = m/d₂. If e₁' ≤ 17 too, contradiction.
+          rw [← zmod_set_swap m a' b']
+          set a'' := (-a' : ℤ); set b'' := (b' - a' : ℤ)
+          have hba_eq : (b'' - a'').natAbs = b'.natAbs := by
+            change (b' - a' - -a').natAbs = b'.natAbs; congr 1; ring
+          have hcop' : (Nat.gcd b''.natAbs m).gcd
+              (Nat.gcd (b'' - a'').natAbs m) = 1 := by
+            rw [hba_eq]; rwa [Nat.gcd_comm]
+          have hmin' : min (Nat.gcd b''.natAbs m)
+              (Nat.gcd (b'' - a'').natAbs m) > 1 := by
+            rw [hba_eq]; rwa [min_comm]
+          -- Dispatch on parity
+          rcases Nat.even_or_odd (m / Nat.gcd b''.natAbs m) with he' | ho'
+          · exact case_two_e1_even m a'' b'' hm hcop' hmin' he'
+          · rcases Nat.even_or_odd (Nat.gcd b''.natAbs m) with hd' | hd'
+            · exact case_two_d1_even_e1_odd m a'' b'' hm hcop' hmin' hd' ho'
+            · -- Both odd after swap. Show e₁' ≥ 19 by contradiction.
+              have he₁'_ge : m / Nat.gcd b''.natAbs m ≥ 19 := by
+                by_contra hlt; push_neg at hlt
+                have hle : m / Nat.gcd b''.natAbs m ≤ 17 := by
+                  obtain ⟨k', hk'⟩ := ho'; omega
+                have hd₁_gt1 : d₁ > 1 := by omega
+                have hd₂_gt1 : d₂ > 1 := by omega
+                rw [Nat.gcd_comm] at hcop
+                exact no_both_e_small hm hcop hd₂_gt1 hd₁_gt1
+                  hd₂_dvd hd₁_dvd hle he_le
+              exact case_two_odd_large m a'' b'' hm hcop' hmin' hd' ho'
+                he₁'_ge h3d₂
+      · have he₁_ge : e₁ ≥ 19 := by
+          obtain ⟨k, hk⟩ := he₁_odd; omega
+        exact case_two_odd_large m a' b' hm hcop hmin hd₁_odd he₁_odd
+          he₁_ge h3_nd₁
 
 end Case2_MultipleCycles
 
