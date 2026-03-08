@@ -609,50 +609,49 @@ variable (m : ℕ)
     for a specific finset of offsets in ZMod m. -/
 private lemma table1_of_blockColor (A B : List (Fin 3)) (offsets : List ℕ)
     (S : Finset (ZMod m))
-    (hA : 1 < A.length) (hBlen : B.length = A.length + 1)
+    (hA : 2 < A.length) (hBlen : B.length = A.length + 1)
     (hmaxOff : offsets.foldr max 0 ≤ A.length)
     (hpairs : checkBlockPairs offsets A B = true)
     (hm : m ≥ A.length * (A.length - 1))
-    (hoff_lt : ∀ s ∈ offsets, s < m)
     (hS : ∀ a : ZMod m, a ∈ S ↔ ∃ s ∈ offsets, (s : ZMod m) = a) :
     HasPolychromColouring (Fin 3) S := by
-  have hm_pos : 0 < m := Nat.lt_of_lt_of_le (Nat.mul_pos (by omega) (by omega)) hm
+  have hA_lt_m : A.length < m :=
+    calc A.length < A.length * 2 := by omega
+    _ ≤ A.length * (A.length - 1) := Nat.mul_le_mul_left _ (by omega)
+    _ ≤ m := hm
+  have hm_pos : 0 < m := by omega
   haveI : NeZero m := ⟨by omega⟩
-  have : 1 < A.length * (A.length - 1) := Nat.lt_of_lt_of_le (by omega)
-    (Nat.mul_le_mul (by omega : 2 ≤ A.length) (by omega : 1 ≤ A.length - 1))
   haveI : Fact (1 < m) := ⟨by omega⟩
-  obtain ⟨h, k, hm_eq, hhk⟩ := frobenius_consec hA hm
+  obtain ⟨h, k, hm_eq, hhk⟩ := frobenius_consec (by omega : 1 < A.length) hm
   have hm_eq' : A.length * h + B.length * k = m := by rw [hBlen]; exact hm_eq
   apply hasPolychromColouring_of_cyclic (blockColorVal A B h k) S
   intro n target
   obtain ⟨s, hs_mem, hs_eq⟩ := blockColor_polychrom A B offsets (by omega) hBlen hmaxOff
     hpairs hhk hm_eq' (ZMod.val_lt n) target
   refine ⟨(s : ZMod m), (hS _).mpr ⟨s, hs_mem, rfl⟩, ?_⟩
-  rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt (hoff_lt s hs_mem)]
+  have : s < m := lt_of_le_of_lt (le_trans (le_foldr_max hs_mem) hmaxOff) hA_lt_m
+  rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt this]
   exact hs_eq
 
 /-- {0,1,2,3}: blocks [0,1,2] (r=3), [0,0,1,2] (r+1=4). Frobenius bound: m ≥ 6. -/
 lemma table1_0123 (hm : m ≥ 6) :
     HasPolychromColouring (Fin 3) ({0, 1, 2, 3} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,1,2] [0,0,1,2] [0,1,2,3]
-    {0, 1, 2, 3} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 1, 2, 3} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 /-- {0,1,3,4}: blocks [0,0,1,2,1,2] (r=6), [0,0,0,1,2,1,2] (r+1=7). Frobenius: m ≥ 30. -/
 lemma table1_0134 (hm : m ≥ 30) :
     HasPolychromColouring (Fin 3) ({0, 1, 3, 4} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,1,2,1,2] [0,0,0,1,2,1,2] [0,1,3,4]
-    {0, 1, 3, 4} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 1, 3, 4} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 /-- {0,2,3,5}: blocks [0,0,1,1,2,2] (r=6), [0,0,0,1,1,2,2] (r+1=7). Frobenius: m ≥ 30. -/
 lemma table1_0235 (hm : m ≥ 30) :
     HasPolychromColouring (Fin 3) ({0, 2, 3, 5} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,1,1,2,2] [0,0,0,1,1,2,2] [0,2,3,5]
-    {0, 2, 3, 5} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 2, 3, 5} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 /-- {0,3,4,7}: blocks [0,0,0,1,1,1,2,2,2] (r=9), [0,0,0,0,1,1,1,2,2,2] (r+1=10).
@@ -660,8 +659,7 @@ lemma table1_0235 (hm : m ≥ 30) :
 lemma table1_0347 (hm : m ≥ 72) :
     HasPolychromColouring (Fin 3) ({0, 3, 4, 7} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,0,1,1,1,2,2,2] [0,0,0,0,1,1,1,2,2,2] [0,3,4,7]
-    {0, 3, 4, 7} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 3, 4, 7} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 /-- {0,3,5,8}: blocks [0,0,0,1,1,1,2,2,2] (r=9), [0,0,0,0,1,1,1,2,2,2] (r+1=10).
@@ -669,8 +667,7 @@ lemma table1_0347 (hm : m ≥ 72) :
 lemma table1_0358 (hm : m ≥ 72) :
     HasPolychromColouring (Fin 3) ({0, 3, 5, 8} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,0,1,1,1,2,2,2] [0,0,0,0,1,1,1,2,2,2] [0,3,5,8]
-    {0, 3, 5, 8} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 3, 5, 8} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 /-- {0,1,4,5}: blocks [0,0,0,1,2,1,2] (r=7), [0,0,0,0,1,2,1,2] (r+1=8).
@@ -678,8 +675,7 @@ lemma table1_0358 (hm : m ≥ 72) :
 lemma table1_0145 (hm : m ≥ 42) :
     HasPolychromColouring (Fin 3) ({0, 1, 4, 5} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,0,1,2,1,2] [0,0,0,0,1,2,1,2] [0,1,4,5]
-    {0, 1, 4, 5} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 1, 4, 5} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 end Table1
