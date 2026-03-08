@@ -336,6 +336,70 @@ private lemma lift_coloring_witness' {m g : ℕ} [NeZero m] [Fact (1 < m)]
          rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt]
        rw [this, hc_period, hca]⟩
 
+/-! ### Helper lemmas for case 1b -/
+
+/-- Two pairs of consecutive mod-3 values with different phases cover {0,1,2}. -/
+private lemma two_pairs_cover (j₁ j₂ : ℕ) (hne : j₁ % 3 ≠ j₂ % 3)
+    (k : ℕ) (hk : k < 3) :
+    k = j₁ % 3 ∨ k = (j₁ + 1) % 3 ∨
+    k = j₂ % 3 ∨ k = (j₂ + 1) % 3 := by
+  have : j₁ % 3 = 0 ∨ j₁ % 3 = 1 ∨ j₁ % 3 = 2 := by omega
+  have : j₂ % 3 = 0 ∨ j₂ % 3 = 1 ∨ j₂ % 3 = 2 := by omega
+  have : k = 0 ∨ k = 1 ∨ k = 2 := by omega
+  rcases ‹j₁ % 3 = 0 ∨ _› with h1 | h1 | h1 <;>
+  rcases ‹j₂ % 3 = 0 ∨ _› with h2 | h2 | h2 <;>
+  rcases ‹k = 0 ∨ _› with hk' | hk' | hk' <;> simp_all <;> omega
+
+private lemma lt_two' (n : ℕ) (h : n < 2) : n = 0 ∨ n = 1 := by omega
+
+/-- Phase differs when gap is 1 or 2 mod s, and 3 ∣ s. -/
+private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
+    j₀ % 3 ≠ jg % 3 := by
+  obtain ⟨t, ht⟩ := hs3; subst ht
+  have ht_pos : 0 < t := by omega
+  have h3t_pos : 0 < 3 * t := by omega
+  have hqlt : (jg + 3 * t - j₀) / (3 * t) < 2 := by
+    rw [Nat.div_lt_iff_lt_mul h3t_pos]; omega
+  have hdam := Nat.div_add_mod (jg + 3 * t - j₀) (3 * t)
+  rcases hgap with hmod | hmod <;>
+    rcases lt_two' _ hqlt with hq | hq <;>
+    rw [hq, hmod] at hdam <;> simp at hdam
+  · have : j₀ = 3 * t - 1 := by omega
+    have : jg = 0 := by omega
+    rw [‹jg = 0›, ‹j₀ = 3 * t - 1›]
+    have h3t1 : 3 * t - 1 = 3 * (t - 1) + 2 := by omega
+    rw [h3t1, Nat.mul_add_mod]; omega
+  · have : jg = j₀ + 1 := by omega
+    rw [this]; omega
+  · by_cases hj₀ : j₀ = 3 * t - 1
+    · have : jg = 1 := by omega
+      rw [this, hj₀]
+      have h3t1 : 3 * t - 1 = 3 * (t - 1) + 2 := by omega
+      rw [h3t1, Nat.mul_add_mod]; omega
+    · have : j₀ = 3 * t - 2 := by omega
+      have : jg = 0 := by omega
+      rw [‹jg = 0›, ‹j₀ = 3 * t - 2›]
+      have h3t2 : 3 * t - 2 = 3 * (t - 1) + 1 := by omega
+      rw [h3t2, Nat.mul_add_mod]; omega
+  · have : jg = j₀ + 2 := by omega
+    rw [this]; omega
+
+/-- Gap bound: idx of (v+g)%m differs from idx(v) by 1 or 2 mod s.
+    This is the key arithmetic fact for interval colorings. -/
+private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
+    (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
+    (v : ℕ) (hv_lt : v < m) :
+    let bd := (m % s) * (m / s + 1)
+    let idx (p : ℕ) : ℕ :=
+      if p < bd then p / (m / s + 1)
+      else m % s + (p - bd) / (m / s)
+    let j₀ := idx v
+    let jg := idx ((v + g) % m)
+    (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2 := by
+  sorry
+
 /-- Subcase (1b): interval coloring strategy.
     Let s be the smallest multiple of 3 such that g > ⌈m/s⌉. Split Z_m into s
     intervals of lengths ⌊m/s⌋ and ⌈m/s⌉, colored in a repeating 01/12/20
@@ -356,14 +420,12 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
     have : q * s ≤ m := Nat.div_mul_le_self m s
     have : q ≤ (m + s - 1) / s := by rw [Nat.le_div_iff_mul_le hs]; omega
     omega
+  have hs_le : s ≤ m := by nlinarith [Nat.div_mul_le_self m s]
   have hg1_lt_m : g + 1 < m := by
     nlinarith [Nat.div_mul_le_self m s, Nat.le_of_dvd hs hs3]
   haveI : NeZero m := ⟨by omega⟩
   haveI : Fact (1 < m) := ⟨by omega⟩
   set bd := r * (q + 1)
-  -- Coloring: partition [0,m) into s intervals. First r have length q+1,
-  -- remaining s-r have length q. Color within interval j alternates
-  -- between j%3 and (j+1)%3.
   let idx (p : ℕ) : ℕ :=
     if p < bd then p / (q + 1) else r + (p - bd) / q
   let off (p : ℕ) : ℕ :=
@@ -376,12 +438,50 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
     lift_coloring_witness' hg1_lt_m hc_lt3 hc_period ?_⟩
   set v := n.val
   have hv_lt : v < m := ZMod.val_lt n
-  -- The proof requires showing all 3 colors appear in {c(v+a) | a ∈ {0,1,g,g+1}}.
-  -- We handle this via gap bounds and interval phase analysis.
-  -- The key facts (proven with sorry for now, to be filled in):
-  -- 1. Each consecutive pair contributes ≥ 1 color from consecutive phases
-  -- 2. The gap g separates the pairs into different-phase intervals
-  -- 3. Together, all 3 colors are covered
+  -- c(p) ∈ {idx(p%m)%3, (idx(p%m)+1)%3}
+  have hc_phase : ∀ p, c p = idx (p % m) % 3 ∨
+      c p = (idx (p % m) + 1) % 3 := by
+    intro p; simp only [c]
+    have : off (p % m) % 2 = 0 ∨ off (p % m) % 2 = 1 := by omega
+    rcases this with h | h <;> simp [h] <;> omega
+  -- Gap bound: idx((v+g)%m) differs from idx(v) by 1 or 2 mod s
+  set j₀ := idx v with hj₀_def
+  set jg := idx ((v + g) % m) with hjg_def
+  have hgap := gap_bound_interval s g m hs hs_le h_lb h_ub v hv_lt
+  -- idx ranges
+  have hidx_lt : ∀ p, p < m → idx p < s := by
+    intro p hp; simp only [idx]; split
+    · have : p / (q + 1) < r := by
+        rw [Nat.div_lt_iff_lt_mul (by omega : 0 < q + 1)]
+        exact ‹_›
+      omega
+    · rename_i hge; push_neg at hge
+      have : (p - bd) / q < s - r := by
+        rw [Nat.div_lt_iff_lt_mul hq_pos]
+        have : r * (q + 1) + (s - r) * q = s * q + r := by
+          have : (s - r) * q + r * q = s * q := by
+            rw [← Nat.add_mul, Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
+          linarith
+        omega
+      omega
+  have hj₀_lt : j₀ < s := hidx_lt v hv_lt
+  have hjg_lt : jg < s :=
+    hidx_lt ((v + g) % m) (Nat.mod_lt _ (by omega))
+  -- Phase difference: j₀ % 3 ≠ jg % 3
+  have hphase : j₀ % 3 ≠ jg % 3 :=
+    phase_ne_of_gap hs3 hj₀_lt hjg_lt hgap
+  -- Coverage: combine phase difference with pair analysis.
+  -- The full argument (TODO) requires:
+  -- (a) Each non-straddling pair {p, p+1} in interval j gives both
+  --     phases {j%3, (j+1)%3} (consecutive offsets have different
+  --     parities).
+  -- (b) A straddling pair always produces (j+1)%3 (the boundary
+  --     color).
+  -- (c) At most one pair straddles (no-double-straddle).
+  -- (d) When pair 1 straddles at j₀/(j₀+1), pair 2 is entirely in
+  --     interval (j₀+2)%s, giving {(j₀+2)%3, j₀%3}.
+  -- Together with two_pairs_cover + phase_ne_of_gap, all 3 colors
+  -- are covered.
   sorry
 
 /-- Multiplication by a unit in ZMod m is an additive automorphism,
