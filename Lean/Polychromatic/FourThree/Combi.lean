@@ -826,6 +826,40 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
     have := div_step (p - r * (q + 1)) q hq
     omega
 
+private lemma compl_parity_witness (j a : ℕ) (t : ℕ)
+    (ht : t < 3)
+    (htarg : t = j % 3 ∨ t = (j + 1) % 3) :
+    (j + a % 2) % 3 = t ∨
+    (j + (a + 1) % 2) % 3 = t := by
+  omega
+
+private lemma two_pairs_cover_split (j₁ j₂ : ℕ)
+    (hne : j₁ % 3 ≠ j₂ % 3) (k : ℕ) (hk : k < 3) :
+    (k = j₁ % 3 ∨ k = (j₁ + 1) % 3) ∨
+    (k = j₂ % 3 ∨ k = (j₂ + 1) % 3) := by
+  omega
+
+private lemma eqp_idx_last (q r s : ℕ) (hq : 0 < q)
+    (hr : r < s) (hs : 0 < s) :
+    eqp_idx q r (s * q + r - 1) = s - 1 := by
+  have h_rq : r * (q + 1) = r * q + r := by ring
+  have h_rq2 : (r + 1) * q = r * q + q := by ring
+  have h_rq_le : r * q + q ≤ s * q :=
+    h_rq2 ▸ Nat.mul_le_mul_right q (by omega)
+  have hge : ¬(s * q + r - 1 < r * (q + 1)) := by omega
+  have h_bd_le : r * (q + 1) ≤ s * q + r - 1 := by omega
+  unfold eqp_idx
+  rw [if_neg hge]
+  have hnum : s * q + r - 1 - r * (q + 1) =
+      (q - 1) + (s - r - 1) * q := by
+    zify [h_bd_le, show 1 ≤ s * q + r from by omega,
+      show 1 ≤ q from hq, show r ≤ s from by omega,
+      show 1 ≤ s - r from by omega]
+    ring
+  rw [hnum, Nat.add_mul_div_right _ _ hq,
+    show (q - 1) / q = 0 from Nat.div_eq_of_lt (by omega)]
+  omega
+
 /-- Subcase (1b): interval coloring strategy.
     Let s be the smallest multiple of 3 such that g > ⌈m/s⌉. Split Z_m into s
     intervals of lengths ⌊m/s⌋ and ⌈m/s⌉, colored in a repeating 01/12/20
