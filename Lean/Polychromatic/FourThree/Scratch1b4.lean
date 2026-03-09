@@ -3,23 +3,92 @@ import Polychromatic.PolychromNumber
 import Polychromatic.ForMathlib.Misc
 
 /-!
-# Scratch file 4: coverage proof helpers for case_one_interval
+# Scratch file 4: coverage proof for `case_one_interval` (Combi.lean:687–763)
 
-## Definitions
+## What is this file?
+
+This file develops the proof that fills the `sorry` at `Combi.lean:763` in
+`case_one_interval`. That sorry is the final missing piece of Case 1b of the
+main theorem. Once all lemmas here are proven and integrated, Case 1b is done.
+
+## Where does `case_one_interval` sit in the overall proof?
+
+The main theorem (`Main.lean:final_result`) proves every 4-element set of
+integers admits a 3-polychromatic colouring. The proof reduces to checking
+ordered sets `{0, 1, g, g+1}` in `ZMod m`, then splits:
+
+- **c < 289** (computational, done): verified by `allC_289` in `Compute.lean`
+- **c ≥ 289** (combinatorial): further splits into cases based on structure
+  - **Case 1**: single-cycle regime — `g` lies in a "middle" range relative
+    to `m/s` for some `s` with `3 ∣ s`
+    - **Case 1a** (done): handled elsewhere
+    - **Case 1b** (`case_one_interval`): the equi-partition coloring argument
+      → **THIS FILE**
+  - **Case 2** (done): different structure
+
+## What does `case_one_interval` prove?
+
+Given `m, s, g` with `3 ∣ s`, `(m+s-1)/s < g < 2*(m/s)`, it constructs a
+3-colouring of `ZMod m` that is `{0, 1, g, g+1}`-polychromatic. The colouring
+uses an equi-partition of `[0, m)` into `s` intervals (lengths `q` or `q+1`
+where `q = m/s`), assigning colour `(idx(p) + off(p) % 2) % 3`.
+
+Everything up to line 762 is already proven. The sorry at line 763 requires:
+  `∃ a ∈ {0, 1, g, g+1}, c(v + a) = k.val`
+i.e., for any position `v` and target colour `k`, one of the four translates
+hits colour `k`.
+
+## Integration plan
+
+**Option A (verified, recommended)**: Apply `coverage_assembly` directly at the
+sorry site via `exact coverage_assembly ...`. The verification section at the
+bottom of this file confirms this works: all hypotheses are satisfiable (`rfl`
+for definitional equalities, `idx_in_interval'` for interval bounds), and the
+conclusion is definitionally equal to the goal (`exact hgoal` works, no
+`convert` needed). The helper lemmas (Lemmas 4–10) must be moved to Combi.lean
+or made non-private.
+
+**Option B**: Copy the *proof* of `coverage_assembly` inline at the sorry site,
+using `have : eqp_idx q r p = idx p := rfl` bridges.
+
+## Current status
+
+| # | Lemma | Status | Purpose |
+|---|-------|--------|---------|
+| 1 | `eqp_idx_zero` | **proven** | `idx(0) = 0` |
+| 2 | `eqp_off_zero` | **proven** | `off(0) = 0` |
+| 3 | `eqp_idx_step` | **proven** | `idx(p+1) ∈ {idx(p), idx(p)+1}` |
+| 4 | `eqp_off_succ_same` | **sorry** | same idx → `off(p+1) = off(p)+1` |
+| 5 | `eqp_off_succ_new` | **sorry** | different idx → `off(p+1) = 0` |
+| 6 | `compl_parity_witness` | **sorry** | parity coverage in a pair |
+| 7 | `two_pairs_cover_split` | **sorry** | two distinct-phase pairs cover Fin 3 |
+| 8 | `eqp_idx_last` | **sorry** | `idx(m-1) = s-1` |
+| 9 | `straddle1_gap2` | **sorry** | pair 1 straddles → gap = 2 |
+| 10 | `straddle2_gap1` | **sorry** | pair 2 straddles → gap = 1 |
+| — | `coverage_assembly` | **sorry** | main assembly combining 4–10 |
+| — | `case_one_interval_test` | **proven** (modulo sorrys) | verifies assembly fills the sorry |
+
+**Recommended proving order**: 6, 7 (easy omega), then 4, 5 (need `mod_step`
+helper), then 8 (division identity), then 9, 10 (hardest, case analysis on
+wrapping), then assembly.
+
+## Key definitions
 
 - `q = m / s`, `r = m % s`, so `m = s * q + r` and `r < s`
 - `bd = r * (q + 1)` (boundary between long and short intervals)
 - `idx(p) = if p < bd then p / (q + 1) else r + (p - bd) / q`
+  (= `eqp_idx q r p`, definitionally equal to local `let idx` in Combi.lean)
 - `off(p) = if p < bd then p % (q + 1) else (p - bd) % q`
+  (= `eqp_off q r p`, same deal)
 - `c(p) = (idx(p % m) + off(p % m) % 2) % 3`
-- `equiEndpoint m s i = m / s * i + min(m % s, i) = q * i + min(r, i)`
+- `equiEndpoint m s i = q * i + min(r, i)` (from `Finpartition`)
 - Interval `j` is `[equiEndpoint(j), equiEndpoint(j+1))`
 - `equiEndpoint(0) = 0`, `equiEndpoint(s) = m` (by `equiEndpoint_hi`)
 - Interval length: `equiEndpoint(j+1) - equiEndpoint(j) = if j < r then q+1 else q`
   (by `card_of_mem_equipartitionToIco_parts_aux`)
 - Hence every interval has length ≥ q and ≤ q+1 ≤ ⌈m/s⌉
 
-## Goal
+## Goal at the sorry site
 
 We need: `∃ a ∈ {0, 1, g, g+1}, c(v + a) = k.val`, where `k : Fin 3`.
 
