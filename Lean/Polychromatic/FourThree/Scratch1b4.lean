@@ -750,6 +750,25 @@ equiEndpoint(j₀+1)`, so `v+g ≥ equiEndpoint(j₀+2)`.
 Case B (`j₀ = s-1`): `v = m-1`, `(v+g)%m = g-1`. For `gap = 1`:
 `jg = 0`, need `g-1 < equiEndpoint(1)`. But `g > ⌈m/s⌉`, so
 `g-1 ≥ equiEndpoint(1)`. Contradiction. -/
+private lemma gap_mod_cases (s j₀ jg : ℕ) (hs : 0 < s)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hmod : (jg + s - j₀) % s = 1) :
+    jg + s - j₀ = 1 ∨ jg + s - j₀ = s + 1 := by
+  have hd_hi : jg + s - j₀ < 2 * s := by omega
+  have hdiv := Nat.div_add_mod (jg + s - j₀) s
+  rw [hmod] at hdiv
+  have hq_lt : (jg + s - j₀) / s < 2 := by
+    by_contra h; push_neg at h
+    have := Nat.mul_le_mul_left s h; omega
+  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
+  · left
+    have : s * ((jg + s - j₀) / s) = 0 := by rw [h]; ring
+    omega
+  · right
+    have hq1 : (jg + s - j₀) / s = 1 := by omega
+    have : s * ((jg + s - j₀) / s) = s := by rw [hq1]; ring
+    omega
+
 private lemma straddle1_gap2 (s g m : ℕ)
     (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
@@ -766,7 +785,95 @@ private lemma straddle1_gap2 (s g m : ℕ)
     (hgap : (jg + s - j₀) % s = 1 ∨
       (jg + s - j₀) % s = 2) :
     (jg + s - j₀) % s = 2 := by
-  sorry
+  -- Assume gap ≠ 2, derive gap = 1, then contradict
+  by_contra hne
+  have hgap1 : (jg + s - j₀) % s = 1 := by tauto
+  -- From straddle: v + 1 = equiEndpoint(j₀+1)
+  have hv_eq : v + 1 = Finpartition.equiEndpoint m s (j₀ + 1) := by
+    omega
+  -- From gap = 1: jg + s - j₀ = 1 or s + 1
+  have hjg_cases := gap_mod_cases s j₀ jg hs hj₀_lt hjg_lt hgap1
+  -- g < m (since 2*(m/s) < s*(m/s) ≤ m when s ≥ 3)
+  have hq_pos : 0 < m / s := by
+    by_contra h; push_neg at h; simp at h; omega
+  have hg_lt_m : g < m := by
+    have : 2 * (m / s) < s * (m / s) :=
+      Nat.mul_lt_mul_of_pos_right (by omega) hq_pos
+    have : s * (m / s) ≤ m := by
+      rw [mul_comm]; exact Nat.div_mul_le_self m s
+    omega
+  -- equiEndpoint(s) = m
+  have hep_s : Finpartition.equiEndpoint m s s = m :=
+    Finpartition.equiEndpoint_hi (by omega)
+  -- Case split: j₀ + 1 < s vs j₀ + 1 = s
+  by_cases hj₀_lt_s : j₀ + 1 < s
+  · -- Case A: j₀ + 1 < s, so jg = j₀ + 1
+    have hjg_val : jg = j₀ + 1 := by omega
+    -- gap_exceeds_ilen: interval length < g
+    have hilen := gap_exceeds_ilen m s g hs h_lb (j₀ + 1)
+    -- Monotonicity for omega
+    have hmono : Finpartition.equiEndpoint m s (j₀ + 1) ≤
+        Finpartition.equiEndpoint m s (j₀ + 1 + 1) :=
+      Finpartition.equiEndpoint_monotone (by omega)
+    have hsac := Nat.sub_add_cancel hmono
+    -- So v + g ≥ equiEndpoint(j₀+2)
+    have hvg_ge : v + g ≥
+        Finpartition.equiEndpoint m s (j₀ + 1 + 1) := by omega
+    -- Sub-case: wrapping or not
+    by_cases hwrap : v + g < m
+    · -- Non-wrapping: (v+g)%m = v+g ≥ equiEndpoint(j₀+2)
+      have : (v + g) % m = v + g := Nat.mod_eq_of_lt hwrap
+      rw [hjg_val] at hvg_hi
+      omega
+    · -- Wrapping: (v+g)%m = v+g-m
+      push_neg at hwrap
+      rw [hjg_val] at hvg_lo
+      have hvg_mod : (v + g) % m = v + g - m := by
+        rw [Nat.mod_eq_sub_mod hwrap]
+        have : v + g - m < m := by omega
+        exact Nat.mod_eq_of_lt this
+      rw [hvg_mod] at hvg_lo
+      omega
+  · -- Case B: j₀ + 1 = s, so j₀ = s-1, jg = 0
+    have hj₀_eq : j₀ = s - 1 := by omega
+    have hjg_val : jg = 0 := by omega
+    -- v = equiEndpoint(s) - 1 = m - 1
+    rw [hj₀_eq] at hv_eq
+    have hep_s1 : Finpartition.equiEndpoint m s (s - 1 + 1) = m := by
+      rw [Nat.sub_add_cancel (by omega : 1 ≤ s)]; exact hep_s
+    rw [hep_s1] at hv_eq
+    have hv_val : v = m - 1 := by omega
+    -- g > 0 (from gap_exceeds_ilen applied to interval 0)
+    have hg_pos : 0 < g := by
+      have := gap_exceeds_ilen m s g hs h_lb 0
+      have := Finpartition.equiEndpoint_strictMono
+        (by omega : s ≠ 0) hs_le (show 0 < 1 from by omega)
+      omega
+    -- (v+g)%m = g-1
+    have hvg_mod : (v + g) % m = g - 1 := by
+      rw [hv_val, show m - 1 + g = m + (g - 1) from by omega,
+        Nat.add_mod_left]
+      exact Nat.mod_eq_of_lt (by omega)
+    -- From hvg_hi with jg = 0: g - 1 < equiEndpoint(1)
+    rw [hjg_val, hvg_mod] at hvg_hi
+    simp only [Nat.zero_add] at hvg_hi
+    -- But g > (m+s-1)/s ≥ equiEndpoint(1), contradiction
+    have hep1 : Finpartition.equiEndpoint m s 1 ≤
+        (m + s - 1) / s := by
+      rw [Finpartition.equiEndpoint]
+      simp only [Nat.mul_one]
+      by_cases hr : m % s = 0
+      · simp [hr]; exact Nat.div_le_div_right (by omega)
+      · have : min (m % s) 1 = 1 := by omega
+        rw [this]
+        -- Goal: m / s + 1 ≤ (m + s - 1) / s
+        apply (Nat.le_div_iff_mul_le hs).mpr
+        -- Goal: (m / s + 1) * s ≤ m + s - 1
+        have hprod : (m / s + 1) * s = m / s * s + s := by ring
+        have hdam := Nat.div_add_mod m s
+        have hmul : m / s * s = s * (m / s) := by ring
+        rw [hprod]; omega
+    omega
 
 /-! ### Lemma 10: pair 2 straddle → gap = 1
 
