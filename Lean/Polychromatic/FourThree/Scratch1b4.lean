@@ -303,6 +303,39 @@ Note: at most one pair can straddle. If pair 1 straddles then
      Pair 1 is non-straddling, so Lemma 6 gives a witness for
      `jg%3` from pair 1. Combined with `c(v+g+1) = (jg+1)%3
      = (j₀+2)%3`, all 3 colors are covered. ✓
+
+## Sub-goal mapping (from Combi.lean TODO)
+
+**(a)** Non-straddling pair covers both phases → Lemmas 4 + 6.
+**(b)** Straddling pair produces boundary color `(j+1)%3` → Lemmas 3 + 5.
+**(c)** At most one pair straddles → Lemmas 9 + 10.
+**(d)** Gap determines pair 2's color set → (a) + (c).
+
+## Bridge (item 5): `eqp_idx`/`eqp_off` ↔ local `let` bindings
+
+The sorry site uses `let idx`, `let off`, `let c` which are
+definitionally equal to `eqp_idx q r`, `eqp_off q r`, and the
+coloring formula. Connect via `have : eqp_idx q r p = idx p := rfl`.
+
+## Assembly pseudocode (item 6)
+
+```
+rcases two_pairs_cover_split j₀ jg hphase k.val k.isLt with hk1 | hk2
+· -- k ∈ {j₀%3, (j₀+1)%3}
+  by_cases hstrad1 : idx((v+1)%m) = idx(v%m)
+  · -- Non-straddling: (a) gives witness from pair 1
+  · -- Straddling: (b) gives (j₀+1)%3; (c)→gap=2→(d) gives j₀%3 from pair 2
+· -- k ∈ {jg%3, (jg+1)%3} — symmetric
+```
+
+## Execution order
+
+1. Lemmas 6, 7 (easy arithmetic, no deps)
+2. mod_step, mod_zero_step helpers + Lemmas 4, 5
+3. Lemma 8 (idx of last element)
+4. Lemmas 9, 10 (straddle → gap, hardest)
+5. Bridge layer
+6. Assembly at Combi.lean:763
 -/
 
 -- Equi-partition index: which interval does position p fall in?
