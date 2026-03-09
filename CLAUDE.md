@@ -147,6 +147,8 @@ When golfing Lean proofs, the following approaches work best (ordered by impact)
 ## Proof Development Process
 
 - **Write a detailed informal proof before formalizing.** For any non-trivial goal (more than a single tactic), write out in comments or text why the goal is true, what the key steps are, and what lemmas you expect to use. This prevents wasted cycles trying tactics blindly.
+- **Fix errors in priority order**: syntax errors → type errors → unsolved goals/tactic failures → linter warnings. Lower-priority errors are often spurious when higher-priority ones exist.
+- **Work on the hardest case first.** `sorry` the easy cases and focus on the hard one. If the hard case requires a different approach, effort on easy cases is wasted.
 - **Fix errors iteratively, one at a time.** After each edit, check diagnostics before moving to the next error. Do not rewrite an entire file at once — changes interact in unexpected ways and make debugging harder.
 
 ## Commit Conventions
