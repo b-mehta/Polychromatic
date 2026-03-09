@@ -3,10 +3,12 @@
 // differences specific to the Polychromatic site.
 
 // ---------------------------------------------------------------------------
-// Layout: wider sidebar (170 -> 220px), narrower content (650 -> 600px).
-// Wrapped in a min-width query so the theme's responsive styles (which set
-// width:auto at <=960px) are not overridden.
+// Layout: center the wrapper and widen sidebar (170 -> 220px), narrower
+// content (650 -> 600px).  The theme sets .wrapper { width: 960px } with no
+// horizontal centering, so we add margin: 0 auto.
 // ---------------------------------------------------------------------------
+
+.wrapper { margin: 0 auto; }
 
 @media screen and (min-width: 961px) {
   header { width: 220px; }
