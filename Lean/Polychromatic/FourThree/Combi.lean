@@ -733,6 +733,99 @@ private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
     rw [hsub]
     have := div_step (p - r * (q + 1)) q hq; omega
 
+-- Helper: if quotient stays same, remainder increases by 1
+private lemma mod_step (a b : ℕ) (_hb : 0 < b)
+    (h : (a + 1) / b = a / b) :
+    (a + 1) % b = a % b + 1 := by
+  have h1 := Nat.div_add_mod a b
+  have h2 := Nat.div_add_mod (a + 1) b
+  have h3 : b * ((a + 1) / b) = b * (a / b) := by rw [h]
+  linarith
+
+-- Helper: if quotient increases by 1, remainder resets to 0
+private lemma mod_zero_step (a b : ℕ) (_hb : 0 < b)
+    (h : (a + 1) / b = a / b + 1) :
+    (a + 1) % b = 0 := by
+  have h1 := Nat.div_add_mod a b
+  have h2 := Nat.div_add_mod (a + 1) b
+  have h3 := Nat.mod_lt a _hb
+  have h4 : b * ((a + 1) / b) = b * (a / b) + b := by
+    rw [h]; ring
+  have h5 := Nat.zero_le ((a + 1) % b)
+  linarith
+
+private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
+    (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
+    eqp_off q r (p + 1) = eqp_off q r p + 1 := by
+  unfold eqp_off
+  by_cases h1 : p + 1 < r * (q + 1) <;>
+      by_cases h2 : p < r * (q + 1)
+  · rw [if_pos h1, if_pos h2]
+    apply mod_step p (q + 1) (by omega)
+    have h3 : eqp_idx q r (p + 1) = (p + 1) / (q + 1) := by
+      unfold eqp_idx; rw [if_pos h1]
+    have h4 : eqp_idx q r p = p / (q + 1) := by
+      unfold eqp_idx; rw [if_pos h2]
+    linarith
+  · omega
+  · exfalso
+    have h3 : eqp_idx q r (p + 1) =
+        r + (p + 1 - r * (q + 1)) / q := by
+      unfold eqp_idx; rw [if_neg h1]
+    have h4 : eqp_idx q r p = p / (q + 1) := by
+      unfold eqp_idx; rw [if_pos h2]
+    have h5 : p / (q + 1) < r := by
+      rw [Nat.div_lt_iff_lt_mul (by omega)]; exact h2
+    have h6 : r ≤ eqp_idx q r (p + 1) := by
+      rw [h3]; exact Nat.le_add_right r _
+    linarith
+  · rw [if_neg h1, if_neg h2]
+    have hsub : p + 1 - r * (q + 1) =
+        (p - r * (q + 1)) + 1 := by omega
+    rw [hsub]
+    apply mod_step (p - r * (q + 1)) q hq
+    have h3 : eqp_idx q r (p + 1) =
+        r + (p + 1 - r * (q + 1)) / q := by
+      unfold eqp_idx; rw [if_neg h1]
+    have h4 : eqp_idx q r p =
+        r + (p - r * (q + 1)) / q := by
+      unfold eqp_idx; rw [if_neg h2]
+    rw [h3, h4, hsub] at h; omega
+
+private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
+    (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
+    eqp_off q r (p + 1) = 0 := by
+  unfold eqp_off
+  by_cases h1 : p + 1 < r * (q + 1) <;>
+      by_cases h2 : p < r * (q + 1)
+  · rw [if_pos h1]
+    apply mod_zero_step p (q + 1) (by omega)
+    have h3 : eqp_idx q r (p + 1) = (p + 1) / (q + 1) := by
+      unfold eqp_idx; rw [if_pos h1]
+    have h4 : eqp_idx q r p = p / (q + 1) := by
+      unfold eqp_idx; rw [if_pos h2]
+    rw [h3, h4] at h
+    have := div_step p (q + 1) (by omega)
+    omega
+  · omega
+  · rw [if_neg h1]
+    have : p + 1 = r * (q + 1) := by omega
+    simp [this]
+  · rw [if_neg h1]
+    have hsub : p + 1 - r * (q + 1) =
+        (p - r * (q + 1)) + 1 := by omega
+    rw [hsub]
+    apply mod_zero_step (p - r * (q + 1)) q hq
+    have h3 : eqp_idx q r (p + 1) =
+        r + (p + 1 - r * (q + 1)) / q := by
+      unfold eqp_idx; rw [if_neg h1]
+    have h4 : eqp_idx q r p =
+        r + (p - r * (q + 1)) / q := by
+      unfold eqp_idx; rw [if_neg h2]
+    rw [h3, h4, hsub] at h
+    have := div_step (p - r * (q + 1)) q hq
+    omega
+
 /-- Subcase (1b): interval coloring strategy.
     Let s be the smallest multiple of 3 such that g > ⌈m/s⌉. Split Z_m into s
     intervals of lengths ⌊m/s⌋ and ⌈m/s⌉, colored in a repeating 01/12/20
