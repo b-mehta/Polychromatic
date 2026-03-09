@@ -56,6 +56,38 @@ boundaries, which is done using `decide`.
 | `table1_0358` | {0,3,5,8} | sorry |
 | `table1_0145` | {0,1,4,5} | sorry |
 
+### Case 1 — Single Cycle
+| Lemma | Subcase | Status |
+|---|---|---|
+| `case_one_small_g` | (1a) g ∈ {2,3,4} | complete (depends on Table 1) |
+| `case_one_interval` | (1b) interval coloring | sorry |
+| per-residue lemmas (×6) | (1c) 3 ∤ m | complete (depend on Table 1) |
+| `case_one_residues` | (1c) dispatch | complete |
+| `case_one_div_g_not_three` | (1d) g ≢ 0 mod 3 | complete |
+| `case_one_div_3g` | (1d) m = 3g, 3 ∣ g | complete |
+| `case_one_div_3g3` | (1d) m = 3g+3, 3 ∣ g | complete |
+| `case_one_divisible` | (1d) dispatch | complete |
+| `case_one_dispatch` | Case 1 dispatch | complete |
+| `case_one_complement` | WLOG g ≤ m/2 | complete |
+| `main_case_one` | Case 1 assembly | complete |
+
+### Case 2 — Multiple Cycles
+| Lemma | Subcase | Status |
+|---|---|---|
+| `case_two_e1_even` | (2a) e₁ even | complete |
+| `case_two_d1_even_e1_odd` | (2b) d₁ even, e₁ odd | complete |
+| `case_two_odd_small` | (2c) both odd, e₁ ≤ 17 | sorry |
+| `case2d_coloring_works` | (2d) both odd, e₁ ≥ 19 | sorry |
+| `main_case_two` | Case 2 dispatch | complete |
+
+### Assembly
+| Lemma | Status |
+|---|---|
+| `zmod_set_card_eq_four` | complete |
+| `gcd_coprime_of_gcd_abc` | complete |
+| `hasPolychromColouring_of_zmod_set` | complete |
+| `normal_bit` | complete (modulo sorry dependencies) |
+
 Total: 9 sorries (5 Table 1 + 1 interval + 3 Case 2)
 -/
 
