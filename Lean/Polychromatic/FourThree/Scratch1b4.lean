@@ -9,16 +9,17 @@ import Polychromatic.ForMathlib.Misc
 
 **Goal**: Fill all `sorry`s in this file, then integrate into `Combi.lean:763`.
 
-**Recommended order** (easiest → hardest):
+**Recommended order** (hardest/riskiest first, to surface statement bugs early):
 
-1. `compl_parity_witness` (Lemma 6) — pure `omega` after `Nat.mod_two_eq_zero_or_one`
-2. `two_pairs_cover_split` (Lemma 7) — `omega` after `Nat.mod_lt` on both `j₁`, `j₂`
+1. `straddle1_gap2` (Lemma 9) — hardest; case split on `j₀ + 1 < s` vs `= s`,
+   then wrap/no-wrap subcases using `equiEndpoint` monotonicity. Most likely
+   to reveal off-by-one issues in the statement.
+2. `straddle2_gap1` (Lemma 10) — symmetric to 9; circular arc length ≥ 2q
 3. `eqp_off_succ_same` (Lemma 4) — needs `mod_step` helper (see proof sketch below)
 4. `eqp_off_succ_new` (Lemma 5) — needs `mod_zero_step` helper (see sketch below)
 5. `eqp_idx_last` (Lemma 8) — division identity via `Nat.add_mul_div_right`
-6. `straddle1_gap2` (Lemma 9) — hardest; case split on `j₀ + 1 < s` vs `= s`,
-   then wrap/no-wrap subcases using `equiEndpoint` monotonicity
-7. `straddle2_gap1` (Lemma 10) — symmetric to 9; circular arc length ≥ 2q
+6. `compl_parity_witness` (Lemma 6) — pure `omega` after `Nat.mod_two_eq_zero_or_one`
+7. `two_pairs_cover_split` (Lemma 7) — `omega` after `Nat.mod_lt` on both `j₁`, `j₂`
 8. `coverage_assembly` — combine all above; see assembly pseudocode in Step 7
 
 **Verification**: After `lake env lean Polychromatic/FourThree/Scratch1b4.lean`
