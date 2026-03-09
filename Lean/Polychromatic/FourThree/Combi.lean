@@ -676,6 +676,63 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
       omega
     exact mod_small _ this
 
+-- Equi-partition index: which interval does position p fall in?
+private def eqp_idx (q r : ℕ) (p : ℕ) : ℕ :=
+  if p < r * (q + 1) then p / (q + 1)
+  else r + (p - r * (q + 1)) / q
+
+-- Equi-partition offset: position within the interval
+private def eqp_off (q r : ℕ) (p : ℕ) : ℕ :=
+  if p < r * (q + 1) then p % (q + 1)
+  else (p - r * (q + 1)) % q
+
+private lemma eqp_idx_zero (q r : ℕ) :
+    eqp_idx q r 0 = 0 := by
+  simp [eqp_idx]
+
+private lemma eqp_off_zero (q r : ℕ) :
+    eqp_off q r 0 = 0 := by
+  simp [eqp_off]
+
+-- General fact: consecutive ℕ quotients differ by 0 or 1
+private lemma div_step (a b : ℕ) (hb : 0 < b) :
+    (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by
+  have hle : a / b ≤ (a + 1) / b :=
+    Nat.div_le_div_right (Nat.le_succ a)
+  suffices h : (a + 1) / b ≤ a / b + 1 by omega
+  have h1 := Nat.div_add_mod a b
+  have hmod := Nat.mod_lt a hb
+  have hring : b * (a / b + 1) = b * (a / b) + b := by ring
+  have hub : a + 1 ≤ b * (a / b + 1) := by linarith
+  calc (a + 1) / b
+      ≤ b * (a / b + 1) / b := Nat.div_le_div_right hub
+    _ = a / b + 1 := Nat.mul_div_cancel_left _ hb
+
+private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
+    eqp_idx q r (p + 1) = eqp_idx q r p ∨
+    eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
+  unfold eqp_idx
+  split_ifs with h1 h2
+  · exact div_step p (q + 1) (by omega)
+  · omega
+  · right
+    have hpeq : p + 1 = r * (q + 1) := by omega
+    have hr_pos : 0 < r := by nlinarith
+    have h_succ : (p + 1) / (q + 1) = r := by
+      rw [hpeq]; exact Nat.mul_div_cancel r (by omega)
+    have hne : p / (q + 1) ≠ r := by
+      intro heq
+      have := Nat.div_mul_le_self p (q + 1)
+      rw [heq] at this; linarith
+    have hidx_p : p / (q + 1) = r - 1 := by
+      have := div_step p (q + 1) (by omega); omega
+    rw [hpeq, Nat.sub_self, Nat.zero_div, hidx_p]; omega
+  · have hsub :
+        p + 1 - r * (q + 1) = (p - r * (q + 1)) + 1 := by
+      omega
+    rw [hsub]
+    have := div_step (p - r * (q + 1)) q hq; omega
+
 /-- Subcase (1b): interval coloring strategy.
     Let s be the smallest multiple of 3 such that g > ⌈m/s⌉. Split Z_m into s
     intervals of lengths ⌊m/s⌋ and ⌈m/s⌉, colored in a repeating 01/12/20
