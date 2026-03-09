@@ -826,6 +826,53 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
     have := div_step (p - r * (q + 1)) q hq
     omega
 
+private lemma gap_mod_cases (s j₀ jg : ℕ) (hs : 0 < s)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hmod : (jg + s - j₀) % s = 1) :
+    jg + s - j₀ = 1 ∨ jg + s - j₀ = s + 1 := by
+  have hd_hi : jg + s - j₀ < 2 * s := by omega
+  have hdiv := Nat.div_add_mod (jg + s - j₀) s
+  rw [hmod] at hdiv
+  have hq_lt : (jg + s - j₀) / s < 2 := by
+    by_contra h; push_neg at h
+    have := Nat.mul_le_mul_left s h; omega
+  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
+  · left
+    have : s * ((jg + s - j₀) / s) = 0 := by rw [h]; ring
+    omega
+  · right
+    have hq1 : (jg + s - j₀) / s = 1 := by omega
+    have : s * ((jg + s - j₀) / s) = s := by rw [hq1]; ring
+    omega
+
+private lemma gap_mod_cases2 (s j₀ jg : ℕ) (hs : 0 < s)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hmod : (jg + s - j₀) % s = 2) :
+    jg + s - j₀ = 2 ∨ jg + s - j₀ = s + 2 := by
+  have hd_hi : jg + s - j₀ < 2 * s := by omega
+  have hdiv := Nat.div_add_mod (jg + s - j₀) s
+  rw [hmod] at hdiv
+  have hq_lt : (jg + s - j₀) / s < 2 := by
+    by_contra h; push_neg at h
+    have := Nat.mul_le_mul_left s h; omega
+  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
+  · left
+    have : s * ((jg + s - j₀) / s) = 0 := by rw [h]; ring
+    omega
+  · right
+    have hq1 : (jg + s - j₀) / s = 1 := by omega
+    have : s * ((jg + s - j₀) / s) = s := by rw [hq1]; ring
+    omega
+
+private lemma equiEndpoint_diff_ge (m s j : ℕ) :
+    m / s ≤ Finpartition.equiEndpoint m s (j + 1) -
+        Finpartition.equiEndpoint m s j := by
+  simp only [Finpartition.equiEndpoint]
+  have h1 : m / s * (j + 1) = m / s * j + m / s := by ring
+  have h2 : min (m % s) j ≤ min (m % s) (j + 1) := by
+    apply min_le_min <;> omega
+  omega
+
 private lemma compl_parity_witness (j a : ℕ) (t : ℕ)
     (ht : t < 3)
     (htarg : t = j % 3 ∨ t = (j + 1) % 3) :
