@@ -5,9 +5,29 @@ import Polychromatic.ForMathlib.Misc
 /-!
 # Coverage proof for `case_one_interval` (Combi.lean:687–763)
 
+## Progress
+
+**Lemmas 1-10**: All proven and moved to Combi.lean (5 commits on
+`claude/theorem-1-case-1b-proof-0es7b`). The defs and sorry'd signatures
+below (marked "STUBS") are duplicates needed for type-checking only.
+
+**New helper lemmas** (marked "NEW WORK", all proven, compiling):
+- `eqp_idx_succ_lt_m`: p+1 < m or eqp_idx(p+1) = s  ✓
+- `non_straddle_witness`: non-straddle pair → witness d ∈ {0,1}  ✓
+- `straddle_boundary_color`: straddle pair → F(p+1) = (j+1)%3  ✓
+- `vg_mod_shift`: (v+(g+d))%m = ((v+g)%m + d)%m  ✓
+- `gap2_jg_mod3`: gap=2 ∧ 3|s → (jg+1)%3 = j₀%3  ✓
+- `gap1_j0_mod3`: gap=1 ∧ 3|s → (j₀+1)%3 = jg%3  ✓
+
+**coverage_assembly**: TODO — the main assembly using the helpers above.
+
+**Integration**: After coverage_assembly compiles, copy proof body into
+Combi.lean:763 (the sorry in `case_one_interval`). Helper lemma calls work
+directly since local `idx = eqp_idx q r` by definitional equality.
+
 ## Quick Start (for a fresh session)
 
-**Goal**: Fill all `sorry`s in this file, then integrate into `Combi.lean:763`.
+**Goal**: Fill `coverage_assembly`, then integrate into `Combi.lean:763`.
 
 **Recommended order** (hardest/riskiest first, to surface statement bugs early):
 
@@ -429,609 +449,87 @@ rcases two_pairs_cover_split j₀ jg hphase k.val k.isLt with hk1 | hk2
 6. Assembly at Combi.lean:763
 -/
 
--- Equi-partition index: which interval does position p fall in?
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║ STUBS: already proven in Combi.lean (sorry here = placeholder) ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
 private def eqp_idx (q r : ℕ) (p : ℕ) : ℕ :=
   if p < r * (q + 1) then p / (q + 1)
   else r + (p - r * (q + 1)) / q
 
--- Equi-partition offset: position within the interval
 private def eqp_off (q r : ℕ) (p : ℕ) : ℕ :=
   if p < r * (q + 1) then p % (q + 1)
   else (p - r * (q + 1)) % q
 
-/-! ### Lemma 1: idx at 0 is 0
-
-Proof: 0 < r*(q+1) iff r > 0.
-If r > 0: 0 < r*(q+1), so idx(0) = 0/(q+1) = 0.
-If r = 0: r*(q+1) = 0, so ¬(0 < 0), idx(0) = 0 + (0-0)/q = 0.
-In both cases: 0. -/
-private lemma eqp_idx_zero (q r : ℕ) :
-    eqp_idx q r 0 = 0 := by
-  simp [eqp_idx]
-
-/-! ### Lemma 2: off at 0 is 0
-
-Proof: Same case split as Lemma 1.
-If r > 0: off(0) = 0 % (q+1) = 0.
-If r = 0: off(0) = (0-0) % q = 0 % q = 0. -/
-private lemma eqp_off_zero (q r : ℕ) :
-    eqp_off q r 0 = 0 := by
-  simp [eqp_off]
-
-/-! ### Lemma 3: consecutive idx values differ by 0 or 1
-
-Proof by case split on the branch of the if-then-else for p
-and p+1.
-
-Case 1: p < bd and p+1 < bd (both in first branch).
-  idx(p) = p/(q+1), idx(p+1) = (p+1)/(q+1).
-  General fact: for any a,b with b>0, a/b and (a+1)/b differ
-  by 0 or 1. (Because (a+1) = a + 1, and the quotient can
-  increase by at most 1 when the input increases by 1.)
-
-Case 2: p ≥ bd and p+1 ≥ bd (both in second branch).
-  idx(p) = r + (p-bd)/q, idx(p+1) = r + (p+1-bd)/q.
-  Same general fact: (p-bd)/q and (p+1-bd)/q differ by 0 or 1.
-  So idx values differ by 0 or 1.
-
-Case 3: p < bd and p+1 ≥ bd (cross-branch).
-  p = bd - 1. idx(p) = (bd-1)/(q+1).
-  bd = r*(q+1), so (bd-1)/(q+1) = (r*(q+1)-1)/(q+1).
-  Since r*(q+1)-1 = (r-1)*(q+1) + q, the quotient is r-1.
-  idx(p+1) = r + (p+1-bd)/q = r + 0/q = r.
-  r = (r-1) + 1 = idx(p) + 1. ✓
-
-Case 4: p ≥ bd and p+1 < bd. Impossible since p < p+1. -/
--- General fact: consecutive ℕ quotients differ by 0 or 1
-private lemma div_step (a b : ℕ) (hb : 0 < b) :
-    (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by
-  have hle : a / b ≤ (a + 1) / b :=
-    Nat.div_le_div_right (Nat.le_succ a)
-  suffices h : (a + 1) / b ≤ a / b + 1 by omega
-  have h1 := Nat.div_add_mod a b
-  have hmod := Nat.mod_lt a hb
-  have hring : b * (a / b + 1) = b * (a / b) + b := by ring
-  have hub : a + 1 ≤ b * (a / b + 1) := by linarith
-  calc (a + 1) / b
-      ≤ b * (a / b + 1) / b := Nat.div_le_div_right hub
-    _ = a / b + 1 := Nat.mul_div_cancel_left _ hb
-
 private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
     eqp_idx q r (p + 1) = eqp_idx q r p ∨
-    eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
-  unfold eqp_idx
-  split_ifs with h1 h2
-  · -- p+1 < r*(q+1), p < r*(q+1): both in first branch
-    exact div_step p (q + 1) (by omega)
-  · -- p+1 < r*(q+1), p ≥ r*(q+1): impossible
-    omega
-  · -- p+1 ≥ r*(q+1), p < r*(q+1): cross branch, p+1 = r*(q+1)
-    right
-    have hpeq : p + 1 = r * (q + 1) := by omega
-    have hr_pos : 0 < r := by nlinarith
-    have h_succ : (p + 1) / (q + 1) = r := by
-      rw [hpeq]; exact Nat.mul_div_cancel r (by omega)
-    have hne : p / (q + 1) ≠ r := by
-      intro heq
-      have := Nat.div_mul_le_self p (q + 1)
-      rw [heq] at this; linarith
-    have hidx_p : p / (q + 1) = r - 1 := by
-      have := div_step p (q + 1) (by omega); omega
-    rw [hpeq, Nat.sub_self, Nat.zero_div, hidx_p]; omega
-  · -- p+1 ≥ r*(q+1), p ≥ r*(q+1): both in second branch
-    have hsub :
-        p + 1 - r * (q + 1) = (p - r * (q + 1)) + 1 := by
-      omega
-    rw [hsub]
-    have := div_step (p - r * (q + 1)) q hq; omega
+    eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by sorry
 
--- Helper: if quotient stays same, remainder increases by 1
-private lemma mod_step (a b : ℕ) (_hb : 0 < b)
-    (h : (a + 1) / b = a / b) :
-    (a + 1) % b = a % b + 1 := by
-  have h1 := Nat.div_add_mod a b
-  have h2 := Nat.div_add_mod (a + 1) b
-  have h3 : b * ((a + 1) / b) = b * (a / b) := by rw [h]
-  linarith
+private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s)
+    (_hs : 0 < s) :
+    eqp_idx q r (s * q + r) = s := by sorry
 
--- Helper: if quotient increases by 1, remainder resets to 0
-private lemma mod_zero_step (a b : ℕ) (_hb : 0 < b)
-    (h : (a + 1) / b = a / b + 1) :
-    (a + 1) % b = 0 := by
-  have h1 := Nat.div_add_mod a b
-  have h2 := Nat.div_add_mod (a + 1) b
-  have h3 := Nat.mod_lt a _hb
-  have h4 : b * ((a + 1) / b) = b * (a / b) + b := by
-    rw [h]; ring
-  have h5 := Nat.zero_le ((a + 1) % b)
-  linarith
-
--- Copy of gap_exceeds_ilen from Combi.lean (private there)
-open Finpartition in
-lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s)
-    (h_lb : (m + s - 1) / s < g) (j : ℕ) :
-    equiEndpoint m s (j + 1) - equiEndpoint m s j < g := by
-  rw [card_of_mem_equipartitionToIco_parts_aux]
-  set q := m / s; set r := m % s
-  by_cases hr : j < r
-  · simp [hr]
-    have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
-    have : (q + 1) * s = s * q + s := by ring
-    have : (q + 1) * s ≤ m + s - 1 := by omega
-    have := Nat.le_div_iff_mul_le hs |>.mpr this
-    omega
-  · simp [hr]
-    have : q * s ≤ m := Nat.div_mul_le_self m s
-    have : q * s ≤ m + s - 1 := by omega
-    have := Nat.le_div_iff_mul_le hs |>.mpr this
-    omega
-
-/-! ### Lemma 4: same idx → off increases by 1
-
-Uses general helper `mod_step`: if `b > 0` and `a/b = (a+1)/b`,
-then `(a+1) % b = a % b + 1`. (See top-level proof sketch.)
-
-`unfold eqp_off; split_ifs` (same 4 cases as Lemma 3):
-1. Both `< bd`: `h` gives `p/(q+1) = (p+1)/(q+1)`.
-   Apply `mod_step`: `(p+1)%(q+1) = p%(q+1) + 1`. ✓
-2. `p+1 < bd`, `p ≥ bd`: impossible (`omega`). ✓
-3. Cross-branch: contradicts `h`. In this branch,
-   `idx(p+1) = r ≠ r-1 = idx(p)` (from Lemma 3 analysis),
-   but `h` says they're equal. Derive `False` via
-   `unfold eqp_idx at h; split_ifs at h`. ✓
-4. Both `≥ bd`: `h` gives `(p-bd)/q = (p+1-bd)/q`.
-   Rewrite `p+1-bd = (p-bd)+1`, apply `mod_step`. ✓ -/
 private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
-    eqp_off q r (p + 1) = eqp_off q r p + 1 := by
-  unfold eqp_off
-  by_cases h1 : p + 1 < r * (q + 1) <;> by_cases h2 : p < r * (q + 1)
-  · -- Both < bd
-    rw [if_pos h1, if_pos h2]
-    apply mod_step p (q + 1) (by omega)
-    have h3 : eqp_idx q r (p + 1) = (p + 1) / (q + 1) := by
-      unfold eqp_idx; rw [if_pos h1]
-    have h4 : eqp_idx q r p = p / (q + 1) := by
-      unfold eqp_idx; rw [if_pos h2]
-    linarith
-  · -- p+1 < bd, p ≥ bd: impossible
-    omega
-  · -- Cross-branch: contradicts h (idx jumps)
-    exfalso
-    have h3 : eqp_idx q r (p + 1) =
-        r + (p + 1 - r * (q + 1)) / q := by
-      unfold eqp_idx; rw [if_neg h1]
-    have h4 : eqp_idx q r p = p / (q + 1) := by
-      unfold eqp_idx; rw [if_pos h2]
-    have h5 : p / (q + 1) < r := by
-      rw [Nat.div_lt_iff_lt_mul (by omega)]; exact h2
-    have h6 : r ≤ eqp_idx q r (p + 1) := by
-      rw [h3]; exact Nat.le_add_right r _
-    linarith
-  · -- Both ≥ bd
-    rw [if_neg h1, if_neg h2]
-    have hsub : p + 1 - r * (q + 1) =
-        (p - r * (q + 1)) + 1 := by omega
-    rw [hsub]
-    apply mod_step (p - r * (q + 1)) q hq
-    have h3 : eqp_idx q r (p + 1) =
-        r + (p + 1 - r * (q + 1)) / q := by
-      unfold eqp_idx; rw [if_neg h1]
-    have h4 : eqp_idx q r p =
-        r + (p - r * (q + 1)) / q := by
-      unfold eqp_idx; rw [if_neg h2]
-    rw [h3, h4, hsub] at h; omega
+    eqp_off q r (p + 1) = eqp_off q r p + 1 := by sorry
 
-/-! ### Lemma 5: different idx → off is 0
-
-Uses general helper `mod_zero_step`: if `b > 0` and
-`(a+1)/b = a/b + 1`, then `(a+1) % b = 0`.
-(See top-level proof sketch for derivation.)
-
-`unfold eqp_off; split_ifs` (same 4 cases):
-1. Both `< bd`: `h` gives `(p+1)/(q+1) ≠ p/(q+1)`.
-   By `div_step`, `(p+1)/(q+1) = p/(q+1) + 1`.
-   Apply `mod_zero_step`: `(p+1)%(q+1) = 0`. ✓
-2. Impossible: `omega`. ✓
-3. Cross-branch: `p+1 = bd`. Goal: `(p+1 - bd) % q = 0`.
-   `p+1 - bd = 0`, `0 % q = 0`. ✓
-4. Both `≥ bd`: `h` gives `(p+1-bd)/q ≠ (p-bd)/q`.
-   Rewrite `p+1-bd = (p-bd)+1`. By `div_step`, quotient
-   increased by 1. Apply `mod_zero_step`: `((p-bd)+1)%q = 0`. ✓ -/
 private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
-    (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
-    eqp_off q r (p + 1) = 0 := by
-  unfold eqp_off
-  by_cases h1 : p + 1 < r * (q + 1) <;> by_cases h2 : p < r * (q + 1)
-  · -- Both < bd: quotients differ → mod = 0
-    rw [if_pos h1]
-    apply mod_zero_step p (q + 1) (by omega)
-    have h3 : eqp_idx q r (p + 1) = (p + 1) / (q + 1) := by
-      unfold eqp_idx; rw [if_pos h1]
-    have h4 : eqp_idx q r p = p / (q + 1) := by
-      unfold eqp_idx; rw [if_pos h2]
-    rw [h3, h4] at h
-    have := div_step p (q + 1) (by omega)
-    omega
-  · -- p+1 < bd, p ≥ bd: impossible
-    omega
-  · -- Cross-branch: p+1 = r*(q+1), off = 0
-    rw [if_neg h1]
-    have : p + 1 = r * (q + 1) := by omega
-    simp [this]
-  · -- Both ≥ bd: quotients differ → mod = 0
-    rw [if_neg h1]
-    have hsub : p + 1 - r * (q + 1) =
-        (p - r * (q + 1)) + 1 := by omega
-    rw [hsub]
-    apply mod_zero_step (p - r * (q + 1)) q hq
-    have h3 : eqp_idx q r (p + 1) =
-        r + (p + 1 - r * (q + 1)) / q := by
-      unfold eqp_idx; rw [if_neg h1]
-    have h4 : eqp_idx q r p =
-        r + (p - r * (q + 1)) / q := by
-      unfold eqp_idx; rw [if_neg h2]
-    rw [h3, h4, hsub] at h
-    have := div_step (p - r * (q + 1)) q hq
-    omega
+    (h : eqp_idx q r (p + 1) = eqp_idx q r p + 1) :
+    eqp_off q r (p + 1) = 0 := by sorry
 
-/-! ### Lemma 6: complementary parity coverage
-
-Given `j` and `a`, `{(j + a%2) % 3, (j + (a+1)%2) % 3}` =
-`{j%3, (j+1)%3}`, since `a%2` and `(a+1)%2` are `{0,1}` in
-some order. For any `t ∈ {j%3, (j+1)%3}`, one matches.
-
-Lean proof: `have := Nat.mod_two_eq_zero_or_one a; omega`. -/
 private lemma compl_parity_witness (j a : ℕ) (t : ℕ)
     (ht : t < 3)
-    (htarg : t = j % 3 ∨ t = (j + 1) % 3) :
-    (j + a % 2) % 3 = t ∨
-    (j + (a + 1) % 2) % 3 = t := by
-  omega
+    (hpair : t = j % 3 ∨ t = (j + 1) % 3) :
+    (j + a % 2) % 3 = t ∨ (j + (a + 1) % 2) % 3 = t := by sorry
 
-/-! ### Lemma 7: two pairs with different phases → coverage split
-
-`{j%3, (j+1)%3}` covers 2 of {0,1,2}. Two pairs with distinct
-base residues `j₁%3 ≠ j₂%3` cover all 3.
-
-Lean proof: `omega` after `have := Nat.mod_lt j₁ (by omega : 0 < 3)`
-and similar. Or `have := Nat.mod_two_eq_zero_or_one ...` style. -/
 private lemma two_pairs_cover_split (j₁ j₂ : ℕ)
-    (hne : j₁ % 3 ≠ j₂ % 3) (k : ℕ) (hk : k < 3) :
-    (k = j₁ % 3 ∨ k = (j₁ + 1) % 3) ∨
-    (k = j₂ % 3 ∨ k = (j₂ + 1) % 3) := by
-  omega
+    (hne : j₁ % 3 ≠ j₂ % 3)
+    (t : ℕ) (ht : t < 3) :
+    (t = j₁ % 3 ∨ t = (j₁ + 1) % 3) ∨
+    (t = j₂ % 3 ∨ t = (j₂ + 1) % 3) := by sorry
 
-/-! ### Lemma 8: idx of last element (m-1) is s-1
-
-m-1 = s*q + r - 1. We show m-1 ≥ bd = r*(q+1).
-bd = r*q + r. m-1 = s*q + r - 1. m-1 - bd = (s-r)*q - 1.
-Since s > r and q ≥ 1: (s-r)*q ≥ 1, so m-1 ≥ bd. ✓
-
-idx(m-1) = r + (m-1-bd)/q = r + ((s-r)*q - 1)/q.
-Write (s-r)*q - 1 = (s-r-1)*q + (q-1).
-Since q-1 < q: ((s-r-1)*q + (q-1))/q = s-r-1.
-So idx(m-1) = r + (s-r-1) = s - 1. ✓ -/
-private lemma eqp_idx_last (q r s : ℕ) (hq : 0 < q)
-    (hr : r < s) (hs : 0 < s) :
-    eqp_idx q r (s * q + r - 1) = s - 1 := by
-  have h_rq : r * (q + 1) = r * q + r := by ring
-  have h_rq2 : (r + 1) * q = r * q + q := by ring
-  have h_rq_le : r * q + q ≤ s * q :=
-    h_rq2 ▸ Nat.mul_le_mul_right q (by omega)
-  have hge : ¬(s * q + r - 1 < r * (q + 1)) := by omega
-  have h_bd_le : r * (q + 1) ≤ s * q + r - 1 := by omega
-  unfold eqp_idx
-  rw [if_neg hge]
-  have hnum : s * q + r - 1 - r * (q + 1) =
-      (q - 1) + (s - r - 1) * q := by
-    zify [h_bd_le, show 1 ≤ s * q + r from by omega,
-      show 1 ≤ q from hq, show r ≤ s from by omega,
-      show 1 ≤ s - r from by omega]
-    ring
-  rw [hnum, Nat.add_mul_div_right _ _ hq,
-    show (q - 1) / q = 0 from Nat.div_eq_of_lt (by omega)]
-  omega
-
-/-! ### Lemma 9: pair 1 straddle → gap = 2
-
-See Step 5 in the top-level proof for the full case analysis.
-
-Summary: Assume `gap = 1`. From `hstrad` and `hv_hi`:
-`v = equiEndpoint(j₀+1) - 1`.
-
-Case A (`j₀+1 < s`): `g > interval length ≥ equiEndpoint(j₀+2) -
-equiEndpoint(j₀+1)`, so `v+g ≥ equiEndpoint(j₀+2)`.
-- Non-wrapping: `(v+g)%m = v+g ≥ equiEndpoint(j₀+2)`, but
-  `hvg_hi` says `< equiEndpoint(j₀+2)`. Contradiction.
-- Wrapping: need `equiEndpoint(j₀+1) ≤ v+g-m`, i.e., `g ≥ m+1`.
-  But `g < 2q < m`. Contradiction.
-
-Case B (`j₀ = s-1`): `v = m-1`, `(v+g)%m = g-1`. For `gap = 1`:
-`jg = 0`, need `g-1 < equiEndpoint(1)`. But `g > ⌈m/s⌉`, so
-`g-1 ≥ equiEndpoint(1)`. Contradiction. -/
-private lemma gap_mod_cases (s j₀ jg : ℕ) (hs : 0 < s)
-    (hj₀ : j₀ < s) (hjg : jg < s)
-    (hmod : (jg + s - j₀) % s = 1) :
-    jg + s - j₀ = 1 ∨ jg + s - j₀ = s + 1 := by
-  have hd_hi : jg + s - j₀ < 2 * s := by omega
-  have hdiv := Nat.div_add_mod (jg + s - j₀) s
-  rw [hmod] at hdiv
-  have hq_lt : (jg + s - j₀) / s < 2 := by
-    by_contra h; push_neg at h
-    have := Nat.mul_le_mul_left s h; omega
-  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
-  · left
-    have : s * ((jg + s - j₀) / s) = 0 := by rw [h]; ring
-    omega
-  · right
-    have hq1 : (jg + s - j₀) / s = 1 := by omega
-    have : s * ((jg + s - j₀) / s) = s := by rw [hq1]; ring
-    omega
-
-private lemma gap_mod_cases2 (s j₀ jg : ℕ) (hs : 0 < s)
-    (hj₀ : j₀ < s) (hjg : jg < s)
-    (hmod : (jg + s - j₀) % s = 2) :
-    jg + s - j₀ = 2 ∨ jg + s - j₀ = s + 2 := by
-  have hd_hi : jg + s - j₀ < 2 * s := by omega
-  have hdiv := Nat.div_add_mod (jg + s - j₀) s
-  rw [hmod] at hdiv
-  have hq_lt : (jg + s - j₀) / s < 2 := by
-    by_contra h; push_neg at h
-    have := Nat.mul_le_mul_left s h; omega
-  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
-  · left
-    have : s * ((jg + s - j₀) / s) = 0 := by rw [h]; ring
-    omega
-  · right
-    have hq1 : (jg + s - j₀) / s = 1 := by omega
-    have : s * ((jg + s - j₀) / s) = s := by rw [hq1]; ring
-    omega
-
-private lemma equiEndpoint_diff_ge (m s j : ℕ) :
-    m / s ≤ Finpartition.equiEndpoint m s (j + 1) -
-        Finpartition.equiEndpoint m s j := by
-  simp only [Finpartition.equiEndpoint]
-  have h1 : m / s * (j + 1) = m / s * j + m / s := by ring
-  have h2 : min (m % s) j ≤ min (m % s) (j + 1) := by
-    apply min_le_min <;> omega
-  omega
-
+open Finpartition in
 private lemma straddle1_gap2 (s g m : ℕ)
-    (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
+    (hs : 0 < s) (hs3 : 3 ∣ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
-    (v j₀ jg : ℕ) (hv : v < m)
+    (q : ℕ) (hq : q = m / s)
+    (r : ℕ) (hr : r = m % s)
+    (hq_pos : 0 < q) (hr_lt : r < s)
+    (v : ℕ) (hv : v < m)
+    (j₀ jg : ℕ)
+    (hj₀ : j₀ = eqp_idx q r v) (hjg : jg = eqp_idx q r ((v + g) % m))
     (hj₀_lt : j₀ < s) (hjg_lt : jg < s)
-    (hv_lo : Finpartition.equiEndpoint m s j₀ ≤ v)
-    (hv_hi : v < Finpartition.equiEndpoint m s (j₀ + 1))
-    (hvg_lo : Finpartition.equiEndpoint m s jg ≤
-      (v + g) % m)
-    (hvg_hi : (v + g) % m <
-      Finpartition.equiEndpoint m s (jg + 1))
-    (hstrad : Finpartition.equiEndpoint m s (j₀ + 1) ≤
-      v + 1)
-    (hgap : (jg + s - j₀) % s = 1 ∨
-      (jg + s - j₀) % s = 2) :
-    (jg + s - j₀) % s = 2 := by
-  -- Assume gap ≠ 2, derive gap = 1, then contradict
-  by_contra hne
-  have hgap1 : (jg + s - j₀) % s = 1 := by tauto
-  -- From straddle: v + 1 = equiEndpoint(j₀+1)
-  have hv_eq : v + 1 = Finpartition.equiEndpoint m s (j₀ + 1) := by
-    omega
-  -- From gap = 1: jg + s - j₀ = 1 or s + 1
-  have hjg_cases := gap_mod_cases s j₀ jg hs hj₀_lt hjg_lt hgap1
-  -- g < m (since 2*(m/s) < s*(m/s) ≤ m when s ≥ 3)
-  have hq_pos : 0 < m / s := by
-    by_contra h; push_neg at h; simp at h; omega
-  have hg_lt_m : g < m := by
-    have : 2 * (m / s) < s * (m / s) :=
-      Nat.mul_lt_mul_of_pos_right (by omega) hq_pos
-    have : s * (m / s) ≤ m := by
-      rw [mul_comm]; exact Nat.div_mul_le_self m s
-    omega
-  -- equiEndpoint(s) = m
-  have hep_s : Finpartition.equiEndpoint m s s = m :=
-    Finpartition.equiEndpoint_hi (by omega)
-  -- Case split: j₀ + 1 < s vs j₀ + 1 = s
-  by_cases hj₀_lt_s : j₀ + 1 < s
-  · -- Case A: j₀ + 1 < s, so jg = j₀ + 1
-    have hjg_val : jg = j₀ + 1 := by omega
-    -- gap_exceeds_ilen: interval length < g
-    have hilen := gap_exceeds_ilen m s g hs h_lb (j₀ + 1)
-    -- Monotonicity for omega
-    have hmono : Finpartition.equiEndpoint m s (j₀ + 1) ≤
-        Finpartition.equiEndpoint m s (j₀ + 1 + 1) :=
-      Finpartition.equiEndpoint_monotone (by omega)
-    have hsac := Nat.sub_add_cancel hmono
-    -- So v + g ≥ equiEndpoint(j₀+2)
-    have hvg_ge : v + g ≥
-        Finpartition.equiEndpoint m s (j₀ + 1 + 1) := by omega
-    -- Sub-case: wrapping or not
-    by_cases hwrap : v + g < m
-    · -- Non-wrapping: (v+g)%m = v+g ≥ equiEndpoint(j₀+2)
-      have : (v + g) % m = v + g := Nat.mod_eq_of_lt hwrap
-      rw [hjg_val] at hvg_hi
-      omega
-    · -- Wrapping: (v+g)%m = v+g-m
-      push_neg at hwrap
-      rw [hjg_val] at hvg_lo
-      have hvg_mod : (v + g) % m = v + g - m := by
-        rw [Nat.mod_eq_sub_mod hwrap]
-        have : v + g - m < m := by omega
-        exact Nat.mod_eq_of_lt this
-      rw [hvg_mod] at hvg_lo
-      omega
-  · -- Case B: j₀ + 1 = s, so j₀ = s-1, jg = 0
-    have hj₀_eq : j₀ = s - 1 := by omega
-    have hjg_val : jg = 0 := by omega
-    -- v = equiEndpoint(s) - 1 = m - 1
-    rw [hj₀_eq] at hv_eq
-    have hep_s1 : Finpartition.equiEndpoint m s (s - 1 + 1) = m := by
-      rw [Nat.sub_add_cancel (by omega : 1 ≤ s)]; exact hep_s
-    rw [hep_s1] at hv_eq
-    have hv_val : v = m - 1 := by omega
-    -- g > 0 (from gap_exceeds_ilen applied to interval 0)
-    have hg_pos : 0 < g := by
-      have := gap_exceeds_ilen m s g hs h_lb 0
-      have := Finpartition.equiEndpoint_strictMono
-        (by omega : s ≠ 0) hs_le (show 0 < 1 from by omega)
-      omega
-    -- (v+g)%m = g-1
-    have hvg_mod : (v + g) % m = g - 1 := by
-      rw [hv_val, show m - 1 + g = m + (g - 1) from by omega,
-        Nat.add_mod_left]
-      exact Nat.mod_eq_of_lt (by omega)
-    -- From hvg_hi with jg = 0: g - 1 < equiEndpoint(1)
-    rw [hjg_val, hvg_mod] at hvg_hi
-    simp only [Nat.zero_add] at hvg_hi
-    -- But g > (m+s-1)/s ≥ equiEndpoint(1), contradiction
-    have hep1 : Finpartition.equiEndpoint m s 1 ≤
-        (m + s - 1) / s := by
-      rw [Finpartition.equiEndpoint]
-      simp only [Nat.mul_one]
-      by_cases hr : m % s = 0
-      · simp [hr]; exact Nat.div_le_div_right (by omega)
-      · have : min (m % s) 1 = 1 := by omega
-        rw [this]
-        -- Goal: m / s + 1 ≤ (m + s - 1) / s
-        apply (Nat.le_div_iff_mul_le hs).mpr
-        -- Goal: (m / s + 1) * s ≤ m + s - 1
-        have hprod : (m / s + 1) * s = m / s * s + s := by ring
-        have hdam := Nat.div_add_mod m s
-        have hmul : m / s * s = s * (m / s) := by ring
-        rw [hprod]; omega
-    omega
+    (hstrad : eqp_idx q r (v + 1) = eqp_idx q r v + 1)
+    (hv_lo : equiEndpoint m s j₀ ≤ v)
+    (hv_hi : v < equiEndpoint m s (j₀ + 1))
+    (hvg_lo : equiEndpoint m s jg ≤ (v + g) % m)
+    (hvg_hi : (v + g) % m < equiEndpoint m s (jg + 1))
+    (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
+    (jg + s - j₀) % s = 2 := by sorry
 
-/-! ### Lemma 10: pair 2 straddle → gap = 1
-
-See Step 6 in the top-level proof for the full case analysis.
-
-Summary: Assume `gap = 2`. From `hstrad` and `hvg_hi`:
-`(v+g)%m = equiEndpoint(jg+1) - 1`. And
-`v ≤ equiEndpoint(j₀+1) - 1` (from `hv_hi`).
-
-The circular arc from `equiEndpoint(j₀+1)` to
-`equiEndpoint(jg+1)` spans 2 intervals (each of length ≥ `q`),
-so arc length ≥ `2q`.
-
-- Non-wrapping: `g ≥ equiEndpoint(jg+1) - equiEndpoint(j₀+1)
-  ≥ 2q`.
-- Wrapping: `g ≥ m + equiEndpoint(jg+1) - equiEndpoint(j₀+1)
-  ≥ 2q` (the wrapping circular arc still spans 2 intervals).
-
-Either way `g ≥ 2q`, contradicting `g < 2q`. -/
+open Finpartition in
 private lemma straddle2_gap1 (s g m : ℕ)
-    (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
+    (hs : 0 < s) (hs3 : 3 ∣ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
-    (v j₀ jg : ℕ) (hv : v < m)
+    (q : ℕ) (hq : q = m / s)
+    (r : ℕ) (hr : r = m % s)
+    (hq_pos : 0 < q) (hr_lt : r < s)
+    (v : ℕ) (hv : v < m)
+    (j₀ jg : ℕ)
+    (hj₀ : j₀ = eqp_idx q r v) (hjg : jg = eqp_idx q r ((v + g) % m))
     (hj₀_lt : j₀ < s) (hjg_lt : jg < s)
-    (hv_lo : Finpartition.equiEndpoint m s j₀ ≤ v)
-    (hv_hi : v < Finpartition.equiEndpoint m s (j₀ + 1))
-    (hvg_lo : Finpartition.equiEndpoint m s jg ≤
-      (v + g) % m)
-    (hvg_hi : (v + g) % m <
-      Finpartition.equiEndpoint m s (jg + 1))
-    (hstrad : Finpartition.equiEndpoint m s (jg + 1) ≤
-      (v + g) % m + 1)
-    (hgap : (jg + s - j₀) % s = 1 ∨
-      (jg + s - j₀) % s = 2) :
-    (jg + s - j₀) % s = 1 := by
-  by_contra hne
-  have hgap2 : (jg + s - j₀) % s = 2 := by tauto
-  have hvg_eq : (v + g) % m + 1 =
-      Finpartition.equiEndpoint m s (jg + 1) := by omega
-  have hq_pos : 0 < m / s := by
-    by_contra h; push_neg at h; simp at h; omega
-  have hg_lt_m : g < m := by
-    have : 2 * (m / s) < s * (m / s) :=
-      Nat.mul_lt_mul_of_pos_right (by omega) hq_pos
-    have : s * (m / s) ≤ m := by
-      rw [mul_comm]; exact Nat.div_mul_le_self m s
-    omega
-  have hjg_cases := gap_mod_cases2 s j₀ jg hs hj₀_lt hjg_lt hgap2
-  have hep0 : Finpartition.equiEndpoint m s 0 = 0 := by
-    simp [Finpartition.equiEndpoint]
-  have hep_s : Finpartition.equiEndpoint m s s = m :=
-    Finpartition.equiEndpoint_hi (by omega)
-  by_cases hj_nowrap : j₀ + 2 < s
-  · -- Case A: Non-wrapping indices (jg = j₀ + 2)
-    have hjg_val : jg = j₀ + 2 := by omega
-    rw [hjg_val] at hvg_eq
-    -- Name equiEndpoint values for omega
-    set e1 := Finpartition.equiEndpoint m s (j₀ + 1) with he1
-    set e2 := Finpartition.equiEndpoint m s (j₀ + 1 + 1) with he2
-    set e3 := Finpartition.equiEndpoint m s (j₀ + 1 + 1 + 1) with he3
-    have hd1 := equiEndpoint_diff_ge m s (j₀ + 1)
-    have hd2 := equiEndpoint_diff_ge m s (j₀ + 1 + 1)
-    have hmono1 : e1 ≤ e2 := by omega
-    have hsac1 := Nat.sub_add_cancel hmono1
-    have hmono2 : e2 ≤ e3 := by omega
-    have hsac2 := Nat.sub_add_cancel hmono2
-    by_cases hwrap : v + g < m
-    · have : (v + g) % m = v + g := Nat.mod_eq_of_lt hwrap
-      omega
-    · push_neg at hwrap
-      have : (v + g) % m = v + g - m := by
-        rw [Nat.mod_eq_sub_mod hwrap]; exact Nat.mod_eq_of_lt (by omega)
-      -- g ≥ m (since e3 ≥ e1 > v, so g = m + e3 - 1 - v ≥ m)
-      omega
-  · -- Case B: Wrapping indices (jg = j₀+2-s, j₀ ≥ s-2)
-    have hjg_val : jg = j₀ + 2 - s := by omega
-    -- Position must wrap
-    have hpos_wrap : m ≤ v + g := by
-      by_contra h; push_neg at h
-      have : (v + g) % m = v + g := Nat.mod_eq_of_lt h
-      have : Finpartition.equiEndpoint m s (jg + 1) ≤
-          Finpartition.equiEndpoint m s j₀ :=
-        Finpartition.equiEndpoint_monotone (by omega)
-      have : 0 < g := by
-        have := gap_exceeds_ilen m s g hs h_lb 0
-        have := Finpartition.equiEndpoint_strictMono
-          (by omega : s ≠ 0) hs_le (show 0 < 1 by omega)
-        omega
-      omega
-    have hvg_mod : (v + g) % m = v + g - m := by
-      rw [Nat.mod_eq_sub_mod hpos_wrap]
-      exact Nat.mod_eq_of_lt (by omega)
-    by_cases hj₀_eq : j₀ = s - 2
-    · -- j₀ = s-2, jg = 0
-      have hjg0 : jg = 0 := by omega
-      rw [hjg0] at hvg_eq
-      simp only [Nat.zero_add] at hvg_eq
-      rw [hj₀_eq] at hv_hi
-      rw [show s - 2 + 1 = s - 1 from by omega] at hv_hi
-      -- Interval s-1 has length ≥ m/s
-      have hd1 := equiEndpoint_diff_ge m s (s - 1)
-      rw [Nat.sub_add_cancel (by omega : 1 ≤ s), hep_s] at hd1
-      -- hd1 : m / s ≤ m - equiEndpoint(s-1)
-      have hep_s1_le : Finpartition.equiEndpoint m s (s - 1) ≤ m := by
-        calc Finpartition.equiEndpoint m s (s - 1)
-            ≤ Finpartition.equiEndpoint m s s :=
-              Finpartition.equiEndpoint_monotone (by omega)
-          _ = m := hep_s
-      have hsac_m := Nat.sub_add_cancel hep_s1_le
-      -- Interval 0 has length ≥ m/s
-      have hd2 := equiEndpoint_diff_ge m s 0
-      rw [hep0] at hd2
-      simp only [Nat.zero_add] at hd2
-      omega
-    · -- j₀ = s-1, jg = 1
-      have hj₀_eq2 : j₀ = s - 1 := by omega
-      have hjg1 : jg = 1 := by omega
-      rw [hjg1] at hvg_eq
-      rw [hj₀_eq2] at hv_hi
-      have hep_s1 : Finpartition.equiEndpoint m s (s - 1 + 1) = m := by
-        rw [Nat.sub_add_cancel (by omega : 1 ≤ s)]; exact hep_s
-      rw [hep_s1] at hv_hi
-      have hd1 := equiEndpoint_diff_ge m s 0
-      rw [hep0] at hd1
-      simp only [Nat.zero_add] at hd1
-      have hd2 := equiEndpoint_diff_ge m s 1
-      have hmono12 : Finpartition.equiEndpoint m s 1 ≤
-          Finpartition.equiEndpoint m s (1 + 1) := by omega
-      have hsac12 := Nat.sub_add_cancel hmono12
-      omega
+    (hstrad : eqp_idx q r (((v + g) % m) + 1) =
+      eqp_idx q r ((v + g) % m) + 1)
+    (hv_lo : equiEndpoint m s j₀ ≤ v)
+    (hv_hi : v < equiEndpoint m s (j₀ + 1))
+    (hvg_lo : equiEndpoint m s jg ≤ (v + g) % m)
+    (hvg_hi : (v + g) % m < equiEndpoint m s (jg + 1))
+    (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
+    (jg + s - j₀) % s = 1 := by sorry
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║ NEW WORK: helpers + assembly that need real proofs             ║
+-- ╚══════════════════════════════════════════════════════════════════╝
 
 /-! ### Assembly lemma: coverage proof for `case_one_interval`
 
@@ -1059,30 +557,176 @@ versions. The proof will use helper lemmas from this file (Lemmas 4–10)
 via `have : eqp_idx q r p = idx p := rfl`-style bridges, or by directly
 unfolding `eqp_idx`/`eqp_off` since they are defeq to the local `let`s.
 
-**Exact goal at the sorry site** (after `lift_coloring_witness'` and
-`set v := n.val`):
-```
-⊢ ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val
-```
-where `c p = (idx (p % m) + off (p % m) % 2) % 3`, and `idx`/`off` are
-the local `let` bindings (defeq to `eqp_idx q r` / `eqp_off q r`).
+## Proof plan for `coverage_assembly`
 
-**Context available at the sorry site**:
-- `s g m : ℕ`, `hs : 0 < s`, `hs3 : 3 ∣ s`
-- `h_lb : (m + s - 1) / s < g`, `h_ub : g < 2 * (m / s)`
-- `q := m / s`, `r := m % s`, `bd := r * (q + 1)` (via `set`)
-- `hm_eq : m = s * q + r`, `hr_lt : r < s`, `hq_pos : 0 < q`
-- `hs_le : s ≤ m`, `hg1_lt_m : g + 1 < m`, `hs3_le : 3 ≤ s`
-- `idx`, `off`, `c` (via `let`), `v := n.val` (via `set`)
-- `hv_lt : v < m`, `k : Fin 3`
-- `j₀ := idx v`, `jg := idx ((v + g) % m)` (via `set`)
-- `hgap : (jg + s - j₀) % s = 1 ∨ ... = 2`
-- `hidx_lt : ∀ p, p < m → idx p < s`
-- `hj₀_lt : j₀ < s`, `hjg_lt : jg < s`
-- `hphase : j₀ % 3 ≠ jg % 3`
-- `hc_phase : ∀ p, c p = idx (p%m) % 3 ∨ c p = (idx (p%m)+1) % 3`
-- NOT available: interval membership (must derive from `idx_in_interval'`)
+**Goal**: Given color `k : Fin 3`, find `a ∈ {0, 1, g, g+1}` such that
+`(eqp_idx q r ((v+a) % m) + eqp_off q r ((v+a) % m) % 2) % 3 = k`.
+
+Write `F(p) = (eqp_idx q r (p%m) + eqp_off q r (p%m) % 2) % 3` for the
+coloring function. We have two "pairs":
+- Pair 1: positions `v` and `v+1` (offsets a=0, a=1)
+- Pair 2: positions `v+g` and `v+g+1` (offsets a=g, a=g+1)
+
+Each pair `{p, p+1}` lies in interval `j` or straddles `j/(j+1)`:
+- **Non-straddling** (eqp_idx(p+1) = eqp_idx(p)):
+  Consecutive offsets have different parities, so `{F(p), F(p+1)} = {j%3, (j+1)%3}`.
+  → `compl_parity_witness` gives the right offset d ∈ {0,1} for any target in this set.
+- **Straddling** (eqp_idx(p+1) = eqp_idx(p) + 1):
+  `eqp_off(p+1) = 0`, so `F(p+1) = (j+1) % 3`. And `F(p) = (j + off(p)%2) % 3`,
+  which is either `j%3` or `(j+1)%3` depending on parity.
+
+**Step 1** (`two_pairs_cover_split`): Since `j₀ % 3 ≠ jg % 3` and `3 | s`,
+every `k < 3` is in `{j₀%3, (j₀+1)%3}` or `{jg%3, (jg+1)%3}`.
+→ Case split: pair 1 covers k, or pair 2 covers k.
+
+**Step 2** (`eqp_idx_step`): For each pair, case split on straddle vs non-straddle.
+
+**Step 3** (Non-straddle cases): Use `compl_parity_witness` to find the witness.
+- Pair 1 non-straddle: witness d ∈ {0,1}, directly gives a ∈ {0,1} ⊂ {0,1,g,g+1}.
+- Pair 2 non-straddle: witness d ∈ {0,1}, maps to a ∈ {g, g+1} ⊂ {0,1,g,g+1}.
+  Need: `(v+(g+d)) % m = (vg+d) % m` (where `vg = (v+g)%m`).
+  For d=0: trivial (`(v+g)%m = vg`).
+  For d=1: `(v+g+1)%m = (vg+1)%m` by `Nat.add_mod`.
+
+**Step 4** (Straddle cases): When one pair straddles, use the OTHER pair.
+- Pair 1 straddles → `straddle1_gap2` → gap = 2 → `(jg+1)%3 = j₀%3`.
+  - If k = (j₀+1)%3: witness is a=1 directly. Need `F(v+1) = (j₀+1)%3`.
+    By `eqp_off_succ_new`, off(v+1) = 0, so `F(v+1) = (j₀+1+0)%3`.
+    Edge case: if v+1=m, then `(v+1)%m = 0`, `eqp_idx(0)=0`, `eqp_off(0)=0`,
+    and `(j₀+1)%3 = s%3 = 0` (since 3|s and j₀=s-1). Still works.
+  - If k = j₀%3: pair 2 must be non-straddling (else `straddle2_gap1` → gap=1,
+    contradicting gap=2). Use pair 2 with target k = j₀%3 = (jg+1)%3.
+- Pair 2 straddles → `straddle2_gap1` → gap = 1 → `j₀%3 = (jg+1)%3`.
+  Symmetric to above with roles swapped.
+
+## Helper lemmas for the proof
+
+The proof body is complex (4-way case split × sub-cases). To keep it manageable,
+we factor out these helpers:
+
+1. `non_straddle_witness`: If eqp_idx doesn't step at p, and k is in
+   {j%3, (j+1)%3}, produce d ∈ {0,1} with F(p+d) = k. Needs p+1 < m.
+
+2. `p_succ_lt_m`: If eqp_idx(p+1) = eqp_idx(p) (or = eqp_idx(p)+1 with
+   eqp_idx(p)+1 < s), then p+1 < m. Proof: if p+1=m then eqp_idx(m)=s,
+   but eqp_idx(p) < s.
+
+3. `straddle_boundary_color`: If eqp_idx(p+1) = j+1 (straddle), then
+   F(p+1) = (j+1)%3, handling both p+1 < m and p+1 = m edge cases.
+
+4. `vg_mod_shift`: `(v + (g + d)) % m = ((v+g)%m + d) % m` for d ∈ {0,1}.
+
+5. `gap2_jg_mod3`: If gap=2 and 3|s, then (jg+1)%3 = j₀%3.
+
+6. `gap1_j0_mod3`: If gap=1 and 3|s, then (j₀+1)%3 = jg%3.
 -/
+/-! #### Helper 1: p+1 < m when eqp_idx doesn't jump to s -/
+private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
+    (hq_pos : 0 < q) (hr_lt : r < s) (hs : 0 < s)
+    (hm_eq : m = s * q + r)
+    (hp : p < m) (hidx_lt : eqp_idx q r p < s) :
+    p + 1 < m ∨ eqp_idx q r (p + 1) = s := by
+  by_cases h : p + 1 < m
+  · exact Or.inl h
+  · have hpm : p + 1 = m := by omega
+    right
+    rw [hpm, hm_eq]
+    exact eqp_idx_m q r s hq_pos hr_lt hs
+
+/-! #### Helper 2: non-straddle witness
+
+If eqp_idx doesn't step at p, and target k is in {j%3, (j+1)%3},
+produce d ∈ {0,1} with the coloring formula at (p+d)%m equaling k. -/
+private lemma non_straddle_witness (q r p : ℕ)
+    (hq_pos : 0 < q)
+    (hp : p < m) (hp1 : p + 1 < m)
+    (hsame : eqp_idx q r (p + 1) = eqp_idx q r p)
+    (j : ℕ) (hj : j = eqp_idx q r p)
+    (t : ℕ) (ht : t < 3) (hpair : t = j % 3 ∨ t = (j + 1) % 3) :
+    ∃ d ∈ ({0, 1} : Finset ℕ),
+      (eqp_idx q r ((p + d) % m) +
+        eqp_off q r ((p + d) % m) % 2) % 3 = t := by
+  have hoff := eqp_off_succ_same q r p hq_pos hsame
+  rcases compl_parity_witness j (eqp_off q r p) t ht hpair with h | h
+  · exact ⟨0, by simp, by
+      simp only [Nat.add_zero, Nat.mod_eq_of_lt hp, ← hj]
+      exact h⟩
+  · exact ⟨1, by simp, by
+      rw [Nat.mod_eq_of_lt hp1, hsame, ← hj, hoff]
+      exact h⟩
+
+/-! #### Helper 3: straddle boundary color
+
+When eqp_idx steps at p, the coloring at p+1 gives (j+1)%3,
+handling the edge case p+1 = m (wraps to 0). -/
+private lemma straddle_boundary_color (q r s p : ℕ)
+    (hq_pos : 0 < q) (hr_lt : r < s) (hs : 0 < s)
+    (hs3 : 3 ∣ s)
+    (hm_eq : m = s * q + r)
+    (hp : p < m)
+    (hstep : eqp_idx q r (p + 1) = eqp_idx q r p + 1)
+    (j : ℕ) (hj : j = eqp_idx q r p) (hj_lt : j < s) :
+    (eqp_idx q r ((p + 1) % m) +
+      eqp_off q r ((p + 1) % m) % 2) % 3 = (j + 1) % 3 := by
+  by_cases h : p + 1 < m
+  · -- Normal case: p + 1 < m
+    rw [Nat.mod_eq_of_lt h]
+    have hoff := eqp_off_succ_new q r p hq_pos hstep
+    rw [hstep, ← hj, hoff]
+  · -- Wrap case: p + 1 = m
+    have hpm : p + 1 = m := by omega
+    rw [hpm, Nat.mod_self]
+    have hidx0 : eqp_idx q r 0 = 0 := by
+      simp [eqp_idx]
+    have hoff0 : eqp_off q r 0 = 0 := by
+      simp [eqp_off]
+    rw [hidx0, hoff0]
+    -- Need: 0 = (j + 1) % 3. Since eqp_idx(m) = s = j+1 and 3 | s.
+    rw [hpm] at hstep
+    have hm_idx : eqp_idx q r m = s := by
+      rw [hm_eq]; exact eqp_idx_m q r s hq_pos hr_lt hs
+    have hjs : j + 1 = s := by rw [hj]; omega
+    obtain ⟨d3, hd3⟩ := hs3; omega
+
+/-! #### Helper 4: modular shift for vg
+
+`(v + (g + d)) % m = ((v + g) % m + d) % m` -/
+private lemma vg_mod_shift (v g d : ℕ) (hm : 0 < m) :
+    (v + (g + d)) % m = ((v + g) % m + d) % m := by
+  have h1 := Nat.add_mod (v + g) d m
+  have h2 := Nat.add_mod ((v + g) % m) d m
+  rw [Nat.mod_mod_of_dvd _ (dvd_refl m)] at h2
+  rw [show v + (g + d) = (v + g) + d from by ring, h1, h2]
+
+/-! #### Helper 5: gap=2 implies (jg+1)%3 = j₀%3 -/
+private lemma gap2_jg_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hgap2 : (jg + s - j₀) % s = 2) :
+    (jg + 1) % 3 = j₀ % 3 := by
+  obtain ⟨d3, hd3⟩ := hs3
+  have hdiv := Nat.div_add_mod (jg + s - j₀) s
+  have : (jg + s - j₀) / s ≤ 1 := by
+    rw [Nat.div_le_iff_le_mul (by omega : 0 < s)]; omega
+  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
+  · rw [h] at hdiv; omega
+  · have : (jg + s - j₀) / s = 1 := by omega
+    rw [this] at hdiv; omega
+
+/-! #### Helper 6: gap=1 implies (j₀+1)%3 = jg%3 -/
+private lemma gap1_j0_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hgap1 : (jg + s - j₀) % s = 1) :
+    (j₀ + 1) % 3 = jg % 3 := by
+  obtain ⟨d3, hd3⟩ := hs3
+  have hdiv := Nat.div_add_mod (jg + s - j₀) s
+  have : (jg + s - j₀) / s ≤ 1 := by
+    rw [Nat.div_le_iff_le_mul (by omega : 0 < s)]; omega
+  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
+  · rw [h] at hdiv; omega
+  · have : (jg + s - j₀) / s = 1 := by omega
+    rw [this] at hdiv; omega
+
+/-! #### Main assembly -/
 open Finpartition in
 private lemma coverage_assembly (s g m q r : ℕ)
     (hs : 0 < s) (hs3 : 3 ∣ s) (hs3_le : 3 ≤ s) (hs_le : s ≤ m)
