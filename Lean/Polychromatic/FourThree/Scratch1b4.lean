@@ -41,16 +41,24 @@ banner).
 
 After `coverage_assembly` compiles without sorry:
 
-1. Move the 6 helper lemmas (`eqp_idx_succ_lt_m`, `non_straddle_witness`,
-   `straddle_boundary_color`, `vg_mod_shift`, `gap2_jg_mod3`,
-   `gap1_j0_mod3`) into Combi.lean, near the existing `eqp_*` lemmas.
-2. At Combi.lean:763 (the sorry in `case_one_interval`), apply
-   `coverage_assembly` by calling it with `rfl` for `hq`/`hr`/`hj₀_def`/
-   `hjg_def` and `idx_in_interval'` for the interval bounds.
-   The `case_one_interval_test` in the Verification section at the bottom
-   of this file demonstrates exactly how this works.
-3. Verify: `lake env lean Polychromatic/FourThree/Combi.lean`
-4. Delete this file.
+1. **Move to Combi.lean** (all 7 lemmas, near existing `eqp_*` lemmas):
+   - `vg_mod_shift` — pure arithmetic, no deps on other helpers
+   - `gap2_jg_mod3` — pure arithmetic, no deps
+   - `gap1_j0_mod3` — pure arithmetic, no deps
+   - `eqp_idx_succ_lt_m` — uses `eqp_idx_m` (already in Combi.lean)
+   - `non_straddle_witness` — uses `eqp_off_succ_same`, `compl_parity_witness`
+   - `straddle_boundary_color` — uses `eqp_off_succ_new`, `eqp_idx_m`
+   - `coverage_assembly` — uses all 6 above + `two_pairs_cover_split`,
+     `eqp_idx_step`, `straddle1_gap2`, `straddle2_gap1` (all in Combi.lean)
+2. **Do NOT move**: the stubs (already in Combi.lean) or the
+   Verification section (test-only code).
+3. At Combi.lean:763 (the sorry in `case_one_interval`), call
+   `coverage_assembly` with `rfl` for `hq`/`hr`/`hj₀_def`/`hjg_def` and
+   `idx_in_interval'` for the interval bounds.
+   The `case_one_interval_test` at the bottom of this file shows exactly
+   how to wire the arguments.
+4. Verify: `lake env lean Polychromatic/FourThree/Combi.lean`
+5. Delete this file.
 
 ## Do not touch
 
