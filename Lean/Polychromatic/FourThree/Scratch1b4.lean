@@ -604,29 +604,59 @@ The proof uses:
 - `idx_in_interval'` (from Combi.lean) for interval membership
 
 The `c` function is `(eqp_idx q r (p%m) + eqp_off q r (p%m) % 2) % 3`.
+
+**Integration plan**: This lemma is NOT meant to be applied directly at the
+sorry site via `exact coverage_assembly ...`. Instead, the *proof* of this
+lemma will be copied into `case_one_interval` at line 763, replacing the
+sorry. The sorry site already has `c`, `idx`, `off`, `j₀`, `jg` as local
+definitions that are definitionally equal to `eqp_idx`/`eqp_off`-based
+versions. The proof will use helper lemmas from this file (Lemmas 4–10)
+via `have : eqp_idx q r p = idx p := rfl`-style bridges, or by directly
+unfolding `eqp_idx`/`eqp_off` since they are defeq to the local `let`s.
+
+**Exact goal at the sorry site** (after `lift_coloring_witness'` and
+`set v := n.val`):
+```
+⊢ ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val
+```
+where `c p = (idx (p % m) + off (p % m) % 2) % 3`, and `idx`/`off` are
+the local `let` bindings (defeq to `eqp_idx q r` / `eqp_off q r`).
+
+**Context available at the sorry site**:
+- `s g m : ℕ`, `hs : 0 < s`, `hs3 : 3 ∣ s`
+- `h_lb : (m + s - 1) / s < g`, `h_ub : g < 2 * (m / s)`
+- `q := m / s`, `r := m % s`, `bd := r * (q + 1)` (via `set`)
+- `hm_eq : m = s * q + r`, `hr_lt : r < s`, `hq_pos : 0 < q`
+- `hs_le : s ≤ m`, `hg1_lt_m : g + 1 < m`, `hs3_le : 3 ≤ s`
+- `idx`, `off`, `c` (via `let`), `v := n.val` (via `set`)
+- `hv_lt : v < m`, `k : Fin 3`
+- `j₀ := idx v`, `jg := idx ((v + g) % m)` (via `set`)
+- `hgap : (jg + s - j₀) % s = 1 ∨ ... = 2`
+- `hidx_lt : ∀ p, p < m → idx p < s`
+- `hj₀_lt : j₀ < s`, `hjg_lt : jg < s`
+- `hphase : j₀ % 3 ≠ jg % 3`
+- `hc_phase : ∀ p, c p = idx (p%m) % 3 ∨ c p = (idx (p%m)+1) % 3`
+- NOT available: interval membership (must derive from `idx_in_interval'`)
 -/
 open Finpartition in
-private lemma coverage_assembly (s g m : ℕ)
+private lemma coverage_assembly (s g m q r : ℕ)
     (hs : 0 < s) (hs3 : 3 ∣ s) (hs3_le : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
     (hg1_lt_m : g + 1 < m)
-    (v : ℕ) (hv : v < m) (k : Fin 3) :
-    let q := m / s
-    let r := m % s
-    let bd := r * (q + 1)
-    let idx := fun p => eqp_idx q r p
-    let off := fun p => eqp_off q r p
-    let c := fun p => (idx (p % m) + off (p % m) % 2) % 3
-    let j₀ := idx v
-    let jg := idx ((v + g) % m)
-    j₀ % 3 ≠ jg % 3 →
-    ((jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) →
-    j₀ < s →
-    jg < s →
-    (∀ p, p < m → idx p < s) →
-    (∀ p, p < m →
-      equiEndpoint m s (idx p) ≤ p ∧
-      p < equiEndpoint m s (idx p + 1)) →
+    (hq : q = m / s) (hr : r = m % s)
+    (hq_pos : 0 < q) (hr_lt : r < s)
+    (hm_eq : m = s * q + r)
+    (v : ℕ) (hv : v < m) (k : Fin 3)
+    (j₀ : ℕ) (hj₀_def : j₀ = eqp_idx q r v)
+    (jg : ℕ) (hjg_def : jg = eqp_idx q r ((v + g) % m))
+    (hphase : j₀ % 3 ≠ jg % 3)
+    (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2)
+    (hj₀_lt : j₀ < s) (hjg_lt : jg < s)
+    (hv_lo : equiEndpoint m s j₀ ≤ v)
+    (hv_hi : v < equiEndpoint m s (j₀ + 1))
+    (hvg_lo : equiEndpoint m s jg ≤ (v + g) % m)
+    (hvg_hi : (v + g) % m < equiEndpoint m s (jg + 1)) :
     ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ),
-      c (v + a) = k.val := by
+      (eqp_idx q r ((v + a) % m) +
+        eqp_off q r ((v + a) % m) % 2) % 3 = k.val := by
   sorry
