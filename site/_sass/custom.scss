@@ -3,27 +3,46 @@
 // differences specific to the Polychromatic site.
 
 // ---------------------------------------------------------------------------
-// Layout: center the wrapper and widen sidebar (170 -> 220px), narrower
-// content (650 -> 600px).  The theme sets .wrapper { width: 960px } with no
-// horizontal centering, so we add margin: 0 auto.
+// Layout: center the wrapper (theme sets width:960px with no margin:auto).
+// The fixed-position header/footer need explicit left:0 so their black
+// background still reaches the viewport edge, with extra left padding to
+// push their text content in line with the now-centered wrapper.
 // ---------------------------------------------------------------------------
 
 .wrapper { margin: 0 auto; }
 
 @media screen and (min-width: 961px) {
-  header { width: 220px; }
-  footer { width: 220px; }
+  header {
+    width: 220px;
+    left: 0;
+    padding-left: calc(50px + (100vw - 960px) / 2);
+  }
+  footer {
+    width: 220px;
+    left: 0;
+    padding-left: calc(50px + (100vw - 960px) / 2);
+  }
 }
 
 // ---------------------------------------------------------------------------
 // Content area: the theme styles <section>, but the layout uses
-// <div class="content">, so we provide our own rules here.
+// <div class="content">.  Verso also generates <section> elements inside
+// the content — neutralise the theme's section rules so that headings
+// outside <section> (e.g. the page title h1) align with the body text
+// inside <section>.
 // ---------------------------------------------------------------------------
 
 .content {
   width: 600px;
   float: right;
   padding-bottom: 50px;
+}
+
+.content section {
+  width: auto;
+  float: none;
+  padding: 0;
+  margin: 0;
 }
 
 @media print, screen and (max-width: 960px) {
