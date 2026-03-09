@@ -421,10 +421,10 @@ rcases two_pairs_cover_split j₀ jg hphase k.val k.isLt with hk1 | hk2
 
 ## Execution order
 
-1. Lemmas 6, 7 (easy arithmetic, no deps)
+1. Lemmas 9, 10 (straddle → gap, hardest — surface statement bugs early)
 2. mod_step, mod_zero_step helpers + Lemmas 4, 5
 3. Lemma 8 (idx of last element)
-4. Lemmas 9, 10 (straddle → gap, hardest)
+4. Lemmas 6, 7 (easy arithmetic, no deps)
 5. Bridge layer
 6. Assembly at Combi.lean:763
 -/
