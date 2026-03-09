@@ -7,12 +7,13 @@ import Mathlib.Algebra.Ring.AddAut
 
 This file contains the core combinatorial argument for the polychromatic coloring theorem
 for 4-element sets. Specifically, it proves that every 4-element subset of ℤ admits a
-3-polychromatic coloring.
+3-polychromatic coloring under the normalization assumptions described below.
 
 Following the reduction in `Main.lean`, we assume the set $S = \{0, a, b, c\}$ is normalized
-such that $0 < a < b < c$ and $\gcd(a, b, c) = 1$. The proof works in the cyclic group
-$\mathbb{Z}_m$ where $m = c - a + b$. As shown in §4 of the paper, the polychromaticity
-of $S$ in $\mathbb{Z}$ follows from its polychromaticity in $\mathbb{Z}_m$.
+such that $0 < a < b < c$, $a + b \le c$, $c \ge 289$, and $\gcd(a, b, c) = 1$.
+The proof works in the cyclic group $\mathbb{Z}_m$ where $m = c - a + b$.
+As shown in §4 of the paper, the polychromaticity of $S$ in $\mathbb{Z}$ follows from
+its polychromaticity in $\mathbb{Z}_m$.
 
 The analysis splits into two main cases based on the subgroup structure of $\mathbb{Z}_m$
 relative to the differences in $S$:
@@ -29,7 +30,8 @@ relative to the differences in $S$:
 
 - **Case 2: Multiple Cycles (§4.2)**
   This case occurs when both $d_1 = \gcd(b, m) > 1$ and $d_2 = \gcd(b-a, m) > 1$.
-  The group $\mathbb{Z}_m$ is viewed via the isomorphism $\mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \cong \mathbb{Z}_m$
+  The group $\mathbb{Z}_m$ is viewed via the isomorphism
+  $\mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \cong \mathbb{Z}_m$
   (where $e_1 = m/d_1$). The set $S$ then interacts with two adjacent cycles in this
   decomposition. Colorings are constructed cycle-by-cycle:
   - **(2a) Even cycle length ($e_1$ even):** Parity-based alternation.
@@ -1275,8 +1277,10 @@ to $(i, j) \to (i+1, j')$. Each translate of $S$ thus touches two adjacent cycle
 consecutive positions within each cycle.
 
 The proof splits into subcases based on the parity of $d_1$ and $e_1$:
-- **(2a) $e_1$ even:** Each cycle uses two alternating colors; adjacent cycles skip different colors.
-- **(2b) $d_1$ even, $e_1$ odd:** Similar but with special "degenerate" handling for odd lengths.
+- **(2a) $e_1$ even:**
+  Each cycle uses two alternating colors; adjacent cycles skip different colors.
+- **(2b) $d_1$ even, $e_1$ odd:**
+  Similar but with special "degenerate" handling for odd lengths.
 - **(2c) Both odd, $e_1 \le 17$:** Shifted periodic colorings.
 - **(2d) Both odd, $e_1 \ge 19$:** Rotating patterns based on a 3-interval partition.
 -/
