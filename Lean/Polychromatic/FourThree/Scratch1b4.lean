@@ -3,98 +3,119 @@ import Polychromatic.PolychromNumber
 import Polychromatic.ForMathlib.Misc
 
 /-!
-# Scratch file 4: coverage proof for `case_one_interval` (Combi.lean:687–763)
+# Coverage proof for `case_one_interval` (Combi.lean:687–763)
 
-## What is this file?
+## Quick Start (for a fresh session)
 
-This file develops the proof that fills the `sorry` at `Combi.lean:763` in
-`case_one_interval`. That sorry is the final missing piece of Case 1b of the
-main theorem. Once all lemmas here are proven and integrated, Case 1b is done.
+**Goal**: Fill all `sorry`s in this file, then integrate into `Combi.lean:763`.
 
-## Where does `case_one_interval` sit in the overall proof?
+**Recommended order** (easiest → hardest):
 
-The main theorem (`Main.lean:final_result`) proves every 4-element set of
-integers admits a 3-polychromatic colouring. The proof reduces to checking
-ordered sets `{0, 1, g, g+1}` in `ZMod m`, then splits:
+1. `compl_parity_witness` (Lemma 6) — pure `omega` after `Nat.mod_two_eq_zero_or_one`
+2. `two_pairs_cover_split` (Lemma 7) — `omega` after `Nat.mod_lt` on both `j₁`, `j₂`
+3. `eqp_off_succ_same` (Lemma 4) — needs `mod_step` helper (see proof sketch below)
+4. `eqp_off_succ_new` (Lemma 5) — needs `mod_zero_step` helper (see sketch below)
+5. `eqp_idx_last` (Lemma 8) — division identity via `Nat.add_mul_div_right`
+6. `straddle1_gap2` (Lemma 9) — hardest; case split on `j₀ + 1 < s` vs `= s`,
+   then wrap/no-wrap subcases using `equiEndpoint` monotonicity
+7. `straddle2_gap1` (Lemma 10) — symmetric to 9; circular arc length ≥ 2q
+8. `coverage_assembly` — combine all above; see assembly pseudocode in Step 7
 
-- **c < 289** (computational, done): verified by `allC_289` in `Compute.lean`
-- **c ≥ 289** (combinatorial): further splits into cases based on structure
-  - **Case 1**: single-cycle regime — `g` lies in a "middle" range relative
-    to `m/s` for some `s` with `3 ∣ s`
-    - **Case 1a** (done): handled elsewhere
-    - **Case 1b** (`case_one_interval`): the equi-partition coloring argument
-      → **THIS FILE**
-  - **Case 2** (done): different structure
+**Verification**: After `lake env lean Polychromatic/FourThree/Scratch1b4.lean`
+passes with only `sorry` warnings, check `lake env lean Polychromatic/FourThree/Combi.lean`
+to confirm integration works.
 
-## What does `case_one_interval` prove?
+**Build commands** (from `Lean/` directory):
+```
+lake exe cache get                                    # first time only
+lake env lean Polychromatic/FourThree/Scratch1b4.lean # check this file
+lake env lean Polychromatic/FourThree/Combi.lean      # check integration
+```
 
-Given `m, s, g` with `3 ∣ s`, `(m+s-1)/s < g < 2*(m/s)`, it constructs a
-3-colouring of `ZMod m` that is `{0, 1, g, g+1}`-polychromatic. The colouring
-uses an equi-partition of `[0, m)` into `s` intervals (lengths `q` or `q+1`
-where `q = m/s`), assigning colour `(idx(p) + off(p) % 2) % 3`.
+## Context: where this fits in the main theorem
 
-Everything up to line 762 is already proven. The sorry at line 763 requires:
-  `∃ a ∈ {0, 1, g, g+1}, c(v + a) = k.val`
-i.e., for any position `v` and target colour `k`, one of the four translates
-hits colour `k`.
+The main theorem (`Main.lean:final_result`) proves every 4-element integer set
+admits a 3-polychromatic colouring. After reductions, it splits:
 
-## Integration plan
+```
+final_result
+ ├─ c < 289: computational (done, Compute.lean)
+ └─ c ≥ 289: combinatorial
+     ├─ Case 1: single-cycle regime (∃ s with 3∣s, g in middle range)
+     │   ├─ Case 1a: done
+     │   └─ Case 1b: case_one_interval ← THIS FILE fills its sorry
+     └─ Case 2: done
+```
 
-**Option A (verified, recommended)**: Apply `coverage_assembly` directly at the
-sorry site via `exact coverage_assembly ...`. The verification section at the
-bottom of this file confirms this works: all hypotheses are satisfiable (`rfl`
-for definitional equalities, `idx_in_interval'` for interval bounds), and the
-conclusion is definitionally equal to the goal (`exact hgoal` works, no
-`convert` needed). The helper lemmas (Lemmas 4–10) must be moved to Combi.lean
-or made non-private.
+`case_one_interval` (Combi.lean:687) constructs a 3-colouring of `ZMod m`
+that is `{0, 1, g, g+1}`-polychromatic, given `3 ∣ s` and
+`⌈m/s⌉ < g < 2⌊m/s⌋`. The colouring partitions `[0, m)` into `s`
+near-equal intervals and assigns colour `(idx(p) + off(p) % 2) % 3`.
 
-**Option B**: Copy the *proof* of `coverage_assembly` inline at the sorry site,
-using `have : eqp_idx q r p = idx p := rfl` bridges.
+Lines 687–762 of Combi.lean are fully proven. The sorry at line 763 needs:
+```
+∃ a ∈ {0, 1, g, g+1}, c(v + a) = k.val
+```
+for arbitrary position `v` and target colour `k : Fin 3`.
 
-## Current status
+## Integration plan (verified)
 
-| # | Lemma | Status | Purpose |
-|---|-------|--------|---------|
-| 1 | `eqp_idx_zero` | **proven** | `idx(0) = 0` |
-| 2 | `eqp_off_zero` | **proven** | `off(0) = 0` |
-| 3 | `eqp_idx_step` | **proven** | `idx(p+1) ∈ {idx(p), idx(p)+1}` |
-| 4 | `eqp_off_succ_same` | **sorry** | same idx → `off(p+1) = off(p)+1` |
-| 5 | `eqp_off_succ_new` | **sorry** | different idx → `off(p+1) = 0` |
-| 6 | `compl_parity_witness` | **sorry** | parity coverage in a pair |
-| 7 | `two_pairs_cover_split` | **sorry** | two distinct-phase pairs cover Fin 3 |
-| 8 | `eqp_idx_last` | **sorry** | `idx(m-1) = s-1` |
-| 9 | `straddle1_gap2` | **sorry** | pair 1 straddles → gap = 2 |
-| 10 | `straddle2_gap1` | **sorry** | pair 2 straddles → gap = 1 |
-| — | `coverage_assembly` | **sorry** | main assembly combining 4–10 |
-| — | `case_one_interval_test` | **proven** (modulo sorrys) | verifies assembly fills the sorry |
+Apply `coverage_assembly` at Combi.lean:763 via `exact coverage_assembly ...`.
+This is verified by `case_one_interval_test` at the bottom of this file:
+- All hypotheses close with `rfl` (definitional equality) or `idx_in_interval'`
+- The conclusion is definitionally equal to the goal (`exact hgoal`, no `convert`)
+- Helper lemmas must be moved to Combi.lean (currently `private` in this file)
 
-**Recommended proving order**: 6, 7 (easy omega), then 4, 5 (need `mod_step`
-helper), then 8 (division identity), then 9, 10 (hardest, case analysis on
-wrapping), then assembly.
+Alternative: copy the proof inline at the sorry site with `rfl` bridges.
+
+## Sorry status
+
+| # | Name | Deps | Difficulty | Strategy |
+|---|------|------|------------|----------|
+| 4 | `eqp_off_succ_same` | 3 | medium | `mod_step` helper + 4-way `split_ifs` |
+| 5 | `eqp_off_succ_new` | 3 | medium | `mod_zero_step` helper + 4-way `split_ifs` |
+| 6 | `compl_parity_witness` | — | easy | `omega` after `Nat.mod_two_eq_zero_or_one` |
+| 7 | `two_pairs_cover_split` | — | easy | `omega` after `Nat.mod_lt` |
+| 8 | `eqp_idx_last` | — | medium | `Nat.add_mul_div_right` or `Nat.div_eq_of_lt_le` |
+| 9 | `straddle1_gap2` | — | hard | case split j₀+1<s vs =s, wrap/no-wrap |
+| 10 | `straddle2_gap1` | — | hard | circular arc ≥ 2q contradicts g < 2q |
+| — | `coverage_assembly` | 4–10 | medium | case split + witness construction |
+
+Already proven: `eqp_idx_zero` (1), `eqp_off_zero` (2), `eqp_idx_step` (3),
+`div_step`, `case_one_interval_test` (integration check).
 
 ## Key definitions
 
-- `q = m / s`, `r = m % s`, so `m = s * q + r` and `r < s`
-- `bd = r * (q + 1)` (boundary between long and short intervals)
-- `idx(p) = if p < bd then p / (q + 1) else r + (p - bd) / q`
-  (= `eqp_idx q r p`, definitionally equal to local `let idx` in Combi.lean)
-- `off(p) = if p < bd then p % (q + 1) else (p - bd) % q`
-  (= `eqp_off q r p`, same deal)
-- `c(p) = (idx(p % m) + off(p % m) % 2) % 3`
-- `equiEndpoint m s i = q * i + min(r, i)` (from `Finpartition`)
-- Interval `j` is `[equiEndpoint(j), equiEndpoint(j+1))`
-- `equiEndpoint(0) = 0`, `equiEndpoint(s) = m` (by `equiEndpoint_hi`)
-- Interval length: `equiEndpoint(j+1) - equiEndpoint(j) = if j < r then q+1 else q`
-  (by `card_of_mem_equipartitionToIco_parts_aux`)
-- Hence every interval has length ≥ q and ≤ q+1 ≤ ⌈m/s⌉
+- `q = m / s`, `r = m % s` → `m = s * q + r`, `r < s`
+- `bd = r * (q + 1)` — boundary between long (q+1) and short (q) intervals
+- `eqp_idx q r p` = interval index of position `p`:
+  `if p < bd then p / (q+1) else r + (p - bd) / q`
+  (defeq to `let idx` in Combi.lean when `q = m/s`, `r = m%s`)
+- `eqp_off q r p` = offset within interval:
+  `if p < bd then p % (q+1) else (p - bd) % q`
+- `c(p) = (eqp_idx q r (p%m) + eqp_off q r (p%m) % 2) % 3`
+- `equiEndpoint m s j = q*j + min(r, j)` — start of interval `j`
+  - `equiEndpoint(0) = 0`, `equiEndpoint(s) = m`
+  - interval `j` = `[equiEndpoint(j), equiEndpoint(j+1))`
+  - length = `if j < r then q+1 else q`
 
-## Goal at the sorry site
+## Hypotheses at the sorry site (Combi.lean:763)
 
-We need: `∃ a ∈ {0, 1, g, g+1}, c(v + a) = k.val`, where `k : Fin 3`.
-
-**Known context**: `j₀ = idx(v)`, `jg = idx((v + g) % m)`,
-`j₀ % 3 ≠ jg % 3`, `gap := (jg + s - j₀) % s ∈ {1, 2}`,
-`3 ∣ s`, `g > ⌈m/s⌉ = (m + s - 1) / s`, `g < 2 * (m / s) = 2q`.
+```
+s g m : ℕ,  hs : 0 < s,  hs3 : 3 ∣ s
+h_lb : (m + s - 1) / s < g,  h_ub : g < 2 * (m / s)
+q := m / s,  r := m % s,  bd := r * (q + 1)
+hm_eq : m = s * q + r,  hr_lt : r < s,  hq_pos : 0 < q
+hs_le : s ≤ m,  hg1_lt_m : g + 1 < m,  hs3_le : 3 ≤ s
+v : ℕ (= n.val),  hv_lt : v < m,  k : Fin 3
+j₀ := idx v,  jg := idx ((v + g) % m)   -- via set
+hgap : (jg + s - j₀) % s = 1 ∨ ... = 2
+hidx_lt : ∀ p, p < m → idx p < s
+hj₀_lt : j₀ < s,  hjg_lt : jg < s
+hphase : j₀ % 3 ≠ jg % 3
+hc_phase : ∀ p, c p = idx(p%m) % 3 ∨ c p = (idx(p%m)+1) % 3
+-- NOT available (must derive): interval membership for v, (v+g)%m
+```
 
 ## General arithmetic helpers
 
