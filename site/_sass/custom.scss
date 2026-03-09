@@ -11,6 +11,7 @@
 
 @media screen and (min-width: 961px) {
   header, footer {
+    width: 220px;
     left: calc((100vw - 960px) / 2);
   }
 }
