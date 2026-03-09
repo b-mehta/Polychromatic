@@ -144,6 +144,11 @@ When golfing Lean proofs, the following approaches work best (ordered by impact)
 7. **Use the LSP, not `lake env lean`** — `lean_diagnostic_messages` is much faster for verifying individual edits than rebuilding the whole file.
 8. **Use `wlog` for symmetric cases** — when two branches of a case split have identical proof structure with swapped variables, `wlog h : P with H` followed by `exact (H ...).symm` eliminates one branch entirely. Applied in `case2d_orbitMap_j_eq`.
 
+## Proof Development Process
+
+- **Write a detailed informal proof before formalizing.** For any non-trivial goal (more than a single tactic), write out in comments or text why the goal is true, what the key steps are, and what lemmas you expect to use. This prevents wasted cycles trying tactics blindly.
+- **Fix errors iteratively, one at a time.** After each edit, check diagnostics before moving to the next error. Do not rewrite an entire file at once — changes interact in unexpected ways and make debugging harder.
+
 ## Commit Conventions
 
 - Do not include Claude session URLs in commit messages
