@@ -587,3 +587,46 @@ private lemma straddle2_gap1 (s g m : ℕ)
       (jg + s - j₀) % s = 2) :
     (jg + s - j₀) % s = 1 := by
   sorry
+
+/-! ### Assembly lemma: coverage proof for `case_one_interval`
+
+This is the main goal at Combi.lean:763. Given the equi-partition setup
+(q, r, bd, idx, off, c) and the established facts (hphase, hgap, hidx_lt,
+hc_phase), we produce a witness `a ∈ {0, 1, g, g+1}` with `c(v+a) = k`.
+
+The proof uses:
+- `two_pairs_cover_split` (Lemma 7) to split into pair 1 or pair 2
+- `compl_parity_witness` (Lemma 6) for non-straddling pairs
+- `eqp_off_succ_same` (Lemma 4) / `eqp_off_succ_new` (Lemma 5) for
+  offset analysis at straddle boundaries
+- `straddle1_gap2` (Lemma 9) / `straddle2_gap1` (Lemma 10) for the
+  at-most-one-straddle argument
+- `idx_in_interval'` (from Combi.lean) for interval membership
+
+The `c` function is `(eqp_idx q r (p%m) + eqp_off q r (p%m) % 2) % 3`.
+-/
+open Finpartition in
+private lemma coverage_assembly (s g m : ℕ)
+    (hs : 0 < s) (hs3 : 3 ∣ s) (hs3_le : 3 ≤ s) (hs_le : s ≤ m)
+    (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
+    (hg1_lt_m : g + 1 < m)
+    (v : ℕ) (hv : v < m) (k : Fin 3) :
+    let q := m / s
+    let r := m % s
+    let bd := r * (q + 1)
+    let idx := fun p => eqp_idx q r p
+    let off := fun p => eqp_off q r p
+    let c := fun p => (idx (p % m) + off (p % m) % 2) % 3
+    let j₀ := idx v
+    let jg := idx ((v + g) % m)
+    j₀ % 3 ≠ jg % 3 →
+    ((jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) →
+    j₀ < s →
+    jg < s →
+    (∀ p, p < m → idx p < s) →
+    (∀ p, p < m →
+      equiEndpoint m s (idx p) ≤ p ∧
+      p < equiEndpoint m s (idx p + 1)) →
+    ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ),
+      c (v + a) = k.val := by
+  sorry
