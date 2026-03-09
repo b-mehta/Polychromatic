@@ -5,134 +5,304 @@ import Polychromatic.ForMathlib.Misc
 /-!
 # Scratch file 4: coverage proof helpers for case_one_interval
 
-## Detailed Informal Proof
+## Definitions
 
-We need: ∃ a ∈ {0, 1, g, g+1}, c(v+a) = k.val, where k : Fin 3.
+- `q = m / s`, `r = m % s`, so `m = s * q + r` and `r < s`
+- `bd = r * (q + 1)` (boundary between long and short intervals)
+- `idx(p) = if p < bd then p / (q + 1) else r + (p - bd) / q`
+- `off(p) = if p < bd then p % (q + 1) else (p - bd) % q`
+- `c(p) = (idx(p % m) + off(p % m) % 2) % 3`
+- `equiEndpoint m s i = m / s * i + min(m % s, i) = q * i + min(r, i)`
+- Interval `j` is `[equiEndpoint(j), equiEndpoint(j+1))`
+- `equiEndpoint(0) = 0`, `equiEndpoint(s) = m` (by `equiEndpoint_hi`)
+- Interval length: `equiEndpoint(j+1) - equiEndpoint(j) = if j < r then q+1 else q`
+  (by `card_of_mem_equipartitionToIco_parts_aux`)
+- Hence every interval has length ≥ q and ≤ q+1 ≤ ⌈m/s⌉
 
-**Definitions**:
-- q = m/s, r = m%s, bd = r*(q+1), m = s*q + r
-- idx(p) = if p < bd then p/(q+1) else r + (p-bd)/q
-- off(p) = if p < bd then p%(q+1) else (p-bd)%q
-- c(p) = (idx(p%m) + off(p%m)%2) % 3
+## Goal
 
-**Known**: j₀ = idx(v), jg = idx((v+g)%m), j₀%3 ≠ jg%3, gap ∈ {1,2}.
+We need: `∃ a ∈ {0, 1, g, g+1}, c(v + a) = k.val`, where `k : Fin 3`.
 
-**Step 1** (Lemma 7): Since j₁%3 ≠ j₂%3 and k < 3, the set
-{j₁%3, (j₁+1)%3, j₂%3, (j₂+1)%3} covers {0,1,2}. Proof: exhaust
-j₁%3 ∈ {0,1,2}, j₂%3 ∈ {0,1,2}\{j₁%3}, k ∈ {0,1,2}, check each.
-So k is in {j₁%3,(j₁+1)%3} or {j₂%3,(j₂+1)%3}.
+**Known context**: `j₀ = idx(v)`, `jg = idx((v + g) % m)`,
+`j₀ % 3 ≠ jg % 3`, `gap := (jg + s - j₀) % s ∈ {1, 2}`,
+`3 ∣ s`, `g > ⌈m/s⌉ = (m + s - 1) / s`, `g < 2 * (m / s) = 2q`.
 
-**Step 2** (Lemmas 3,4,5): For consecutive positions p, p+1:
-- idx(p+1) = idx(p) or idx(p)+1, because in both branches of
-  the if-then-else, the quotient a/b and (a+1)/b differ by 0 or 1
-  (a general fact about ℕ division). The cross-branch case
-  (p<bd, p+1≥bd) means p=bd-1, idx(p)=(bd-1)/(q+1)=r-1,
-  idx(p+1)=r+0=r=idx(p)+1.
-- If idx(p+1)=idx(p) (non-straddling): off(p+1)=off(p)+1. Proof:
-  same branch, same quotient. From a/b=(a+1)/b we get
-  b*(a/b)+a%b=a and b*(a/b)+(a+1)%b=a+1, so (a+1)%b=a%b+1.
-- If idx(p+1)≠idx(p) (straddling): off(p+1)=0. Proof: new quotient.
-  From (a+1)/b=a/b+1 we get b*(a/b+1)+(a+1)%b=a+1 and
-  b*(a/b)+a%b=a, so b+a%b=a%b+1+(a+1)%b, so (a+1)%b=b-1-a%b+a%b+1
-  ...actually simpler: (a+1)%b < b and b*(a/b+1) ≤ a+1, with
-  b*(a/b+1)+(a+1)%b = a+1 and b*(a/b)+b ≤ a+1 giving (a+1)%b=a+1-b*(a/b+1).
-  From a/b=a%b=... just use omega after rewriting.
+## General arithmetic helpers
 
-**Step 3** (Lemma 6): For a non-straddling pair in interval j:
-c(p)=(j+off(p)%2)%3, c(p+1)=(j+(off(p)+1)%2)%3.
-Since off(p)%2 ∈ {0,1}, (off(p)+1)%2 = 1-off(p)%2.
-So {c(p),c(p+1)} = {(j+0)%3, (j+1)%3} = {j%3, (j+1)%3}.
-For any target t ∈ {j%3,(j+1)%3}: if off(p)%2=0 then
-c(p)=j%3 and c(p+1)=(j+1)%3; if off(p)%2=1 then
-c(p)=(j+1)%3 and c(p+1)=j%3. Either way t is achieved.
+**div_step** (proven): For `b > 0`: `(a+1)/b = a/b ∨ (a+1)/b = a/b+1`.
+Proof: `a/b ≤ (a+1)/b` (monotonicity) and `(a+1)/b ≤ a/b + 1`
+(since `a + 1 ≤ b*(a/b+1)` using `Nat.div_add_mod`).
 
-**Step 4** (Lemma 8): idx(m-1) = s-1.
-m-1 = s*q+r-1. Since s*q ≥ s ≥ 3 > 0, m-1 ≥ r*(q+1)-1 ≥ 0.
-Is m-1 < bd? bd = r*(q+1). m-1 = s*q+r-1. For m-1 < bd:
-s*q+r-1 < r*(q+1) = r*q+r, so (s-r)*q < 1. Since q≥1 and
-s>r, (s-r)*q ≥ 1. Contradiction. So m-1 ≥ bd.
-idx(m-1) = r + (m-1-bd)/q = r + (s*q+r-1-r*q-r)/q
-         = r + ((s-r)*q-1)/q.
-(s-r)*q-1 = (s-r-1)*q + (q-1). So ((s-r)*q-1)/q = s-r-1.
-idx(m-1) = r + s-r-1 = s-1. ✓
+**mod_step** (needed for Lemma 4): If `b > 0` and `a/b = (a+1)/b`,
+then `(a+1) % b = a % b + 1`.
+Proof: From `Nat.div_add_mod`: `b*(a/b) + a%b = a` and
+`b*((a+1)/b) + (a+1)%b = a+1`. Since the quotients are equal,
+the `b*(·)` terms cancel: `(a+1)%b - a%b = 1`, i.e.,
+`(a+1) % b = a % b + 1`. (In ℕ, `(a+1)%b ≥ a%b` follows from
+the equation and `(a+1)%b ≥ 0`.)
 
-**Step 5** (Lemma 9): Pair 1 straddle → gap = 2.
-Hypothesis: equiEndpoint(j₀+1) ≤ v+1 (v is last in interval j₀).
-Combined with v < equiEndpoint(j₀+1), we get v+1 = equiEndpoint(j₀+1).
+**mod_zero_step** (needed for Lemma 5): If `b > 0` and
+`(a+1)/b = a/b + 1`, then `(a+1) % b = 0`.
+Proof: From `Nat.div_add_mod`: `b*(a/b) + a%b = a` and
+`b*(a/b+1) + (a+1)%b = a+1`. Expanding: `b*a/b + b + (a+1)%b
+= b*a/b + a%b + 1`. So `b + (a+1)%b = a%b + 1`. Since
+`a%b < b` (Nat.mod_lt), we have `a%b + 1 ≤ b`. Since
+`(a+1)%b ≥ 0`, we need `b ≤ a%b + 1 ≤ b`, forcing
+`a%b = b - 1` and `(a+1)%b = 0`.
 
-Key fact: g > ceil(m/s) ≥ equiEndpoint(j₀+2) - equiEndpoint(j₀+1).
-Proof: equiEndpoint(j+1) - equiEndpoint(j) = q + (if j < r then 1 else 0)
-     ≤ q + 1 ≤ ceil(m/s) = (m+s-1)/s. And g > (m+s-1)/s.
+## Step 1 — Lemma 7: two pairs with different phases cover all 3
 
-So v+g = equiEndpoint(j₀+1)-1+g ≥ equiEndpoint(j₀+1)+ceil(m/s)-1
-       ≥ equiEndpoint(j₀+2)-1+1-1 = equiEndpoint(j₀+2)-1.
-Actually more precisely: g > ilen(j₀+1), so g ≥ ilen(j₀+1)+1,
-v+g ≥ equiEndpoint(j₀+1)+ilen(j₀+1) = equiEndpoint(j₀+2).
+For `j₁ % 3 ≠ j₂ % 3` and `k < 3`: `k ∈ {j₁%3, (j₁+1)%3}` or
+`k ∈ {j₂%3, (j₂+1)%3}`.
 
-Now assume for contradiction gap = 1, i.e., jg = (j₀+1)%s.
-Then (v+g)%m is in interval (j₀+1)%s.
+Proof: The pair `{j%3, (j+1)%3}` covers exactly 2 of {0,1,2}.
+Two such pairs with *different* base residues cover all 3.
+Exhaust `j₁%3 ∈ {0,1,2}`, `j₂%3 ∈ {0,1,2}\{j₁%3}`,
+`k ∈ {0,1,2}`: all 18 cases check out. (omega/decide in Lean.)
 
-Case A: v+g < m (non-wrapping).
-  (v+g)%m = v+g ≥ equiEndpoint(j₀+2).
-  But interval (j₀+1)%s = j₀+1 (since j₀+1 ≤ s-1 or j₀+1=s→
-  (j₀+1)%s=0) ends at equiEndpoint(j₀+2) (if j₀+1<s) or
-  equiEndpoint(1) (if j₀+1=s).
-  If j₀+1 < s: v+g ≥ equiEndpoint(j₀+2) means v+g is NOT in
-  interval j₀+1 (which is [equiEndpoint(j₀+1), equiEndpoint(j₀+2))).
-  Contradiction.
-  If j₀+1 = s (j₀=s-1): equiEndpoint(s) = m but v+g < m,
-  so v+g < equiEndpoint(s) = m. And v+g ≥ equiEndpoint(s) = m.
-  Contradiction.
+## Step 2 — Lemmas 3,4,5: consecutive position analysis
 
-Case B: v+g ≥ m (wrapping). (v+g)%m = v+g-m.
-  Sub-case j₀ < s-1: (j₀+1)%s = j₀+1. For gap=1, (v+g)%m
-  must be in interval j₀+1: equiEndpoint(j₀+1) ≤ v+g-m.
-  But v < equiEndpoint(j₀+1) and g < 2q, so
-  v+g-m < equiEndpoint(j₀+1)+2q-m ≤ (m-q)+2q-m = q.
-  And equiEndpoint(j₀+1) ≥ equiEndpoint(1) ≥ q.
-  So v+g-m < q ≤ equiEndpoint(j₀+1). Contradiction.
+**Lemma 3** (eqp_idx_step, proven): `idx(p+1) = idx(p)` or `idx(p)+1`.
+Four cases from `split_ifs` on `p+1 < bd` and `p < bd`:
+1. Both `< bd`: apply `div_step` with divisor `q+1`. ✓
+2. `p+1 < bd`, `p ≥ bd`: impossible (`omega`). ✓
+3. `p+1 ≥ bd`, `p < bd` (cross-branch): `p+1 = bd = r*(q+1)`.
+   So `(p+1)/(q+1) = r` and `p/(q+1) = r-1` (since `p = r*(q+1)-1
+   = (r-1)*(q+1) + q`). And `idx(p+1) = r + 0 = r = (r-1)+1
+   = idx(p)+1`. ✓
+4. Both `≥ bd`: rewrite `p+1-bd = (p-bd)+1`, apply `div_step`
+   with divisor `q`. ✓
 
-  Sub-case j₀ = s-1: (j₀+1)%s = 0. For gap=1, jg=0.
-  v = m-1 (last element, since equiEndpoint(s)=m and
-  equiEndpoint(s) ≤ v+1 ≤ m, and v < m). (v+g)%m = g-1.
-  idx(g-1) must be 0. But g > ceil(m/s). If r>0: ceil=q+1,
-  g ≥ q+2, g-1 ≥ q+1 ≥ equiEndpoint(1). If r=0: ceil=q,
-  g ≥ q+1, g-1 ≥ q = equiEndpoint(1).
-  In both cases g-1 ≥ equiEndpoint(1), so g-1 is NOT in
-  interval 0 (which is [0, equiEndpoint(1))). So idx(g-1) ≠ 0.
-  Contradiction.
+**Lemma 4** (eqp_off_succ_same): If `idx(p+1) = idx(p)`, then
+`off(p+1) = off(p) + 1`.
+Proof structure: `unfold eqp_off; split_ifs` (same 4 cases).
+1. Both `< bd`: From `h : idx(p+1) = idx(p)` and both in first
+   branch, `p/(q+1) = (p+1)/(q+1)`. Apply `mod_step`. ✓
+2. `p+1 < bd`, `p ≥ bd`: impossible (`omega`). ✓
+3. Cross-branch: `idx(p+1) = idx(p) + 1` (from Lemma 3 cross case),
+   contradicting `h : idx(p+1) = idx(p)`. Derive `False` by
+   showing `idx(p+1) ≠ idx(p)` in this branch. Concretely:
+   `unfold eqp_idx at h; split_ifs at h` produces `r + 0 = p/(q+1)`,
+   but `p/(q+1) = r - 1` (from `p < r*(q+1)`), giving `r = r-1`.
+   Since `r > 0` (from `p ≥ 0` and `p < r*(q+1)`): contradiction. ✓
+4. Both `≥ bd`: From `h` in second branch, `(p-bd)/q = (p+1-bd)/q`.
+   Rewrite `p+1-bd = (p-bd)+1`, apply `mod_step`. ✓
 
-**Step 6** (Lemma 10): Pair 2 straddle → gap = 1.
-Hypothesis: equiEndpoint(jg+1) ≤ (v+g)%m + 1 (v+g is last in jg).
-Combined with (v+g)%m < equiEndpoint(jg+1), we get
-(v+g)%m + 1 = equiEndpoint(jg+1).
+**Lemma 5** (eqp_off_succ_new): If `idx(p+1) ≠ idx(p)`, then
+`off(p+1) = 0`.
+Proof structure: same 4-way `split_ifs`.
+1. Both `< bd`: From `h : idx(p+1) ≠ idx(p)` and both in first
+   branch, `(p+1)/(q+1) ≠ p/(q+1)`. By `div_step`, `(p+1)/(q+1)
+   = p/(q+1) + 1`. Apply `mod_zero_step`: `(p+1)%(q+1) = 0`. ✓
+2. Impossible: `omega`. ✓
+3. Cross-branch: `p+1 = bd`. `off(p+1) = (p+1 - bd) % q
+   = 0 % q = 0`. ✓
+4. Both `≥ bd`: From `h`, `(p+1-bd)/q ≠ (p-bd)/q`. Rewrite
+   `p+1-bd = (p-bd)+1`. By `div_step`, quotient increased by 1.
+   Apply `mod_zero_step`: `((p-bd)+1) % q = 0`. ✓
 
-Assume for contradiction gap = 2.
-Then jg = (j₀+2)%s. The distance from v (in interval j₀) to
-(v+g)%m (last element of interval jg) spans at least 2 full
-intervals: ilen(j₀+1) + ilen(j₀+2) (possibly wrapping).
-Each interval has length ≥ q, so g ≥ 2q.
-But h_ub says g < 2q. Contradiction.
+## Step 3 — Lemma 6: complementary parity coverage
 
-More precisely: v ≥ equiEndpoint(j₀), and
-(v+g)%m = equiEndpoint(jg+1)-1.
-g = (v+g) - v ≥ equiEndpoint(jg+1)-1 - (equiEndpoint(j₀+1)-1)
-  = equiEndpoint(jg+1) - equiEndpoint(j₀+1).
-If jg = j₀+2 (non-wrapping): this is
-equiEndpoint(j₀+3) - equiEndpoint(j₀+1) = ilen(j₀+1)+ilen(j₀+2) ≥ 2q.
-So g ≥ 2q. But g < 2q. Contradiction.
-Wrapping cases are similar (the sum of interval lengths ≥ 2q).
+Given `j` and `a`, the pair `{(j + a%2) % 3, (j + (a+1)%2) % 3}`
+equals `{j%3, (j+1)%3}`.
 
-**Step 7** (Main assembly in case_one_interval):
-- By Lemma 7, k.val ∈ {j₀%3,(j₀+1)%3} or {jg%3,(jg+1)%3}.
-- Case split on straddling of each pair.
-- Neither straddles: Lemma 6 gives witnesses from each pair.
-- Pair 1 straddles: gap=2 (Lemma 9), pair 2 non-straddles.
-  c(v+1) has off=0 so c(v+1)=(j₀+1)%3 (from idx step + 3|s).
-  Pair 2 covers {(j₀+2)%3, j₀%3}. All 3 colors present.
-- Pair 2 straddles: gap=1 (Lemma 10), pair 1 non-straddles.
-  Pair 1 covers {j₀%3, (j₀+1)%3}. c(v+g+1) has off=0 so
-  c(v+g+1)=(jg+1)%3=(j₀+2)%3. All 3 colors present.
+Proof: `a%2 ∈ {0, 1}`.
+- If `a%2 = 0`: `(a+1)%2 = 1`. Pair = `{(j+0)%3, (j+1)%3}` =
+  `{j%3, (j+1)%3}`. ✓
+- If `a%2 = 1`: `(a+1)%2 = 0`. Pair = `{(j+1)%3, (j+0)%3}` =
+  `{(j+1)%3, j%3}`. ✓
+
+So for any target `t ∈ {j%3, (j+1)%3}`, one of the two
+expressions equals `t`. (omega/decide after `Nat.mod_two_eq_zero_or_one`.)
+
+## Step 4 — Lemma 8: idx(m-1) = s-1
+
+Given `m = s*q + r`, `r < s`, `q ≥ 1`, `s ≥ 1`.
+
+First: `m - 1 ≥ bd = r*(q+1)`.
+`m - 1 - bd = s*q + r - 1 - r*q - r = (s-r)*q - 1`.
+Since `s > r` and `q ≥ 1`: `(s-r)*q ≥ 1`, so `m-1 ≥ bd`. ✓
+
+So `idx(m-1) = r + (m - 1 - bd) / q = r + ((s-r)*q - 1) / q`.
+
+Write `(s-r)*q - 1 = (s-r-1)*q + (q-1)`. Since `q-1 < q`:
+`((s-r-1)*q + (q-1)) / q = s-r-1` (by `Nat.add_mul_div_right`
+applied to `(q-1) + (s-r-1)*q`).
+
+So `idx(m-1) = r + (s - r - 1) = s - 1`. ✓
+
+Lean proof strategy: `unfold eqp_idx; split_ifs; simp/omega`
+after providing the key division identity via
+`Nat.add_mul_div_right` or `Nat.div_eq_of_lt_le`.
+
+## Step 5 — Lemma 9: Pair 1 straddle → gap = 2
+
+**Hypotheses**:
+- `hstrad : equiEndpoint(j₀+1) ≤ v + 1` (pair (v,v+1) straddles)
+- `hv_hi : v < equiEndpoint(j₀+1)`
+- Combined: `v + 1 = equiEndpoint(j₀+1)`, i.e., `v` is the last
+  element of interval `j₀`.
+- `hgap : gap ∈ {1, 2}` where `gap = (jg + s - j₀) % s`
+
+**Goal**: `gap = 2`, i.e., rule out `gap = 1`.
+
+Assume for contradiction `gap = 1`, i.e., `jg = (j₀+1) % s`.
+
+Since `v = equiEndpoint(j₀+1) - 1`:
+  `v + g = equiEndpoint(j₀+1) - 1 + g`.
+
+**Key bound**: Every interval has length ≤ `⌈m/s⌉ < g`.
+In particular, `equiEndpoint(j+1) - equiEndpoint(j) ≤ q+1
+≤ (m+s-1)/s < g` for all `j`.
+
+**Case A: j₀ + 1 < s** (so `(j₀+1)%s = j₀+1`):
+
+Since `g > equiEndpoint(j₀+2) - equiEndpoint(j₀+1)`:
+  `v + g = equiEndpoint(j₀+1) - 1 + g ≥ equiEndpoint(j₀+2)`.
+
+Sub-case A1 (`v + g < m`, non-wrapping):
+  `(v+g)%m = v + g ≥ equiEndpoint(j₀+2)`.
+  But for `jg = j₀+1`: `(v+g)%m < equiEndpoint(j₀+2)` (from
+  `hvg_hi`). Contradiction. ✓
+
+Sub-case A2 (`v + g ≥ m`, wrapping):
+  `(v+g)%m = v + g - m`. For `jg = j₀+1`: need
+  `equiEndpoint(j₀+1) ≤ v + g - m`, i.e.,
+  `g ≥ m + 1` (since `v = equiEndpoint(j₀+1) - 1`).
+  But `g < 2q ≤ 2*(m/3) ≤ 2m/3 < m` (since `m ≥ s ≥ 3`).
+  So `g < m < m + 1`. Contradiction. ✓
+
+**Case B: j₀ + 1 = s** (so `j₀ = s-1`, `(j₀+1)%s = 0`):
+
+`v = equiEndpoint(s) - 1 = m - 1`. So `v + g = m - 1 + g`.
+Since `g ≥ 1`: `v + g ≥ m`, so wrapping: `(v+g)%m = g - 1`.
+
+For `gap = 1`: `jg = 0`. Need `g - 1 < equiEndpoint(1)`.
+`equiEndpoint(1) = q + min(r, 1)`.
+
+- If `r = 0`: `⌈m/s⌉ = q`. So `g > q`, `g ≥ q + 1`,
+  `g - 1 ≥ q = equiEndpoint(1)`. But need `g-1 < equiEndpoint(1)`.
+  Contradiction. ✓
+- If `r > 0`: `⌈m/s⌉ = q + 1`. So `g > q + 1`, `g ≥ q + 2`,
+  `g - 1 ≥ q + 1 = equiEndpoint(1)`. Contradiction. ✓
+
+## Step 6 — Lemma 10: Pair 2 straddle → gap = 1
+
+**Hypotheses**:
+- `hstrad : equiEndpoint(jg+1) ≤ (v+g)%m + 1`
+- `hvg_hi : (v+g)%m < equiEndpoint(jg+1)`
+- Combined: `(v+g)%m = equiEndpoint(jg+1) - 1`, i.e., `(v+g)%m`
+  is the last element of interval `jg`.
+- `hv_hi : v < equiEndpoint(j₀+1)`
+
+**Goal**: `gap = 1`, i.e., rule out `gap = 2`.
+
+Assume for contradiction `gap = 2`.
+
+**Key idea**: The circular arc from `equiEndpoint(j₀+1)` to
+`equiEndpoint(jg+1)` contains exactly `gap = 2` intervals, each
+of length ≥ `q`. So the arc length ≥ `2q`. And `g ≥` arc length
+(since `v ≤ equiEndpoint(j₀+1) - 1` and `(v+g)%m =
+equiEndpoint(jg+1) - 1`). So `g ≥ 2q`, contradicting `g < 2q`.
+
+**Detailed computation**:
+
+`(v+g)%m = equiEndpoint(jg+1) - 1` and `v ≤ equiEndpoint(j₀+1) - 1`.
+
+Non-wrapping (`v + g < m`):
+  `v + g = equiEndpoint(jg+1) - 1`.
+  `g = v + g - v ≥ equiEndpoint(jg+1) - equiEndpoint(j₀+1)`.
+
+  For `gap = 2`: `jg = (j₀+2) % s`. When non-wrapping and
+  `jg ≥ j₀` (so `jg = j₀+2 < s`):
+  `equiEndpoint(j₀+3) - equiEndpoint(j₀+1)` = sum of lengths of
+  intervals `j₀+1` and `j₀+2`, each ≥ `q`. So `g ≥ 2q`.
+  But `g < 2q`. Contradiction. ✓
+
+  When `jg < j₀` (wrapping gap): non-wrapping is impossible
+  because `(v+g)%m = v+g` is in interval `jg` which ends before
+  interval `j₀` starts, so `v+g < equiEndpoint(jg+1) ≤
+  equiEndpoint(j₀) ≤ v`, impossible since `g > 0`. ✓
+
+Wrapping (`v + g ≥ m`):
+  `v + g = m + equiEndpoint(jg+1) - 1` (since `(v+g)%m =
+  v + g - m = equiEndpoint(jg+1) - 1`).
+  `g = m + equiEndpoint(jg+1) - 1 - v
+     ≥ m + equiEndpoint(jg+1) - equiEndpoint(j₀+1)`.
+
+  The circular arc length from `equiEndpoint(j₀+1)` to
+  `equiEndpoint(jg+1)` (going forward through `m`) is:
+  `m - equiEndpoint(j₀+1) + equiEndpoint(jg+1)` = sum of
+  interval lengths from `j₀+1` through `jg` (mod `s`), which
+  is 2 intervals for `gap = 2`, each of length ≥ `q`.
+  So `g ≥ 2q`. But `g < 2q`. Contradiction. ✓
+
+  Sub-cases for `jg = (j₀+2) % s`:
+  - `j₀ = s-2, jg = 0`: arc = `(m - equiEndpoint(s-1))
+    + equiEndpoint(1)` = lengths of intervals `s-1` and `0`,
+    each ≥ `q`. ✓
+  - `j₀ = s-1, jg = 1`: arc = `(m - equiEndpoint(s))
+    + equiEndpoint(2)` = `equiEndpoint(2) ≥ 2q`. ✓
+  - `j₀+2 < s` (wrapping due to `v+g ≥ m`):
+    `g ≥ m + equiEndpoint(j₀+3) - equiEndpoint(j₀+1) ≥ m + 2q
+    > 2q`. ✓
+
+## Step 7 — Main assembly in case_one_interval
+
+**Given**: `v < m`, `j₀ = idx(v)`, `jg = idx((v+g)%m)`,
+`j₀ % 3 ≠ jg % 3`, `gap ∈ {1,2}`, `3 ∣ s`.
+
+**Straddling definitions**:
+- Pair 1 (v, v+1) straddles iff `idx(v+1) ≠ idx(v)`,
+  equivalently `equiEndpoint(j₀+1) ≤ v + 1` (v is last in j₀).
+- Pair 2 ((v+g)%m, (v+g+1)%m) straddles iff
+  `idx(((v+g)%m)+1) ≠ idx((v+g)%m)`, equivalently
+  `equiEndpoint(jg+1) ≤ (v+g)%m + 1`.
+
+Note: at most one pair can straddle. If pair 1 straddles then
+`gap = 2` (Lemma 9), and if pair 2 straddles then `gap = 1`
+(Lemma 10). Since gap can't be both 1 and 2, at most one does.
+
+**Coloring values**:
+- `c(p) = (idx(p%m) + off(p%m) % 2) % 3`.
+- Non-straddling pair `(p, p+1)` in interval `j`: By Lemma 4,
+  `off(p+1) = off(p) + 1`. So `{c(p), c(p+1)} =
+  {(j + off(p)%2)%3, (j + (off(p)+1)%2)%3} = {j%3, (j+1)%3}`
+  (by Lemma 6). Witness for any `t ∈ {j%3, (j+1)%3}` exists.
+- Straddling pair `(p, p+1)`: By Lemma 5, `off(p+1) = 0`.
+  So `c(p+1) = (idx(p+1) + 0) % 3 = idx(p+1) % 3`.
+  Since `idx(p+1) = idx(p) + 1 = j + 1`: `c(p+1) = (j+1) % 3`.
+  And when `j+1 = s` (wrap): `(v+1)%m = 0`, `idx(0) = 0`,
+  `c(v+1) = 0 % 3 = 0 = s % 3 = (j+1) % 3` (since `3 ∣ s`).
+
+**Case split** (by Lemma 7, `k` is in pair 1 or pair 2's range):
+
+1. **k ∈ {j₀%3, (j₀+1)%3}** — need witness `a ∈ {0, 1}`:
+   - Pair 1 non-straddling: Lemma 6 gives
+     `c(v) = k` or `c(v+1) = k`. Use `a = 0` or `a = 1`. ✓
+   - Pair 1 straddling: `c(v+1) = (j₀+1)%3`. If `k = (j₀+1)%3`:
+     use `a = 1`. If `k = j₀%3`: need witness from pair 2
+     (see case 3 below). ✓
+
+2. **k ∈ {jg%3, (jg+1)%3}** — need witness `a ∈ {g, g+1}`:
+   - Pair 2 non-straddling: Lemma 6 gives `c(v+g) = k` or
+     `c(v+g+1) = k`. Use `a = g` or `a = g+1`. ✓
+   - Pair 2 straddling: `c(v+g+1) = (jg+1)%3`. If
+     `k = (jg+1)%3`: use `a = g+1`. If `k = jg%3`: need
+     witness from pair 1 (see case 3 below). ✓
+
+3. **Both pairs have the needed color** — when one pair straddles:
+   - Pair 1 straddles → `gap = 2` (Lemma 9).
+     `{jg%3, (jg+1)%3} = {(j₀+2)%3, (j₀+3)%3} = {(j₀+2)%3, j₀%3}`.
+     So `j₀%3 ∈ {jg%3, (jg+1)%3}`. Pair 2 is non-straddling
+     (since pair 1 straddles), so Lemma 6 gives a witness for
+     `j₀%3` from pair 2. Combined with `c(v+1) = (j₀+1)%3`
+     from the straddle, all 3 colors are covered. ✓
+   - Pair 2 straddles → `gap = 1` (Lemma 10).
+     `{j₀%3, (j₀+1)%3}` already covers `jg%3 = (j₀+1)%3`.
+     Pair 1 is non-straddling, so Lemma 6 gives a witness for
+     `jg%3` from pair 1. Combined with `c(v+g+1) = (jg+1)%3
+     = (j₀+2)%3`, all 3 colors are covered. ✓
 -/
 
 -- Equi-partition index: which interval does position p fall in?
@@ -233,21 +403,19 @@ private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
 
 /-! ### Lemma 4: same idx → off increases by 1
 
-Proof: If eqp_idx(p+1) = eqp_idx(p), then p and p+1 are in
-the same branch and have the same quotient.
+Uses general helper `mod_step`: if `b > 0` and `a/b = (a+1)/b`,
+then `(a+1) % b = a % b + 1`. (See top-level proof sketch.)
 
-Case 1: Both in first branch (p < bd, p+1 < bd).
-  idx(p) = p/(q+1) = (p+1)/(q+1). By the general fact:
-  if a/b = (a+1)/b then (a+1)%b = a%b + 1.
-  Proof of general fact: from Nat.div_add_mod,
-  b*(a/b) + a%b = a and b*((a+1)/b) + (a+1)%b = a+1.
-  Since a/b = (a+1)/b, subtract: (a+1)%b - a%b = 1.
-
-Case 2: Both in second branch (p ≥ bd, p+1 ≥ bd).
-  Same argument with (p-bd)/q = (p+1-bd)/q.
-  (p+1-bd)%q = (p-bd)%q + 1.
-
-Case 3: Cross-branch impossible (would change idx). -/
+`unfold eqp_off; split_ifs` (same 4 cases as Lemma 3):
+1. Both `< bd`: `h` gives `p/(q+1) = (p+1)/(q+1)`.
+   Apply `mod_step`: `(p+1)%(q+1) = p%(q+1) + 1`. ✓
+2. `p+1 < bd`, `p ≥ bd`: impossible (`omega`). ✓
+3. Cross-branch: contradicts `h`. In this branch,
+   `idx(p+1) = r ≠ r-1 = idx(p)` (from Lemma 3 analysis),
+   but `h` says they're equal. Derive `False` via
+   `unfold eqp_idx at h; split_ifs at h`. ✓
+4. Both `≥ bd`: `h` gives `(p-bd)/q = (p+1-bd)/q`.
+   Rewrite `p+1-bd = (p-bd)+1`, apply `mod_step`. ✓ -/
 private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
     eqp_off q r (p + 1) = eqp_off q r p + 1 := by
@@ -255,23 +423,20 @@ private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
 
 /-! ### Lemma 5: different idx → off is 0
 
-Proof: If eqp_idx(p+1) ≠ eqp_idx(p), then either:
+Uses general helper `mod_zero_step`: if `b > 0` and
+`(a+1)/b = a/b + 1`, then `(a+1) % b = 0`.
+(See top-level proof sketch for derivation.)
 
-Case 1: Both in first branch, quotient changes.
-  p/(q+1) ≠ (p+1)/(q+1), i.e., (p+1)/(q+1) = p/(q+1)+1.
-  General fact: if (a+1)/b = a/b + 1, then (a+1)%b = 0.
-  Proof: b*(a/b+1) + (a+1)%b = a+1 and b*(a/b) + a%b = a.
-  So b + (a+1)%b = a%b + 1 ≤ b. Hence (a+1)%b = 0.
-  ...actually from omega: b*(a/b+1) ≤ a+1 and (a+1)%b < b
-  gives (a+1)%b = a+1 - b*(a/b+1). And a+1 = b*(a/b)+a%b+1,
-  so (a+1)%b = b*(a/b)+a%b+1 - b*(a/b+1) = a%b+1-b.
-  Since a%b < b, a%b+1 ≤ b, so (a+1)%b = a%b+1-b. For this
-  to be ≥ 0: a%b = b-1. Then (a+1)%b = 0. ✓
-
-Case 2: Both in second branch, quotient changes. Same.
-
-Case 3: Cross-branch (p < bd, p+1 ≥ bd).
-  p+1 = bd. off(p+1) = (bd - bd) % q = 0 % q = 0. ✓ -/
+`unfold eqp_off; split_ifs` (same 4 cases):
+1. Both `< bd`: `h` gives `(p+1)/(q+1) ≠ p/(q+1)`.
+   By `div_step`, `(p+1)/(q+1) = p/(q+1) + 1`.
+   Apply `mod_zero_step`: `(p+1)%(q+1) = 0`. ✓
+2. Impossible: `omega`. ✓
+3. Cross-branch: `p+1 = bd`. Goal: `(p+1 - bd) % q = 0`.
+   `p+1 - bd = 0`, `0 % q = 0`. ✓
+4. Both `≥ bd`: `h` gives `(p+1-bd)/q ≠ (p-bd)/q`.
+   Rewrite `p+1-bd = (p-bd)+1`. By `div_step`, quotient
+   increased by 1. Apply `mod_zero_step`: `((p-bd)+1)%q = 0`. ✓ -/
 private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
     eqp_off q r (p + 1) = 0 := by
@@ -279,15 +444,11 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
 
 /-! ### Lemma 6: complementary parity coverage
 
-Given j and a, the pair (j+a%2)%3 and (j+(a+1)%2)%3 covers
-{j%3, (j+1)%3}. So for any target t ∈ {j%3, (j+1)%3}, one
-of the two expressions equals t.
+Given `j` and `a`, `{(j + a%2) % 3, (j + (a+1)%2) % 3}` =
+`{j%3, (j+1)%3}`, since `a%2` and `(a+1)%2` are `{0,1}` in
+some order. For any `t ∈ {j%3, (j+1)%3}`, one matches.
 
-Proof: a%2 = 0 or a%2 = 1.
-If a%2 = 0: (a+1)%2 = 1. Values: (j+0)%3 = j%3, (j+1)%3.
-If a%2 = 1: (a+1)%2 = 0. Values: (j+1)%3, (j+0)%3 = j%3.
-Either way, both j%3 and (j+1)%3 appear.
-For any t ∈ {j%3, (j+1)%3}, one of the pair equals t. -/
+Lean proof: `have := Nat.mod_two_eq_zero_or_one a; omega`. -/
 private lemma compl_parity_witness (j a : ℕ) (t : ℕ)
     (ht : t < 3)
     (htarg : t = j % 3 ∨ t = (j + 1) % 3) :
@@ -297,13 +458,11 @@ private lemma compl_parity_witness (j a : ℕ) (t : ℕ)
 
 /-! ### Lemma 7: two pairs with different phases → coverage split
 
-For j₁%3 ≠ j₂%3 and k < 3: k is in {j₁%3, (j₁+1)%3} or
-{j₂%3, (j₂+1)%3}. The pair {j%3, (j+1)%3} covers 2 of the
-3 residues mod 3. Two such pairs with different base residues
-cover all 3.
+`{j%3, (j+1)%3}` covers 2 of {0,1,2}. Two pairs with distinct
+base residues `j₁%3 ≠ j₂%3` cover all 3.
 
-Proof: Exhaust j₁%3 ∈ {0,1,2}, j₂%3 ∈ {0,1,2}\{j₁%3},
-k ∈ {0,1,2}. Each of the 18 cases is verified directly. -/
+Lean proof: `omega` after `have := Nat.mod_lt j₁ (by omega : 0 < 3)`
+and similar. Or `have := Nat.mod_two_eq_zero_or_one ...` style. -/
 private lemma two_pairs_cover_split (j₁ j₂ : ℕ)
     (hne : j₁ % 3 ≠ j₂ % 3) (k : ℕ) (hk : k < 3) :
     (k = j₁ % 3 ∨ k = (j₁ + 1) % 3) ∨
@@ -327,34 +486,21 @@ private lemma eqp_idx_last (q r s : ℕ) (hq : 0 < q)
 
 /-! ### Lemma 9: pair 1 straddle → gap = 2
 
-Hypothesis: v is last element of interval j₀ (equiEndpoint(j₀+1)
-≤ v+1, combined with v < equiEndpoint(j₀+1) gives equality).
+See Step 5 in the top-level proof for the full case analysis.
 
-Key arithmetic: equiEndpoint(j₀+2) - equiEndpoint(j₀+1)
-= ilen(j₀+1) ≤ q+1 ≤ ceil(m/s) < g.
-So v+g = (v+1)-1+g = equiEndpoint(j₀+1)-1+g ≥ equiEndpoint(j₀+2).
+Summary: Assume `gap = 1`. From `hstrad` and `hv_hi`:
+`v = equiEndpoint(j₀+1) - 1`.
 
-Assume gap = 1, derive contradiction:
-(v+g)%m must be in interval (j₀+1)%s.
+Case A (`j₀+1 < s`): `g > interval length ≥ equiEndpoint(j₀+2) -
+equiEndpoint(j₀+1)`, so `v+g ≥ equiEndpoint(j₀+2)`.
+- Non-wrapping: `(v+g)%m = v+g ≥ equiEndpoint(j₀+2)`, but
+  `hvg_hi` says `< equiEndpoint(j₀+2)`. Contradiction.
+- Wrapping: need `equiEndpoint(j₀+1) ≤ v+g-m`, i.e., `g ≥ m+1`.
+  But `g < 2q < m`. Contradiction.
 
-Non-wrapping (v+g < m): (v+g)%m = v+g ≥ equiEndpoint(j₀+2).
-  Interval (j₀+1) is [equiEndpoint(j₀+1), equiEndpoint(j₀+2)).
-  So v+g ≥ equiEndpoint(j₀+2) means NOT in this interval.
-  Contradiction with gap=1.
-
-Wrapping (v+g ≥ m), j₀ < s-1: (v+g)%m = v+g-m.
-  v < equiEndpoint(j₀+1) ≤ equiEndpoint(s-1) = m - q.
-  So v+g-m < (m-q)+g-m = g-q < 2q-q = q.
-  equiEndpoint(j₀+1) ≥ equiEndpoint(1) ≥ q.
-  So v+g-m < q ≤ equiEndpoint(j₀+1).
-  For gap=1, need equiEndpoint(j₀+1) ≤ (v+g)%m. Contradiction.
-
-Wrapping, j₀ = s-1: v = m-1, (v+g)%m = g-1.
-  For gap=1: jg = 0, need idx(g-1) = 0, need g-1 < equiEndpoint(1).
-  equiEndpoint(1) = q + min(r,1) ≤ q+1.
-  g > ceil(m/s) ≥ q (with equality iff r=0).
-  If r=0: g > q, g-1 ≥ q = equiEndpoint(1). Contradiction.
-  If r>0: g > q+1, g-1 ≥ q+1 = equiEndpoint(1). Contradiction. -/
+Case B (`j₀ = s-1`): `v = m-1`, `(v+g)%m = g-1`. For `gap = 1`:
+`jg = 0`, need `g-1 < equiEndpoint(1)`. But `g > ⌈m/s⌉`, so
+`g-1 ≥ equiEndpoint(1)`. Contradiction. -/
 private lemma straddle1_gap2 (s g m : ℕ)
     (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
@@ -375,27 +521,22 @@ private lemma straddle1_gap2 (s g m : ℕ)
 
 /-! ### Lemma 10: pair 2 straddle → gap = 1
 
-Hypothesis: (v+g)%m is last element of interval jg
-(equiEndpoint(jg+1) ≤ (v+g)%m + 1, combined with
-(v+g)%m < equiEndpoint(jg+1) gives equality).
-So (v+g)%m + 1 = equiEndpoint(jg+1).
+See Step 6 in the top-level proof for the full case analysis.
 
-Assume gap = 2, derive contradiction:
-jg = (j₀+2)%s. We need g ≥ 2q.
+Summary: Assume `gap = 2`. From `hstrad` and `hvg_hi`:
+`(v+g)%m = equiEndpoint(jg+1) - 1`. And
+`v ≤ equiEndpoint(j₀+1) - 1` (from `hv_hi`).
 
-In the non-wrapping case (v+g < m):
-(v+g)%m = v+g = equiEndpoint(jg+1)-1.
-v ≥ equiEndpoint(j₀) and jg = j₀+2 (non-wrapping).
-g = v+g - v = equiEndpoint(j₀+3)-1 - v.
-v < equiEndpoint(j₀+1), so g > equiEndpoint(j₀+3)-1
-- equiEndpoint(j₀+1) + 1 - 1 = equiEndpoint(j₀+3) -
-equiEndpoint(j₀+1) - 1.
-equiEndpoint(j₀+3) - equiEndpoint(j₀+1) =
-ilen(j₀+1) + ilen(j₀+2) ≥ 2q.
-So g ≥ 2q. But g < 2q. Contradiction.
+The circular arc from `equiEndpoint(j₀+1)` to
+`equiEndpoint(jg+1)` spans 2 intervals (each of length ≥ `q`),
+so arc length ≥ `2q`.
 
-Wrapping case is similar: the total span of 2 intervals is
-≥ 2q, forcing g ≥ 2q, which contradicts h_ub. -/
+- Non-wrapping: `g ≥ equiEndpoint(jg+1) - equiEndpoint(j₀+1)
+  ≥ 2q`.
+- Wrapping: `g ≥ m + equiEndpoint(jg+1) - equiEndpoint(j₀+1)
+  ≥ 2q` (the wrapping circular arc still spans 2 intervals).
+
+Either way `g ≥ 2q`, contradicting `g < 2q`. -/
 private lemma straddle2_gap1 (s g m : ℕ)
     (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
