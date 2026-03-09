@@ -525,6 +525,47 @@ private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
     rw [hsub]
     have := div_step (p - r * (q + 1)) q hq; omega
 
+-- Helper: if quotient stays same, remainder increases by 1
+private lemma mod_step (a b : ℕ) (_hb : 0 < b)
+    (h : (a + 1) / b = a / b) :
+    (a + 1) % b = a % b + 1 := by
+  have h1 := Nat.div_add_mod a b
+  have h2 := Nat.div_add_mod (a + 1) b
+  have h3 : b * ((a + 1) / b) = b * (a / b) := by rw [h]
+  linarith
+
+-- Helper: if quotient increases by 1, remainder resets to 0
+private lemma mod_zero_step (a b : ℕ) (_hb : 0 < b)
+    (h : (a + 1) / b = a / b + 1) :
+    (a + 1) % b = 0 := by
+  have h1 := Nat.div_add_mod a b
+  have h2 := Nat.div_add_mod (a + 1) b
+  have h3 := Nat.mod_lt a _hb
+  have h4 : b * ((a + 1) / b) = b * (a / b) + b := by
+    rw [h]; ring
+  have h5 := Nat.zero_le ((a + 1) % b)
+  linarith
+
+-- Copy of gap_exceeds_ilen from Combi.lean (private there)
+open Finpartition in
+lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s)
+    (h_lb : (m + s - 1) / s < g) (j : ℕ) :
+    equiEndpoint m s (j + 1) - equiEndpoint m s j < g := by
+  rw [card_of_mem_equipartitionToIco_parts_aux]
+  set q := m / s; set r := m % s
+  by_cases hr : j < r
+  · simp [hr]
+    have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
+    have : (q + 1) * s = s * q + s := by ring
+    have : (q + 1) * s ≤ m + s - 1 := by omega
+    have := Nat.le_div_iff_mul_le hs |>.mpr this
+    omega
+  · simp [hr]
+    have : q * s ≤ m := Nat.div_mul_le_self m s
+    have : q * s ≤ m + s - 1 := by omega
+    have := Nat.le_div_iff_mul_le hs |>.mpr this
+    omega
+
 /-! ### Lemma 4: same idx → off increases by 1
 
 Uses general helper `mod_step`: if `b > 0` and `a/b = (a+1)/b`,
@@ -543,7 +584,43 @@ then `(a+1) % b = a % b + 1`. (See top-level proof sketch.)
 private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
     eqp_off q r (p + 1) = eqp_off q r p + 1 := by
-  sorry
+  unfold eqp_off
+  by_cases h1 : p + 1 < r * (q + 1) <;> by_cases h2 : p < r * (q + 1)
+  · -- Both < bd
+    rw [if_pos h1, if_pos h2]
+    apply mod_step p (q + 1) (by omega)
+    have h3 : eqp_idx q r (p + 1) = (p + 1) / (q + 1) := by
+      unfold eqp_idx; rw [if_pos h1]
+    have h4 : eqp_idx q r p = p / (q + 1) := by
+      unfold eqp_idx; rw [if_pos h2]
+    linarith
+  · -- p+1 < bd, p ≥ bd: impossible
+    omega
+  · -- Cross-branch: contradicts h (idx jumps)
+    exfalso
+    have h3 : eqp_idx q r (p + 1) =
+        r + (p + 1 - r * (q + 1)) / q := by
+      unfold eqp_idx; rw [if_neg h1]
+    have h4 : eqp_idx q r p = p / (q + 1) := by
+      unfold eqp_idx; rw [if_pos h2]
+    have h5 : p / (q + 1) < r := by
+      rw [Nat.div_lt_iff_lt_mul (by omega)]; exact h2
+    have h6 : r ≤ eqp_idx q r (p + 1) := by
+      rw [h3]; exact Nat.le_add_right r _
+    linarith
+  · -- Both ≥ bd
+    rw [if_neg h1, if_neg h2]
+    have hsub : p + 1 - r * (q + 1) =
+        (p - r * (q + 1)) + 1 := by omega
+    rw [hsub]
+    apply mod_step (p - r * (q + 1)) q hq
+    have h3 : eqp_idx q r (p + 1) =
+        r + (p + 1 - r * (q + 1)) / q := by
+      unfold eqp_idx; rw [if_neg h1]
+    have h4 : eqp_idx q r p =
+        r + (p - r * (q + 1)) / q := by
+      unfold eqp_idx; rw [if_neg h2]
+    rw [h3, h4, hsub] at h; omega
 
 /-! ### Lemma 5: different idx → off is 0
 
@@ -564,7 +641,39 @@ Uses general helper `mod_zero_step`: if `b > 0` and
 private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
     eqp_off q r (p + 1) = 0 := by
-  sorry
+  unfold eqp_off
+  by_cases h1 : p + 1 < r * (q + 1) <;> by_cases h2 : p < r * (q + 1)
+  · -- Both < bd: quotients differ → mod = 0
+    rw [if_pos h1]
+    apply mod_zero_step p (q + 1) (by omega)
+    have h3 : eqp_idx q r (p + 1) = (p + 1) / (q + 1) := by
+      unfold eqp_idx; rw [if_pos h1]
+    have h4 : eqp_idx q r p = p / (q + 1) := by
+      unfold eqp_idx; rw [if_pos h2]
+    rw [h3, h4] at h
+    have := div_step p (q + 1) (by omega)
+    omega
+  · -- p+1 < bd, p ≥ bd: impossible
+    omega
+  · -- Cross-branch: p+1 = r*(q+1), off = 0
+    rw [if_neg h1]
+    have : p + 1 = r * (q + 1) := by omega
+    simp [this]
+  · -- Both ≥ bd: quotients differ → mod = 0
+    rw [if_neg h1]
+    have hsub : p + 1 - r * (q + 1) =
+        (p - r * (q + 1)) + 1 := by omega
+    rw [hsub]
+    apply mod_zero_step (p - r * (q + 1)) q hq
+    have h3 : eqp_idx q r (p + 1) =
+        r + (p + 1 - r * (q + 1)) / q := by
+      unfold eqp_idx; rw [if_neg h1]
+    have h4 : eqp_idx q r p =
+        r + (p - r * (q + 1)) / q := by
+      unfold eqp_idx; rw [if_neg h2]
+    rw [h3, h4, hsub] at h
+    have := div_step (p - r * (q + 1)) q hq
+    omega
 
 /-! ### Lemma 6: complementary parity coverage
 
@@ -578,7 +687,7 @@ private lemma compl_parity_witness (j a : ℕ) (t : ℕ)
     (htarg : t = j % 3 ∨ t = (j + 1) % 3) :
     (j + a % 2) % 3 = t ∨
     (j + (a + 1) % 2) % 3 = t := by
-  sorry
+  omega
 
 /-! ### Lemma 7: two pairs with different phases → coverage split
 
@@ -591,7 +700,7 @@ private lemma two_pairs_cover_split (j₁ j₂ : ℕ)
     (hne : j₁ % 3 ≠ j₂ % 3) (k : ℕ) (hk : k < 3) :
     (k = j₁ % 3 ∨ k = (j₁ + 1) % 3) ∨
     (k = j₂ % 3 ∨ k = (j₂ + 1) % 3) := by
-  sorry
+  omega
 
 /-! ### Lemma 8: idx of last element (m-1) is s-1
 
@@ -606,7 +715,23 @@ So idx(m-1) = r + (s-r-1) = s - 1. ✓ -/
 private lemma eqp_idx_last (q r s : ℕ) (hq : 0 < q)
     (hr : r < s) (hs : 0 < s) :
     eqp_idx q r (s * q + r - 1) = s - 1 := by
-  sorry
+  have h_rq : r * (q + 1) = r * q + r := by ring
+  have h_rq2 : (r + 1) * q = r * q + q := by ring
+  have h_rq_le : r * q + q ≤ s * q :=
+    h_rq2 ▸ Nat.mul_le_mul_right q (by omega)
+  have hge : ¬(s * q + r - 1 < r * (q + 1)) := by omega
+  have h_bd_le : r * (q + 1) ≤ s * q + r - 1 := by omega
+  unfold eqp_idx
+  rw [if_neg hge]
+  have hnum : s * q + r - 1 - r * (q + 1) =
+      (q - 1) + (s - r - 1) * q := by
+    zify [h_bd_le, show 1 ≤ s * q + r from by omega,
+      show 1 ≤ q from hq, show r ≤ s from by omega,
+      show 1 ≤ s - r from by omega]
+    ring
+  rw [hnum, Nat.add_mul_div_right _ _ hq,
+    show (q - 1) / q = 0 from Nat.div_eq_of_lt (by omega)]
+  omega
 
 /-! ### Lemma 9: pair 1 straddle → gap = 2
 
