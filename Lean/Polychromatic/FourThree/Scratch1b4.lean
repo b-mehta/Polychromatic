@@ -660,3 +660,141 @@ private lemma coverage_assembly (s g m q r : ℕ)
       (eqp_idx q r ((v + a) % m) +
         eqp_off q r ((v + a) % m) % 2) % 3 = k.val := by
   sorry
+
+/-! ### Verification: check coverage_assembly fills the sorry in case_one_interval
+
+We copy `case_one_interval` with sorry'd stubs for its private dependencies,
+and verify that `coverage_assembly` (also sorry'd) can close the goal. -/
+section Verification
+
+-- Stubs for private lemmas from Combi.lean
+private lemma lift_coloring_witness_stub {m g : ℕ} [NeZero m]
+    [Fact (1 < m)] (hg_lt : g + 1 < m)
+    {c : ℕ → ℕ} (hc_lt : ∀ p, c p < 3)
+    (hc_period : ∀ p, c (p % m) = c p)
+    {n : ZMod m} {k : Fin 3}
+    (h : ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ),
+      c (n.val + a) = k.val) :
+    ∃ s ∈ ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
+      Finset (ZMod m)),
+      (⟨c (n + s).val, hc_lt _⟩ : Fin 3) = k := by sorry
+
+private lemma gap_bound_interval_stub (s g m : ℕ) (hs : 0 < s)
+    (hs3 : 3 ≤ s) (hs_le : s ≤ m)
+    (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
+    (v : ℕ) (hv_lt : v < m) :
+    let bd := (m % s) * (m / s + 1)
+    let idx (p : ℕ) : ℕ :=
+      if p < bd then p / (m / s + 1)
+      else m % s + (p - bd) / (m / s)
+    let j₀ := idx v
+    let jg := idx ((v + g) % m)
+    (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2 := by
+  sorry
+
+private lemma phase_ne_of_gap_stub {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hgap : (jg + s - j₀) % s = 1 ∨
+      (jg + s - j₀) % s = 2) :
+    j₀ % 3 ≠ jg % 3 := by sorry
+
+open Finpartition in
+private lemma idx_in_interval_stub (s m : ℕ)
+    (hs : 0 < s) (hs_le : s ≤ m) (p : ℕ) (hp : p < m) :
+    let q := m / s
+    let r := m % s
+    let bd := r * (q + 1)
+    let j := if p < bd then p / (q + 1)
+      else r + (p - bd) / q
+    j < s ∧ equiEndpoint m s j ≤ p ∧
+    p < equiEndpoint m s (j + 1) := by sorry
+
+-- Full copy of case_one_interval with the sorry replaced by
+-- coverage_assembly application
+open Finpartition in
+private lemma case_one_interval_test (m : ℕ)
+    (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
+    (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s)) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
+        Finset (ZMod m)) := by
+  set q := m / s
+  set r := m % s
+  have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
+  have hr_lt : r < s := Nat.mod_lt m hs
+  have hq_pos : 0 < q := by
+    have : q * s ≤ m := Nat.div_mul_le_self m s
+    have : q ≤ (m + s - 1) / s := by
+      rw [Nat.le_div_iff_mul_le hs]; omega
+    omega
+  have hs_le : s ≤ m := by
+    nlinarith [Nat.div_mul_le_self m s]
+  have hg1_lt_m : g + 1 < m := by
+    nlinarith [Nat.div_mul_le_self m s, Nat.le_of_dvd hs hs3]
+  haveI : NeZero m := ⟨by omega⟩
+  haveI : Fact (1 < m) := ⟨by omega⟩
+  set bd := r * (q + 1)
+  let idx (p : ℕ) : ℕ :=
+    if p < bd then p / (q + 1) else r + (p - bd) / q
+  let off (p : ℕ) : ℕ :=
+    if p < bd then p % (q + 1) else (p - bd) % q
+  let c (p : ℕ) : ℕ :=
+    (idx (p % m) + off (p % m) % 2) % 3
+  have hc_lt3 : ∀ p, c p < 3 :=
+    fun p => Nat.mod_lt _ (by omega)
+  have hc_period : ∀ p, c (p % m) = c p := by
+    intro p; simp only [c]
+    rw [Nat.mod_mod_of_dvd p (dvd_refl m)]
+  refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
+    lift_coloring_witness_stub hg1_lt_m hc_lt3 hc_period ?_⟩
+  set v := n.val
+  have hv_lt : v < m := ZMod.val_lt n
+  have hc_phase : ∀ p, c p = idx (p % m) % 3 ∨
+      c p = (idx (p % m) + 1) % 3 := by
+    intro p; simp only [c]
+    have : off (p % m) % 2 = 0 ∨ off (p % m) % 2 = 1 :=
+      by omega
+    rcases this with h | h <;> simp [h] <;> omega
+  set j₀ := idx v with hj₀_def
+  set jg := idx ((v + g) % m) with hjg_def
+  have hs3_le : 3 ≤ s := Nat.le_of_dvd hs hs3
+  have hgap := gap_bound_interval_stub s g m hs hs3_le hs_le
+    h_lb h_ub v hv_lt
+  have hidx_lt : ∀ p, p < m → idx p < s := by
+    intro p hp; simp only [idx]; split
+    · have : p / (q + 1) < r := by
+        rw [Nat.div_lt_iff_lt_mul (by omega : 0 < q + 1)]
+        exact ‹_›
+      omega
+    · rename_i hge; push_neg at hge
+      have : (p - bd) / q < s - r := by
+        rw [Nat.div_lt_iff_lt_mul hq_pos]
+        have : r * (q + 1) + (s - r) * q = s * q + r := by
+          have : (s - r) * q + r * q = s * q := by
+            rw [← Nat.add_mul,
+              Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
+          linarith
+        omega
+      omega
+  have hj₀_lt : j₀ < s := hidx_lt v hv_lt
+  have hjg_lt : jg < s :=
+    hidx_lt ((v + g) % m) (Nat.mod_lt _ (by omega))
+  have hphase : j₀ % 3 ≠ jg % 3 :=
+    phase_ne_of_gap_stub hs3 hj₀_lt hjg_lt hgap
+  -- === HERE: the sorry site ===
+  -- Goal: ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val
+  -- Derive interval membership from idx_in_interval_stub
+  have hiv := idx_in_interval_stub s m hs hs_le v hv_lt
+  have hivg := idx_in_interval_stub s m hs hs_le
+    ((v + g) % m) (Nat.mod_lt _ (by omega))
+  -- Bridge: show the goal matches coverage_assembly's conclusion
+  have hgoal := coverage_assembly s g m q r
+    hs hs3 hs3_le hs_le h_lb h_ub hg1_lt_m
+    rfl rfl hq_pos hr_lt hm_eq
+    v hv_lt k
+    j₀ rfl jg rfl
+    hphase hgap hj₀_lt hjg_lt
+    hiv.2.1 hiv.2.2 hivg.2.1 hivg.2.2
+  exact hgoal
+
+end Verification
