@@ -873,6 +873,198 @@ private lemma equiEndpoint_diff_ge (m s j : ℕ) :
     apply min_le_min <;> omega
   omega
 
+open Finpartition in
+private lemma straddle1_gap2 (s g m : ℕ)
+    (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
+    (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
+    (v j₀ jg : ℕ) (hv : v < m)
+    (hj₀_lt : j₀ < s) (hjg_lt : jg < s)
+    (_hv_lo : equiEndpoint m s j₀ ≤ v)
+    (hv_hi : v < equiEndpoint m s (j₀ + 1))
+    (hvg_lo : equiEndpoint m s jg ≤ (v + g) % m)
+    (hvg_hi : (v + g) % m < equiEndpoint m s (jg + 1))
+    (hstrad : equiEndpoint m s (j₀ + 1) ≤ v + 1)
+    (hgap : (jg + s - j₀) % s = 1 ∨
+      (jg + s - j₀) % s = 2) :
+    (jg + s - j₀) % s = 2 := by
+  by_contra hne
+  have hgap1 : (jg + s - j₀) % s = 1 := by tauto
+  have hv_eq : v + 1 = equiEndpoint m s (j₀ + 1) := by
+    omega
+  have hjg_cases := gap_mod_cases s j₀ jg hs hj₀_lt hjg_lt
+    hgap1
+  have hq_pos : 0 < m / s := by
+    by_contra h; push_neg at h; simp at h; omega
+  have hg_lt_m : g < m := by
+    have : 2 * (m / s) < s * (m / s) :=
+      Nat.mul_lt_mul_of_pos_right (by omega) hq_pos
+    have : s * (m / s) ≤ m := by
+      rw [mul_comm]; exact Nat.div_mul_le_self m s
+    omega
+  have hep_s : equiEndpoint m s s = m :=
+    equiEndpoint_hi (by omega)
+  by_cases hj₀_lt_s : j₀ + 1 < s
+  · have hjg_val : jg = j₀ + 1 := by omega
+    have hilen := gap_exceeds_ilen m s g hs h_lb (j₀ + 1)
+    have hmono : equiEndpoint m s (j₀ + 1) ≤
+        equiEndpoint m s (j₀ + 1 + 1) :=
+      equiEndpoint_monotone (by omega)
+    have hsac := Nat.sub_add_cancel hmono
+    have hvg_ge : v + g ≥
+        equiEndpoint m s (j₀ + 1 + 1) := by omega
+    by_cases hwrap : v + g < m
+    · have : (v + g) % m = v + g := Nat.mod_eq_of_lt hwrap
+      rw [hjg_val] at hvg_hi
+      omega
+    · push_neg at hwrap
+      rw [hjg_val] at hvg_lo
+      have hvg_mod : (v + g) % m = v + g - m := by
+        rw [Nat.mod_eq_sub_mod hwrap]
+        have : v + g - m < m := by omega
+        exact Nat.mod_eq_of_lt this
+      rw [hvg_mod] at hvg_lo
+      omega
+  · have hj₀_eq : j₀ = s - 1 := by omega
+    have hjg_val : jg = 0 := by omega
+    rw [hj₀_eq] at hv_eq
+    have hep_s1 : equiEndpoint m s (s - 1 + 1) = m := by
+      rw [Nat.sub_add_cancel (by omega : 1 ≤ s)]; exact hep_s
+    rw [hep_s1] at hv_eq
+    have hv_val : v = m - 1 := by omega
+    have hg_pos : 0 < g := by
+      have := gap_exceeds_ilen m s g hs h_lb 0
+      have := equiEndpoint_strictMono
+        (by omega : s ≠ 0) hs_le (show 0 < 1 from by omega)
+      omega
+    have hvg_mod : (v + g) % m = g - 1 := by
+      rw [hv_val, show m - 1 + g = m + (g - 1) from by omega,
+        Nat.add_mod_left]
+      exact Nat.mod_eq_of_lt (by omega)
+    rw [hjg_val, hvg_mod] at hvg_hi
+    simp only [Nat.zero_add] at hvg_hi
+    have hep1 : equiEndpoint m s 1 ≤
+        (m + s - 1) / s := by
+      rw [equiEndpoint]
+      simp only [Nat.mul_one]
+      by_cases hr : m % s = 0
+      · simp [hr]; exact Nat.div_le_div_right (by omega)
+      · have : min (m % s) 1 = 1 := by omega
+        rw [this]
+        apply (Nat.le_div_iff_mul_le hs).mpr
+        have hprod : (m / s + 1) * s = m / s * s + s := by
+          ring
+        have hdam := Nat.div_add_mod m s
+        have hmul : m / s * s = s * (m / s) := by ring
+        rw [hprod]; omega
+    omega
+
+open Finpartition in
+private lemma straddle2_gap1 (s g m : ℕ)
+    (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
+    (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
+    (v j₀ jg : ℕ) (hv : v < m)
+    (hj₀_lt : j₀ < s) (hjg_lt : jg < s)
+    (_hv_lo : equiEndpoint m s j₀ ≤ v)
+    (hv_hi : v < equiEndpoint m s (j₀ + 1))
+    (_hvg_lo : equiEndpoint m s jg ≤ (v + g) % m)
+    (hvg_hi : (v + g) % m < equiEndpoint m s (jg + 1))
+    (hstrad : equiEndpoint m s (jg + 1) ≤
+      (v + g) % m + 1)
+    (hgap : (jg + s - j₀) % s = 1 ∨
+      (jg + s - j₀) % s = 2) :
+    (jg + s - j₀) % s = 1 := by
+  by_contra hne
+  have hgap2 : (jg + s - j₀) % s = 2 := by tauto
+  have hvg_eq : (v + g) % m + 1 =
+      equiEndpoint m s (jg + 1) := by omega
+  have hq_pos : 0 < m / s := by
+    by_contra h; push_neg at h; simp at h; omega
+  have hg_lt_m : g < m := by
+    have : 2 * (m / s) < s * (m / s) :=
+      Nat.mul_lt_mul_of_pos_right (by omega) hq_pos
+    have : s * (m / s) ≤ m := by
+      rw [mul_comm]; exact Nat.div_mul_le_self m s
+    omega
+  have hjg_cases := gap_mod_cases2 s j₀ jg hs hj₀_lt hjg_lt
+    hgap2
+  have hep0 : equiEndpoint m s 0 = 0 := by
+    simp [equiEndpoint]
+  have hep_s : equiEndpoint m s s = m :=
+    equiEndpoint_hi (by omega)
+  by_cases hj_nowrap : j₀ + 2 < s
+  · have hjg_val : jg = j₀ + 2 := by omega
+    rw [hjg_val] at hvg_eq
+    set e1 := equiEndpoint m s (j₀ + 1) with he1
+    set e2 := equiEndpoint m s (j₀ + 1 + 1) with he2
+    set e3 := equiEndpoint m s (j₀ + 1 + 1 + 1) with he3
+    have hd1 := equiEndpoint_diff_ge m s (j₀ + 1)
+    have hd2 := equiEndpoint_diff_ge m s (j₀ + 1 + 1)
+    have hmono1 : e1 ≤ e2 := by omega
+    have hsac1 := Nat.sub_add_cancel hmono1
+    have hmono2 : e2 ≤ e3 := by omega
+    have hsac2 := Nat.sub_add_cancel hmono2
+    by_cases hwrap : v + g < m
+    · have : (v + g) % m = v + g := Nat.mod_eq_of_lt hwrap
+      omega
+    · push_neg at hwrap
+      have : (v + g) % m = v + g - m := by
+        rw [Nat.mod_eq_sub_mod hwrap]
+        exact Nat.mod_eq_of_lt (by omega)
+      omega
+  · have hjg_val : jg = j₀ + 2 - s := by omega
+    have hpos_wrap : m ≤ v + g := by
+      by_contra h; push_neg at h
+      have : (v + g) % m = v + g := Nat.mod_eq_of_lt h
+      have : equiEndpoint m s (jg + 1) ≤
+          equiEndpoint m s j₀ :=
+        equiEndpoint_monotone (by omega)
+      have : 0 < g := by
+        have := gap_exceeds_ilen m s g hs h_lb 0
+        have := equiEndpoint_strictMono
+          (by omega : s ≠ 0) hs_le (show 0 < 1 by omega)
+        omega
+      omega
+    have hvg_mod : (v + g) % m = v + g - m := by
+      rw [Nat.mod_eq_sub_mod hpos_wrap]
+      exact Nat.mod_eq_of_lt (by omega)
+    by_cases hj₀_eq : j₀ = s - 2
+    · have hjg0 : jg = 0 := by omega
+      rw [hjg0] at hvg_eq
+      simp only [Nat.zero_add] at hvg_eq
+      rw [hj₀_eq] at hv_hi
+      rw [show s - 2 + 1 = s - 1 from by omega] at hv_hi
+      have hd1 := equiEndpoint_diff_ge m s (s - 1)
+      rw [Nat.sub_add_cancel (by omega : 1 ≤ s), hep_s]
+        at hd1
+      have hep_s1_le :
+          equiEndpoint m s (s - 1) ≤ m := by
+        calc equiEndpoint m s (s - 1)
+            ≤ equiEndpoint m s s :=
+              equiEndpoint_monotone (by omega)
+          _ = m := hep_s
+      have hsac_m := Nat.sub_add_cancel hep_s1_le
+      have hd2 := equiEndpoint_diff_ge m s 0
+      rw [hep0] at hd2
+      simp only [Nat.zero_add] at hd2
+      omega
+    · have hj₀_eq2 : j₀ = s - 1 := by omega
+      have hjg1 : jg = 1 := by omega
+      rw [hjg1] at hvg_eq
+      rw [hj₀_eq2] at hv_hi
+      have hep_s1 :
+          equiEndpoint m s (s - 1 + 1) = m := by
+        rw [Nat.sub_add_cancel (by omega : 1 ≤ s)]
+        exact hep_s
+      rw [hep_s1] at hv_hi
+      have hd1 := equiEndpoint_diff_ge m s 0
+      rw [hep0] at hd1
+      simp only [Nat.zero_add] at hd1
+      have hd2 := equiEndpoint_diff_ge m s 1
+      have hmono12 : equiEndpoint m s 1 ≤
+          equiEndpoint m s (1 + 1) := by omega
+      have hsac12 := Nat.sub_add_cancel hmono12
+      omega
+
 private lemma compl_parity_witness (j a : ℕ) (t : ℕ)
     (ht : t < 3)
     (htarg : t = j % 3 ∨ t = (j + 1) % 3) :
