@@ -4,23 +4,14 @@
 
 // ---------------------------------------------------------------------------
 // Layout: center the wrapper (theme sets width:960px with no margin:auto).
-// The fixed-position header/footer need explicit left:0 so their black
-// background still reaches the viewport edge, with extra left padding to
-// push their text content in line with the now-centered wrapper.
+// The fixed-position header/footer move with the wrapper via left offset.
 // ---------------------------------------------------------------------------
 
 .wrapper { margin: 0 auto; }
 
 @media screen and (min-width: 961px) {
-  header {
-    width: 220px;
-    left: 0;
-    padding-left: calc(50px + (100vw - 960px) / 2);
-  }
-  footer {
-    width: 220px;
-    left: 0;
-    padding-left: calc(50px + (100vw - 960px) / 2);
+  header, footer {
+    left: calc((100vw - 960px) / 2);
   }
 }
 
