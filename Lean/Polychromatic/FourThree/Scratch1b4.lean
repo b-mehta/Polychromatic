@@ -205,34 +205,31 @@ private lemma div_step (a b : ℕ) (hb : 0 < b) :
 private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
     eqp_idx q r (p + 1) = eqp_idx q r p ∨
     eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
-  set bd := r * (q + 1)
   unfold eqp_idx
-  split_ifs with h1 h2 h3 h4
-  · -- p+1 < bd, p < bd: both in first branch
+  split_ifs with h1 h2
+  · -- p+1 < r*(q+1), p < r*(q+1): both in first branch
     exact div_step p (q + 1) (by omega)
-  · -- p+1 ≥ bd, p < bd: cross branch, p+1 = bd
-    have hpeq : p + 1 = bd := by omega
-    right
-    have hr_pos : 1 ≤ r := by
-      by_contra h; push_neg at h
-      have : r = 0 := by omega; omega
-    have hidx_p : p / (q + 1) = r - 1 := by
-      have h_dm := Nat.div_add_mod p (q + 1)
-      have h_ml := Nat.mod_lt p (show 0 < q + 1 by omega)
-      have hle : p / (q + 1) ≤ r - 1 := by
-        rw [Nat.div_le_iff_le_mul_add_pred (by omega)]
-        omega
-      have hge : r - 1 ≤ p / (q + 1) := by
-        rw [Nat.le_div_iff_mul_le (by omega)]
-        omega
-      omega
-    rw [hidx_p, hpeq, Nat.sub_self, Nat.zero_div]; omega
-  · -- p+1 < bd, p ≥ bd: impossible
+  · -- p+1 < r*(q+1), p ≥ r*(q+1): impossible
     omega
-  · -- p+1 ≥ bd, p ≥ bd: both in second branch
-    have hsub : p + 1 - bd = (p - bd) + 1 := by omega
+  · -- p+1 ≥ r*(q+1), p < r*(q+1): cross branch, p+1 = r*(q+1)
+    right
+    have hpeq : p + 1 = r * (q + 1) := by omega
+    have hr_pos : 0 < r := by nlinarith
+    have h_succ : (p + 1) / (q + 1) = r := by
+      rw [hpeq]; exact Nat.mul_div_cancel r (by omega)
+    have hne : p / (q + 1) ≠ r := by
+      intro heq
+      have := Nat.div_mul_le_self p (q + 1)
+      rw [heq] at this; linarith
+    have hidx_p : p / (q + 1) = r - 1 := by
+      have := div_step p (q + 1) (by omega); omega
+    rw [hpeq, Nat.sub_self, Nat.zero_div, hidx_p]; omega
+  · -- p+1 ≥ r*(q+1), p ≥ r*(q+1): both in second branch
+    have hsub :
+        p + 1 - r * (q + 1) = (p - r * (q + 1)) + 1 := by
+      omega
     rw [hsub]
-    have key := div_step (p - bd) q hq; omega
+    have := div_step (p - r * (q + 1)) q hq; omega
 
 /-! ### Lemma 4: same idx → off increases by 1
 
