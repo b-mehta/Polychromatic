@@ -1344,10 +1344,7 @@ private lemma b_zero_mod_d1 {m : ℕ} {b : ℤ} {d₁ : ℕ}
     (hd1_def : Nat.gcd b.natAbs m = d₁) [NeZero d₁] :
     (b : ZMod d₁) = 0 := by
   rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-  have h1 : d₁ ∣ b.natAbs := hd1_def ▸ Nat.gcd_dvd_left b.natAbs m
-  rcases Int.natAbs_eq b with h | h <;> rw [h]
-  · exact_mod_cast h1
-  · exact dvd_neg.mpr (by exact_mod_cast h1)
+  exact Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m)
 
 private lemma ba_coprime_d1 {m : ℕ} {a b : ℤ} {d₁ : ℕ}
     (hd1_dvd : d₁ ∣ m)
@@ -1446,6 +1443,32 @@ private lemma orbitMap_shift_ba {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero 
   have : (i + 1).val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
   rw [this]; push_cast; ring
 
+/-- The cycle index α(x) = castHom(x) * u⁻¹ satisfies α(φ(i,j)) = i. -/
+private lemma orbitMap_cycle_index {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁]
+    (hd1_dvd : d₁ ∣ m)
+    (hb_zero : (b : ZMod d₁) = 0)
+    (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁))
+    (i : ZMod d₁) (j : ZMod e₁) :
+    ZMod.castHom hd1_dvd (ZMod d₁) (orbitMap m a b d₁ e₁ (i, j)) *
+      u⁻¹ = i := by
+  simp only [orbitMap]
+  rw [map_add, map_mul, map_mul, map_natCast, map_intCast, map_natCast,
+    map_intCast, hb_zero, mul_zero, add_zero, mul_assoc,
+    ← hu, u.mul_inv, mul_one]
+  simp [ZMod.natCast_val]
+
+/-- The cycle index α shifts by 1 when (b-a) is added. -/
+private lemma cycle_index_shift_ba {m : ℕ} {a b : ℤ} {d₁ : ℕ}
+    [NeZero m] [NeZero d₁]
+    (hd1_dvd : d₁ ∣ m)
+    (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁))
+    (x : ZMod m) :
+    ZMod.castHom hd1_dvd (ZMod d₁) (x + ↑(b - a)) * u⁻¹ =
+    ZMod.castHom hd1_dvd (ZMod d₁) x * u⁻¹ + 1 := by
+  simp only [map_add, map_intCast, add_mul]
+  rw [← hu]; ring_nf; rw [u.inv_mul]; ring
+
 /-- Subcase (2a): e1 is even.
     Cycles are colored with alternating 01/02 patterns. -/
 lemma case_two_e1_even (hm : m ≥ 289)
@@ -1482,16 +1505,10 @@ lemma case_two_e1_even (hm : m ≥ 289)
   obtain ⟨u_ba, hu_ba⟩ := hba_unit
   let α : ZMod m → ZMod d₁ :=
     fun x => ZMod.castHom hd₁_dvd (ZMod d₁) x * u_ba⁻¹
-  -- α(x + (b-a)) = α(x) + 1
-  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 := by
-    intro x; simp only [α, map_add, map_intCast, add_mul]
-    rw [← hu_ba]; ring_nf; rw [u_ba.inv_mul]; ring
-  -- α(φ(i, j)) = i
-  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i := by
-    intro i j; simp only [α, φ, orbitMap]
-    rw [map_add, map_mul, map_mul, map_natCast, map_intCast, map_natCast, map_intCast,
-      hb_zero, mul_zero, add_zero, mul_assoc, ← hu_ba, u_ba.mul_inv, mul_one]
-    simp [ZMod.natCast_val]
+  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 :=
+    cycle_index_shift_ba hd₁_dvd u_ba hu_ba
+  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i :=
+    orbitMap_cycle_index hd₁_dvd hb_zero u_ba hu_ba
   -- Φ.symm(x+b) = (same_i, j+1)
   have hΦ_add_b : ∀ x : ZMod m,
       Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := fun x => by
@@ -1740,16 +1757,10 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   obtain ⟨u_ba, hu_ba⟩ := hba_unit
   let α : ZMod m → ZMod d₁ :=
     fun x => ZMod.castHom hd₁_dvd (ZMod d₁) x * u_ba⁻¹
-  -- α(x + (b-a)) = α(x) + 1
-  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 := by
-    intro x; simp only [α, map_add, map_intCast, add_mul]
-    rw [← hu_ba]; ring_nf; rw [u_ba.inv_mul]; ring
-  -- α(φ(i, j)) = i
-  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i := by
-    intro i j; simp only [α, φ, orbitMap]
-    rw [map_add, map_mul, map_mul, map_natCast, map_intCast, map_natCast, map_intCast,
-      hb_zero, mul_zero, add_zero, mul_assoc, ← hu_ba, u_ba.mul_inv, mul_one]
-    simp [ZMod.natCast_val]
+  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 :=
+    cycle_index_shift_ba hd₁_dvd u_ba hu_ba
+  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i :=
+    orbitMap_cycle_index hd₁_dvd hb_zero u_ba hu_ba
   -- Φ.symm(x+b) = (same_i, j+1)
   have hΦ_add_b : ∀ x : ZMod m,
       Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := fun x => by
@@ -2586,10 +2597,9 @@ private lemma no_both_e_small {m d₁ d₂ : ℕ}
   -- d₁*d₂ ≤ m ≤ d₁*17 → d₂ ≤ 17; similarly d₁ ≤ 17
   have hd₂_le : d₂ ≤ 17 :=
     Nat.le_of_mul_le_mul_left (hprod_le.trans hd₁_bound) (by grind)
-  have hd₁_le : d₁ ≤ 17 := by
-    have : d₁ * d₂ ≤ d₂ * 17 := hprod_le.trans hd₂_bound
-    rw [mul_comm d₁ d₂] at this
-    exact Nat.le_of_mul_le_mul_left this (by grind)
+  have hd₁_le : d₁ ≤ 17 :=
+    Nat.le_of_mul_le_mul_left
+      (mul_comm d₁ d₂ ▸ hprod_le.trans hd₂_bound) (by grind)
   -- 289 ≤ m ≤ d₁*17 → d₁ ≥ 17; similarly d₂ ≥ 17
   -- So d₁ = d₂ = 17, gcd(17,17) = 17 ≠ 1.
   have hd₁_eq : d₁ = 17 := by grind
@@ -2709,17 +2719,24 @@ lemma zmod_set_card_eq_four {a b : ℤ} {m : ℕ}
     (ha : 0 < a) (hab : a < b) (hbm : 2 * b - a < ↑m) :
     (zmod_set m a b).card = 4 := by
   unfold zmod_set
-  -- Helper: two integers in [0, m) that cast to the same ZMod m element must be equal
+  -- Helper: distinct integers in [0, m) have distinct ZMod casts
   have hne : ∀ x y : ℤ, 0 ≤ x → x < ↑m → 0 ≤ y → y < ↑m → x ≠ y →
       (x : ZMod m) ≠ (y : ZMod m) := fun _ _ hx1 hx2 hy1 hy2 hxy h =>
     hxy (by rwa [ZMod.intCast_eq_intCast_iff', Int.emod_eq_of_lt hx1 hx2,
                   Int.emod_eq_of_lt hy1 hy2] at h)
-  have ne01 := hne 0 (b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
-  have ne02 := hne 0 b (by grind) (by grind) (by grind) (by grind) (by grind)
-  have ne03 := hne 0 (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
-  have ne12 := hne (b - a) b (by grind) (by grind) (by grind) (by grind) (by grind)
-  have ne13 := hne (b - a) (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
-  have ne23 := hne b (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
+  -- All four elements 0, b-a, b, 2b-a are in [0, m) and pairwise distinct
+  have ne01 := hne 0 (b - a) (by grind) (by grind) (by grind)
+    (by grind) (by grind)
+  have ne02 := hne 0 b (by grind) (by grind) (by grind)
+    (by grind) (by grind)
+  have ne03 := hne 0 (2 * b - a) (by grind) (by grind) (by grind)
+    (by grind) (by grind)
+  have ne12 := hne (b - a) b (by grind) (by grind) (by grind)
+    (by grind) (by grind)
+  have ne13 := hne (b - a) (2 * b - a) (by grind) (by grind) (by grind)
+    (by grind) (by grind)
+  have ne23 := hne b (2 * b - a) (by grind) (by grind) (by grind)
+    (by grind) (by grind)
   simp only [image_insert, image_singleton]
   rw [card_insert_of_notMem, card_insert_of_notMem, card_insert_of_notMem, card_singleton]
   · rw [mem_singleton]; exact ne23
