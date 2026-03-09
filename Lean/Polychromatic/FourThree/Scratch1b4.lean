@@ -769,6 +769,34 @@ private lemma gap_mod_cases (s j₀ jg : ℕ) (hs : 0 < s)
     have : s * ((jg + s - j₀) / s) = s := by rw [hq1]; ring
     omega
 
+private lemma gap_mod_cases2 (s j₀ jg : ℕ) (hs : 0 < s)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hmod : (jg + s - j₀) % s = 2) :
+    jg + s - j₀ = 2 ∨ jg + s - j₀ = s + 2 := by
+  have hd_hi : jg + s - j₀ < 2 * s := by omega
+  have hdiv := Nat.div_add_mod (jg + s - j₀) s
+  rw [hmod] at hdiv
+  have hq_lt : (jg + s - j₀) / s < 2 := by
+    by_contra h; push_neg at h
+    have := Nat.mul_le_mul_left s h; omega
+  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
+  · left
+    have : s * ((jg + s - j₀) / s) = 0 := by rw [h]; ring
+    omega
+  · right
+    have hq1 : (jg + s - j₀) / s = 1 := by omega
+    have : s * ((jg + s - j₀) / s) = s := by rw [hq1]; ring
+    omega
+
+private lemma equiEndpoint_diff_ge (m s j : ℕ) :
+    m / s ≤ Finpartition.equiEndpoint m s (j + 1) -
+        Finpartition.equiEndpoint m s j := by
+  simp only [Finpartition.equiEndpoint]
+  have h1 : m / s * (j + 1) = m / s * j + m / s := by ring
+  have h2 : min (m % s) j ≤ min (m % s) (j + 1) := by
+    apply min_le_min <;> omega
+  omega
+
 private lemma straddle1_gap2 (s g m : ℕ)
     (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
@@ -909,7 +937,101 @@ private lemma straddle2_gap1 (s g m : ℕ)
     (hgap : (jg + s - j₀) % s = 1 ∨
       (jg + s - j₀) % s = 2) :
     (jg + s - j₀) % s = 1 := by
-  sorry
+  by_contra hne
+  have hgap2 : (jg + s - j₀) % s = 2 := by tauto
+  have hvg_eq : (v + g) % m + 1 =
+      Finpartition.equiEndpoint m s (jg + 1) := by omega
+  have hq_pos : 0 < m / s := by
+    by_contra h; push_neg at h; simp at h; omega
+  have hg_lt_m : g < m := by
+    have : 2 * (m / s) < s * (m / s) :=
+      Nat.mul_lt_mul_of_pos_right (by omega) hq_pos
+    have : s * (m / s) ≤ m := by
+      rw [mul_comm]; exact Nat.div_mul_le_self m s
+    omega
+  have hjg_cases := gap_mod_cases2 s j₀ jg hs hj₀_lt hjg_lt hgap2
+  have hep0 : Finpartition.equiEndpoint m s 0 = 0 := by
+    simp [Finpartition.equiEndpoint]
+  have hep_s : Finpartition.equiEndpoint m s s = m :=
+    Finpartition.equiEndpoint_hi (by omega)
+  by_cases hj_nowrap : j₀ + 2 < s
+  · -- Case A: Non-wrapping indices (jg = j₀ + 2)
+    have hjg_val : jg = j₀ + 2 := by omega
+    rw [hjg_val] at hvg_eq
+    -- Name equiEndpoint values for omega
+    set e1 := Finpartition.equiEndpoint m s (j₀ + 1) with he1
+    set e2 := Finpartition.equiEndpoint m s (j₀ + 1 + 1) with he2
+    set e3 := Finpartition.equiEndpoint m s (j₀ + 1 + 1 + 1) with he3
+    have hd1 := equiEndpoint_diff_ge m s (j₀ + 1)
+    have hd2 := equiEndpoint_diff_ge m s (j₀ + 1 + 1)
+    have hmono1 : e1 ≤ e2 := by omega
+    have hsac1 := Nat.sub_add_cancel hmono1
+    have hmono2 : e2 ≤ e3 := by omega
+    have hsac2 := Nat.sub_add_cancel hmono2
+    by_cases hwrap : v + g < m
+    · have : (v + g) % m = v + g := Nat.mod_eq_of_lt hwrap
+      omega
+    · push_neg at hwrap
+      have : (v + g) % m = v + g - m := by
+        rw [Nat.mod_eq_sub_mod hwrap]; exact Nat.mod_eq_of_lt (by omega)
+      -- g ≥ m (since e3 ≥ e1 > v, so g = m + e3 - 1 - v ≥ m)
+      omega
+  · -- Case B: Wrapping indices (jg = j₀+2-s, j₀ ≥ s-2)
+    have hjg_val : jg = j₀ + 2 - s := by omega
+    -- Position must wrap
+    have hpos_wrap : m ≤ v + g := by
+      by_contra h; push_neg at h
+      have : (v + g) % m = v + g := Nat.mod_eq_of_lt h
+      have : Finpartition.equiEndpoint m s (jg + 1) ≤
+          Finpartition.equiEndpoint m s j₀ :=
+        Finpartition.equiEndpoint_monotone (by omega)
+      have : 0 < g := by
+        have := gap_exceeds_ilen m s g hs h_lb 0
+        have := Finpartition.equiEndpoint_strictMono
+          (by omega : s ≠ 0) hs_le (show 0 < 1 by omega)
+        omega
+      omega
+    have hvg_mod : (v + g) % m = v + g - m := by
+      rw [Nat.mod_eq_sub_mod hpos_wrap]
+      exact Nat.mod_eq_of_lt (by omega)
+    by_cases hj₀_eq : j₀ = s - 2
+    · -- j₀ = s-2, jg = 0
+      have hjg0 : jg = 0 := by omega
+      rw [hjg0] at hvg_eq
+      simp only [Nat.zero_add] at hvg_eq
+      rw [hj₀_eq] at hv_hi
+      rw [show s - 2 + 1 = s - 1 from by omega] at hv_hi
+      -- Interval s-1 has length ≥ m/s
+      have hd1 := equiEndpoint_diff_ge m s (s - 1)
+      rw [Nat.sub_add_cancel (by omega : 1 ≤ s), hep_s] at hd1
+      -- hd1 : m / s ≤ m - equiEndpoint(s-1)
+      have hep_s1_le : Finpartition.equiEndpoint m s (s - 1) ≤ m := by
+        calc Finpartition.equiEndpoint m s (s - 1)
+            ≤ Finpartition.equiEndpoint m s s :=
+              Finpartition.equiEndpoint_monotone (by omega)
+          _ = m := hep_s
+      have hsac_m := Nat.sub_add_cancel hep_s1_le
+      -- Interval 0 has length ≥ m/s
+      have hd2 := equiEndpoint_diff_ge m s 0
+      rw [hep0] at hd2
+      simp only [Nat.zero_add] at hd2
+      omega
+    · -- j₀ = s-1, jg = 1
+      have hj₀_eq2 : j₀ = s - 1 := by omega
+      have hjg1 : jg = 1 := by omega
+      rw [hjg1] at hvg_eq
+      rw [hj₀_eq2] at hv_hi
+      have hep_s1 : Finpartition.equiEndpoint m s (s - 1 + 1) = m := by
+        rw [Nat.sub_add_cancel (by omega : 1 ≤ s)]; exact hep_s
+      rw [hep_s1] at hv_hi
+      have hd1 := equiEndpoint_diff_ge m s 0
+      rw [hep0] at hd1
+      simp only [Nat.zero_add] at hd1
+      have hd2 := equiEndpoint_diff_ge m s 1
+      have hmono12 : Finpartition.equiEndpoint m s 1 ≤
+          Finpartition.equiEndpoint m s (1 + 1) := by omega
+      have hsac12 := Nat.sub_add_cancel hmono12
+      omega
 
 /-! ### Assembly lemma: coverage proof for `case_one_interval`
 
