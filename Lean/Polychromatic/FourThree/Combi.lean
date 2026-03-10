@@ -956,22 +956,16 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
       unfold Finpartition.equiEndpoint
       rw [min_eq_left (by omega : r ≤ j₀ + 3)]
     have hm_eq : m = q * s + r := by
-      have h := Nat.div_add_mod m s
-      rw [mul_comm] at h; exact h.symm
+      have := Nat.div_add_mod m s; grind
     have hm_le_ep : m ≤
         Finpartition.equiEndpoint m s (j₀ + 3) := by
-      rw [hep_j3, hm_eq]
-      have : q * s ≤ q * (j₀ + 3) :=
-        Nat.mul_le_mul_left q (by omega)
-      omega
+      rw [hep_j3, hm_eq]; grind
     have hep_diff :
         Finpartition.equiEndpoint m s (j₀ + 3) - m =
         q * (j₀ + 3 - s) := by
       rw [hep_j3, hm_eq]
-      have : q * (j₀ + 3 - s) + q * s =
-          q * (j₀ + 3) := by
-        rw [← Nat.mul_add,
-          Nat.sub_add_cancel (by omega)]
+      have : q * (j₀ + 3 - s) + q * s = q * (j₀ + 3) := by
+        rw [← Nat.mul_add, Nat.sub_add_cancel (by omega)]
       omega
     have hvgm_ub : v + g - m <
         Finpartition.equiEndpoint m s
@@ -1030,8 +1024,7 @@ private lemma div_step (a b : ℕ) (hb : 0 < b) :
   suffices h : (a + 1) / b ≤ a / b + 1 by omega
   have h1 := Nat.div_add_mod a b
   have hmod := Nat.mod_lt a hb
-  have hring : b * (a / b + 1) = b * (a / b) + b := by ring
-  have hub : a + 1 ≤ b * (a / b + 1) := by linarith
+  have hub : a + 1 ≤ b * (a / b + 1) := by grind
   calc (a + 1) / b
       ≤ b * (a / b + 1) / b := Nat.div_le_div_right hub
     _ = a / b + 1 := Nat.mul_div_cancel_left _ hb
@@ -1067,8 +1060,7 @@ private lemma mod_step (a b : ℕ) (_hb : 0 < b)
     (a + 1) % b = a % b + 1 := by
   have h1 := Nat.div_add_mod a b
   have h2 := Nat.div_add_mod (a + 1) b
-  have h3 : b * ((a + 1) / b) = b * (a / b) := by rw [h]
-  linarith
+  grind
 
 -- Helper: if quotient increases by 1, remainder resets to 0
 private lemma mod_zero_step (a b : ℕ) (_hb : 0 < b)
@@ -1077,8 +1069,7 @@ private lemma mod_zero_step (a b : ℕ) (_hb : 0 < b)
   have h1 := Nat.div_add_mod a b
   have h2 := Nat.div_add_mod (a + 1) b
   have h3 := Nat.mod_lt a _hb
-  have h4 : b * ((a + 1) / b) = b * (a / b) + b := by
-    rw [h]; ring
+  have h4 : b * ((a + 1) / b) = b * (a / b) + b := by grind
   have h5 := Nat.zero_le ((a + 1) % b)
   linarith
 
@@ -1094,7 +1085,7 @@ private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
       unfold eqp_idx; rw [if_pos h1]
     have h4 : eqp_idx q r p = p / (q + 1) := by
       unfold eqp_idx; rw [if_pos h2]
-    linarith
+    grind
   · omega
   · exfalso
     have h3 : eqp_idx q r (p + 1) =
@@ -1106,7 +1097,7 @@ private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
       rw [Nat.div_lt_iff_lt_mul (by omega)]; exact h2
     have h6 : r ≤ eqp_idx q r (p + 1) := by
       rw [h3]; exact Nat.le_add_right r _
-    linarith
+    grind
   · rw [if_neg h1, if_neg h2]
     have hsub : p + 1 - r * (q + 1) =
         (p - r * (q + 1)) + 1 := by omega
@@ -1248,10 +1239,8 @@ private lemma straddle1_gap2 (s g m : ℕ)
       · have : min (m % s) 1 = 1 := by omega
         rw [this]
         apply (Nat.le_div_iff_mul_le hs).mpr
-        have hprod : (m / s + 1) * s = m / s * s + s := by ring
         have := Nat.div_add_mod m s
-        have : m / s * s = s * (m / s) := by ring
-        rw [hprod]; omega
+        grind
     omega
 
 open Finpartition in
@@ -1427,7 +1416,7 @@ private lemma vg_mod_shift (v g d : ℕ) (_hm : 0 < m) :
   have h1 := Nat.add_mod (v + g) d m
   have h2 := Nat.add_mod ((v + g) % m) d m
   rw [Nat.mod_mod_of_dvd _ (dvd_refl m)] at h2
-  have : v + (g + d) = (v + g) + d := by ring
+  have : v + (g + d) = (v + g) + d := by grind
   rw [this, h1, h2]
 
 private lemma gap2_jg_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
@@ -1447,8 +1436,8 @@ private lemma gap1_j0_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
 private lemma eqp_idx_last (q r s : ℕ) (hq : 0 < q)
     (hr : r < s) (hs : 0 < s) :
     eqp_idx q r (s * q + r - 1) = s - 1 := by
-  have h_rq : r * (q + 1) = r * q + r := by ring
-  have h_rq2 : (r + 1) * q = r * q + q := by ring
+  have h_rq : r * (q + 1) = r * q + r := by grind
+  have h_rq2 : (r + 1) * q = r * q + q := by grind
   have h_rq_le : r * q + q ≤ s * q :=
     h_rq2 ▸ Nat.mul_le_mul_right q (by omega)
   have hge : ¬(s * q + r - 1 < r * (q + 1)) := by omega
@@ -1568,7 +1557,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         have : r * (q + 1) + (s - r) * q = s * q + r := by
           have : (s - r) * q + r * q = s * q := by
             rw [← Nat.add_mul, Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
-          linarith
+          grind
         omega
       omega
   have hj₀_lt : j₀ < s := hidx_lt v hv_lt
@@ -1911,7 +1900,7 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   have hc_period : ∀ p, c (p % m) = c p := by
     intro p; simp only [c, hm_eq]
     rw [Nat.mod_mod_of_dvd p (dvd_mul_right 3 g)]
-    have h1 : (3 * (p / (3 * g))) * g = 3 * g * (p / (3 * g)) := by ring
+    have h1 : (3 * (p / (3 * g))) * g = 3 * g * (p / (3 * g)) := by grind
     have h2 : p = p % (3 * g) + (3 * (p / (3 * g))) * g := by
       rw [h1]; exact (Nat.mod_add_div p (3 * g)).symm
     have h3 : p / g = p % (3 * g) / g + 3 * (p / (3 * g)) := by
@@ -1924,8 +1913,7 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   have hv_eq : v = g * q + r := (Nat.div_add_mod v g).symm
   have hr_lt : r < g := Nat.mod_lt _ hg
   have gk_mod3 : ∀ k a, (g * k + a) % 3 = a % 3 := fun k a => by
-    have : 3 * t * k + a = 3 * (t * k) + a := by ring
-    rw [ht, this, Nat.mul_add_mod]
+    rw [ht]; grind [Nat.mul_add_mod]
   have color_at : ∀ q' r', r' < g → c (g * q' + r') = (r' % 3 + q') % 3 := fun q' r' hr' => by
     simp only [c, gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr', add_zero]
   by_cases hr_lt_gm1 : r + 1 < g
@@ -3086,7 +3074,7 @@ private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : 
   have h2 := basePattern_consec_pair he hge hjr
   -- Rewrite ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁
   have hmod : ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁ := by
-    have : j + r + 1 = (j + r) + 1 := by ring
+    have : j + r + 1 = (j + r) + 1 := by grind
     conv_rhs => rw [this]
     rw [Nat.add_mod, Nat.mod_mod_of_dvd _ (dvd_refl _), ← Nat.add_mod]
   rw [hmod] at h2
