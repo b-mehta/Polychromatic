@@ -15,13 +15,23 @@
 
 // ---------------------------------------------------------------------------
 // Content area: the theme styles <section>, but the layout uses
-// <div class="content">, so we provide our own rules here.
+// <div class="content">.  Verso also generates <section> elements inside
+// the content — neutralise the theme's section rules so that headings
+// outside <section> (e.g. the page title h1) align with the body text
+// inside <section>.
 // ---------------------------------------------------------------------------
 
 .content {
   width: 600px;
   float: right;
   padding-bottom: 50px;
+}
+
+.content section {
+  width: auto;
+  float: none;
+  padding: 0;
+  margin: 0;
 }
 
 @media print, screen and (max-width: 960px) {

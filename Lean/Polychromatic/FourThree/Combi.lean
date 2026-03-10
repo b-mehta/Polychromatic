@@ -5,66 +5,48 @@ import Mathlib.Algebra.Ring.AddAut
 /-!
 # Combinatorial case analysis for the polychromatic coloring theorem
 
-This file contains the main combinatorial argument showing that every 4-element subset
-of ℤ admits a 3-polychromatic coloring, under the assumption that the set has been
-normalized (via `Main.lean`) to have `c ≥ 289` and `gcd(a,b,c) = 1`.
+This file contains the core combinatorial argument for the polychromatic coloring theorem
+for 4-element sets. Specifically, it proves that every 4-element subset of ℤ admits a
+3-polychromatic coloring under the normalization assumptions described below.
 
-The proof works in `ZMod m` (where `m = c - a + b`) and splits into two main cases
-based on the cycle structure of the group action:
+Following the reduction in `Main.lean`, we assume the set $S = \{0, a, b, c\}$ is normalized
+such that $0 < a < b < c$, $a + b \le c$, $c \ge 289$, and $\gcd(a, b, c) = 1$.
+The proof works in the cyclic group $\mathbb{Z}_m$ where $m = c - a + b$.
+As shown in §4 of the paper, the polychromaticity of $S$ in $\mathbb{Z}$ follows from
+its polychromaticity in $\mathbb{Z}_m$.
 
-- **Case 1** (`main_case_one`): one of `gcd(b, m)` or `gcd(b-a, m)` equals 1
-  (single cycle). The set reduces to `{0, 1, g, g+1}` and is handled by interval
-  colorings, multiplication-by-3 reductions to Table 1, or explicit periodic colorings.
+The analysis splits into two main cases based on the subgroup structure of $\mathbb{Z}_m$
+relative to the differences in $S$:
 
-- **Case 2** (`main_case_two`): both GCDs exceed 1 (multiple cycles). The set is
-  colored via a product decomposition `ZMod d₁ × ZMod e₁ ≅ ZMod m`, with subcases
-  based on the parity of `d₁` and `e₁`.
+- **Case 1: Single Cycle (§4.1)**
+  This case occurs when at least one of $\gcd(b, m)$ or $\gcd(b-a, m)$ is 1.
+  The set $S$ is shown to be equivalent (via an affine transformation $x \mapsto ux + v$)
+  to a set of the form $\{0, 1, g, g+1\}$. The proof then branches:
+  - **(1a) Small $g$:** $g \in \{2, 3, 4\}$. Handled by the "Table 1" block colorings.
+  - **(1b) Interval Coloring:** For larger $g$, we partition $\mathbb{Z}_m$ into $s$
+    intervals (where $s$ is a multiple of 3) and use a repeating color pattern.
+  - **(1c/1d) Specific Residues:** When the interval bound is tight, we use multiplication
+    by 3 (if $3 \nmid m$) or explicit periodic colorings (if $3 \mid m$).
 
-The final assembly is `normal_bit`, which combines both cases.
+- **Case 2: Multiple Cycles (§4.2)**
+  This case occurs when both $d_1 = \gcd(b, m) > 1$ and $d_2 = \gcd(b-a, m) > 1$.
+  The group $\mathbb{Z}_m$ is viewed via the isomorphism
+  $\mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \cong \mathbb{Z}_m$
+  (where $e_1 = m/d_1$). The set $S$ then interacts with two adjacent cycles in this
+  decomposition. Colorings are constructed cycle-by-cycle:
+  - **(2a) Even cycle length ($e_1$ even):** Parity-based alternation.
+  - **(2b) Even cycle count ($d_1$ even, $e_1$ odd):** Parity-based alternation with
+    a "degenerate" position fixup.
+  - **(2c/2d) Both odd:** Rotating color patterns based on a partition $e_1 = u+v+w$.
+
+## Infrastructure
+
+The file provides `blockColor_polychrom`, a general tool for proving polychromaticity of
+cyclic colorings formed by concatenating two types of blocks (lengths $r$ and $r+1$).
+This reduces the proof of polychromaticity to checking a finite number of block-pair
+boundaries, which is done using `decide`.
 
 ## Completion status
-
-### Table 1 (Subcase 1a/1c block colorings)
-| Lemma | Set | Status |
-|---|---|---|
-| `table1_0123` | {0,1,2,3} | complete |
-| `table1_0134` | {0,1,3,4} | sorry |
-| `table1_0235` | {0,2,3,5} | sorry |
-| `table1_0347` | {0,3,4,7} | sorry |
-| `table1_0358` | {0,3,5,8} | sorry |
-| `table1_0145` | {0,1,4,5} | sorry |
-
-### Case 1 — Single Cycle
-| Lemma | Subcase | Status |
-|---|---|---|
-| `case_one_small_g` | (1a) g ∈ {2,3,4} | complete (depends on Table 1) |
-| `case_one_interval` | (1b) interval coloring | sorry |
-| per-residue lemmas (×6) | (1c) 3 ∤ m | complete (depend on Table 1) |
-| `case_one_residues` | (1c) dispatch | complete |
-| `case_one_div_g_not_three` | (1d) g ≢ 0 mod 3 | complete |
-| `case_one_div_3g` | (1d) m = 3g, 3 ∣ g | complete |
-| `case_one_div_3g3` | (1d) m = 3g+3, 3 ∣ g | complete |
-| `case_one_divisible` | (1d) dispatch | complete |
-| `case_one_dispatch` | Case 1 dispatch | complete |
-| `case_one_complement` | WLOG g ≤ m/2 | complete |
-| `main_case_one` | Case 1 assembly | complete |
-
-### Case 2 — Multiple Cycles
-| Lemma | Subcase | Status |
-|---|---|---|
-| `case_two_e1_even` | (2a) e₁ even | complete |
-| `case_two_d1_even_e1_odd` | (2b) d₁ even, e₁ odd | complete |
-| `case_two_odd_small` | (2c) both odd, e₁ ≤ 17 | sorry |
-| `case2d_coloring_works` | (2d) both odd, e₁ ≥ 19 | sorry |
-| `main_case_two` | Case 2 dispatch | complete |
-
-### Assembly
-| Lemma | Status |
-|---|---|
-| `zmod_set_card_eq_four` | complete |
-| `gcd_coprime_of_gcd_abc` | complete |
-| `hasPolychromColouring_of_zmod_set` | complete |
-| `normal_bit` | complete (modulo sorry dependencies) |
 
 Total: 9 sorries (5 Table 1 + 1 interval + 3 Case 2)
 -/
@@ -112,22 +94,36 @@ which is decidable for concrete blocks. The general theorem `blockColor_polychro
 proves that passing these checks implies cyclic polychromaticity.
 -/
 
-/-- Check that every starting position in L (where all offsets fit) hits all 3 colors. -/
+/--
+Check that every starting position in the list `L` hits all three colors {0, 1, 2}
+when considering the provided `offsets`.
+This is a "linear" check because it doesn't account for cyclic wrap-around;
+that is handled by checking all possible block-pair concatenations.
+-/
 def checkLinearPolychrom (offsets : List ℕ) (L : List (Fin 3)) : Bool :=
   let maxOff := offsets.foldr max 0
   (List.range (L.length - maxOff)).all fun i =>
     ([0, 1, 2] : List (Fin 3)).all fun c =>
       offsets.any fun s => L[i + s]? == some c
 
-/-- Check all 4 block-pair boundaries for polychromaticity. -/
+/--
+Verifies that the block-based coloring remains polychromatic across all possible
+transitions between blocks `A` and `B`.
+Specifically, it checks the four possible concatenations: AA, AB, BA, and BB.
+If these four "local" checks pass, then any sequence of these blocks will
+produce a polychromatic coloring.
+-/
 def checkBlockPairs (offsets : List ℕ) (A B : List (Fin 3)) : Bool :=
   checkLinearPolychrom offsets (A ++ A) &&
   checkLinearPolychrom offsets (A ++ B) &&
   checkLinearPolychrom offsets (B ++ A) &&
   checkLinearPolychrom offsets (B ++ B)
 
-/-- Block-based coloring: first `h·|A|` positions use pattern A (cyclically),
-    remaining `k·|B|` positions use pattern B (cyclically). -/
+/--
+The coloring function generated by concatenating `h` copies of block `A`
+followed by `k` copies of block `B`.
+The resulting pattern colors $\mathbb{Z}_m$ where $m = h|A| + k|B|$.
+-/
 def blockColorVal (A B : List (Fin 3)) (h k : ℕ) (p : ℕ) : Fin 3 :=
   if p < A.length * h then
     (A[p % A.length]?).getD 0
@@ -1218,20 +1214,23 @@ end Case1_SingleCycle
 
 /-! ## Main Case 2: Multiple Cycles (paper §4.2)
 
-When both `gcd(b, m) > 1` and `gcd(b-a, m) > 1`, the action of `b` on `ZMod m`
-decomposes into `d₁ = gcd(b, m)` cycles of length `e₁ = m / d₁`. We use the
-product decomposition `ZMod d₁ × ZMod e₁ ≅ ZMod m` to define colorings.
+When both $d_1 = \gcd(b, m) > 1$ and $d_2 = \gcd(b-a, m) > 1$, the action of $b$ on
+$\mathbb{Z}_m$ decomposes into $d_1$ cycles of length $e_1 = m/d_1$.
+We use the isomorphism $\mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \cong \mathbb{Z}_m$ to define
+coordinate-based colorings.
 
-Each translate of `{0, b-a, b, 2b-a}` touches two adjacent cycles (via `b-a`)
-and two consecutive positions within each cycle (via `b`). The coloring assigns
-each cycle a pair of colors that alternate along the cycle, chosen so that
-adjacent cycles collectively cover all three colors.
+Specifically, the "orbit map" $\phi(i, j) = i(b-a) + jb \pmod m$ provides a coordinate system
+where moving by $b$ corresponds to $(i, j) \to (i, j+1)$ and moving by $(b-a)$ corresponds
+to $(i, j) \to (i+1, j')$. Each translate of $S$ thus touches two adjacent cycles and two
+consecutive positions within each cycle.
 
-- **(2a)** `e₁` even: parity alternation within each cycle gives two colors per
-  cycle; the three "missing color" categories (even/odd/last) ensure coverage.
-- **(2b)** `d₁` even, `e₁` odd: similar but with swapped roles.
-- **(2c)** Both odd, `e₁ ≤ 17`: handled by specific small patterns.
-- **(2d)** Both odd, `e₁ ≥ 19`: "rotating" colorings based on a partition `e₁ = u+v+w`.
+The proof splits into subcases based on the parity of $d_1$ and $e_1$:
+- **(2a) $e_1$ even:**
+  Each cycle uses two alternating colors; adjacent cycles skip different colors.
+- **(2b) $d_1$ even, $e_1$ odd:**
+  Similar but with special "degenerate" handling for odd lengths.
+- **(2c) Both odd, $e_1 \le 17$:** Shifted periodic colorings.
+- **(2d) Both odd, $e_1 \ge 19$:** Rotating patterns based on a 3-interval partition.
 -/
 
 section Case2_MultipleCycles
@@ -1254,18 +1253,17 @@ private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2
     (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by
   grind [zmod_val_add_one e he2 j]
 
--- The coloring function for the even-parity cycle decomposition (Case 2a).
--- Each cycle uses two colors that alternate with parity; the last cycle (when d₁ is
--- odd) uses {1,2}, even-indexed cycles use {0,1}, odd-indexed cycles use {0,2}.
+/--
+A coloring for Case 2a ($e_1$ even).
+Each cycle $i$ uses two colors that alternate based on position parity.
+Cycles are assigned "missing colors" such that no two adjacent cycles miss the same color.
+-/
 private def cycle_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
   if i.val = d₁ - 1 ∧ ¬Even d₁ then ⟨1 + j.val % 2, by grind⟩
   else if i.val % 2 = 0 then ⟨j.val % 2, by grind⟩
   else ⟨2 * (j.val % 2), by grind⟩
 
--- The "missing" color for each cycle category.
--- Category A (even, not special last): misses 2
--- Category B (odd, not special last): misses 1
--- Category C (last cycle, d₁ odd): misses 0
+/-- The "missing" color for each cycle category in Case 2a. -/
 private def missing_color (d₁ : ℕ) (i : ZMod d₁) : Fin 3 :=
   if i.val = d₁ - 1 ∧ d₁ % 2 = 1 then 0
   else if i.val % 2 = 0 then 2
@@ -1324,7 +1322,11 @@ private lemma ZMod.val_add_one {n : ℕ} [NeZero n] (x : ZMod n) :
     (x + 1).val = (x.val + 1) % n := by
   rw [ZMod.val_add, ZMod.val_one_eq_one_mod, Nat.add_mod_mod]
 
-/-- The orbit map φ(i,j) = i*(b-a) + j*b in ZMod m. -/
+/--
+The orbit map $\phi : \mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \to \mathbb{Z}_m$ defined by
+$\phi(i, j) = i(b-a) + jb \pmod m$. This map is a bijection when $\gcd(b-a, b, m) = 1$.
+It provides the coordinate system used to analyze the "Multiple Cycles" case.
+-/
 private def orbitMap (m : ℕ) (a b : ℤ) (d₁ e₁ : ℕ) :
     ZMod d₁ × ZMod e₁ → ZMod m :=
   fun p => (p.1.val : ZMod m) * ↑(b - a) + (p.2.val : ZMod m) * ↑b
@@ -1469,8 +1471,13 @@ private lemma cycle_index_shift_ba {m : ℕ} {a b : ℤ} {d₁ : ℕ}
   simp only [map_add, map_intCast, add_mul]
   rw [← hu]; ring_nf; rw [u.inv_mul]; ring
 
-/-- Subcase (2a): e1 is even.
-    Cycles are colored with alternating 01/02 patterns. -/
+/--
+Case 2a: $e_1$ is even.
+The cycles are colored with alternating 01 and 02 patterns.
+Because $e_1$ is even, the patterns alternate perfectly without any degenerate positions.
+Adjacent cycles are assigned different "missing" colors to ensure all 3 colors are covered
+by any translate of the set.
+-/
 lemma case_two_e1_even (hm : m ≥ 289)
     (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
@@ -1704,9 +1711,14 @@ private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
       · exact Or.inl h.symm
       · exact Or.inr (Or.inl h.symm)
 
-/-- Subcase (2b): d1 is even and e1 is odd.
-    Cycles use modified alternating patterns: even cycles get `01010…011`,
-    odd cycles get `22020…020`. -/
+/--
+Case 2b: $d_1$ is even and $e_1$ is odd.
+Even cycles use the pattern `0101...011`, and odd cycles use `22020...020`.
+Because $e_1$ is odd, a perfect alternating pattern would have one "degenerate" pair
+at the boundary ($e_1 - 1, 0$). The strategy here places these degenerate pairs
+at different positions for even and odd cycles so that they do not overlap
+when the set $S$ spans two adjacent cycles.
+-/
 lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
@@ -2777,8 +2789,15 @@ lemma hasPolychromColouring_of_zmod_set {a b c : ℤ} {m : ℕ}
   rw [polychromNumber_zmod hm_eq]
   exact le_polychromNumber h
 
-/-- The main theorem (paper §4): combines the reduction to `ZMod m` with the
-    Case 1 / Case 2 split on `min(gcd(b, m), gcd(b-a, m))`. -/
+/--
+The main theorem of this file: every 4-element set $\{0, a, b, c\}$ satisfying the
+normalization conditions ($0 < a < b$, $a + b \le c$, $c \ge 289$, $\gcd(a, b, c) = 1$)
+admits a 3-polychromatic coloring.
+
+This serves as the "combinatorial bit" of the overall polychromatic coloring theorem.
+The proof dispatches to `main_case_one` (Case 1: Single Cycle) or `main_case_two`
+(Case 2: Multiple Cycles) based on the value of $\min(\gcd(b, m), \gcd(b-a, m))$.
+-/
 theorem normal_bit :
     ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → 289 ≤ c → Finset.gcd {a, b, c} id = 1 →
           HasPolychromColouring (Fin 3) {0, a, b, c} := by
