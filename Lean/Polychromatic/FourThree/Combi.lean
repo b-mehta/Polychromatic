@@ -167,14 +167,8 @@ private lemma hasPolychromColouring_of_cyclic {m : ℕ} [NeZero m] [Fact (1 < m)
 
 /-- Key: offsets in a list are bounded by foldr max. -/
 private lemma le_foldr_max {offsets : List ℕ} {s : ℕ} (hs : s ∈ offsets) :
-    s ≤ offsets.foldr max 0 := by
-  induction offsets with
-  | nil => simp at hs
-  | cons a l ih =>
-    simp only [List.foldr, List.mem_cons] at hs ⊢
-    rcases hs with rfl | hs
-    · exact le_max_left _ _
-    · exact le_trans (ih hs) (le_max_right _ _)
+    s ≤ offsets.foldr max 0 :=
+  List.le_max_of_le' 0 hs le_rfl
 
 /-- If `i % r + s < r`, then `(i + s) % r = i % r + s`. -/
 private lemma add_mod_of_lt {i s r : ℕ} (_hr : 0 < r) (h : i % r + s < r) :
@@ -606,50 +600,49 @@ variable (m : ℕ)
     for a specific finset of offsets in ZMod m. -/
 private lemma table1_of_blockColor (A B : List (Fin 3)) (offsets : List ℕ)
     (S : Finset (ZMod m))
-    (hA : 1 < A.length) (hBlen : B.length = A.length + 1)
+    (hA : 2 < A.length) (hBlen : B.length = A.length + 1)
     (hmaxOff : offsets.foldr max 0 ≤ A.length)
     (hpairs : checkBlockPairs offsets A B = true)
     (hm : m ≥ A.length * (A.length - 1))
-    (hoff_lt : ∀ s ∈ offsets, s < m)
     (hS : ∀ a : ZMod m, a ∈ S ↔ ∃ s ∈ offsets, (s : ZMod m) = a) :
     HasPolychromColouring (Fin 3) S := by
-  have hm_pos : 0 < m := Nat.lt_of_lt_of_le (Nat.mul_pos (by omega) (by omega)) hm
+  have hA_lt_m : A.length < m :=
+    calc A.length < A.length * 2 := by omega
+    _ ≤ A.length * (A.length - 1) := Nat.mul_le_mul_left _ (by omega)
+    _ ≤ m := hm
+  have hm_pos : 0 < m := by omega
   haveI : NeZero m := ⟨by omega⟩
-  have : 1 < A.length * (A.length - 1) := Nat.lt_of_lt_of_le (by omega)
-    (Nat.mul_le_mul (by omega : 2 ≤ A.length) (by omega : 1 ≤ A.length - 1))
   haveI : Fact (1 < m) := ⟨by omega⟩
-  obtain ⟨h, k, hm_eq, hhk⟩ := frobenius_consec hA hm
+  obtain ⟨h, k, hm_eq, hhk⟩ := frobenius_consec (by omega : 1 < A.length) hm
   have hm_eq' : A.length * h + B.length * k = m := by rw [hBlen]; exact hm_eq
   apply hasPolychromColouring_of_cyclic (blockColorVal A B h k) S
   intro n target
   obtain ⟨s, hs_mem, hs_eq⟩ := blockColor_polychrom A B offsets (by omega) hBlen hmaxOff
     hpairs hhk hm_eq' (ZMod.val_lt n) target
   refine ⟨(s : ZMod m), (hS _).mpr ⟨s, hs_mem, rfl⟩, ?_⟩
-  rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt (hoff_lt s hs_mem)]
+  have : s < m := lt_of_le_of_lt (le_trans (le_foldr_max hs_mem) hmaxOff) hA_lt_m
+  rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt this]
   exact hs_eq
 
 /-- {0,1,2,3}: blocks [0,1,2] (r=3), [0,0,1,2] (r+1=4). Frobenius bound: m ≥ 6. -/
 lemma table1_0123 (hm : m ≥ 6) :
     HasPolychromColouring (Fin 3) ({0, 1, 2, 3} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,1,2] [0,0,1,2] [0,1,2,3]
-    {0, 1, 2, 3} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 1, 2, 3} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 /-- {0,1,3,4}: blocks [0,0,1,2,1,2] (r=6), [0,0,0,1,2,1,2] (r+1=7). Frobenius: m ≥ 30. -/
 lemma table1_0134 (hm : m ≥ 30) :
     HasPolychromColouring (Fin 3) ({0, 1, 3, 4} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,1,2,1,2] [0,0,0,1,2,1,2] [0,1,3,4]
-    {0, 1, 3, 4} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 1, 3, 4} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 /-- {0,2,3,5}: blocks [0,0,1,1,2,2] (r=6), [0,0,0,1,1,2,2] (r+1=7). Frobenius: m ≥ 30. -/
 lemma table1_0235 (hm : m ≥ 30) :
     HasPolychromColouring (Fin 3) ({0, 2, 3, 5} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,1,1,2,2] [0,0,0,1,1,2,2] [0,2,3,5]
-    {0, 2, 3, 5} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 2, 3, 5} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 /-- {0,3,4,7}: blocks [0,0,0,1,1,1,2,2,2] (r=9), [0,0,0,0,1,1,1,2,2,2] (r+1=10).
@@ -657,8 +650,7 @@ lemma table1_0235 (hm : m ≥ 30) :
 lemma table1_0347 (hm : m ≥ 72) :
     HasPolychromColouring (Fin 3) ({0, 3, 4, 7} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,0,1,1,1,2,2,2] [0,0,0,0,1,1,1,2,2,2] [0,3,4,7]
-    {0, 3, 4, 7} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 3, 4, 7} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 /-- {0,3,5,8}: blocks [0,0,0,1,1,1,2,2,2] (r=9), [0,0,0,0,1,1,1,2,2,2] (r+1=10).
@@ -666,8 +658,7 @@ lemma table1_0347 (hm : m ≥ 72) :
 lemma table1_0358 (hm : m ≥ 72) :
     HasPolychromColouring (Fin 3) ({0, 3, 5, 8} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,0,1,1,1,2,2,2] [0,0,0,0,1,1,1,2,2,2] [0,3,5,8]
-    {0, 3, 5, 8} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 3, 5, 8} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 /-- {0,1,4,5}: blocks [0,0,0,1,2,1,2] (r=7), [0,0,0,0,1,2,1,2] (r+1=8).
@@ -675,8 +666,7 @@ lemma table1_0358 (hm : m ≥ 72) :
 lemma table1_0145 (hm : m ≥ 42) :
     HasPolychromColouring (Fin 3) ({0, 1, 4, 5} : Finset (ZMod m)) :=
   table1_of_blockColor m [0,0,0,1,2,1,2] [0,0,0,0,1,2,1,2] [0,1,4,5]
-    {0, 1, 4, 5} (by simp) (by simp) (by decide) (by decide)
-    hm (by intro s hs; grind)
+    {0, 1, 4, 5} (by simp) (by simp) (by decide) (by decide) hm
     (by intro a; simp; tauto)
 
 end Table1
@@ -2475,10 +2465,7 @@ private lemma b_zero_mod_d1 {m : ℕ} {b : ℤ} {d₁ : ℕ}
     (hd1_def : Nat.gcd b.natAbs m = d₁) [NeZero d₁] :
     (b : ZMod d₁) = 0 := by
   rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-  have h1 : d₁ ∣ b.natAbs := hd1_def ▸ Nat.gcd_dvd_left b.natAbs m
-  rcases Int.natAbs_eq b with h | h <;> rw [h]
-  · exact_mod_cast h1
-  · exact dvd_neg.mpr (by exact_mod_cast h1)
+  exact Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m)
 
 private lemma ba_coprime_d1 {m : ℕ} {a b : ℤ} {d₁ : ℕ}
     (hd1_dvd : d₁ ∣ m)
@@ -2577,6 +2564,32 @@ private lemma orbitMap_shift_ba {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero 
   have : (i + 1).val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
   rw [this]; push_cast; ring
 
+/-- The cycle index α(x) = castHom(x) * u⁻¹ satisfies α(φ(i,j)) = i. -/
+private lemma orbitMap_cycle_index {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁]
+    (hd1_dvd : d₁ ∣ m)
+    (hb_zero : (b : ZMod d₁) = 0)
+    (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁))
+    (i : ZMod d₁) (j : ZMod e₁) :
+    ZMod.castHom hd1_dvd (ZMod d₁) (orbitMap m a b d₁ e₁ (i, j)) *
+      u⁻¹ = i := by
+  simp only [orbitMap]
+  rw [map_add, map_mul, map_mul, map_natCast, map_intCast, map_natCast,
+    map_intCast, hb_zero, mul_zero, add_zero, mul_assoc,
+    ← hu, u.mul_inv, mul_one]
+  simp [ZMod.natCast_val]
+
+/-- The cycle index α shifts by 1 when (b-a) is added. -/
+private lemma cycle_index_shift_ba {m : ℕ} {a b : ℤ} {d₁ : ℕ}
+    [NeZero m] [NeZero d₁]
+    (hd1_dvd : d₁ ∣ m)
+    (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁))
+    (x : ZMod m) :
+    ZMod.castHom hd1_dvd (ZMod d₁) (x + ↑(b - a)) * u⁻¹ =
+    ZMod.castHom hd1_dvd (ZMod d₁) x * u⁻¹ + 1 := by
+  simp only [map_add, map_intCast, add_mul]
+  rw [← hu]; ring_nf; rw [u.inv_mul]; ring
+
 /--
 Case 2a: $e_1$ is even.
 The cycles are colored with alternating 01 and 02 patterns.
@@ -2618,16 +2631,10 @@ lemma case_two_e1_even (hm : m ≥ 289)
   obtain ⟨u_ba, hu_ba⟩ := hba_unit
   let α : ZMod m → ZMod d₁ :=
     fun x => ZMod.castHom hd₁_dvd (ZMod d₁) x * u_ba⁻¹
-  -- α(x + (b-a)) = α(x) + 1
-  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 := by
-    intro x; simp only [α, map_add, map_intCast, add_mul]
-    rw [← hu_ba]; ring_nf; rw [u_ba.inv_mul]; ring
-  -- α(φ(i, j)) = i
-  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i := by
-    intro i j; simp only [α, φ, orbitMap]
-    rw [map_add, map_mul, map_mul, map_natCast, map_intCast, map_natCast, map_intCast,
-      hb_zero, mul_zero, add_zero, mul_assoc, ← hu_ba, u_ba.mul_inv, mul_one]
-    simp [ZMod.natCast_val]
+  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 :=
+    cycle_index_shift_ba hd₁_dvd u_ba hu_ba
+  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i :=
+    orbitMap_cycle_index hd₁_dvd hb_zero u_ba hu_ba
   -- Φ.symm(x+b) = (same_i, j+1)
   have hΦ_add_b : ∀ x : ZMod m,
       Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := fun x => by
@@ -2881,16 +2888,10 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   obtain ⟨u_ba, hu_ba⟩ := hba_unit
   let α : ZMod m → ZMod d₁ :=
     fun x => ZMod.castHom hd₁_dvd (ZMod d₁) x * u_ba⁻¹
-  -- α(x + (b-a)) = α(x) + 1
-  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 := by
-    intro x; simp only [α, map_add, map_intCast, add_mul]
-    rw [← hu_ba]; ring_nf; rw [u_ba.inv_mul]; ring
-  -- α(φ(i, j)) = i
-  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i := by
-    intro i j; simp only [α, φ, orbitMap]
-    rw [map_add, map_mul, map_mul, map_natCast, map_intCast, map_natCast, map_intCast,
-      hb_zero, mul_zero, add_zero, mul_assoc, ← hu_ba, u_ba.mul_inv, mul_one]
-    simp [ZMod.natCast_val]
+  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 :=
+    cycle_index_shift_ba hd₁_dvd u_ba hu_ba
+  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i :=
+    orbitMap_cycle_index hd₁_dvd hb_zero u_ba hu_ba
   -- Φ.symm(x+b) = (same_i, j+1)
   have hΦ_add_b : ∀ x : ZMod m,
       Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := fun x => by
@@ -3727,10 +3728,9 @@ private lemma no_both_e_small {m d₁ d₂ : ℕ}
   -- d₁*d₂ ≤ m ≤ d₁*17 → d₂ ≤ 17; similarly d₁ ≤ 17
   have hd₂_le : d₂ ≤ 17 :=
     Nat.le_of_mul_le_mul_left (hprod_le.trans hd₁_bound) (by grind)
-  have hd₁_le : d₁ ≤ 17 := by
-    have : d₁ * d₂ ≤ d₂ * 17 := hprod_le.trans hd₂_bound
-    rw [mul_comm d₁ d₂] at this
-    exact Nat.le_of_mul_le_mul_left this (by grind)
+  have hd₁_le : d₁ ≤ 17 :=
+    Nat.le_of_mul_le_mul_left
+      (mul_comm d₁ d₂ ▸ hprod_le.trans hd₂_bound) (by grind)
   -- 289 ≤ m ≤ d₁*17 → d₁ ≥ 17; similarly d₂ ≥ 17
   -- So d₁ = d₂ = 17, gcd(17,17) = 17 ≠ 1.
   have hd₁_eq : d₁ = 17 := by grind
