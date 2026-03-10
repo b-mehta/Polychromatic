@@ -174,8 +174,7 @@ private lemma le_foldr_max {offsets : List ℕ} {s : ℕ} (hs : s ∈ offsets) :
 private lemma add_mod_of_lt {i s r : ℕ} (_hr : 0 < r) (h : i % r + s < r) :
     (i + s) % r = i % r + s := by
   have hs : s < r := by omega
-  rw [Nat.add_mod]
-  rw [Nat.mod_eq_of_lt hs]
+  rw [Nat.add_mod, Nat.mod_eq_of_lt hs]
   exact Nat.mod_eq_of_lt h
 
 /-- If `r ≤ i % r + s < 2r`, then `(i + s) % r = i % r + s - r`. -/
@@ -1662,11 +1661,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
     · -- Pair 1 non-straddle
       have hv1_lt : v + 1 < m := by
         rcases eqp_idx_succ_lt_m m q r s v hq_pos hr_lt hs hm_eq
-          hv_lt (show eqp_idx q r v < s from hj₀_lt)
-          with h | h
+          hv_lt hj₀_lt with h | h
         · exact h
-        · rw [h1_same] at h
-          exact absurd (show j₀ = s from h) (by omega)
+        · rw [h1_same] at h; exact absurd h (by omega)
       obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r v
         hq_pos hv_lt hv1_lt h1_same j₀ rfl k.val k.isLt hk1
       exact ⟨d, by simp only [Finset.mem_insert,
@@ -1690,11 +1687,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
           have hvg1_lt : (v + g) % m + 1 < m := by
             rcases eqp_idx_succ_lt_m m q r s ((v + g) % m) hq_pos
               hr_lt hs hm_eq hvg_lt
-              (show eqp_idx q r ((v + g) % m) < s from hjg_lt)
-              with h | h
+              hjg_lt with h | h
             · exact h
-            · rw [h2_same] at h
-              exact absurd (show jg = s from h) (by omega)
+            · rw [h2_same] at h; exact absurd h (by omega)
           obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
             ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg rfl
             k.val k.isLt (Or.inr (hk_eq ▸ hjg1_eq.symm))
@@ -1729,11 +1724,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
       have hvg1_lt : (v + g) % m + 1 < m := by
         rcases eqp_idx_succ_lt_m m q r s ((v + g) % m) hq_pos
           hr_lt hs hm_eq hvg_lt
-          (show eqp_idx q r ((v + g) % m) < s from hjg_lt)
-          with h | h
+          hjg_lt with h | h
         · exact h
-        · rw [h2_same] at h
-          exact absurd (show jg = s from h) (by omega)
+        · rw [h2_same] at h; exact absurd h (by omega)
       obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
         ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg rfl
         k.val k.isLt hk2
@@ -1761,11 +1754,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
           have hv1_lt : v + 1 < m := by
             rcases eqp_idx_succ_lt_m m q r s v hq_pos hr_lt hs
               hm_eq hv_lt
-              (show eqp_idx q r v < s from hj₀_lt)
-              with h | h
+              hj₀_lt with h | h
             · exact h
-            · rw [h1_same] at h
-              exact absurd (show j₀ = s from h) (by omega)
+            · rw [h1_same] at h; exact absurd h (by omega)
           obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
             v hq_pos hv_lt hv1_lt h1_same j₀ rfl k.val k.isLt
             (Or.inr (hk_eq ▸ hj01_eq.symm))
