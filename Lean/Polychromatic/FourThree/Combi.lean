@@ -3148,7 +3148,7 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
     obtain ⟨k, hk⟩ := he1_odd; subst hk
     have h5w : 5 * ((2 * k + 1) - 2 * ((2 * k + 1) / 3 + (2 * k + 1) % 3)) ≥
         2 * k + 1 := by grind
-    exact le_trans h5w (Nat.mul_le_mul_right _ hd1_ge)
+    exact le_trans h5w (by gcongr)
   set u := case2d_u e₁
   set w := e₁ - 2 * u
   have hw_pos : 0 < w := by grind
@@ -3163,7 +3163,7 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
     have h1 : deficit ≥ d₁ * w :=
       calc deficit ≥ deficit / w * w := Nat.div_mul_le_self deficit w
         _ = q * w := rfl
-        _ ≥ d₁ * w := Nat.mul_le_mul_right w hge
+        _ ≥ d₁ * w := by gcongr
     grind
   have hqr : w * q + r = deficit := Nat.div_add_mod deficit w
   let f : ZMod d₁ → ℕ := fun i =>
@@ -3546,10 +3546,10 @@ private lemma no_both_e_small {m d₁ d₂ : ℕ}
     (he₁_le : m / d₁ ≤ 17) (he₂_le : m / d₂ ≤ 17) : False := by
   have hd₁_bound : m ≤ d₁ * 17 := by
     calc m = d₁ * (m / d₁) := (Nat.mul_div_cancel' hd₁_dvd).symm
-      _ ≤ d₁ * 17 := Nat.mul_le_mul_left d₁ he₁_le
+      _ ≤ d₁ * 17 := by gcongr
   have hd₂_bound : m ≤ d₂ * 17 := by
     calc m = d₂ * (m / d₂) := (Nat.mul_div_cancel' hd₂_dvd).symm
-      _ ≤ d₂ * 17 := Nat.mul_le_mul_left d₂ he₂_le
+      _ ≤ d₂ * 17 := by gcongr
   have hprod_le : d₁ * d₂ ≤ m :=
     Nat.le_of_dvd (by grind)
       (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by rwa [Nat.Coprime]) hd₁_dvd hd₂_dvd)
