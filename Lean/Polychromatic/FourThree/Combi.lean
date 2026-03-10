@@ -197,7 +197,8 @@ private lemma add_lt_of_mod_add_lt {i s r n : ℕ} (hr : 0 < r)
   have h1 := Nat.mod_add_div i r
   have h2 := Nat.mod_lt i hr
   have h3 : i / r < n := Nat.div_lt_of_lt_mul hi
-  grind [Nat.mul_le_mul_left r (show i / r + 1 ≤ n by omega)]
+  have : i / r + 1 ≤ n := by omega
+  grind [Nat.mul_le_mul_left r this]
 
 /-- If `r * (n-1) ≤ i` and `r ≤ i % r + s`, then `r * n ≤ i + s`. -/
 private lemma ge_mul_of_mod_add_ge {i s r n : ℕ} (hr : 0 < r) (hn : 0 < n)
@@ -206,7 +207,8 @@ private lemma ge_mul_of_mod_add_ge {i s r n : ℕ} (hr : 0 < r) (hn : 0 < n)
   have := Nat.mod_add_div i r
   have := Nat.mod_lt i hr
   have : n - 1 ≤ i / r := by rw [Nat.le_div_iff_mul_le hr]; grind [mul_comm r (n - 1)]
-  grind [Nat.mul_le_mul_left r (show n ≤ i / r + 1 by omega)]
+  have : n ≤ i / r + 1 := by omega
+  grind [Nat.mul_le_mul_left r this]
 
 /-! ### Bridge lemmas
 
@@ -357,17 +359,15 @@ private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
   refine ⟨B ++ B, j, hBB, by grind, fun s hsle => ?_⟩
   rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
   by_cases hjs_lt : j + s < B.length
-  · exact bcv_eq_B A B h _ _ _ _ (by grind) (by grind)
-      (by rw [show i + s - A.length * h = (i - A.length * h) + s
-            from by grind]
-          exact add_mod_of_lt (by grind) hjs_lt)
+  · exact bcv_eq_B A B h k _ _ _ _ (by grind) (by grind)
+      (by have : i + s - A.length * h = (i - A.length * h) + s := by grind
+          rw [this]; exact add_mod_of_lt (by grind) hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
   · push_neg at hjs_lt
     have hjs_sub : j + s - B.length < B.length := by grind
-    exact bcv_eq_B A B h _ _ _ _ (by grind) (by grind)
-      (by rw [show i + s - A.length * h = (i - A.length * h) + s
-            from by grind]
-          exact add_mod_sub (by grind) hjs_lt (by grind))
+    exact bcv_eq_B A B h k _ _ _ _ (by grind) (by grind)
+      (by have : i + s - A.length * h = (i - A.length * h) + s := by grind
+          rw [this]; exact add_mod_sub (by grind) hjs_lt (by grind))
       hjs_sub
       (by rw [List.getElem?_append_right
             (by grind : B.length ≤ j + s)])
@@ -404,9 +404,7 @@ private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
       ge_mul_of_mod_add_ge hA hh_pos hi_lo hjs_lt
     have hmod : (i + s) % (A.length * h) = i + s - A.length * h :=
       by
-      conv_lhs =>
-        rw [show i + s = (i + s - A.length * h) + A.length * h
-          from (Nat.sub_add_cancel his_ge).symm]
+      conv_lhs => rw [← Nat.sub_add_cancel his_ge]
       rw [Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
     have hsub_eq := sub_region_eq hA hi_lo (by grind) hjs_lt
     have hsub_lt : i + s - A.length * h < A.length := by grind
@@ -445,10 +443,9 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
     have his_lt : (i - A.length * h) + s < B.length * k :=
       add_lt_of_mod_add_lt (by grind) hi_B hjs_lt
     rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
-    exact bcv_eq_B A B h _ _ _ _ (by grind) (by grind)
-      (by rw [show i + s - A.length * h =
-            (i - A.length * h) + s from by grind]
-          exact add_mod_of_lt (by grind) hjs_lt)
+    exact bcv_eq_B A B h k _ _ _ _ (by grind) (by grind)
+      (by have : i + s - A.length * h = (i - A.length * h) + s := by grind
+          rw [this]; exact add_mod_of_lt (by grind) hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
   · -- Wrapped to A region
     push_neg at hjs_lt
@@ -456,9 +453,7 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
       have := ge_mul_of_mod_add_ge (by grind : 0 < B.length)
         hk_pos hk_lo hjs_lt; grind
     have hmod : (i + s) % m = i + s - m := by
-      conv_lhs =>
-        rw [show i + s = (i + s - m) + m
-          from (Nat.sub_add_cancel his_ge).symm]
+      conv_lhs => rw [← Nat.sub_add_cancel his_ge]
       rw [Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
     have hsub_eq : i + s - m = j + s - B.length := by
       have key : (i - A.length * h) + s - B.length * k =
@@ -505,9 +500,7 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
       have := ge_mul_of_mod_add_ge (by grind : 0 < B.length)
         hk_pos hk_lo hjs_lt; grind
     have hmod : (i + s) % m = i + s - m := by
-      conv_lhs =>
-        rw [show i + s = (i + s - m) + m
-          from (Nat.sub_add_cancel his_ge).symm]
+      conv_lhs => rw [← Nat.sub_add_cancel his_ge]
       rw [Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
     have hsub_eq : i + s - m = j + s - B.length := by
       rw [← hm]
@@ -1062,7 +1055,7 @@ private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s)
   simp only [eqp_idx, if_neg hge]
   have hle : r * (q + 1) ≤ s * q + r := by nlinarith
   have hsub : s * q + r - r * (q + 1) = (s - r) * q := by
-    zify [hle, show r ≤ s from by omega]; ring
+    zify [hle, (by omega : r ≤ s)]; ring
   rw [hsub, Nat.mul_div_cancel _ hq]; omega
 
 -- General fact: consecutive ℕ quotients differ by 0 or 1
@@ -1286,11 +1279,11 @@ private lemma straddle1_gap2 (s g m : ℕ)
     have hg_pos : 0 < g := by
       have := gap_exceeds_ilen m s g hs h_lb 0
       have := equiEndpoint_strictMono
-        (by omega : s ≠ 0) hs_le (show 0 < 1 from by omega)
+        (by omega : s ≠ 0) hs_le one_pos
       omega
     have hvg_mod : (v + g) % m = g - 1 := by
-      rw [hv_val, show m - 1 + g = m + (g - 1) from by omega,
-        Nat.add_mod_left]
+      have : m - 1 + g = m + (g - 1) := by omega
+      rw [hv_val, this, Nat.add_mod_left]
       exact Nat.mod_eq_of_lt (by omega)
     rw [hjg_val, hvg_mod] at hvg_hi
     simp only [Nat.zero_add] at hvg_hi
@@ -1373,7 +1366,7 @@ private lemma straddle2_gap1 (s g m : ℕ)
       have : 0 < g := by
         have := gap_exceeds_ilen m s g hs h_lb 0
         have := equiEndpoint_strictMono
-          (by omega : s ≠ 0) hs_le (show 0 < 1 by omega)
+          (by omega : s ≠ 0) hs_le one_pos
         omega
       omega
     have hvg_mod : (v + g) % m = v + g - m := by
@@ -1384,7 +1377,8 @@ private lemma straddle2_gap1 (s g m : ℕ)
       rw [hjg0] at hvg_eq
       simp only [Nat.zero_add] at hvg_eq
       rw [hj₀_eq] at hv_hi
-      rw [show s - 2 + 1 = s - 1 from by omega] at hv_hi
+      have : s - 2 + 1 = s - 1 := by omega
+      rw [this] at hv_hi
       have hd1 := equiEndpoint_diff_ge m s (s - 1)
       rw [Nat.sub_add_cancel (by omega : 1 ≤ s), hep_s]
         at hd1
@@ -1486,7 +1480,7 @@ private lemma vg_mod_shift (v g d : ℕ) (_hm : 0 < m) :
   have h1 := Nat.add_mod (v + g) d m
   have h2 := Nat.add_mod ((v + g) % m) d m
   rw [Nat.mod_mod_of_dvd _ (dvd_refl m)] at h2
-  rw [show v + (g + d) = (v + g) + d from by ring, h1, h2]
+  rw [add_assoc, h1, h2]
 
 private lemma gap2_jg_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
@@ -1515,12 +1509,11 @@ private lemma eqp_idx_last (q r s : ℕ) (hq : 0 < q)
   rw [if_neg hge]
   have hnum : s * q + r - 1 - r * (q + 1) =
       (q - 1) + (s - r - 1) * q := by
-    zify [h_bd_le, show 1 ≤ s * q + r from by omega,
-      show 1 ≤ q from hq, show r ≤ s from by omega,
-      show 1 ≤ s - r from by omega]
+    zify [h_bd_le, (by omega : 1 ≤ s * q + r),
+      hq, (by omega : r ≤ s), (by omega : 1 ≤ s - r)]
     ring
   rw [hnum, Nat.add_mul_div_right _ _ hq,
-    show (q - 1) / q = 0 from Nat.div_eq_of_lt (by omega)]
+    Nat.div_eq_of_lt (by omega)]
   omega
 
 private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
