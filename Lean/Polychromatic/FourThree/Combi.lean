@@ -699,12 +699,7 @@ private lemma two_pairs_cover (j₁ j₂ : ℕ) (hne : j₁ % 3 ≠ j₂ % 3)
     (k : ℕ) (hk : k < 3) :
     k = j₁ % 3 ∨ k = (j₁ + 1) % 3 ∨
     k = j₂ % 3 ∨ k = (j₂ + 1) % 3 := by
-  have : j₁ % 3 = 0 ∨ j₁ % 3 = 1 ∨ j₁ % 3 = 2 := by omega
-  have : j₂ % 3 = 0 ∨ j₂ % 3 = 1 ∨ j₂ % 3 = 2 := by omega
-  have : k = 0 ∨ k = 1 ∨ k = 2 := by omega
-  rcases ‹j₁ % 3 = 0 ∨ _› with h1 | h1 | h1 <;>
-  rcases ‹j₂ % 3 = 0 ∨ _› with h2 | h2 | h2 <;>
-  rcases ‹k = 0 ∨ _› with hk' | hk' | hk' <;> simp_all <;> omega
+  omega
 
 private lemma lt_two' (n : ℕ) (h : n < 2) : n = 0 ∨ n = 1 := by omega
 
@@ -919,10 +914,8 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
   have mod_shift : ∀ d : ℕ, d = 1 ∨ d = 2 →
       (s + d) % s = 1 ∨ (s + d) % s = 2 := by
     intro d hd; rcases hd with h | h <;> subst h
-    · left; rw [show s + 1 = 1 + s from by omega,
-        Nat.add_mod_right]; exact Nat.mod_eq_of_lt (by omega)
-    · right; rw [show s + 2 = 2 + s from by omega,
-        Nat.add_mod_right]; exact Nat.mod_eq_of_lt (by omega)
+    · left; rw [Nat.add_comm, Nat.add_mod_right]; exact Nat.mod_eq_of_lt (by omega)
+    · right; rw [Nat.add_comm, Nat.add_mod_right]; exact Nat.mod_eq_of_lt (by omega)
   by_cases hvg_wrap : v + g < m
   · have hvg_eq : (v + g) % m = v + g :=
       Nat.mod_eq_of_lt hvg_wrap
@@ -1438,7 +1431,8 @@ private lemma vg_mod_shift (v g d : ℕ) (_hm : 0 < m) :
   have h1 := Nat.add_mod (v + g) d m
   have h2 := Nat.add_mod ((v + g) % m) d m
   rw [Nat.mod_mod_of_dvd _ (dvd_refl m)] at h2
-  rw [show v + (g + d) = (v + g) + d from by ring, h1, h2]
+  have : v + (g + d) = (v + g) + d := by ring
+  rw [this, h1, h2]
 
 private lemma gap2_jg_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
