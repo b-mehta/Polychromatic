@@ -928,7 +928,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
         Finpartition.equiEndpoint_hi (by omega : s ≠ 0)
       have hvg_lt_ep : v + g <
           Finpartition.equiEndpoint m s s := by
-        linarith
+        grind
       have hrange := idx_range_from_endpoints' m s
         (j₀+1) s (v+g) hpast hvg_lt_ep
         jg hvg_lo hvg_hi
@@ -1038,13 +1038,13 @@ private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
   · omega
   · right
     have hpeq : p + 1 = r * (q + 1) := by omega
-    have hr_pos : 0 < r := by nlinarith
+    have hr_pos : 0 < r := by grind
     have h_succ : (p + 1) / (q + 1) = r := by
       rw [hpeq]; exact Nat.mul_div_cancel r (by omega)
     have hne : p / (q + 1) ≠ r := by
       intro heq
       have := Nat.div_mul_le_self p (q + 1)
-      rw [heq] at this; linarith
+      rw [heq] at this; grind
     have hidx_p : p / (q + 1) = r - 1 := by
       have := div_step p (q + 1) (by omega); omega
     rw [hpeq, Nat.sub_self, Nat.zero_div, hidx_p]; omega
