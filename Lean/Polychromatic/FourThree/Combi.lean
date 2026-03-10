@@ -358,13 +358,13 @@ private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
   refine ⟨B ++ B, j, hBB, by grind, fun s hsle => ?_⟩
   rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
   by_cases hjs_lt : j + s < B.length
-  · exact bcv_eq_B A B h k _ _ _ _ (by grind) (by grind)
+  · exact bcv_eq_B A B h _ _ _ _ (by grind) (by grind)
       (by have : i + s - A.length * h = (i - A.length * h) + s := by grind
           rw [this]; exact add_mod_of_lt (by grind) hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
   · push_neg at hjs_lt
     have hjs_sub : j + s - B.length < B.length := by grind
-    exact bcv_eq_B A B h k _ _ _ _ (by grind) (by grind)
+    exact bcv_eq_B A B h _ _ _ _ (by grind) (by grind)
       (by have : i + s - A.length * h = (i - A.length * h) + s := by grind
           rw [this]; exact add_mod_sub (by grind) hjs_lt (by grind))
       hjs_sub
@@ -442,7 +442,7 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
     have his_lt : (i - A.length * h) + s < B.length * k :=
       add_lt_of_mod_add_lt (by grind) hi_B hjs_lt
     rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
-    exact bcv_eq_B A B h k _ _ _ _ (by grind) (by grind)
+    exact bcv_eq_B A B h _ _ _ _ (by grind) (by grind)
       (by have : i + s - A.length * h = (i - A.length * h) + s := by grind
           rw [this]; exact add_mod_of_lt (by grind) hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
