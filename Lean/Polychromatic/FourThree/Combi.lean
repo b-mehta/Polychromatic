@@ -3344,8 +3344,7 @@ private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
     (j + (S + V) % n) % n = ((j + S % n) % n + V) % n := by
-  have h2 : (j + S) % n = (j + S % n) % n := (Nat.add_mod_mod j S n).symm
-  rw [Nat.add_mod_mod, add_assoc, ← Nat.mod_add_mod (j + S) n V, h2]
+  rw [Nat.add_mod_mod, add_assoc, ← Nat.mod_add_mod (j + S) n V, ← Nat.add_mod_mod j S n]
 
 /-- Wrap case: if (S + V) % n = k₀ % n, then
     (j + k₀) % n = ((j + S % n) % n + V) % n -/
