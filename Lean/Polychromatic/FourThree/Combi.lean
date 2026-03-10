@@ -937,11 +937,14 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
   have mod_small : ∀ d : ℕ, d = 1 ∨ d = 2 →
       d % s = 1 ∨ d % s = 2 := by
     intro d hd; rcases hd with h | h <;> [left; right] <;>
-      subst h <;> omega
+      rw [h] <;> exact Nat.mod_eq_of_lt (by omega)
   have mod_shift : ∀ d : ℕ, d = 1 ∨ d = 2 →
       (s + d) % s = 1 ∨ (s + d) % s = 2 := by
-    intro d hd; rcases hd with h | h <;> [left; right] <;>
-      subst h <;> omega
+    intro d hd; rcases hd with h | h <;> subst h
+    · left; rw [show s + 1 = 1 + s from by omega,
+        Nat.add_mod_right]; exact Nat.mod_eq_of_lt (by omega)
+    · right; rw [show s + 2 = 2 + s from by omega,
+        Nat.add_mod_right]; exact Nat.mod_eq_of_lt (by omega)
   by_cases hvg_wrap : v + g < m
   · have hvg_eq : (v + g) % m = v + g :=
       Nat.mod_eq_of_lt hvg_wrap
@@ -1471,7 +1474,10 @@ private lemma straddle_boundary_color (q r s p : ℕ)
 
 private lemma vg_mod_shift (v g d : ℕ) (_hm : 0 < m) :
     (v + (g + d)) % m = ((v + g) % m + d) % m := by
-  rw [add_assoc, Nat.add_mod, Nat.add_mod, Nat.mod_mod_of_dvd _ (dvd_refl m)]
+  have h1 := Nat.add_mod (v + g) d m
+  have h2 := Nat.add_mod ((v + g) % m) d m
+  rw [Nat.mod_mod_of_dvd _ (dvd_refl m)] at h2
+  rw [show v + (g + d) = (v + g) + d from by ring, h1, h2]
 
 private lemma gap2_jg_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
@@ -1655,7 +1661,8 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         rcases eqp_idx_succ_lt_m m q r s v hq_pos hr_lt hs hm_eq
           hv_lt hj₀_lt with h | h
         · exact h
-        · rw [h1_same] at h; exact absurd h (by omega)
+        · rw [h1_same] at h
+          have : j₀ = s := h; omega
       obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r v
         hq_pos hv_lt hv1_lt h1_same j₀ rfl k.val k.isLt hk1
       exact ⟨d, by simp only [Finset.mem_insert,
@@ -1681,7 +1688,8 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
               hr_lt hs hm_eq hvg_lt
               hjg_lt with h | h
             · exact h
-            · rw [h2_same] at h; exact absurd h (by omega)
+            · rw [h2_same] at h
+              have : jg = s := h; omega
           obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
             ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg rfl
             k.val k.isLt (Or.inr (hk_eq ▸ hjg1_eq.symm))
@@ -1718,7 +1726,8 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
           hr_lt hs hm_eq hvg_lt
           hjg_lt with h | h
         · exact h
-        · rw [h2_same] at h; exact absurd h (by omega)
+        · rw [h2_same] at h
+          have : jg = s := h; omega
       obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
         ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg rfl
         k.val k.isLt hk2
@@ -1748,7 +1757,8 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
               hm_eq hv_lt
               hj₀_lt with h | h
             · exact h
-            · rw [h1_same] at h; exact absurd h (by omega)
+            · rw [h1_same] at h
+              have : j₀ = s := h; omega
           obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
             v hq_pos hv_lt hv1_lt h1_same j₀ rfl k.val k.isLt
             (Or.inr (hk_eq ▸ hj01_eq.symm))
@@ -3344,7 +3354,10 @@ private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
     (j + (S + V) % n) % n = ((j + S % n) % n + V) % n := by
-  rw [Nat.add_mod_mod, add_assoc, ← Nat.mod_add_mod (j + S) n V, ← Nat.add_mod_mod j S n]
+  have h1 : j + (S + V) = j + S + V := by grind
+  have h2 : (j + S) % n = (j + S % n) % n :=
+    (Nat.add_mod_mod j S n).symm
+  rw [Nat.add_mod_mod, h1, ← Nat.mod_add_mod (j + S) n V, h2]
 
 /-- Wrap case: if (S + V) % n = k₀ % n, then
     (j + k₀) % n = ((j + S % n) % n + V) % n -/
