@@ -3,17 +3,14 @@
 // differences specific to the Polychromatic site.
 
 // ---------------------------------------------------------------------------
-// Layout: center the wrapper (theme sets width:960px with no margin:auto).
-// The fixed-position header/footer move with the wrapper via left offset.
+// Layout: wider sidebar (170 -> 220px), narrower content (650 -> 600px).
+// Wrapped in a min-width query so the theme's responsive styles (which set
+// width:auto at <=960px) are not overridden.
 // ---------------------------------------------------------------------------
 
-.wrapper { margin: 0 auto; }
-
 @media screen and (min-width: 961px) {
-  header, footer {
-    width: 220px;
-    left: calc((100vw - 960px) / 2);
-  }
+  header { width: 220px; }
+  footer { width: 220px; }
 }
 
 // ---------------------------------------------------------------------------
