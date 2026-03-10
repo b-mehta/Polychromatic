@@ -1061,8 +1061,7 @@ private lemma mod_zero_step (a b : ℕ) (hb : 0 < b)
   have h2 := Nat.div_add_mod (a + 1) b
   have h3 := Nat.mod_lt a hb
   have h4 : b * ((a + 1) / b) = b * (a / b) + b := by grind
-  have h5 := Nat.zero_le ((a + 1) % b)
-  linarith
+  grind
 
 private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
@@ -1968,7 +1967,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 1 (g + 1)
       (by simp) (by simp) (by simp) rfl
       (by rw [hcv1]; exact color_shift_r r q)
-      (by have : v + (g + 1) = v + g + 1 := by ring
+      (by have : v + (g + 1) = v + g + 1 := by grind
           rw [this, hcvg1]; exact color_shift_q r q)
 
 /-- Subcase (1d) assembled: dispatches on `g % 3` and `m ∈ {3g, 3g+3}` (paper §4.1). -/
