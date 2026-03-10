@@ -937,16 +937,11 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
   have mod_small : ∀ d : ℕ, d = 1 ∨ d = 2 →
       d % s = 1 ∨ d % s = 2 := by
     intro d hd; rcases hd with h | h <;> [left; right] <;>
-      rw [h] <;> exact Nat.mod_eq_of_lt (by omega)
+      subst h <;> omega
   have mod_shift : ∀ d : ℕ, d = 1 ∨ d = 2 →
       (s + d) % s = 1 ∨ (s + d) % s = 2 := by
-    intro d hd; rcases hd with h | h <;> subst h
-    · left
-      rw [add_comm s 1, Nat.add_mod_right]
-      exact Nat.mod_eq_of_lt (by omega)
-    · right
-      rw [add_comm s 2, Nat.add_mod_right]
-      exact Nat.mod_eq_of_lt (by omega)
+    intro d hd; rcases hd with h | h <;> [left; right] <;>
+      subst h <;> omega
   by_cases hvg_wrap : v + g < m
   · have hvg_eq : (v + g) % m = v + g :=
       Nat.mod_eq_of_lt hvg_wrap
@@ -1476,10 +1471,7 @@ private lemma straddle_boundary_color (q r s p : ℕ)
 
 private lemma vg_mod_shift (v g d : ℕ) (_hm : 0 < m) :
     (v + (g + d)) % m = ((v + g) % m + d) % m := by
-  have h1 := Nat.add_mod (v + g) d m
-  have h2 := Nat.add_mod ((v + g) % m) d m
-  rw [Nat.mod_mod_of_dvd _ (dvd_refl m)] at h2
-  rw [add_assoc, h1, h2]
+  rw [add_assoc, Nat.add_mod, Nat.add_mod, Nat.mod_mod_of_dvd _ (dvd_refl m)]
 
 private lemma gap2_jg_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
@@ -3352,9 +3344,8 @@ private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
     (j + (S + V) % n) % n = ((j + S % n) % n + V) % n := by
-  have h1 : j + (S + V) = j + S + V := by grind
   have h2 : (j + S) % n = (j + S % n) % n := (Nat.add_mod_mod j S n).symm
-  rw [Nat.add_mod_mod, h1, ← Nat.mod_add_mod (j + S) n V, h2]
+  rw [Nat.add_mod_mod, add_assoc, ← Nat.mod_add_mod (j + S) n V, h2]
 
 /-- Wrap case: if (S + V) % n = k₀ % n, then
     (j + k₀) % n = ((j + S % n) % n + V) % n -/
