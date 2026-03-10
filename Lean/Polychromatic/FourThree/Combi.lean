@@ -701,47 +701,6 @@ lemma case_one_small_g (g : ℕ) (hm : m ≥ 289) (hg : g ∈ ({2, 3, 4} : Finse
   · exact table1_0134 m (by grind)
   · exact table1_0145 m (by grind)
 
-private lemma mod3_witness' {s k : ℕ} (hs : s < 3) (hk : k < 3) :
-    ((k + 3 - s) % 3 = 0 → s = k) ∧
-    ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
-    ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by grind
-
-private lemma endgame_witness' {g : ℕ} {c : ℕ → ℕ}
-    {v s : ℕ} {k : Fin 3} (hs : s < 3)
-    (a₀ a₁ a₂ : ℕ)
-    (ha₀ : a₀ ∈ ({0, 1, g, g + 1} : Finset ℕ))
-    (ha₁ : a₁ ∈ ({0, 1, g, g + 1} : Finset ℕ))
-    (ha₂ : a₂ ∈ ({0, 1, g, g + 1} : Finset ℕ))
-    (hc₀ : c (v + a₀) = s)
-    (hc₁ : c (v + a₁) = (s + 1) % 3)
-    (hc₂ : c (v + a₂) = (s + 2) % 3) :
-    ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by
-  obtain ⟨h1, h2, h3⟩ := mod3_witness' hs k.isLt
-  set d := (k.val + 3 - s) % 3
-  have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
-  rcases this with h | h | h
-  exacts [⟨a₀, ha₀, hc₀ ▸ h1 h⟩, ⟨a₁, ha₁, hc₁ ▸ h2 h⟩, ⟨a₂, ha₂, hc₂ ▸ h3 h⟩]
-
-/-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
-private lemma lift_coloring_witness' {m g : ℕ} [NeZero m] [Fact (1 < m)]
-    (hg_lt : g + 1 < m) {c : ℕ → ℕ} (hc_lt : ∀ p, c p < 3)
-    (hc_period : ∀ p, c (p % m) = c p)
-    {n : ZMod m} {k : Fin 3}
-    (h : ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (n.val + a) = k.val) :
-    ∃ s ∈ ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)),
-      (⟨c (n + s).val, hc_lt _⟩ : Fin 3) = k := by
-  obtain ⟨a, ha, hca⟩ := h
-  have ha_lt : a < m := by
-    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
-    rcases ha with rfl | rfl | rfl | rfl <;> grind
-  exact ⟨(a : ZMod m),
-    by simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
-       rcases ha with rfl | rfl | rfl | rfl <;> simp,
-    by ext; change c (n + (a : ZMod m)).val = k.val
-       have : (n + (a : ZMod m)).val = (n.val + a) % m := by
-         rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt]
-       rw [this, hc_period, hca]⟩
-
 /-! ### Helper lemmas for case 1b -/
 
 /-- Two pairs of consecutive mod-3 values with different phases cover {0,1,2}. -/
@@ -1241,29 +1200,10 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
     have := div_step (p - r * (q + 1)) q hq
     omega
 
-private lemma gap_mod_cases (s j₀ jg : ℕ) (_hs : 0 < s)
+private lemma gap_mod_cases_gen (s j₀ jg d : ℕ) (_hs : 0 < s)
     (hj₀ : j₀ < s) (hjg : jg < s)
-    (hmod : (jg + s - j₀) % s = 1) :
-    jg + s - j₀ = 1 ∨ jg + s - j₀ = s + 1 := by
-  have hd_hi : jg + s - j₀ < 2 * s := by omega
-  have hdiv := Nat.div_add_mod (jg + s - j₀) s
-  rw [hmod] at hdiv
-  have hq_lt : (jg + s - j₀) / s < 2 := by
-    by_contra h; push_neg at h
-    have := Nat.mul_le_mul_left s h; omega
-  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
-  · left
-    have : s * ((jg + s - j₀) / s) = 0 := by rw [h]; ring
-    omega
-  · right
-    have hq1 : (jg + s - j₀) / s = 1 := by omega
-    have : s * ((jg + s - j₀) / s) = s := by rw [hq1]; ring
-    omega
-
-private lemma gap_mod_cases2 (s j₀ jg : ℕ) (_hs : 0 < s)
-    (hj₀ : j₀ < s) (hjg : jg < s)
-    (hmod : (jg + s - j₀) % s = 2) :
-    jg + s - j₀ = 2 ∨ jg + s - j₀ = s + 2 := by
+    (hmod : (jg + s - j₀) % s = d) (_hd : d < s) :
+    jg + s - j₀ = d ∨ jg + s - j₀ = s + d := by
   have hd_hi : jg + s - j₀ < 2 * s := by omega
   have hdiv := Nat.div_add_mod (jg + s - j₀) s
   rw [hmod] at hdiv
@@ -1306,8 +1246,8 @@ private lemma straddle1_gap2 (s g m : ℕ)
   have hgap1 : (jg + s - j₀) % s = 1 := by tauto
   have hv_eq : v + 1 = equiEndpoint m s (j₀ + 1) := by
     omega
-  have hjg_cases := gap_mod_cases s j₀ jg hs hj₀_lt hjg_lt
-    hgap1
+  have hjg_cases := gap_mod_cases_gen s j₀ jg 1 hs hj₀_lt hjg_lt
+    hgap1 (by omega)
   have hq_pos : 0 < m / s := by
     by_contra h; push_neg at h; simp at h; omega
   have hg_lt_m : g < m := by
@@ -1400,8 +1340,8 @@ private lemma straddle2_gap1 (s g m : ℕ)
     have : s * (m / s) ≤ m := by
       rw [mul_comm]; exact Nat.div_mul_le_self m s
     omega
-  have hjg_cases := gap_mod_cases2 s j₀ jg hs hj₀_lt hjg_lt
-    hgap2
+  have hjg_cases := gap_mod_cases_gen s j₀ jg 2 hs hj₀_lt hjg_lt
+    hgap2 (by omega)
   have hep0 : equiEndpoint m s 0 = 0 := by
     simp [equiEndpoint]
   have hep_s : equiEndpoint m s s = m :=
@@ -1555,27 +1495,15 @@ private lemma gap2_jg_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
     (hgap2 : (jg + s - j₀) % s = 2) :
     (jg + 1) % 3 = j₀ % 3 := by
-  obtain ⟨d3, hd3⟩ := hs3
-  have hdiv := Nat.div_add_mod (jg + s - j₀) s
-  have : (jg + s - j₀) / s ≤ 1 := by
-    rw [Nat.div_le_iff_le_mul (by omega : 0 < s)]; omega
-  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
-  · rw [h] at hdiv; omega
-  · have : (jg + s - j₀) / s = 1 := by omega
-    rw [this] at hdiv; omega
+  rcases gap_mod_cases_gen s j₀ jg 2 (by omega) hj₀ hjg hgap2 (by omega) with h | h <;>
+    obtain ⟨d3, hd3⟩ := hs3 <;> omega
 
 private lemma gap1_j0_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
     (hgap1 : (jg + s - j₀) % s = 1) :
     (j₀ + 1) % 3 = jg % 3 := by
-  obtain ⟨d3, hd3⟩ := hs3
-  have hdiv := Nat.div_add_mod (jg + s - j₀) s
-  have : (jg + s - j₀) / s ≤ 1 := by
-    rw [Nat.div_le_iff_le_mul (by omega : 0 < s)]; omega
-  rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
-  · rw [h] at hdiv; omega
-  · have : (jg + s - j₀) / s = 1 := by omega
-    rw [this] at hdiv; omega
+  rcases gap_mod_cases_gen s j₀ jg 1 (by omega) hj₀ hjg hgap1 (by omega) with h | h <;>
+    obtain ⟨d3, hd3⟩ := hs3 <;> omega
 
 private lemma eqp_idx_last (q r s : ℕ) (hq : 0 < q)
     (hr : r < s) (hs : 0 < s) :
@@ -1597,6 +1525,47 @@ private lemma eqp_idx_last (q r s : ℕ) (hq : 0 < q)
   rw [hnum, Nat.add_mul_div_right _ _ hq,
     show (q - 1) / q = 0 from Nat.div_eq_of_lt (by omega)]
   omega
+
+private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
+    ((k + 3 - s) % 3 = 0 → s = k) ∧
+    ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
+    ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by grind
+
+private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ}
+    {v s : ℕ} {k : Fin 3} (hs : s < 3)
+    (a₀ a₁ a₂ : ℕ)
+    (ha₀ : a₀ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (ha₁ : a₁ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (ha₂ : a₂ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (hc₀ : c (v + a₀) = s)
+    (hc₁ : c (v + a₁) = (s + 1) % 3)
+    (hc₂ : c (v + a₂) = (s + 2) % 3) :
+    ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by
+  obtain ⟨h1, h2, h3⟩ := mod3_witness hs k.isLt
+  set d := (k.val + 3 - s) % 3
+  have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
+  rcases this with h | h | h
+  exacts [⟨a₀, ha₀, hc₀ ▸ h1 h⟩, ⟨a₁, ha₁, hc₁ ▸ h2 h⟩, ⟨a₂, ha₂, hc₂ ▸ h3 h⟩]
+
+/-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
+private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
+    (hg_lt : g + 1 < m) {c : ℕ → ℕ} (hc_lt : ∀ p, c p < 3)
+    (hc_period : ∀ p, c (p % m) = c p)
+    {n : ZMod m} {k : Fin 3}
+    (h : ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (n.val + a) = k.val) :
+    ∃ s ∈ ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)),
+      (⟨c (n + s).val, hc_lt _⟩ : Fin 3) = k := by
+  obtain ⟨a, ha, hca⟩ := h
+  have ha_lt : a < m := by
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
+    rcases ha with rfl | rfl | rfl | rfl <;> grind
+  exact ⟨(a : ZMod m),
+    by simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
+       rcases ha with rfl | rfl | rfl | rfl <;> simp,
+    by ext; change c (n + (a : ZMod m)).val = k.val
+       have : (n + (a : ZMod m)).val = (n.val + a) % m := by
+         rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt]
+       rw [this, hc_period, hca]⟩
 
 /-- Subcase (1b): interval coloring strategy.
     Let s be the smallest multiple of 3 such that g > ⌈m/s⌉. Split Z_m into s
@@ -1633,7 +1602,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
   have hc_period : ∀ p, c (p % m) = c p := by
     intro p; simp only [c]; rw [Nat.mod_mod_of_dvd p (dvd_refl m)]
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
-    lift_coloring_witness' hg1_lt_m hc_lt3 hc_period ?_⟩
+    lift_coloring_witness hg1_lt_m hc_lt3 hc_period ?_⟩
   set v := n.val
   have hv_lt : v < m := ZMod.val_lt n
   -- c(p) ∈ {idx(p%m)%3, (idx(p%m)+1)%3}
@@ -1993,47 +1962,6 @@ private lemma color_shift_r (r q : ℕ) :
 private lemma color_shift_q (r q : ℕ) :
     (r % 3 + (3 - (q + 1) % 3)) % 3 =
       ((r % 3 + (3 - q % 3)) % 3 + 2) % 3 := by omega
-
-private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
-    ((k + 3 - s) % 3 = 0 → s = k) ∧
-    ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
-    ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by grind
-
-private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ}
-    {v s : ℕ} {k : Fin 3} (hs : s < 3)
-    (a₀ a₁ a₂ : ℕ)
-    (ha₀ : a₀ ∈ ({0, 1, g, g + 1} : Finset ℕ))
-    (ha₁ : a₁ ∈ ({0, 1, g, g + 1} : Finset ℕ))
-    (ha₂ : a₂ ∈ ({0, 1, g, g + 1} : Finset ℕ))
-    (hc₀ : c (v + a₀) = s)
-    (hc₁ : c (v + a₁) = (s + 1) % 3)
-    (hc₂ : c (v + a₂) = (s + 2) % 3) :
-    ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by
-  obtain ⟨h1, h2, h3⟩ := mod3_witness hs k.isLt
-  set d := (k.val + 3 - s) % 3
-  have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
-  rcases this with h | h | h
-  exacts [⟨a₀, ha₀, hc₀ ▸ h1 h⟩, ⟨a₁, ha₁, hc₁ ▸ h2 h⟩, ⟨a₂, ha₂, hc₂ ▸ h3 h⟩]
-
-/-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
-private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
-    (hg_lt : g + 1 < m) {c : ℕ → ℕ} (hc_lt : ∀ p, c p < 3)
-    (hc_period : ∀ p, c (p % m) = c p)
-    {n : ZMod m} {k : Fin 3}
-    (h : ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (n.val + a) = k.val) :
-    ∃ s ∈ ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)),
-      (⟨c (n + s).val, hc_lt _⟩ : Fin 3) = k := by
-  obtain ⟨a, ha, hca⟩ := h
-  have ha_lt : a < m := by
-    simp only [Finset.mem_insert, Finset.mem_singleton] at ha
-    rcases ha with rfl | rfl | rfl | rfl <;> grind
-  exact ⟨(a : ZMod m),
-    by simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
-       rcases ha with rfl | rfl | rfl | rfl <;> simp,
-    by ext; change c (n + (a : ZMod m)).val = k.val
-       have : (n + (a : ZMod m)).val = (n.val + a) % m := by
-         rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt]
-       rw [this, hc_period, hca]⟩
 
 /-- (1d), m = 3g, g ≡ 0 (mod 3): diagonal coloring `n ↦ (n%3 + n/g) % 3`. -/
 lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
