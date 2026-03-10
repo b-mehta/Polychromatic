@@ -1183,10 +1183,7 @@ private lemma equiEndpoint_diff_ge (m s j : ℕ) :
     m / s ≤ Finpartition.equiEndpoint m s (j + 1) -
         Finpartition.equiEndpoint m s j := by
   simp only [Finpartition.equiEndpoint]
-  have h1 : m / s * (j + 1) = m / s * j + m / s := by ring
-  have h2 : min (m % s) j ≤ min (m % s) (j + 1) := by
-    apply min_le_min <;> omega
-  omega
+  grind
 
 open Finpartition in
 private lemma straddle1_gap2 (s g m : ℕ)
@@ -1262,10 +1259,9 @@ private lemma straddle1_gap2 (s g m : ℕ)
       · have : min (m % s) 1 = 1 := by omega
         rw [this]
         apply (Nat.le_div_iff_mul_le hs).mpr
-        have hprod : (m / s + 1) * s = m / s * s + s := by
-          ring
-        have hdam := Nat.div_add_mod m s
-        have hmul : m / s * s = s * (m / s) := by ring
+        have hprod : (m / s + 1) * s = m / s * s + s := by ring
+        have := Nat.div_add_mod m s
+        have : m / s * s = s * (m / s) := by ring
         rw [hprod]; omega
     omega
 
