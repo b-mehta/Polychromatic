@@ -363,7 +363,103 @@ private lemma coverage_assembly (s g m q r : ℕ)
     ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ),
       (eqp_idx q r ((v + a) % m) +
         eqp_off q r ((v + a) % m) % 2) % 3 = k.val := by
-  sorry
+  have hm_pos : 0 < m := by omega
+  -- Step 1: which pair covers k?
+  rcases two_pairs_cover_split j₀ jg hphase k.val k.isLt with hk1 | hk2
+  · -- Pair 1 covers k: k ∈ {j₀%3, (j₀+1)%3}
+    -- Case split: does pair 1 straddle?
+    rcases eqp_idx_step q r v hq_pos with h1_same | h1_step
+    · -- Pair 1 non-straddle: v+1 < m since idx doesn't jump to s
+      have hv1_lt : v + 1 < m := by
+        rcases eqp_idx_succ_lt_m q r s v hq_pos hr_lt hs hm_eq hv
+          (hj₀_def ▸ hj₀_lt)
+          with h | h
+        · exact h
+        · rw [h1_same, ← hj₀_def] at h; omega
+      obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness q r v hq_pos
+        hv hv1_lt h1_same j₀ hj₀_def k.val k.isLt hk1
+      exact ⟨d, by simp only [Finset.mem_insert, Finset.mem_singleton]
+                    at hd_mem ⊢; omega, hd_eq⟩
+    · -- Pair 1 straddles → gap = 2
+      have hgap2 := straddle1_gap2 s g m hs hs3 hs_le h_lb h_ub q hq r hr
+        hq_pos hr_lt v hv j₀ jg hj₀_def hjg_def hj₀_lt hjg_lt
+        (hj₀_def ▸ h1_step) hv_lo hv_hi hvg_lo hvg_hi hgap
+      have hjg1_eq := gap2_jg_mod3 s j₀ jg hs3 hj₀_lt hjg_lt hgap2
+      rcases hk1 with hk_eq | hk_eq
+      · -- k = j₀%3 = (jg+1)%3: pair 2 must be non-straddle
+        rcases eqp_idx_step q r ((v + g) % m) hq_pos with h2_same | h2_step
+        · -- Pair 2 non-straddle → witness a = g+d
+          have hvg_lt : (v + g) % m < m := Nat.mod_lt _ hm_pos
+          have hvg1_lt : (v + g) % m + 1 < m := by
+            rcases eqp_idx_succ_lt_m q r s ((v + g) % m) hq_pos hr_lt hs
+              hm_eq hvg_lt (hjg_def ▸ hjg_lt) with h | h
+            · exact h
+            · rw [h2_same, ← hjg_def] at h; omega
+          obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness q r
+            ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg hjg_def
+            k.val k.isLt (Or.inr (hk_eq ▸ hjg1_eq.symm))
+          refine ⟨g + d, ?_, ?_⟩
+          · simp only [Finset.mem_insert, Finset.mem_singleton] at hd_mem ⊢
+            omega
+          · rw [vg_mod_shift v g d hm_pos]; exact hd_eq
+        · -- Pair 2 straddles → contradiction: gap would be 1
+          have hgap1 := straddle2_gap1 s g m hs hs3 hs_le h_lb h_ub q hq
+            r hr hq_pos hr_lt v hv j₀ jg hj₀_def hjg_def hj₀_lt hjg_lt
+            h2_step hv_lo hv_hi hvg_lo hvg_hi hgap
+          omega
+      · -- k = (j₀+1)%3: witness a = 1 via straddle_boundary_color
+        exact ⟨1, by simp, by
+          rw [show v + 1 = v + 1 from rfl]
+          exact (straddle_boundary_color q r s v hq_pos hr_lt hs hs3
+            hm_eq hv h1_step j₀ hj₀_def hj₀_lt).symm ▸ hk_eq.symm⟩
+  · -- Pair 2 covers k: k ∈ {jg%3, (jg+1)%3}
+    -- Case split: does pair 2 straddle?
+    rcases eqp_idx_step q r ((v + g) % m) hq_pos with h2_same | h2_step
+    · -- Pair 2 non-straddle
+      have hvg_lt : (v + g) % m < m := Nat.mod_lt _ hm_pos
+      have hvg1_lt : (v + g) % m + 1 < m := by
+        rcases eqp_idx_succ_lt_m q r s ((v + g) % m) hq_pos hr_lt hs
+          hm_eq hvg_lt (hjg_def ▸ hjg_lt) with h | h
+        · exact h
+        · rw [h2_same, ← hjg_def] at h; omega
+      obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness q r
+        ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg hjg_def
+        k.val k.isLt hk2
+      -- Witness is a = g + d, need (v + (g + d)) % m = ((v+g)%m + d) % m
+      refine ⟨g + d, ?_, ?_⟩
+      · simp only [Finset.mem_insert, Finset.mem_singleton] at hd_mem ⊢
+        omega
+      · rw [vg_mod_shift v g d hm_pos]; exact hd_eq
+    · -- Pair 2 straddles → gap = 1
+      have hgap1 := straddle2_gap1 s g m hs hs3 hs_le h_lb h_ub q hq r hr
+        hq_pos hr_lt v hv j₀ jg hj₀_def hjg_def hj₀_lt hjg_lt
+        h2_step hv_lo hv_hi hvg_lo hvg_hi hgap
+      have hj01_eq := gap1_j0_mod3 s j₀ jg hs3 hj₀_lt hjg_lt hgap1
+      rcases hk2 with hk_eq | hk_eq
+      · -- k = jg%3 = (j₀+1)%3: pair 1 must be non-straddle
+        rcases eqp_idx_step q r v hq_pos with h1_same | h1_step
+        · -- Pair 1 non-straddle → witness a = d
+          have hv1_lt : v + 1 < m := by
+            rcases eqp_idx_succ_lt_m q r s v hq_pos hr_lt hs hm_eq hv
+              (hj₀_def ▸ hj₀_lt) with h | h
+            · exact h
+            · rw [h1_same, ← hj₀_def] at h; omega
+          obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness q r v hq_pos
+            hv hv1_lt h1_same j₀ hj₀_def k.val k.isLt
+            (Or.inr (hk_eq ▸ hj01_eq.symm))
+          exact ⟨d, by simp only [Finset.mem_insert, Finset.mem_singleton]
+                      at hd_mem ⊢; omega, hd_eq⟩
+        · -- Pair 1 straddles → contradiction: gap would be 2
+          have hgap2 := straddle1_gap2 s g m hs hs3 hs_le h_lb h_ub q hq
+            r hr hq_pos hr_lt v hv j₀ jg hj₀_def hjg_def hj₀_lt hjg_lt
+            (hj₀_def ▸ h1_step) hv_lo hv_hi hvg_lo hvg_hi hgap
+          omega
+      · -- k = (jg+1)%3: witness a = g+1 via straddle_boundary_color
+        have hvg_lt : (v + g) % m < m := Nat.mod_lt _ hm_pos
+        refine ⟨g + 1, by simp, ?_⟩
+        rw [vg_mod_shift v g 1 hm_pos]
+        exact (straddle_boundary_color q r s ((v + g) % m) hq_pos hr_lt
+          hs hs3 hm_eq hvg_lt h2_step jg hjg_def hjg_lt).symm ▸ hk_eq.symm
 
 /-! ### Verification: check coverage_assembly fills the sorry in case_one_interval
 
