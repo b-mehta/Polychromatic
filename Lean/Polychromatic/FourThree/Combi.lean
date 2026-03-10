@@ -722,25 +722,10 @@ private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
   rcases hgap with hmod | hmod <;>
     rcases lt_two' _ hqlt with hq | hq <;>
     rw [hq, hmod] at hdam
-  · have : j₀ = 3 * t - 1 := by omega
-    have : jg = 0 := by omega
-    rw [‹jg = 0›, ‹j₀ = 3 * t - 1›]
-    have h3t1 : 3 * t - 1 = 3 * (t - 1) + 2 := by omega
-    rw [h3t1, Nat.mul_add_mod]; omega
-  · have : jg = j₀ + 1 := by omega
-    rw [this]; omega
-  · by_cases hj₀ : j₀ = 3 * t - 1
-    · have : jg = 1 := by omega
-      rw [this, hj₀]
-      have h3t1 : 3 * t - 1 = 3 * (t - 1) + 2 := by omega
-      rw [h3t1, Nat.mul_add_mod]; omega
-    · have : j₀ = 3 * t - 2 := by omega
-      have : jg = 0 := by omega
-      rw [‹jg = 0›, ‹j₀ = 3 * t - 2›]
-      have h3t2 : 3 * t - 2 = 3 * (t - 1) + 1 := by omega
-      rw [h3t2, Nat.mul_add_mod]; omega
-  · have : jg = j₀ + 2 := by omega
-    rw [this]; omega
+  · grind [Nat.mul_add_mod]
+  · grind
+  · grind [Nat.mul_add_mod]
+  · grind
 
 open Finpartition in
 private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
@@ -796,16 +781,9 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
     have hd_lt : d < s - r := by
       rw [Nat.div_lt_iff_lt_mul hq_pos]; omega
     set j := r + d
-    have hring_j : q * j + r = bd + q * d := by
-      have : q * j = q * r + q * d := by ring
-      have : bd = r * q + r := by ring
-      linarith
+    have hring_j : q * j + r = bd + q * d := by grind
     have hring_j1 :
-        q * (j + 1) + r = bd + q * d + q := by
-      have : q * (j + 1) = q * r + q * d + q := by
-        ring
-      have : bd = r * q + r := by ring
-      linarith
+        q * (j + 1) + r = bd + q * d + q := by grind
     have hle : q * j + r ≤ p := by omega
     have hub : p < q * (j + 1) + r := by omega
     have hr_le_j : r ≤ j := Nat.le_add_right r d
@@ -1198,13 +1176,8 @@ private lemma gap_mod_cases_gen (s j₀ jg d : ℕ) (_hs : 0 < s)
     by_contra h; push_neg at h
     have := Nat.mul_le_mul_left s h; omega
   rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
-  · left
-    have : s * ((jg + s - j₀) / s) = 0 := by rw [h]; ring
-    omega
-  · right
-    have hq1 : (jg + s - j₀) / s = 1 := by omega
-    have : s * ((jg + s - j₀) / s) = s := by rw [hq1]; ring
-    omega
+  · left; grind
+  · right; grind
 
 private lemma equiEndpoint_diff_ge (m s j : ℕ) :
     m / s ≤ Finpartition.equiEndpoint m s (j + 1) -
@@ -1236,13 +1209,9 @@ private lemma straddle1_gap2 (s g m : ℕ)
   have hjg_cases := gap_mod_cases_gen s j₀ jg 1 hs hj₀_lt hjg_lt
     hgap1 (by omega)
   have hq_pos : 0 < m / s := by
-    by_contra h; push_neg at h; simp at h; omega
+    grind
   have hg_lt_m : g < m := by
-    have : 2 * (m / s) < s * (m / s) :=
-      Nat.mul_lt_mul_of_pos_right (by omega) hq_pos
-    have : s * (m / s) ≤ m := by
-      rw [mul_comm]; exact Nat.div_mul_le_self m s
-    omega
+    have := Nat.div_mul_le_self m s; nlinarith
   have hep_s : equiEndpoint m s s = m :=
     equiEndpoint_hi (by omega)
   by_cases hj₀_lt_s : j₀ + 1 < s
@@ -1320,13 +1289,9 @@ private lemma straddle2_gap1 (s g m : ℕ)
   have hvg_eq : (v + g) % m + 1 =
       equiEndpoint m s (jg + 1) := by omega
   have hq_pos : 0 < m / s := by
-    by_contra h; push_neg at h; simp at h; omega
+    grind
   have hg_lt_m : g < m := by
-    have : 2 * (m / s) < s * (m / s) :=
-      Nat.mul_lt_mul_of_pos_right (by omega) hq_pos
-    have : s * (m / s) ≤ m := by
-      rw [mul_comm]; exact Nat.div_mul_le_self m s
-    omega
+    have := Nat.div_mul_le_self m s; nlinarith
   have hjg_cases := gap_mod_cases_gen s j₀ jg 2 hs hj₀_lt hjg_lt
     hgap2 (by omega)
   have hep0 : equiEndpoint m s 0 = 0 := by
