@@ -224,8 +224,7 @@ private lemma bcv_eq_A (A B : List (Fin 3)) (h : ℕ)
     XY[js]? = some (blockColorVal A B h p) := by
   rw [hxy, List.getElem?_eq_getElem hidx]
   simp only [blockColorVal, if_pos hp]
-  rw [show p % A.length = idx from hmod, List.getElem?_eq_getElem hidx,
-    Option.getD_some]
+  rw [hmod, List.getElem?_eq_getElem hidx, Option.getD_some]
 
 /-- If `XY[js]? = B[idx]?` and `p` is in the B-region with
     `(p - |A|*h) % |B| = idx`, then `XY[js]? = some (blockColorVal A B h p)`. -/
@@ -237,8 +236,7 @@ private lemma bcv_eq_B (A B : List (Fin 3)) (h : ℕ)
     XY[js]? = some (blockColorVal A B h p) := by
   rw [hxy, List.getElem?_eq_getElem hidx]
   simp only [blockColorVal, if_neg hp]
-  rw [show (p - A.length * h) % B.length = idx from hmod,
-    List.getElem?_eq_getElem hidx, Option.getD_some]
+  rw [hmod, List.getElem?_eq_getElem hidx, Option.getD_some]
 
 /-- When `i = j + q` and `j + s ≥ r`, then `i + s - (q + r) = j + s - r`. -/
 private lemma sub_add_eq {i j s r q : ℕ} (hge : r ≤ j + s)
@@ -260,7 +258,8 @@ private lemma sub_region_eq {i s r h : ℕ} (hr : 0 < r)
   set Q := r * (i / r) with hQ_def
   have hQr : r * h = Q + r := by
     rw [hQ_def, hq]
-    conv_lhs => rw [show h = (h - 1) + 1 from by grind, Nat.mul_add, Nat.mul_one]
+    have : h = (h - 1) + 1 := by grind
+    conv_lhs => rw [this, Nat.mul_add, Nat.mul_one]
   rw [hQr]
   exact sub_add_eq hjs_ge hdiv
 
@@ -951,12 +950,10 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
       (s + d) % s = 1 ∨ (s + d) % s = 2 := by
     intro d hd; rcases hd with h | h <;> subst h
     · left
-      rw [show s + 1 = 1 + s from by omega,
-        Nat.add_mod_right]
+      rw [add_comm s 1, Nat.add_mod_right]
       exact Nat.mod_eq_of_lt (by omega)
     · right
-      rw [show s + 2 = 2 + s from by omega,
-        Nat.add_mod_right]
+      rw [add_comm s 2, Nat.add_mod_right]
       exact Nat.mod_eq_of_lt (by omega)
   by_cases hvg_wrap : v + g < m
   · have hvg_eq : (v + g) % m = v + g :=
@@ -984,7 +981,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
   · push_neg at hvg_wrap
     have hvg_eq : (v + g) % m = v + g - m := by
       conv_lhs =>
-        rw [show v + g = (v + g - m) + m from by omega]
+        rw [← Nat.sub_add_cancel (by omega : m ≤ v + g)]
       rw [Nat.add_mod_right]
       exact Nat.mod_eq_of_lt (by omega)
     rw [hvg_eq] at hvg_lo hvg_hi
@@ -2331,7 +2328,7 @@ private lemma f_ne_missing_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
 -- Adjacent cycles have different missing colors.
 private lemma missing_color_ne_succ (d₁ : ℕ) [NeZero d₁] (hd₁ : d₁ ≥ 2)
     (i : ZMod d₁) : missing_color d₁ i ≠ missing_color d₁ (i + 1) := by
-  simp only [missing_color, zmod_val_add_one d₁ hd₁ i]; grind [Fin.ext_iff]
+  grind [missing_color, zmod_val_add_one d₁ hd₁ i, Fin.ext_iff]
 
 -- cycle_coloring(i,j) ≠ cycle_coloring(i,j+1) when parity flips.
 private lemma f_alt_color (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
@@ -3270,18 +3267,18 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
   let f : ZMod d₁ → ℕ := fun i =>
     if i.val < q then e₁ - u else if i.val = q then u + r else u
   refine ⟨f, fun i => ?_, ?_⟩
-  · simp only [f]; grind
+  · grind
   · let g : ZMod d₁ → ℕ := fun i =>
       if i.val < q then w else if i.val = q then r else 0
     have hfg : ∀ i : ZMod d₁, f i = u + g i := by
-      intro i; simp only [f, g]; grind
+      intro i; grind
     have hsum_f : Finset.univ.sum f = d₁ * u + Finset.univ.sum g := by
       conv_lhs => arg 2; ext i; rw [hfg i]
       simp [Finset.sum_add_distrib, Finset.card_univ, ZMod.card]
     have hsum_g : Finset.univ.sum g = q * w + r := by
       have hg_split : ∀ i : ZMod d₁,
           g i = (if i.val < q then w else 0) + (if i.val = q then r else 0) := by
-        intro i; simp only [g]; grind
+        intro i; grind
       rw [Finset.sum_congr rfl (fun i _ => hg_split i), Finset.sum_add_distrib]
       congr 1
       · simp only [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const,
@@ -3366,7 +3363,7 @@ private lemma zmod_filter_sum_last {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i 
 /-- Position shift by 1: adding 1 to ZMod coordinate shifts position by 1 mod n. -/
 private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
     ((j + 1).val + c) % n = ((j.val + c) % n + 1) % n := by
-  rw [ZMod.val_add_one, Nat.mod_add_mod, Nat.mod_add_mod]; congr 1; grind
+  rw [ZMod.val_add_one, Nat.mod_add_mod, Nat.mod_add_mod]; grind
 
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
