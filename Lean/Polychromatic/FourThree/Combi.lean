@@ -741,8 +741,7 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
   have hbd_le_m : bd + (s - r) * q = m := by
     have : (s - r) * q + r * q = s * q := by
       rw [← Nat.add_mul, Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
-    have : bd = r * q + r := by ring
-    linarith
+    grind
   split
   · rename_i hlt
     set j := p / (q + 1)
@@ -753,11 +752,8 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
       Nat.div_add_mod p (q + 1)
     have hmod : p % (q + 1) < q + 1 :=
       Nat.mod_lt p hq1_pos
-    have hr1 : (q + 1) * j = q * j + j := by ring
-    have hr2 : (q + 1) * j + (q + 1) =
-        q * (j + 1) + (j + 1) := by ring
-    have hle : q * j + j ≤ p := by omega
-    have hub : p < q * (j + 1) + (j + 1) := by omega
+    have hle : q * j + j ≤ p := by grind
+    have hub : p < q * (j + 1) + (j + 1) := by grind
     refine ⟨by omega, ?_, ?_⟩
     · unfold equiEndpoint
       rw [min_eq_right (by omega : j ≤ r)]
@@ -806,9 +802,8 @@ private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s)
   set q := m / s; set r := m % s
   by_cases hr : j < r
   · rw [if_pos hr]
-    have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
-    have : (q + 1) * s = s * q + s := by ring
-    have : (q + 1) * s ≤ m + s - 1 := by omega
+    have := Nat.div_add_mod m s
+    have : (q + 1) * s ≤ m + s - 1 := by grind
     have := Nat.le_div_iff_mul_le hs |>.mpr this
     omega
   · rw [if_neg hr]
@@ -909,8 +904,9 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
     omega
   have mod_small : ∀ d : ℕ, d = 1 ∨ d = 2 →
       d % s = 1 ∨ d % s = 2 := by
-    intro d hd; rcases hd with h | h <;> [left; right] <;>
-      rw [h] <;> exact Nat.mod_eq_of_lt (by omega)
+    intro d hd; rcases hd with h | h <;> subst h
+    · left; exact Nat.mod_eq_of_lt (by omega)
+    · right; exact Nat.mod_eq_of_lt (by omega)
   have mod_shift : ∀ d : ℕ, d = 1 ∨ d = 2 →
       (s + d) % s = 1 ∨ (s + d) % s = 2 := by
     intro d hd; rcases hd with h | h <;> subst h
