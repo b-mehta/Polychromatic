@@ -2719,24 +2719,17 @@ lemma zmod_set_card_eq_four {a b : ℤ} {m : ℕ}
     (ha : 0 < a) (hab : a < b) (hbm : 2 * b - a < ↑m) :
     (zmod_set m a b).card = 4 := by
   unfold zmod_set
-  -- Helper: distinct integers in [0, m) have distinct ZMod casts
+  -- Helper: two integers in [0, m) that cast to the same ZMod m element must be equal
   have hne : ∀ x y : ℤ, 0 ≤ x → x < ↑m → 0 ≤ y → y < ↑m → x ≠ y →
       (x : ZMod m) ≠ (y : ZMod m) := fun _ _ hx1 hx2 hy1 hy2 hxy h =>
     hxy (by rwa [ZMod.intCast_eq_intCast_iff', Int.emod_eq_of_lt hx1 hx2,
                   Int.emod_eq_of_lt hy1 hy2] at h)
-  -- All four elements 0, b-a, b, 2b-a are in [0, m) and pairwise distinct
-  have ne01 := hne 0 (b - a) (by grind) (by grind) (by grind)
-    (by grind) (by grind)
-  have ne02 := hne 0 b (by grind) (by grind) (by grind)
-    (by grind) (by grind)
-  have ne03 := hne 0 (2 * b - a) (by grind) (by grind) (by grind)
-    (by grind) (by grind)
-  have ne12 := hne (b - a) b (by grind) (by grind) (by grind)
-    (by grind) (by grind)
-  have ne13 := hne (b - a) (2 * b - a) (by grind) (by grind) (by grind)
-    (by grind) (by grind)
-  have ne23 := hne b (2 * b - a) (by grind) (by grind) (by grind)
-    (by grind) (by grind)
+  have ne01 := hne 0 (b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne02 := hne 0 b (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne03 := hne 0 (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne12 := hne (b - a) b (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne13 := hne (b - a) (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne23 := hne b (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
   simp only [image_insert, image_singleton]
   rw [card_insert_of_notMem, card_insert_of_notMem, card_insert_of_notMem, card_singleton]
   · rw [mem_singleton]; exact ne23
