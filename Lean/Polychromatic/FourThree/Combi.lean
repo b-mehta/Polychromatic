@@ -802,15 +802,12 @@ private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s)
   set q := m / s; set r := m % s
   by_cases hr : j < r
   · rw [if_pos hr]
-    have := Nat.div_add_mod m s
-    have : (q + 1) * s ≤ m + s - 1 := by grind
-    have := Nat.le_div_iff_mul_le hs |>.mpr this
-    omega
+    have : (q + 1) * s ≤ m + s - 1 := by
+      have := Nat.div_add_mod m s; grind
+    have := Nat.le_div_iff_mul_le hs |>.mpr this; omega
   · rw [if_neg hr]
-    have : q * s ≤ m := Nat.div_mul_le_self m s
-    have : q * s ≤ m + s - 1 := by omega
-    have := Nat.le_div_iff_mul_le hs |>.mpr this
-    omega
+    have : q * s ≤ m + s - 1 := le_trans (Nat.div_mul_le_self m s) (by omega)
+    have := Nat.le_div_iff_mul_le hs |>.mpr this; omega
 
 open Finpartition in
 private lemma shift_past_interval' (m s g : ℕ) (hs : 0 < s)
@@ -1203,9 +1200,7 @@ private lemma straddle1_gap2 (s g m : ℕ)
     · push_neg at hwrap
       rw [hjg_val] at hvg_lo
       have hvg_mod : (v + g) % m = v + g - m := by
-        rw [Nat.mod_eq_sub_mod hwrap]
-        have : v + g - m < m := by omega
-        exact Nat.mod_eq_of_lt this
+        rw [Nat.mod_eq_sub_mod hwrap]; exact Nat.mod_eq_of_lt (by omega)
       rw [hvg_mod] at hvg_lo
       omega
   · have hj₀_eq : j₀ = s - 1 := by omega
@@ -1505,9 +1500,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
   have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
   have hr_lt : r < s := Nat.mod_lt m hs
   have hq_pos : 0 < q := by
-    have : q * s ≤ m := Nat.div_mul_le_self m s
-    have : q ≤ (m + s - 1) / s := by rw [Nat.le_div_iff_mul_le hs]; omega
-    omega
+    nlinarith [Nat.div_mul_le_self m s, h_lb, h_ub]
   have hs_le : s ≤ m := by nlinarith [Nat.div_mul_le_self m s]
   have hg1_lt_m : g + 1 < m := by
     nlinarith [Nat.div_mul_le_self m s, Nat.le_of_dvd hs hs3]
