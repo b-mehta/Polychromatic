@@ -189,6 +189,12 @@ private lemma add_mod_sub {i s r : ℕ} (hr : 0 < r) (hge : r ≤ i % r + s)
   rw [Nat.add_mul_mod_self_right]
   exact Nat.mod_eq_of_lt (by omega)
 
+/-- If `M ≤ n` and `n - M < M`, then `n % M = n - M`. -/
+private lemma mod_eq_sub {n M : ℕ} (hge : M ≤ n) (hlt : n - M < M) :
+    n % M = n - M := by
+  conv_lhs => rw [← Nat.sub_add_cancel hge]
+  rw [Nat.add_mod_right, Nat.mod_eq_of_lt hlt]
+
 /-- If `i < r * n` and `i % r + s < r`, then `i + s < r * n`. -/
 private lemma add_lt_of_mod_add_lt {i s r n : ℕ} (hr : 0 < r)
     (hi : i < r * n) (h : i % r + s < r) :
@@ -359,14 +365,12 @@ private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
   rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
   by_cases hjs_lt : j + s < B.length
   · exact bcv_eq_B A B h _ _ _ _ (by grind)
-      (by have : i + s - A.length * h = (i - A.length * h) + s := by grind
-          rw [this]; exact add_mod_of_lt hjs_lt)
+      (by rw [Nat.sub_add_comm hB_region]; exact add_mod_of_lt hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
   · push_neg at hjs_lt
     have hjs_sub : j + s - B.length < B.length := by grind
     exact bcv_eq_B A B h _ _ _ _ (by grind)
-      (by have : i + s - A.length * h = (i - A.length * h) + s := by grind
-          rw [this]; exact add_mod_sub (by grind) hjs_lt (by grind))
+      (by rw [Nat.sub_add_comm hB_region]; exact add_mod_sub (by grind) hjs_lt (by grind))
       hjs_sub
       (by rw [List.getElem?_append_right
             (by grind : B.length ≤ j + s)])
@@ -402,9 +406,7 @@ private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
     have his_ge : A.length * h ≤ i + s :=
       ge_mul_of_mod_add_ge hA hh_pos hi_lo hjs_lt
     have hmod : (i + s) % (A.length * h) = i + s - A.length * h :=
-      by
-      conv_lhs => rw [← Nat.sub_add_cancel his_ge]
-      rw [Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
+      mod_eq_sub his_ge (by grind)
     have hsub_eq := sub_region_eq hA hi_lo (by grind) hjs_lt
     have hsub_lt : i + s - A.length * h < A.length := by grind
     have hjs_idx : j + s - A.length < A.length := by grind
@@ -443,17 +445,14 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
       add_lt_of_mod_add_lt (by grind) hi_B hjs_lt
     rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
     exact bcv_eq_B A B h _ _ _ _ (by grind)
-      (by have : i + s - A.length * h = (i - A.length * h) + s := by grind
-          rw [this]; exact add_mod_of_lt hjs_lt)
+      (by rw [Nat.sub_add_comm hB_region]; exact add_mod_of_lt hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
   · -- Wrapped to A region
     push_neg at hjs_lt
     have his_ge : m ≤ i + s := by
       have := ge_mul_of_mod_add_ge (by grind : 0 < B.length)
         hk_pos hk_lo hjs_lt; grind
-    have hmod : (i + s) % m = i + s - m := by
-      conv_lhs => rw [← Nat.sub_add_cancel his_ge]
-      rw [Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
+    have hmod : (i + s) % m = i + s - m := mod_eq_sub his_ge (by grind)
     have hsub_eq : i + s - m = j + s - B.length := by
       have key : (i - A.length * h) + s - B.length * k =
           j + s - B.length :=
@@ -498,9 +497,7 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     have his_ge : m ≤ i + s := by
       have := ge_mul_of_mod_add_ge (by grind : 0 < B.length)
         hk_pos hk_lo hjs_lt; grind
-    have hmod : (i + s) % m = i + s - m := by
-      conv_lhs => rw [← Nat.sub_add_cancel his_ge]
-      rw [Nat.add_mod_right, Nat.mod_eq_of_lt (by grind)]
+    have hmod : (i + s) % m = i + s - m := mod_eq_sub his_ge (by grind)
     have hsub_eq : i + s - m = j + s - B.length := by
       rw [← hm]
       exact sub_region_eq (by grind) hk_lo (by grind) hjs_lt
