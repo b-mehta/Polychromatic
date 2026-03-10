@@ -107,6 +107,18 @@ Preserve `-- ANCHOR:` / `-- ANCHOR_END:` comments — they mark sections extract
   change ((h * q' + r') % h % 3 + ...) % 3 = _
   ```
 
+## Proof Development Workflow Tips
+
+- **Develop in a scratch file, then integrate** — for complex sorry-filling work, create a temporary `ScratchXxx.lean` that imports the target module. Prove all helper lemmas there first, verify they compile, then move them into the real file in dependency order (leaves first). Delete the scratch file once integration is complete.
+- **Move lemmas bottom-up** — when integrating from scratch to target, move dependency-free helpers first, then lemmas that depend on them. This ensures each intermediate state compiles. Commit after each batch of moves.
+- **`omega` handles most ℕ modular arithmetic goals** — lemmas about `(a + s - b) % s` with bounds `a < s`, `b < s` are typically closed by `omega` after case-splitting on `Nat.div_add_mod` and bounding the quotient. The pattern: `have hdiv := Nat.div_add_mod (x + s - y) s; have : (x + s - y) / s ≤ 1 := by rw [Nat.div_le_iff_le_mul ...]; omega; rcases ... with h | h; omega; omega`.
+- **`nlinarith` for nonlinear ℕ bounds** — goals like `¬(s * q + r < r * (q + 1))` where the negation involves products of variables are handled by `nlinarith`, not `omega`.
+- **Boundary wrap pattern** — when a proof needs `p + 1 < m` but `p + 1` might equal `m`, use `by_cases h : p + 1 < m` then handle the wrap case `p + 1 = m` (where `(p+1) % m = 0`) separately. Factor this into a helper like `eqp_idx_succ_lt_m` that returns `p + 1 < m ∨ <boundary condition>`.
+- **Coverage proofs via `rcases` dispatch** — for showing "every color `k : Fin 3` is hit", the pattern is: (1) prove two pairs of indices cover all 3 colors via `two_pairs_cover_split`, (2) `rcases` on which pair covers `k`, (3) for each pair, `rcases` on straddle vs non-straddle (`eqp_idx_step`), (4) in each branch produce a witness `⟨d, hd_mem, hd_eq⟩`.
+- **`suffices` for symmetric straddle/non-straddle branches** — when a straddle case and non-straddle case for pair 2 both need to produce a witness of the same type, use `suffices ∃ d, ...` to share the downstream proof structure.
+- **Keep helper lemma signatures minimal** — pass only what's needed. For instance, `non_straddle_witness` takes the raw `eqp_idx` equality rather than the full interval structure — this makes it reusable across both pairs.
+
+
 ## Commit Conventions
 
 - Do not include Claude session URLs in commit messages
