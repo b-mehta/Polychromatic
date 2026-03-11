@@ -391,8 +391,7 @@ private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
   set j := i % A.length
   have hj_lt : j < A.length := Nat.mod_lt _ hA
   have hh_pos : 0 < h := by grind
-  have hi_lo : A.length * (h - 1) ≤ i := by
-    grind [Nat.mul_sub]
+  have hi_lo : A.length * (h - 1) ≤ i := by grind [Nat.mul_sub]
   have hAh : A.length ≤ A.length * h :=
     Nat.le_mul_of_pos_right _ hh_pos
   refine ⟨A ++ A, j, hAA, by grind, fun s hsle => ?_⟩
@@ -408,10 +407,9 @@ private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
     have hmod : (i + s) % (A.length * h) = i + s - A.length * h :=
       mod_eq_sub his_ge (by grind)
     have hsub_eq := sub_region_eq hA hi_lo (by grind) hjs_lt
-    have hsub_lt : i + s - A.length * h < A.length := by grind
     have hjs_idx : j + s - A.length < A.length := by grind
     refine bcv_eq_A A B h _ _ _ _ (by grind)
-      (by rw [hmod, Nat.mod_eq_of_lt hsub_lt, hsub_eq])
+      (by rw [hmod, Nat.mod_eq_of_lt (by grind), hsub_eq])
       hjs_idx ?_
     rw [List.getElem?_append_right
       (by grind : A.length ≤ j + s)]
@@ -458,10 +456,9 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
           j + s - B.length :=
         sub_region_eq (by grind) hk_lo hi_B hjs_lt
       grind
-    have hsub_lt : i + s - m < A.length := by grind
     have hjs_idx : j + s - B.length < A.length := by grind
     refine bcv_eq_A A B h _ _ _ _ (by grind)
-      (by rw [hmod, Nat.mod_eq_of_lt hsub_lt, hsub_eq])
+      (by rw [hmod, Nat.mod_eq_of_lt (by grind), hsub_eq])
       hjs_idx ?_
     rw [List.getElem?_append_right
       (by grind : B.length ≤ j + s)]
@@ -950,15 +947,11 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
     have hm_eq : m = q * s + r := by
       have := Nat.div_add_mod m s; grind
     have hm_le_ep : m ≤
-        Finpartition.equiEndpoint m s (j₀ + 3) := by
-      rw [hep_j3, hm_eq]; grind
+        Finpartition.equiEndpoint m s (j₀ + 3) := by grind
     have hep_diff :
         Finpartition.equiEndpoint m s (j₀ + 3) - m =
         q * (j₀ + 3 - s) := by
-      rw [hep_j3, hm_eq]
-      have : q * (j₀ + 3 - s) + q * s = q * (j₀ + 3) := by
-        rw [← Nat.mul_add, Nat.sub_add_cancel (by omega)]
-      omega
+      rw [hep_j3, hm_eq]; grind [Nat.mul_add]
     have hvgm_ub : v + g - m <
         Finpartition.equiEndpoint m s
           (j₀ + 3 - s) := by
