@@ -3239,7 +3239,7 @@ private lemma zmod_filter_sum_succ {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i 
     grind [ZMod.val_injective]
   rw [hsplit, Finset.sum_union (by
     simp only [Finset.disjoint_left, Finset.mem_filter, Finset.mem_univ, true_and,
-      Finset.mem_singleton]; intro k hk hk'; rw [hk'] at hk; grind),
+      Finset.mem_singleton]; grind),
     Finset.sum_singleton]
 
 /-- When i is the max element, {k | k < i} ∪ {i} = univ. -/
