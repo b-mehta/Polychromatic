@@ -74,8 +74,7 @@ lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
         _ = ↑(c - a + b : ℤ) := by simp
         _ = (m : ℤ) := by rw [hm]
         _ = 0 := by simp
-    rw [this, sub_add_eq_add_sub, ← two_mul]
-    grind
+    grind [sub_add_eq_add_sub, two_mul]
   rw [this, polychromNumber_vadd]
 
 /-- The set {0, b-a, b, 2b-a} is symmetric in the two repeated differences b and b-a:
@@ -734,7 +733,7 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
   have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
   have hbd_le_m : bd + (s - r) * q = m := by
     have : (s - r) * q + r * q = s * q := by
-      rw [← Nat.add_mul, Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
+      grind [Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
     grind
   split
   · rename_i hlt
@@ -913,8 +912,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
       rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
     · have hvg_lt_ep : v + g <
           Finpartition.equiEndpoint m s s := by
-        have := Finpartition.equiEndpoint_hi (show s ≠ 0 by omega) (n := m) (k := s)
-        grind
+        grind [Finpartition.equiEndpoint_hi (show s ≠ 0 by omega) (n := m) (k := s)]
       have hrange := idx_range_from_endpoints' m s
         (j₀+1) s (v+g) hpast hvg_lt_ep
         jg hvg_lo hvg_hi
@@ -1023,8 +1021,7 @@ private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
       rw [hpeq]; exact Nat.mul_div_cancel r (by omega)
     have hne : p / (q + 1) ≠ r := by
       intro heq
-      have := Nat.div_mul_le_self p (q + 1)
-      grind
+      grind [Nat.div_mul_le_self p (q + 1)]
     have hidx_p : p / (q + 1) = r - 1 := by
       have := div_step p (q + 1) (by omega); omega
     rw [hpeq, Nat.sub_self, Nat.zero_div, hidx_p]; omega
@@ -1038,9 +1035,7 @@ private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
 private lemma mod_step (a b : ℕ)
     (h : (a + 1) / b = a / b) :
     (a + 1) % b = a % b + 1 := by
-  have h1 := Nat.div_add_mod a b
-  have h2 := Nat.div_add_mod (a + 1) b
-  grind
+  grind [Nat.div_add_mod a b, Nat.div_add_mod (a + 1) b]
 
 -- Helper: if quotient increases by 1, remainder resets to 0
 private lemma mod_zero_step (a b : ℕ) (hb : 0 < b)
@@ -1134,14 +1129,13 @@ private lemma gap_mod_cases_gen (s j₀ jg d : ℕ)
   have hq_lt : (jg + s - j₀) / s < 2 := by
     rw [Nat.div_lt_iff_lt_mul (by omega)]; omega
   rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
-  · left; grind
-  · right; grind
+  · grind
+  · grind
 
 private lemma equiEndpoint_diff_ge (m s j : ℕ) :
     m / s ≤ Finpartition.equiEndpoint m s (j + 1) -
         Finpartition.equiEndpoint m s j := by
-  simp only [Finpartition.equiEndpoint]
-  grind
+  grind [Finpartition.equiEndpoint]
 
 open Finpartition in
 private lemma straddle1_gap2 (s g m : ℕ)
@@ -1214,8 +1208,7 @@ private lemma straddle1_gap2 (s g m : ℕ)
       · have : min (m % s) 1 = 1 := by omega
         rw [this]
         apply (Nat.le_div_iff_mul_le hs).mpr
-        have := Nat.div_add_mod m s
-        grind
+        grind [Nat.div_add_mod m s]
     omega
 
 open Finpartition in
@@ -1526,7 +1519,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         rw [Nat.div_lt_iff_lt_mul hq_pos]
         have : r * (q + 1) + (s - r) * q = s * q + r := by
           have : (s - r) * q + r * q = s * q := by
-            rw [← Nat.add_mul, Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
+            grind [Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
           grind
         omega
       omega
@@ -2085,7 +2078,6 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
       ({0, 1, g', g' + 1} : Finset (ZMod m)).image (bz * ·) := by
     simp only [zmod_set, Finset.image_insert, Finset.image_singleton]
     simp only [mul_zero, mul_one, hbg', hbg'1]
-    push_cast
     grind
   have hval : (g'.val : ZMod m) = g' := ZMod.natCast_zmod_val g'
   have hinj : Function.Injective (bz * · : ZMod m → ZMod m) := fun x y h => by
@@ -2323,7 +2315,7 @@ private lemma orbitMap_j_eq {m : ℕ} {b : ℤ} {e₁ : ℕ} [NeZero e₁]
     have hdvd : e₁ ∣ (j₂.val - j₁.val) := by
       have := addOrderOf_dvd_of_nsmul_eq_zero h3; rwa [hord] at this
     have := Nat.eq_zero_of_dvd_of_lt hdvd (by
-      have := j₁.val_lt (n := e₁); have := j₂.val_lt (n := e₁); grind)
+      grind [j₁.val_lt (n := e₁), j₂.val_lt (n := e₁)])
     exact ZMod.val_injective _ (by grind)
 
 private lemma orbitMap_injective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
@@ -2585,7 +2577,7 @@ private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     k = case2b_coloring d₁ e₁ (i + 1, j₂) ∨
     k = case2b_coloring d₁ e₁ (i + 1, j₂ + 1) := by
   have he₁_ge2 : e₁ ≥ 2 := by grind
-  have hd₁_ge2 : d₁ ≥ 2 := by obtain ⟨k, hk⟩ := hd₁_even; have := NeZero.ne d₁; grind
+  have hd₁_ge2 : d₁ ≥ 2 := by have := NeZero.ne d₁; grind
   have hi_parity := parity_flip_even d₁ hd₁_even hd₁_ge2 i
   rcases Nat.even_or_odd i.val with ⟨_, hi_even⟩ | ⟨_, hi_odd⟩
   · -- i is even, i+1 is odd
@@ -2728,7 +2720,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   set d₂ := Nat.gcd (b - a).natAbs m
   have hd₂_dvd : d₂ ∣ m := Nat.gcd_dvd_right _ _
   have hd₂_gt1 : d₂ > 1 := by
-    have := h_min; simp [d₁, d₂] at this ⊢; grind
+    simp only [d₂]; grind
   have hd₂_dvd_ba : (d₂ : ℤ) ∣ (b - a) := by
     simpa [Int.gcd, d₂] using Int.gcd_dvd_left (b - a) (m : ℤ)
   have hd₂_dvd_e₁ : d₂ ∣ e₁ := by
@@ -2790,8 +2782,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
       have h2 : e₁ - (e₁ - 2) = 2 := by grind
       rwa [h2] at h
     have hd₂_eq2 : d₂ = 2 := by have := Nat.le_of_dvd (by grind) hd₂_dvd_2; grind
-    obtain ⟨k, hk⟩ := hd₂_dvd_e₁; obtain ⟨l, hl⟩ := he1_odd
-    rw [hd₂_eq2] at hk; grind
+    obtain ⟨k, hk⟩ := hd₂_dvd_e₁; obtain ⟨l, hl⟩ := he1_odd; grind
   -- π(n) and π(n+(b-a)) give the same ZMod d₂ value
   have hπ_eq : π (n + ↑(b - a)) = π n := by
     simp only [π, map_add, map_intCast]
@@ -2969,16 +2960,14 @@ private lemma basePattern_consec_boundary {e₁ j : ℕ}
   simp only [whichInterval] at hdiff ⊢
   by_cases hj1_wrap : j + 1 < e₁
   · rw [Nat.mod_eq_of_lt hj1_wrap] at hdiff ⊢
-    simp only [basePattern, intervalColors]
-    grind
+    grind [basePattern, intervalColors]
   · -- Wrap: j = e₁ - 1
     push_neg at hj1_wrap
     have hj_eq : j = e₁ - 1 := by grind
     subst hj_eq
     have : e₁ - 1 + 1 = e₁ := by grind
     rw [this, Nat.mod_self] at hdiff ⊢
-    simp only [basePattern, intervalColors]
-    grind
+    grind [basePattern, intervalColors]
 
 /-- Combined: for any j, {basePattern(j), basePattern(j+1 mod e₁)} is the
     interval pair of whichInterval(j). -/
@@ -2995,8 +2984,7 @@ private lemma basePattern_consec_pair {e₁ j : ℕ}
       subst this
       have : e₁ - 1 + 1 = e₁ := by grind
       rw [this, Nat.mod_self] at hsame
-      simp only [whichInterval, case2d_u, case2d_v] at hsame
-      grind
+      grind [whichInterval, case2d_u, case2d_v]
     rw [Nat.mod_eq_of_lt hj1]
     exact (basePattern_consec_same_interval (by rwa [Nat.mod_eq_of_lt hj1] at hsame)).ge
   · exact (basePattern_consec_boundary he hge hj hsame).ge
