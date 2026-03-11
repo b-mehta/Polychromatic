@@ -2178,6 +2178,10 @@ variable (m : ℕ) (a b : ℤ)
 -- In this section, we work directly with `zmod_set` using cycle decompositions.
 -- We inline d1 = gcd(b, m) and e1 = m / d1.
 
+private lemma intCast_2ba_eq :
+    ((2 * b - a : ℤ) : ZMod m) = ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by
+  push_cast; ring
+
 private lemma zmod_val_add_one (d : ℕ) [NeZero d] (hd : d ≥ 2) (i : ZMod d) :
     (i + 1).val = if i.val + 1 < d then i.val + 1 else 0 := by
   have hival : (i + 1).val = (i.val + 1) % d := by
@@ -2482,7 +2486,8 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') :=
     congr_arg f (Prod.ext (by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]) rfl)
   have hχ_n2ba : χ (n + ↑(2 * b - a)) = f (i + 1, j' + 1) := by
-    have : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by push_cast; ring
+    have : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by
+      rw [intCast_2ba_eq, add_assoc]
     rw [congr_arg χ this]
     have hΦ' := hΦ_add_b (n + ↑(b - a))
     exact congr_arg f (Prod.ext
@@ -2767,7 +2772,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') :=
     congr_arg f (Prod.ext (by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]) rfl)
   have hχ_n2ba : χ (n + ↑(2 * b - a)) = f (i + 1, j' + 1) := by
-    have : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by push_cast; ring
+    have : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by
+      rw [intCast_2ba_eq, add_assoc]
     rw [congr_arg χ this]
     have hΦ' := hΦ_add_b (n + ↑(b - a))
     exact congr_arg f (Prod.ext
@@ -3453,9 +3459,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
       rw [← hn, hij]; exact (orbitMap_shift_ba i j hi).symm
     -- Shift: n + (2b-a) = Φ(i', j+1)
     have hΦ_2ba : Φ (i', j + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
-      have : ((2 * b - a : ℤ) : ZMod m) =
-          ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by push_cast; ring
-      rw [this, ← add_assoc, ← hΦ_ba]
+      rw [intCast_2ba_eq, ← add_assoc, ← hΦ_ba]
       exact (orbitMap_shift_b he1_b_zero (i', j)).symm
     -- Coverage hypothesis
     have hi'_eq : i'.val = i.val + 1 := by
@@ -3488,9 +3492,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
       exact (case2d_shift_ba_wrap he1_b_zero k₀ hk₀ i hi_eq j).symm
     -- Shift: n + (2b-a) = Φ(0, j'+1)
     have hΦ_2ba : Φ (0, j' + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
-      have : ((2 * b - a : ℤ) : ZMod m) =
-          ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by push_cast; ring
-      rw [this, ← add_assoc, ← hΦ_ba]
+      rw [intCast_2ba_eq, ← add_assoc, ← hΦ_ba]
       exact (orbitMap_shift_b he1_b_zero (0, j')).symm
     -- Coverage hypothesis: (j + p_last) % 3 ≠ (j + k₀ + p₀) % 3
     have hp_eq : p = case2c_pattern d₁ k₀.val (d₁ - 1) := by
