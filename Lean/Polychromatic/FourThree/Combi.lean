@@ -3344,10 +3344,7 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
       (j_new.val + rot i_new) % e₁ = (p + vals i) % e₁ by
     obtain ⟨i_new, j_new, hΦ_ba, hpos⟩ := this
     have hΦ_2ba : Φ (i_new, j_new + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
-      have : ((2 * b - a : ℤ) : ZMod m) =
-          ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by
-        push_cast; ring
-      rw [this, ← add_assoc, ← hΦ_ba]
+      rw [intCast_2ba_eq, ← add_assoc, ← hΦ_ba]
       exact (orbitMap_shift_b he1_b_zero (i_new, j_new)).symm
     rcases covers with h | h | h | h
     · exact ⟨0, zero_mem_zmod_set m a b, by rw [add_zero, ← hn, hij, hχ_eq, h]⟩
