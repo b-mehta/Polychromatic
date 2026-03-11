@@ -1376,29 +1376,24 @@ private lemma straddle_boundary_color (q r s p : ℕ)
     have hm_idx : eqp_idx q r m = s := by
       rw [hm_eq]; exact eqp_idx_m q r s hq_pos hr_lt
     have hjs : j + 1 = s := by rw [hj]; omega
-    obtain ⟨d3, hd3⟩ := hs3; omega
+    grind
 
 private lemma vg_mod_shift (v g d : ℕ) :
     (v + (g + d)) % m = ((v + g) % m + d) % m := by
-  have h1 := Nat.add_mod (v + g) d m
-  have h2 := Nat.add_mod ((v + g) % m) d m
-  rw [Nat.mod_mod_of_dvd _ (dvd_refl m)] at h2
-  have : v + (g + d) = (v + g) + d := by grind
-  rw [this, h1, h2]
+  grind [Nat.add_mod (v + g) d m, Nat.add_mod ((v + g) % m) d m,
+    Nat.mod_mod_of_dvd _ (dvd_refl m)]
 
 private lemma gap2_jg_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
     (hgap2 : (jg + s - j₀) % s = 2) :
     (jg + 1) % 3 = j₀ % 3 := by
-  rcases gap_mod_cases_gen s j₀ jg 2 hj₀ hjg hgap2 with h | h <;>
-    obtain ⟨d3, hd3⟩ := hs3 <;> omega
+  rcases gap_mod_cases_gen s j₀ jg 2 hj₀ hjg hgap2 with h | h <;> grind
 
 private lemma gap1_j0_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
     (hgap1 : (jg + s - j₀) % s = 1) :
     (j₀ + 1) % 3 = jg % 3 := by
-  rcases gap_mod_cases_gen s j₀ jg 1 hj₀ hjg hgap1 with h | h <;>
-    obtain ⟨d3, hd3⟩ := hs3 <;> omega
+  rcases gap_mod_cases_gen s j₀ jg 1 hj₀ hjg hgap1 with h | h <;> grind
 
 private lemma eqp_idx_last (q r s : ℕ) (hq : 0 < q)
     (hr : r < s) (hs : 0 < s) :
