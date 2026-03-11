@@ -1729,7 +1729,7 @@ lemma case_one_res_3g_sub_2 (g : ℕ) (hm : m ≥ 289)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * (g : ZMod m) = 2 := by
     have : ((3 * g : ℕ) : ZMod m) = (m + 2 : ℕ) := by congr 1; grind
-    simpa using this
+    push_cast [ZMod.natCast_self] at this; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 5 := by grind
   simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g_mod, image_singleton,
     h3g1_mod, insert_comm] using table1_0235 m (by grind)
@@ -1742,7 +1742,7 @@ lemma case_one_res_3g_sub_1 (g : ℕ) (hm : m ≥ 289)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * g = 1 := by
     have : ((3 * g : ℕ) : ZMod m) = (m + 1 : ℕ) := by congr 1; grind
-    simpa using this
+    push_cast [ZMod.natCast_self] at this; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 4 := by grind
   simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g_mod,
     image_singleton, h3g1_mod, insert_comm] using table1_0134 m (by grind)
@@ -1755,8 +1755,7 @@ lemma case_one_res_3g_add_1 (g : ℕ) (hm : m ≥ 289)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * g = -1 := by
     have : ((3 * g + 1 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, Nat.cast_one,
-      ZMod.natCast_self] at this; grind
+    push_cast [ZMod.natCast_self] at this; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 2 := by grind
   have : {0, (3 : ZMod m), -1, 2} = (-1 : ZMod m) +ᵥ ({0, 1, 3, 4} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
@@ -1771,7 +1770,7 @@ lemma case_one_res_3g_add_2 (g : ℕ) (hm : m ≥ 289)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * g = -2 := by
     have : ((3 * g + 2 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, ZMod.natCast_self] at this; grind
+    push_cast [ZMod.natCast_self] at this; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 1 := by grind
   have : {0, (3 : ZMod m), -2, 1} = (-2 : ZMod m) +ᵥ ({0, 2, 3, 5} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
@@ -1786,7 +1785,7 @@ lemma case_one_res_3g_add_4 (g : ℕ) (hm : m ≥ 289)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * g = -4 := by
     have : ((3 * g + 4 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, ZMod.natCast_self] at this; grind
+    push_cast [ZMod.natCast_self] at this; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = -1 := by grind
   have : {0, (3 : ZMod m), -4, -1} = (-4 : ZMod m) +ᵥ ({0, 3, 4, 7} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
@@ -1801,7 +1800,7 @@ lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289)
   rw [← hasPolychromColouring_mul_unit m u]
   have h3g_mod : (3 : ZMod m) * g = -5 := by
     have : ((3 * g + 5 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, ZMod.natCast_self] at this; grind
+    push_cast [ZMod.natCast_self] at this; grind
   have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = -2 := by grind
   have : {0, (3 : ZMod m), -5, -2} = (-5 : ZMod m) +ᵥ ({0, 3, 5, 8} : Finset (ZMod m)) := by
     simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
