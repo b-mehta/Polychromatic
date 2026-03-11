@@ -2562,7 +2562,7 @@ private lemma case2b_odd_degenerate_pos (d₁ e₁ : ℕ) [NeZero d₁] [NeZero 
   have hj := j.val_lt (n := e₁)
   obtain ⟨k, hk⟩ := he₁
   rw [zmod_val_add_one e₁ (by grind) j] at h2
-  split_ifs at h1 h2 <;> grind
+  grind
 
 -- Fin 3 helpers for Case 2b.
 private lemma case2b_fin3_eq_one {a : Fin 3} (h0 : a ≠ 0) (h2 : a ≠ 2) : a = 1 := by
@@ -2837,10 +2837,10 @@ private lemma case2c_pattern_ne_succ (d₁ k₀ i : ℕ) (hd₁ : d₁ ≥ 3)
   by_cases hw : i + 1 < 2 * k + 1
   · have hmod := Nat.mod_eq_of_lt hw
     rcases hk03 with h | h | h <;> simp only [h, hmod] <;>
-      split_ifs <;> grind [Fin.ext_iff]
+      grind [Fin.ext_iff]
   · have hi_eq : i = 2 * k := by grind
     simp only [hi_eq, Nat.mod_self]
-    split_ifs <;> grind [Fin.ext_iff]
+    grind [Fin.ext_iff]
 
 -- General coverage: if (j₁ + p₁) % 3 ≠ (j₂ + p₂) % 3, all 3 colors appear.
 private lemma cover_mod3_general (p₁ p₂ : Fin 3)
@@ -2996,7 +2996,7 @@ private lemma basePattern_consec_pair {e₁ j : ℕ}
       have : e₁ - 1 + 1 = e₁ := by grind
       rw [this, Nat.mod_self] at hsame
       simp only [whichInterval, case2d_u, case2d_v] at hsame
-      split_ifs at hsame <;> grind
+      grind
     rw [Nat.mod_eq_of_lt hj1]
     exact (basePattern_consec_same_interval (by rwa [Nat.mod_eq_of_lt hj1] at hsame)).ge
   · exact (basePattern_consec_boundary he hge hj hsame).ge
@@ -3017,7 +3017,7 @@ private lemma rotation_changes_interval {e₁ j : ℕ}
   by_cases hjr_wrap : j + r < e₁
   · -- No wrap
     rw [Nat.mod_eq_of_lt hjr_wrap] at heq hj'_lt
-    split_ifs at heq <;> grind
+    grind
   · -- Wrap: (j + r) % e₁ = j + r - e₁
     push_neg at hjr_wrap
     have hmod : (j + r) % e₁ = j + r - e₁ := by
@@ -3025,7 +3025,7 @@ private lemma rotation_changes_interval {e₁ j : ℕ}
       have h1 : j + r - e₁ < e₁ := by grind
       rw [Nat.add_mod_eq_sub, Nat.mod_eq_of_lt hj, Nat.mod_eq_of_lt this, if_neg (by grind)]
     rw [hmod] at heq hj'_lt
-    split_ifs at heq <;> grind
+    grind
 
 /-- Key polychromaticity lemma: if the base pattern is rotated by r ∈ [u, e₁-u],
     then at every position j, the 2×2 block covers all 3 colors. -/
@@ -3164,14 +3164,14 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
   · let g : ZMod d₁ → ℕ := fun i =>
       if i.val < q then w else if i.val = q then r else 0
     have hfg : ∀ i : ZMod d₁, f i = u + g i := by
-      intro i; grind
+      grind
     have hsum_f : Finset.univ.sum f = d₁ * u + Finset.univ.sum g := by
       conv_lhs => arg 2; ext i; rw [hfg i]
       simp [Finset.sum_add_distrib, Finset.card_univ, ZMod.card]
     have hsum_g : Finset.univ.sum g = q * w + r := by
       have hg_split : ∀ i : ZMod d₁,
           g i = (if i.val < q then w else 0) + (if i.val = q then r else 0) := by
-        intro i; grind
+        grind
       rw [Finset.sum_congr rfl (fun i _ => hg_split i), Finset.sum_add_distrib]
       congr 1
       · simp only [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const,
