@@ -796,8 +796,7 @@ private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s)
   set q := m / s; set r := m % s
   by_cases hr : j < r
   · rw [if_pos hr]
-    have : (q + 1) * s ≤ m + s - 1 := by
-      have := Nat.div_add_mod m s; grind
+    have : (q + 1) * s ≤ m + s - 1 := by grind [Nat.div_add_mod m s]
     have := Nat.le_div_iff_mul_le hs |>.mpr this; omega
   · rw [if_neg hr]
     have : q * s ≤ m + s - 1 := le_trans (Nat.div_mul_le_self m s) (by omega)
@@ -900,9 +899,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
     · right; exact Nat.mod_eq_of_lt (by omega)
   have mod_shift : ∀ d : ℕ, d = 1 ∨ d = 2 →
       (s + d) % s = 1 ∨ (s + d) % s = 2 := by
-    intro d hd; rcases hd with h | h <;> subst h
-    · left; rw [Nat.add_comm, Nat.add_mod_right]; exact Nat.mod_eq_of_lt (by omega)
-    · right; rw [Nat.add_comm, Nat.add_mod_right]; exact Nat.mod_eq_of_lt (by omega)
+    intro d hd; rw [Nat.add_comm, Nat.add_mod_right]; exact mod_small d hd
   by_cases hvg_wrap : v + g < m
   · have hvg_eq : (v + g) % m = v + g :=
       Nat.mod_eq_of_lt hvg_wrap
@@ -944,8 +941,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
         (j₀ + 3) = q * (j₀ + 3) + r := by
       unfold Finpartition.equiEndpoint
       rw [min_eq_left (by omega : r ≤ j₀ + 3)]
-    have hm_eq : m = q * s + r := by
-      have := Nat.div_add_mod m s; grind
+    have hm_eq : m = q * s + r := by grind [Nat.div_add_mod m s]
     have hm_le_ep : m ≤
         Finpartition.equiEndpoint m s (j₀ + 3) := by grind
     have hep_diff :
@@ -1028,7 +1024,7 @@ private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
     have hne : p / (q + 1) ≠ r := by
       intro heq
       have := Nat.div_mul_le_self p (q + 1)
-      rw [heq] at this; grind
+      grind
     have hidx_p : p / (q + 1) = r - 1 := by
       have := div_step p (q + 1) (by omega); omega
     rw [hpeq, Nat.sub_self, Nat.zero_div, hidx_p]; omega
@@ -2841,11 +2837,10 @@ private lemma case2c_pattern_ne_succ (d₁ k₀ i : ℕ) (hd₁ : d₁ ≥ 3)
   by_cases hw : i + 1 < 2 * k + 1
   · have hmod := Nat.mod_eq_of_lt hw
     rcases hk03 with h | h | h <;> simp only [h, hmod] <;>
-      split_ifs <;> simp [Fin.ext_iff] <;> grind
+      split_ifs <;> grind [Fin.ext_iff]
   · have hi_eq : i = 2 * k := by grind
-    have hmod_self : (2 * k + 1) % (2 * k + 1) = 0 := Nat.mod_self _
-    simp only [hi_eq, hmod_self]
-    split_ifs <;> simp [Fin.ext_iff] <;> grind
+    simp only [hi_eq, Nat.mod_self]
+    split_ifs <;> grind [Fin.ext_iff]
 
 -- General coverage: if (j₁ + p₁) % 3 ≠ (j₂ + p₂) % 3, all 3 colors appear.
 private lemma cover_mod3_general (p₁ p₂ : Fin 3)
@@ -3048,10 +3043,8 @@ private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : 
   have hjr : (j + r) % e₁ < e₁ := Nat.mod_lt _ he₁_pos
   have h2 := basePattern_consec_pair he hge hjr
   -- Rewrite ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁
-  have hmod : ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁ := by
-    have : j + r + 1 = (j + r) + 1 := by grind
-    conv_rhs => rw [this]
-    rw [Nat.add_mod, Nat.mod_mod_of_dvd _ (dvd_refl _), ← Nat.add_mod]
+  have hmod : ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁ :=
+    Nat.mod_add_mod (j + r) e₁ 1
   rw [hmod] at h2
   have hcov := intervalColors_union_covers hI k
   simp only [Finset.mem_insert, Finset.mem_singleton]
@@ -3212,7 +3205,7 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
         rw [this, one_mul]
     rw [hsum_f, hsum_g, Nat.mul_comm q w, hqr]
     simp only [deficit]
-    rw [Nat.add_mod, Nat.mod_mod_of_dvd _ (dvd_refl e₁), ← Nat.add_mod]
+    rw [Nat.add_mod_mod]
     have hle : d₁ * u ≤ target + e₁ * d₁ :=
       le_add_left (le_trans (Nat.mul_le_mul_left d₁ (le_of_lt hu_lt))
         (by rw [Nat.mul_comm]))
