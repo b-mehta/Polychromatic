@@ -1853,7 +1853,7 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   have hc_period : ∀ p, c (p % m) = c p := by
     intro p; simp only [c, hm_eq]
     rw [Nat.mod_mod_of_dvd p (dvd_mul_right 3 g)]
-    have h1 : (3 * (p / (3 * g))) * g = 3 * g * (p / (3 * g)) := by ring
+    have h1 : (3 * (p / (3 * g))) * g = 3 * g * (p / (3 * g)) := by grind
     have h2 : p = p % (3 * g) + (3 * (p / (3 * g))) * g := by
       rw [h1]; exact (Nat.mod_add_div p (3 * g)).symm
     have h3 : p / g = p % (3 * g) / g + 3 * (p / (3 * g)) := by
@@ -1943,7 +1943,7 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 1 (g + 1)
       (by simp) (by simp) (by simp) rfl
       (by rw [hcv1]; exact color_shift_r r q)
-      (by have : v + (g + 1) = v + g + 1 := by omega
+      (by have : v + (g + 1) = v + g + 1 := by grind
           rw [this, hcvg1]; exact color_shift_q r q)
 
 /-- Subcase (1d) assembled: dispatches on `g % 3` and `m ∈ {3g, 3g+3}` (paper §4.1). -/
