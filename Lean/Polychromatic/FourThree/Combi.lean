@@ -2781,15 +2781,21 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   have hΦ_cycle_shift : ∀ x : ZMod m,
       (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1 := fun x => by
     rw [hΦ_cycle, hα_ba, ← hΦ_cycle]
+  -- π(n) and π(n+(b-a)) give the same ZMod d₂ value
+  have hπ_eq : ∀ n : ZMod m, π (n + ↑(b - a)) = π n := fun n => by
+    simp only [π, map_add, map_intCast]
+    rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba, add_zero]
   exact orbit_coloring_polychrom Φ hΦ_add_b hΦ_cycle_shift (case2b_coloring d₁ e₁)
     (fun n k => by
-      set j := (Φ.symm n).2; set j' := (Φ.symm (n + ↑(b - a))).2
+      set p := Φ.symm n; set j := p.2
+      set j' := (Φ.symm (n + ↑(b - a))).2
+      -- π(n) and π(n+(b-a)) give the same ZMod d₂ value
       have hπ_eq : π (n + ↑(b - a)) = π n := by
         simp only [π, map_add, map_intCast]
         rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba, add_zero]
       have hπn : π n = (j.val : ZMod d₂) * π (↑b) := by
-        have : n = Φ (Φ.symm n) := (Equiv.apply_symm_apply Φ n).symm
-        conv_lhs => rw [this]; exact hπ_φ _ j
+        have : n = Φ p := (Equiv.apply_symm_apply Φ n).symm
+        conv_lhs => rw [this]; exact hπ_φ p.1 j
       have hπn' : π n = (j'.val : ZMod d₂) * π (↑b) := by
         rw [← hπ_eq]
         have : n + ↑(b - a) = Φ (Φ.symm (n + ↑(b - a))) :=
