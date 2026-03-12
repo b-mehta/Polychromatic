@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+See also:
+- **`.claude/simplification-patterns.md`** — read when golfing, simplifying, or writing proofs
+- **`.claude/combi-patterns.md`** — read when working on `FourThree/Combi.lean` (block colorings, ZMod arithmetic, proof patterns)
+
 ## Project Overview
 
 Formalization of polychromatic colourings of integers in Lean 4. A colouring of integers is *S*-polychromatic if every translate of set *S* contains an element of each colour class. The main theorem (`Lean/Polychromatic/Main.lean:final_result`) proves that every set of 4 integers admits a 3-polychromatic colouring.
