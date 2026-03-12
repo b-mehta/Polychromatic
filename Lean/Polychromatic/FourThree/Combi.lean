@@ -802,13 +802,6 @@ private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s)
     have := Nat.le_div_iff_mul_le hs |>.mpr this; omega
 
 open Finpartition in
-private lemma shift_past_interval' (m s g : ℕ) (hs : 0 < s)
-    (h_lb : (m + s - 1) / s < g)
-    (j p : ℕ) (hlo : equiEndpoint m s j ≤ p)
-    (hhi : p < equiEndpoint m s (j + 1)) :
-    equiEndpoint m s (j + 1) ≤ p + g := by
-  have := gap_exceeds_ilen m s g hs h_lb j; omega
-
 open Finpartition in
 private lemma shift_within_two' (m s g : ℕ)
     (h_ub : g < 2 * (m / s))
@@ -882,8 +875,8 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
   have hvg_hi : (v + g) % m <
       Finpartition.equiEndpoint m s (jg + 1) := hvg_hi'
   have hpast : Finpartition.equiEndpoint m s (j₀ + 1) ≤
-      v + g :=
-    shift_past_interval' m s g hs h_lb j₀ v hv_lo hv_hi
+      v + g := by
+    have := gap_exceeds_ilen m s g hs h_lb j₀; omega
   have hwithin : v + g <
       Finpartition.equiEndpoint m s (j₀ + 3) :=
     shift_within_two' m s g h_ub j₀ v hv_hi
@@ -903,22 +896,19 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
   · have hvg_eq : (v + g) % m = v + g :=
       Nat.mod_eq_of_lt hvg_wrap
     rw [hvg_eq] at hvg_lo hvg_hi
-    by_cases hj3 : j₀ + 3 ≤ s
-    · have hrange := idx_range_from_endpoints' m s
-        (j₀+1) (j₀+3) (v+g) hpast hwithin
-        jg hvg_lo hvg_hi
-      have : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
-      have : jg + s - j₀ = s + (jg - j₀) := by omega
-      rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
-    · have hvg_lt_ep : v + g <
-          Finpartition.equiEndpoint m s s := by
-        grind [Finpartition.equiEndpoint_hi (show s ≠ 0 by omega) (n := m) (k := s)]
-      have hrange := idx_range_from_endpoints' m s
-        (j₀+1) s (v+g) hpast hvg_lt_ep
-        jg hvg_lo hvg_hi
-      have : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
-      have : jg + s - j₀ = s + (jg - j₀) := by omega
-      rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
+    have hrange : j₀ + 1 ≤ jg ∧ jg < j₀ + 3 := by
+      by_cases hj3 : j₀ + 3 ≤ s
+      · exact idx_range_from_endpoints' m s
+          (j₀+1) (j₀+3) (v+g) hpast hwithin jg hvg_lo hvg_hi
+      · have hvg_lt_ep : v + g <
+            Finpartition.equiEndpoint m s s := by
+          grind [Finpartition.equiEndpoint_hi (show s ≠ 0 by omega) (n := m) (k := s)]
+        have := idx_range_from_endpoints' m s
+          (j₀+1) s (v+g) hpast hvg_lt_ep jg hvg_lo hvg_hi
+        omega
+    have : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
+    have : jg + s - j₀ = s + (jg - j₀) := by omega
+    rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
   · push_neg at hvg_wrap
     have hvg_eq : (v + g) % m = v + g - m := by
       conv_lhs =>
@@ -976,14 +966,6 @@ private def eqp_idx (q r : ℕ) (p : ℕ) : ℕ :=
 private def eqp_off (q r : ℕ) (p : ℕ) : ℕ :=
   if p < r * (q + 1) then p % (q + 1)
   else (p - r * (q + 1)) % q
-
-private lemma eqp_idx_zero (q r : ℕ) :
-    eqp_idx q r 0 = 0 := by
-  simp [eqp_idx]
-
-private lemma eqp_off_zero (q r : ℕ) :
-    eqp_off q r 0 = 0 := by
-  simp [eqp_off]
 
 private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) :
     eqp_idx q r (s * q + r) = s := by
@@ -1314,19 +1296,6 @@ private lemma straddle2_gap1 (s g m : ℕ)
       have hsac12 := Nat.sub_add_cancel hmono12
       omega
 
-private lemma compl_parity_witness (j a : ℕ) (t : ℕ)
-    (ht : t < 3)
-    (htarg : t = j % 3 ∨ t = (j + 1) % 3) :
-    (j + a % 2) % 3 = t ∨
-    (j + (a + 1) % 2) % 3 = t := by
-  omega
-
-private lemma two_pairs_cover_split (j₁ j₂ : ℕ)
-    (hne : j₁ % 3 ≠ j₂ % 3) (k : ℕ) (hk : k < 3) :
-    (k = j₁ % 3 ∨ k = (j₁ + 1) % 3) ∨
-    (k = j₂ % 3 ∨ k = (j₂ + 1) % 3) := by
-  omega
-
 private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
     (hq_pos : 0 < q) (hr_lt : r < s)
     (hm_eq : m = s * q + r)
@@ -1344,12 +1313,14 @@ private lemma non_straddle_witness (q r p : ℕ)
     (hp : p < m) (hp1 : p + 1 < m)
     (hsame : eqp_idx q r (p + 1) = eqp_idx q r p)
     (j : ℕ) (hj : j = eqp_idx q r p)
-    (t : ℕ) (ht : t < 3) (hpair : t = j % 3 ∨ t = (j + 1) % 3) :
+    (t : ℕ) (_ : t < 3) (hpair : t = j % 3 ∨ t = (j + 1) % 3) :
     ∃ d ∈ ({0, 1} : Finset ℕ),
       (eqp_idx q r ((p + d) % m) +
         eqp_off q r ((p + d) % m) % 2) % 3 = t := by
   have hoff := eqp_off_succ_same q r p hq_pos hsame
-  rcases compl_parity_witness j (eqp_off q r p) t ht hpair with h | h
+  have : (j + (eqp_off q r p) % 2) % 3 = t ∨
+      (j + ((eqp_off q r p) + 1) % 2) % 3 = t := by omega
+  rcases this with h | h
   · exact ⟨0, by simp, by
       simp only [Nat.add_zero, Nat.mod_eq_of_lt hp, ← hj]
       exact h⟩
@@ -1371,7 +1342,8 @@ private lemma straddle_boundary_color (q r s p : ℕ)
     have hoff := eqp_off_succ_new q r p hq_pos (by omega)
     rw [hstep, ← hj, hoff]
   · have hpm : p + 1 = m := by omega
-    rw [hpm, Nat.mod_self, eqp_idx_zero, eqp_off_zero]
+    rw [hpm, Nat.mod_self, show eqp_idx q r 0 = 0 from by simp [eqp_idx],
+      show eqp_off q r 0 = 0 from by simp [eqp_off]]
     rw [hpm] at hstep
     have hm_idx : eqp_idx q r m = s := by
       rw [hm_eq]; exact eqp_idx_m q r s hq_pos hr_lt
@@ -1394,24 +1366,6 @@ private lemma gap1_j0_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
     (hgap1 : (jg + s - j₀) % s = 1) :
     (j₀ + 1) % 3 = jg % 3 := by
   rcases gap_mod_cases_gen s j₀ jg 1 hj₀ hjg hgap1 with h | h <;> grind
-
-private lemma eqp_idx_last (q r s : ℕ) (hq : 0 < q)
-    (hr : r < s) (hs : 0 < s) :
-    eqp_idx q r (s * q + r - 1) = s - 1 := by
-  have h_rq : r * (q + 1) = r * q + r := by grind
-  have h_rq_le : r * q + q ≤ s * q := by nlinarith
-  have hge : ¬(s * q + r - 1 < r * (q + 1)) := by omega
-  have h_bd_le : r * (q + 1) ≤ s * q + r - 1 := by omega
-  unfold eqp_idx
-  rw [if_neg hge]
-  have hnum : s * q + r - 1 - r * (q + 1) =
-      (q - 1) + (s - r - 1) * q := by
-    zify [h_bd_le, (by omega : 1 ≤ s * q + r),
-      hq, (by omega : r ≤ s), (by omega : 1 ≤ s - r)]
-    ring
-  rw [hnum, Nat.add_mul_div_right _ _ hq,
-    Nat.div_eq_of_lt (by omega)]
-  omega
 
 private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
     ((k + 3 - s) % 3 = 0 → s = k) ∧
@@ -1550,7 +1504,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         _ = m := equiEndpoint_hi (by omega)
   have hs3_le : 3 ≤ s := Nat.le_of_dvd hs hs3
   -- Step 1: which pair covers k?
-  rcases two_pairs_cover_split j₀ jg hphase k.val k.isLt
+  have : (k.val = j₀ % 3 ∨ k.val = (j₀ + 1) % 3) ∨
+      (k.val = jg % 3 ∨ k.val = (jg + 1) % 3) := by omega
+  rcases this
     with hk1 | hk2
   · -- Pair 1 covers k: k ∈ {j₀%3, (j₀+1)%3}
     rcases eqp_idx_step q r v hq_pos with h1_same | h1_step
@@ -1831,14 +1787,6 @@ lemma case_one_div_g_not_three (g : ℕ)
     simp only [this, h]; decide
   }
 
-private lemma color_shift_r (r q : ℕ) :
-    ((r + 1) % 3 + (3 - q % 3)) % 3 =
-      ((r % 3 + (3 - q % 3)) % 3 + 1) % 3 := by omega
-
-private lemma color_shift_q (r q : ℕ) :
-    (r % 3 + (3 - (q + 1) % 3)) % 3 =
-      ((r % 3 + (3 - q % 3)) % 3 + 2) % 3 := by omega
-
 /-- (1d), m = 3g, g ≡ 0 (mod 3): diagonal coloring `n ↦ (n%3 + n/g) % 3`. -/
 lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     (hg3 : 3 ∣ g) (hg : 0 < g) :
@@ -1942,9 +1890,14 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
       rw [this, color_at (q + 1) r hr_lt]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 1 (g + 1)
       (by simp) (by simp) (by simp) rfl
-      (by rw [hcv1]; exact color_shift_r r q)
-      (by have : v + (g + 1) = v + g + 1 := by grind
-          rw [this, hcvg1]; exact color_shift_q r q)
+      (by rw [hcv1]
+          change ((r + 1) % 3 + (3 - q % 3)) % 3 =
+            ((r % 3 + (3 - q % 3)) % 3 + 1) % 3
+          omega)
+      (by rw [show v + (g + 1) = v + g + 1 from by ring, hcvg1]
+          change (r % 3 + (3 - (q + 1) % 3)) % 3 =
+            ((r % 3 + (3 - q % 3)) % 3 + 2) % 3
+          omega)
 
 /-- Subcase (1d) assembled: dispatches on `g % 3` and `m ∈ {3g, 3g+3}` (paper §4.1). -/
 lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3 * g + 3) :
@@ -2815,21 +2768,6 @@ private def case2c_pattern (d₁ k₀ i : ℕ) : Fin 3 :=
   else if i % 2 = 0 then 0
   else if k₀ % 3 = 2 then 2 else 1
 
--- Adjacent cycles get different patterns.
-private lemma case2c_pattern_ne_succ (d₁ k₀ i : ℕ) (hd₁ : d₁ ≥ 3)
-    (hd₁_odd : Odd d₁) (hi : i < d₁) :
-    case2c_pattern d₁ k₀ i ≠ case2c_pattern d₁ k₀ ((i + 1) % d₁) := by
-  simp only [case2c_pattern]
-  obtain ⟨k, hk⟩ := hd₁_odd; subst hk
-  have hk03 : k₀ % 3 = 0 ∨ k₀ % 3 = 1 ∨ k₀ % 3 = 2 := by grind
-  by_cases hw : i + 1 < 2 * k + 1
-  · have hmod := Nat.mod_eq_of_lt hw
-    rcases hk03 with h | h | h <;> simp only [h, hmod] <;>
-      grind [Fin.ext_iff]
-  · have hi_eq : i = 2 * k := by grind
-    simp only [hi_eq, Nat.mod_self]
-    grind [Fin.ext_iff]
-
 -- General coverage: if (j₁ + p₁) % 3 ≠ (j₂ + p₂) % 3, all 3 colors appear.
 private lemma cover_mod3_general (p₁ p₂ : Fin 3)
     (j₁ j₂ : ℕ)
@@ -2876,25 +2814,9 @@ private def case2d_u (e₁ : ℕ) : ℕ := e₁ / 3 + e₁ % 3
 private def case2d_v (e₁ : ℕ) : ℕ :=
   if e₁ % 3 = 1 then e₁ / 3 + 1 else e₁ / 3
 
-private lemma case2d_u_odd {e₁ : ℕ} (he : Odd e₁) : Odd (case2d_u e₁) := by
-  obtain ⟨k, hk⟩ := he; grind [case2d_u]
-
-private lemma case2d_v_odd {e₁ : ℕ} (he : Odd e₁) : Odd (case2d_v e₁) := by
-  obtain ⟨k, hk⟩ := he; grind [case2d_v]
-
-private lemma case2d_w_odd {e₁ : ℕ} (he : Odd e₁) (hge : e₁ ≥ 3) :
-    Odd (e₁ - case2d_u e₁ - case2d_v e₁) := by
-  obtain ⟨k, hk⟩ := he; grind [case2d_u, case2d_v]
 
 private lemma case2d_uv_le {e₁ : ℕ} (hge : e₁ ≥ 19) :
     case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
-  grind [case2d_u, case2d_v]
-
-private lemma case2d_v_le_u {e₁ : ℕ} : case2d_v e₁ ≤ case2d_u e₁ := by
-  grind [case2d_u, case2d_v]
-
-private lemma case2d_w_le_u {e₁ : ℕ} (hge : e₁ ≥ 19) :
-    e₁ - (case2d_u e₁ + case2d_v e₁) ≤ case2d_u e₁ := by
   grind [case2d_u, case2d_v]
 
 /-- The base pattern: three alternating bicolor intervals on {0,...,e₁-1}.
@@ -2950,9 +2872,10 @@ private lemma basePattern_consec_boundary {e₁ j : ℕ}
     (hdiff : whichInterval e₁ j ≠ whichInterval e₁ ((j + 1) % e₁)) :
     {basePattern e₁ j, basePattern e₁ ((j + 1) % e₁)} =
       intervalColors (whichInterval e₁ j) := by
-  obtain ⟨ku, hku⟩ := case2d_u_odd he
-  obtain ⟨kv, hkv⟩ := case2d_v_odd he
-  obtain ⟨kw, hkw⟩ := case2d_w_odd he (by grind)
+  obtain ⟨ku, hku⟩ : Odd (case2d_u e₁) := by obtain ⟨k, hk⟩ := he; grind [case2d_u]
+  obtain ⟨kv, hkv⟩ : Odd (case2d_v e₁) := by obtain ⟨k, hk⟩ := he; grind [case2d_v]
+  obtain ⟨kw, hkw⟩ : Odd (e₁ - case2d_u e₁ - case2d_v e₁) := by
+    obtain ⟨k, hk⟩ := he; grind [case2d_u, case2d_v]
   have huv := case2d_uv_le hge
   simp only [whichInterval] at hdiff ⊢
   by_cases hj1_wrap : j + 1 < e₁
@@ -2994,8 +2917,9 @@ private lemma rotation_changes_interval {e₁ j : ℕ}
     whichInterval e₁ j ≠ whichInterval e₁ ((j + r) % e₁) := by
   have he₁_pos : 0 < e₁ := by grind
   have huv_bound := case2d_uv_le hge
-  have hv_le_u := case2d_v_le_u (e₁ := e₁)
-  have hw_le_u := case2d_w_le_u hge
+  have hv_le_u : case2d_v e₁ ≤ case2d_u e₁ := by grind [case2d_u, case2d_v]
+  have hw_le_u : e₁ - (case2d_u e₁ + case2d_v e₁) ≤ case2d_u e₁ := by
+    grind [case2d_u, case2d_v]
   simp only [whichInterval]
   have hj'_lt : (j + r) % e₁ < e₁ := Nat.mod_lt _ he₁_pos
   intro heq
