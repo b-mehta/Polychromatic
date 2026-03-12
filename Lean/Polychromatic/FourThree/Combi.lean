@@ -1313,7 +1313,7 @@ private lemma non_straddle_witness (q r p : ℕ)
     (hp : p < m) (hp1 : p + 1 < m)
     (hsame : eqp_idx q r (p + 1) = eqp_idx q r p)
     (j : ℕ) (hj : j = eqp_idx q r p)
-    (t : ℕ) (_ : t < 3) (hpair : t = j % 3 ∨ t = (j + 1) % 3) :
+    (t : ℕ) (hpair : t = j % 3 ∨ t = (j + 1) % 3) :
     ∃ d ∈ ({0, 1} : Finset ℕ),
       (eqp_idx q r ((p + d) % m) +
         eqp_off q r ((p + d) % m) % 2) % 3 = t := by
@@ -1342,8 +1342,9 @@ private lemma straddle_boundary_color (q r s p : ℕ)
     have hoff := eqp_off_succ_new q r p hq_pos (by omega)
     rw [hstep, ← hj, hoff]
   · have hpm : p + 1 = m := by omega
-    rw [hpm, Nat.mod_self, show eqp_idx q r 0 = 0 from by simp [eqp_idx],
-      show eqp_off q r 0 = 0 from by simp [eqp_off]]
+    have : eqp_idx q r 0 = 0 := by simp [eqp_idx]
+    have : eqp_off q r 0 = 0 := by simp [eqp_off]
+    rw [hpm, Nat.mod_self, ‹eqp_idx q r 0 = 0›, ‹eqp_off q r 0 = 0›]
     rw [hpm] at hstep
     have hm_idx : eqp_idx q r m = s := by
       rw [hm_eq]; exact eqp_idx_m q r s hq_pos hr_lt
@@ -1518,7 +1519,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         · rw [h1_same] at h
           have : j₀ = s := h; omega
       obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r v
-        hq_pos hv_lt hv1_lt h1_same j₀ rfl k.val k.isLt hk1
+        hq_pos hv_lt hv1_lt h1_same j₀ rfl k.val hk1
       exact ⟨d, by simp only [Finset.mem_insert,
         Finset.mem_singleton] at hd_mem ⊢; omega, hd_eq⟩
     · -- Pair 1 straddles → gap = 2
@@ -1545,7 +1546,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
               have : jg = s := h; omega
           obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
             ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg rfl
-            k.val k.isLt (Or.inr (hk_eq ▸ hjg1_eq.symm))
+            k.val (Or.inr (hk_eq ▸ hjg1_eq.symm))
           refine ⟨g + d, ?_, ?_⟩
           · simp only [Finset.mem_insert, Finset.mem_singleton]
               at hd_mem ⊢; omega
@@ -1582,7 +1583,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
           have : jg = s := h; omega
       obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
         ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg rfl
-        k.val k.isLt hk2
+        k.val hk2
       refine ⟨g + d, ?_, ?_⟩
       · simp only [Finset.mem_insert, Finset.mem_singleton]
           at hd_mem ⊢; omega
@@ -1611,7 +1612,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
             · rw [h1_same] at h
               have : j₀ = s := h; omega
           obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
-            v hq_pos hv_lt hv1_lt h1_same j₀ rfl k.val k.isLt
+            v hq_pos hv_lt hv1_lt h1_same j₀ rfl k.val
             (Or.inr (hk_eq ▸ hj01_eq.symm))
           exact ⟨d, by simp only [Finset.mem_insert,
             Finset.mem_singleton] at hd_mem ⊢; omega, hd_eq⟩
@@ -1894,7 +1895,8 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
           change ((r + 1) % 3 + (3 - q % 3)) % 3 =
             ((r % 3 + (3 - q % 3)) % 3 + 1) % 3
           omega)
-      (by rw [show v + (g + 1) = v + g + 1 from by ring, hcvg1]
+      (by have : v + (g + 1) = v + g + 1 := by ring
+          rw [this, hcvg1]
           change (r % 3 + (3 - (q + 1) % 3)) % 3 =
             ((r % 3 + (3 - q % 3)) % 3 + 2) % 3
           omega)
