@@ -67,13 +67,6 @@ Use `Nat.mod_eq_of_lt (by omega)` instead.
 ## Don't extract tactic blocks that create typeclass instances
 `haveI : NeZero m := ⟨by grind⟩` introduces a local instance. Extracting into a helper requires threading instances explicitly, adding more complexity than it removes. Leave these inline.
 
-## case_one_interval — what the paper does
-- Uses VARIABLE number of intervals s = smallest multiple of 3 with ⌈m/s⌉ < g
-- For g=5, m=289: s=75, intervals of size 3-4
-- Within each group of 3 consecutive intervals: bicolor alternating 01..., 12..., 20...
-- Since ⌈m/s⌉ < g < 2⌊m/s⌋, the g-shift crosses an interval boundary but
-  stays within a group, guaranteeing 3 colors
-
 ## Dependent type rewriting
 
 When `rw` fails with "motive is not type correct" because the rewritten term appears in dependent types (e.g. `hab : a ≤ b` depends on `b`), generalize first:
