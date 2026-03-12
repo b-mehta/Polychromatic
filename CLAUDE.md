@@ -91,6 +91,18 @@ Preserve `-- ANCHOR:` / `-- ANCHOR_END:` comments — they mark sections extract
   have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
   rcases this with h | h | h
 
+  -- Bad: show inside rw
+  rw [hpm, Nat.mod_self, show eqp_idx q r 0 = 0 from by simp [eqp_idx]]
+  -- Good: extract to have, then rw
+  have : eqp_idx q r 0 = 0 := by simp [eqp_idx]
+  rw [hpm, Nat.mod_self, this]
+
+  -- Bad: show for arithmetic rewrite inside rw
+  rw [show v + (g + 1) = v + g + 1 from by ring, hcvg1]
+  -- Good: extract to have
+  have : v + (g + 1) = v + g + 1 := by ring
+  rw [this, hcvg1]
+
   -- Bad: show to change goal type
   show ((h * q' + r') % h % 3 + ...) % 3 = _
   -- Good: use change instead
@@ -129,6 +141,12 @@ When simplifying or shortening Lean proofs:
 - **Extract repeated inline definitions** — when the same `let f := ...` appears in multiple helper lemmas, extract it as a `private def`. This removes duplication and makes call sites cleaner (e.g. `cycle_coloring` in Case 2).
 - **Check for existing lemmas before writing new ones** — before writing a private helper, search for an existing lemma with the same statement. For example, `case2d_ba_unit_d1` (proving `IsUnit` of an `Int.cast` from `Nat.Coprime`) was identical to `isUnit_intCast_of_natAbs_coprime` already defined earlier in the file. `Nat.Coprime a b` unfolds to `Nat.gcd a b = 1`, so lemmas taking one form accept the other.
 - **Use `suffices` to deduplicate symmetric case splits** — when a `by_cases` produces two branches with identical downstream proof structure (e.g. the same `rcases` dispatch), use `suffices ∃ ..., P ∧ Q` to extract the common proof into the `suffices` block, then have each branch of the `by_cases` only produce the witness. This avoids copy-pasting the dispatch logic. Applied in `case2d_coloring_works` to unify wrap/no-wrap branches.
+- **Deduplicate `by_cases` with weaker intermediate goals** — when two branches prove slightly different intermediate types (e.g. `jg < j₀ + 3` vs `jg < s`) but share the same conclusion, hoist the conclusion to a `have ... by` block containing the `by_cases`, and use `omega` to bridge the stronger branch to the weaker target. Applied in `gap_bound_interval`.
+- **Inline single-use private helpers** — when a `private lemma` is used exactly once, inline it at the call site to reduce file size. Techniques by proof structure:
+  - Simple lemma proved by `omega`/`simp`/`grind`: replace call with inline `have ... := by omega`
+  - Destructuring result (`obtain ⟨k, hk⟩ := helper arg`): replace with `obtain ⟨k, hk⟩ : TargetType := by tactic`
+  - Lemma used as a term in `rw` or `exact`: replace with `have := ...; rw [this]` or `have := ...; exact this`
+  - **Caveat**: `omega` and `grind` are context-sensitive. `omega` can fail at a call site due to many division/modular terms in context, even when it proves the same statement standalone. Fix with `change` to narrow the goal before `omega`. `grind [lemma]` can time out in large proof contexts — keep standalone lemmas when inlining causes timeouts.
 
 
 ## Golfing Process Tips
@@ -139,7 +157,7 @@ When golfing Lean proofs, the following approaches work best (ordered by impact)
 2. **Derive lemmas from each other** — look at what's already proven nearby and build on it rather than reproving from scratch. Example: `fin_filter_sum_last` can be derived from `fin_filter_sum_succ` in one line.
 3. **Factor duplicated proof blocks** — read the code for identical multi-line blocks and hoist shared proofs. Example: identical `hba` proofs in two branches of a `rcases`.
 4. **`lean_multi_attempt` for tactic replacement** — test 2–3 alternatives at once. Works well for single-tactic replacements (e.g. `omega` replacing `have; rcases; grind`). Does NOT work for replacing multi-line `have`/`calc` blocks.
-5. **Remove unused parameters** — grep for `_h` prefix to find them quickly.
+5. **Remove unused parameters** — grep for `_h` prefix to find them quickly. After inlining a helper, check whether the inlined proof still needs all the enclosing lemma's parameters — inlining can make parameters unused (e.g. a `t < 3` bound that the original helper needed but `omega` at the call site doesn't). Remove the parameter from the signature and update all call sites.
 6. **Unit cancellation in `ZMod`** — `mul_right_cancel₀` does NOT work on `ZMod d₁` (not an integral domain for composite `d₁`). Instead use `IsUnit.mul_right_cancel` or `IsUnit.mul_left_eq_zero` — these work without integral domain.
 7. **Use the LSP, not `lake env lean`** — `lean_diagnostic_messages` is much faster for verifying individual edits than rebuilding the whole file.
 8. **Use `wlog` for symmetric cases** — when two branches of a case split have identical proof structure with swapped variables, `wlog h : P with H` followed by `exact (H ...).symm` eliminates one branch entirely. Applied in `case2d_orbitMap_j_eq`.
