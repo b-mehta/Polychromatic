@@ -2396,6 +2396,67 @@ private lemma cycle_index_shift_ba {m : ℕ} {a b : ℤ} {d₁ : ℕ}
   simp only [map_add, map_intCast, add_mul]
   rw [← hu]; ring_nf; rw [u.inv_mul]; ring
 
+/-- If Φ(i, j+1) = Φ(i, j) + b, then Φ⁻¹(x+b) = (same_i, j+1). -/
+private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid γ]
+    (Φ : ZMod d₁ × ZMod e₁ ≃ γ) {b : γ}
+    (hΦ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, Φ (i, j + 1) = Φ (i, j) + b)
+    (x : γ) :
+    Φ.symm (x + b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := by
+  have key := hΦ (Φ.symm x).1 (Φ.symm x).2
+  rw [Equiv.apply_symm_apply] at key
+  exact Φ.symm_apply_eq.mpr key.symm
+
+/-- If α(Φ(i,j)) = i for all i,j, then (Φ⁻¹(x)).1 = α(x). -/
+private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
+    (Φ : ZMod d₁ × ZMod e₁ ≃ γ) (α : γ → ZMod d₁)
+    (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i)
+    (x : γ) :
+    (Φ.symm x).1 = α x := by
+  have h := hα (Φ.symm x).1 (Φ.symm x).2
+  rw [Equiv.apply_symm_apply] at h; exact h.symm
+
+/-- Polychromaticity from an orbit coloring.
+    Given an orbit equivalence Φ with shift properties and a coloring f,
+    if f covers all colors at any translate, then f ∘ Φ.symm is polychromatic. -/
+private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁] [NeZero e₁]
+    (Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m)
+    (hΦ_add_b : ∀ x : ZMod m,
+      Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1))
+    (hΦ_cycle_shift : ∀ x : ZMod m,
+      (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1)
+    (f : ZMod d₁ × ZMod e₁ → Fin 3)
+    (hcovers : ∀ (n : ZMod m) (k : Fin 3),
+      k = f ((Φ.symm n).1, (Φ.symm n).2) ∨
+      k = f ((Φ.symm n).1, (Φ.symm n).2 + 1) ∨
+      k = f ((Φ.symm n).1 + 1, (Φ.symm (n + ↑(b - a))).2) ∨
+      k = f ((Φ.symm n).1 + 1, (Φ.symm (n + ↑(b - a))).2 + 1)) :
+    HasPolychromColouring (Fin 3) (zmod_set m a b) := by
+  let χ : ZMod m → Fin 3 := f ∘ Φ.symm
+  refine ⟨χ, fun n k => ?_⟩
+  simp only [zmod_set, Finset.image_insert, Finset.image_singleton,
+    Finset.mem_insert, Finset.mem_singleton]
+  set i := (Φ.symm n).1; set j := (Φ.symm n).2
+  set j' := (Φ.symm (n + ↑(b - a))).2
+  have hχ_n : χ n = f (i, j) := rfl
+  have hχ_nb : χ (n + ↑b) = f (i, j + 1) := congr_arg f (hΦ_add_b n)
+  have hi_shift : (Φ.symm (n + ↑(b - a))).1 = i + 1 := hΦ_cycle_shift n
+  have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') :=
+    congr_arg f (Prod.ext hi_shift rfl)
+  have hχ_n2ba : χ (n + ↑(2 * b - a)) = f (i + 1, j' + 1) := by
+    have : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by
+      rw [intCast_2ba_eq, add_assoc]
+    rw [congr_arg χ this]
+    have hΦ' := hΦ_add_b (n + ↑(b - a))
+    exact congr_arg f (Prod.ext
+      (by rw [Prod.ext_iff.mp hΦ' |>.1, hi_shift])
+      (Prod.ext_iff.mp hΦ' |>.2))
+  rcases hcovers n k with h | h | h | h
+  · exact ⟨0, by simp, by rw [add_zero, hχ_n, h]⟩
+  · exact ⟨↑b, by simp, by rw [hχ_nb, h]⟩
+  · exact ⟨↑(b - a), by simp, by rw [hχ_nba, h]⟩
+  · exact ⟨↑(2 * b - a), by simp, by rw [hχ_n2ba, h]⟩
+
 /--
 Case 2a: $e_1$ is even.
 The cycles are colored with alternating 01 and 02 patterns.
@@ -2441,46 +2502,16 @@ lemma case_two_e1_even (hm : m ≥ 289)
     cycle_index_shift_ba hd₁_dvd u_ba hu_ba
   have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i :=
     orbitMap_cycle_index hd₁_dvd hb_zero u_ba hu_ba
-  -- Φ.symm(x+b) = (same_i, j+1)
-  have hΦ_add_b : ∀ x : ZMod m,
-      Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := fun x => by
-    have key := hφ_add_b (Φ.symm x).1 (Φ.symm x).2
-    change Φ ((Φ.symm x).1, (Φ.symm x).2 + 1) = Φ (Φ.symm x) + ↑b at key
-    rw [Equiv.apply_symm_apply] at key
-    exact Φ.symm_apply_eq.mpr key.symm
-  -- (Φ.symm x).1 = α x
-  have hΦ_cycle : ∀ x : ZMod m, (Φ.symm x).1 = α x := fun x => by
-    have h := hα_φ (Φ.symm x).1 (Φ.symm x).2
-    change α (Φ (Φ.symm x)) = _ at h
-    rw [Equiv.apply_symm_apply] at h; exact h.symm
+  have hΦ_add_b := equiv_symm_shift_b Φ hφ_add_b
+  have hΦ_cycle := equiv_symm_fst_eq Φ α hα_φ
   have hd₁_ge2 : d₁ ≥ 2 := by grind
   have hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2 :=
     parity_flip_even e₁ he1_even he₁_ge2
-  -- Define coloring and prove polychromaticity
-  let χ : ZMod m → Fin 3 := cycle_coloring d₁ e₁ ∘ Φ.symm
-  let f := cycle_coloring d₁ e₁
-  refine ⟨χ, fun n k => ?_⟩
-  simp only [zmod_set, Finset.image_insert, Finset.image_singleton,
-    Finset.mem_insert, Finset.mem_singleton]
-  set p := Φ.symm n; set i := p.1; set j := p.2
-  set j' := (Φ.symm (n + ↑(b - a))).2
-  have hχ_n : χ n = f (i, j) := rfl
-  have hχ_nb : χ (n + ↑b) = f (i, j + 1) := congr_arg f (hΦ_add_b n)
-  have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') :=
-    congr_arg f (Prod.ext (by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]) rfl)
-  have hχ_n2ba : χ (n + ↑(2 * b - a)) = f (i + 1, j' + 1) := by
-    have : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by
-      rw [intCast_2ba_eq, add_assoc]
-    rw [congr_arg χ this]
-    have hΦ' := hΦ_add_b (n + ↑(b - a))
-    exact congr_arg f (Prod.ext
-      (by rw [Prod.ext_iff.mp hΦ' |>.1, hΦ_cycle, hα_ba, ← hΦ_cycle])
-      (Prod.ext_iff.mp hΦ' |>.2))
-  rcases color_covers_even d₁ e₁ hd₁_ge2 hparity i j j' k with h | h | h | h
-  · exact ⟨0, by simp, by rw [add_zero, hχ_n, h]⟩
-  · exact ⟨↑b, by simp, by rw [hχ_nb, h]⟩
-  · exact ⟨↑(b - a), by simp, by rw [hχ_nba, h]⟩
-  · exact ⟨↑(2 * b - a), by simp, by rw [hχ_n2ba, h]⟩
+  have hΦ_cycle_shift : ∀ x : ZMod m,
+      (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1 := fun x => by
+    rw [hΦ_cycle, hα_ba, ← hΦ_cycle]
+  exact orbit_coloring_polychrom Φ hΦ_add_b hΦ_cycle_shift (cycle_coloring d₁ e₁)
+    (fun n k => color_covers_even d₁ e₁ hd₁_ge2 hparity _ _ _ k)
 
 /-! #### Case (2b): d₁ even, e₁ odd
 
@@ -2699,18 +2730,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     cycle_index_shift_ba hd₁_dvd u_ba hu_ba
   have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i :=
     orbitMap_cycle_index hd₁_dvd hb_zero u_ba hu_ba
-  -- Φ.symm(x+b) = (same_i, j+1)
-  have hΦ_add_b : ∀ x : ZMod m,
-      Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := fun x => by
-    have key := hφ_add_b (Φ.symm x).1 (Φ.symm x).2
-    change Φ ((Φ.symm x).1, (Φ.symm x).2 + 1) = Φ (Φ.symm x) + ↑b at key
-    rw [Equiv.apply_symm_apply] at key
-    exact Φ.symm_apply_eq.mpr key.symm
-  -- (Φ.symm x).1 = α x
-  have hΦ_cycle : ∀ x : ZMod m, (Φ.symm x).1 = α x := fun x => by
-    have h := hα_φ (Φ.symm x).1 (Φ.symm x).2
-    change α (Φ (Φ.symm x)) = _ at h
-    rw [Equiv.apply_symm_apply] at h; exact h.symm
+  have hΦ_add_b := equiv_symm_shift_b Φ hφ_add_b
+  have hΦ_cycle := equiv_symm_fst_eq Φ α hα_φ
   -- d₂ properties for the compatibility argument
   set d₂ := Nat.gcd (b - a).natAbs m
   have hd₂_dvd : d₂ ∣ m := Nat.gcd_dvd_right _ _
@@ -2742,28 +2763,6 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   -- π(n+(b-a)) = π(n) since π(b-a)=0, combined with π(φ(i,j))=j.val*π(b)
   -- gives d₂ | (j.val - j'.val). Then d₂ | e₁ and d₂ > 1, so e₁-2 and 0
   -- can't both be divisible by d₂ (since e₁ odd → gcd(e₁-2, e₁) | 2).
-  -- Define coloring and prove polychromaticity
-  let χ : ZMod m → Fin 3 := case2b_coloring d₁ e₁ ∘ Φ.symm
-  let f := case2b_coloring d₁ e₁
-  refine ⟨χ, fun n k => ?_⟩
-  simp only [zmod_set, Finset.image_insert, Finset.image_singleton,
-    Finset.mem_insert, Finset.mem_singleton]
-  set p := Φ.symm n; set i := p.1; set j := p.2
-  set j' := (Φ.symm (n + ↑(b - a))).2
-  have hχ_n : χ n = f (i, j) := rfl
-  have hχ_nb : χ (n + ↑b) = f (i, j + 1) := congr_arg f (hΦ_add_b n)
-  have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') :=
-    congr_arg f (Prod.ext (by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]) rfl)
-  have hχ_n2ba : χ (n + ↑(2 * b - a)) = f (i + 1, j' + 1) := by
-    have : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by
-      rw [intCast_2ba_eq, add_assoc]
-    rw [congr_arg χ this]
-    have hΦ' := hΦ_add_b (n + ↑(b - a))
-    exact congr_arg f (Prod.ext
-      (by rw [Prod.ext_iff.mp hΦ' |>.1, hΦ_cycle, hα_ba, ← hΦ_cycle])
-      (Prod.ext_iff.mp hΦ' |>.2))
-  -- Compatibility: degenerate positions don't coincide
-  -- Helper: derive False from degenerate-position coincidence
   have h_degenerate_false : ∀ (j₁ j₂ : ZMod e₁),
       (j₁.val : ZMod d₂) * π (↑b) = (j₂.val : ZMod d₂) * π (↑b) →
       j₁.val = 0 → j₂.val = e₁ - 2 → False := by
@@ -2778,31 +2777,28 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
       rwa [h2] at h
     have hd₂_eq2 : d₂ = 2 := by have := Nat.le_of_dvd (by grind) hd₂_dvd_2; grind
     obtain ⟨k, hk⟩ := hd₂_dvd_e₁; obtain ⟨l, hl⟩ := he1_odd; grind
-  -- π(n) and π(n+(b-a)) give the same ZMod d₂ value
-  have hπ_eq : π (n + ↑(b - a)) = π n := by
-    simp only [π, map_add, map_intCast]
-    rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba, add_zero]
-  have hπn : π n = (j.val : ZMod d₂) * π (↑b) := by
-    have : n = Φ p := (Equiv.apply_symm_apply Φ n).symm
-    conv_lhs => rw [this]
-    exact hπ_φ i j
-  have hπn' : π n = (j'.val : ZMod d₂) * π (↑b) := by
-    rw [← hπ_eq]
-    have : n + ↑(b - a) = Φ (Φ.symm (n + ↑(b - a))) := (Equiv.apply_symm_apply Φ _).symm
-    conv_lhs => rw [this]
-    exact hπ_φ _ j'
-  have hπ_jj' : (j.val : ZMod d₂) * π (↑b) = (j'.val : ZMod d₂) * π (↑b) :=
-    hπn.symm.trans hπn'
-  have h_compat : j.val = 0 → j'.val ≠ e₁ - 2 := fun hj hj' =>
-    h_degenerate_false j j' hπ_jj' hj hj'
-  have h_compat' : j'.val = 0 → j.val ≠ e₁ - 2 := fun hj' hj =>
-    h_degenerate_false j' j hπ_jj'.symm hj' hj
-  rcases case2b_coverage_gen d₁ e₁ hd1_even he1_odd he₁_ge3
-      i j j' h_compat h_compat' k with h | h | h | h
-  · exact ⟨0, by simp, by rw [add_zero, hχ_n, h]⟩
-  · exact ⟨↑b, by simp, by rw [hχ_nb, h]⟩
-  · exact ⟨↑(b - a), by simp, by rw [hχ_nba, h]⟩
-  · exact ⟨↑(2 * b - a), by simp, by rw [hχ_n2ba, h]⟩
+  -- Define coloring and prove polychromaticity via orbit helper
+  have hΦ_cycle_shift : ∀ x : ZMod m,
+      (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1 := fun x => by
+    rw [hΦ_cycle, hα_ba, ← hΦ_cycle]
+  exact orbit_coloring_polychrom Φ hΦ_add_b hΦ_cycle_shift (case2b_coloring d₁ e₁)
+    (fun n k => by
+      set j := (Φ.symm n).2; set j' := (Φ.symm (n + ↑(b - a))).2
+      have hπ_eq : π (n + ↑(b - a)) = π n := by
+        simp only [π, map_add, map_intCast]
+        rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba, add_zero]
+      have hπn : π n = (j.val : ZMod d₂) * π (↑b) := by
+        have : n = Φ (Φ.symm n) := (Equiv.apply_symm_apply Φ n).symm
+        conv_lhs => rw [this]; exact hπ_φ _ j
+      have hπn' : π n = (j'.val : ZMod d₂) * π (↑b) := by
+        rw [← hπ_eq]
+        have : n + ↑(b - a) = Φ (Φ.symm (n + ↑(b - a))) :=
+          (Equiv.apply_symm_apply Φ _).symm
+        conv_lhs => rw [this]; exact hπ_φ _ j'
+      have hπ_jj' := hπn.symm.trans hπn'
+      exact case2b_coverage_gen d₁ e₁ hd1_even he1_odd he₁_ge3 _ j j'
+        (fun hj hj' => h_degenerate_false j j' hπ_jj' hj hj')
+        (fun hj' hj => h_degenerate_false j' j hπ_jj'.symm hj' hj) k)
 
 -- Pattern assignment for Case 2c, parametrized by k₀ (the wrap shift).
 -- Variant A (k₀ % 3 ≠ 2): even→0, odd→1, last→2.
