@@ -131,6 +131,18 @@ When simplifying or shortening Lean proofs:
 - **Use `suffices` to deduplicate symmetric case splits** — when a `by_cases` produces two branches with identical downstream proof structure (e.g. the same `rcases` dispatch), use `suffices ∃ ..., P ∧ Q` to extract the common proof into the `suffices` block, then have each branch of the `by_cases` only produce the witness. This avoids copy-pasting the dispatch logic. Applied in `case2d_coloring_works` to unify wrap/no-wrap branches.
 
 
+## Simplification and Deduplication Tips
+
+When reducing code reuse and improving proof quality:
+
+- **Extract shared `Equiv.symm` reasoning into helpers** — when multiple proofs build an `Equiv.ofBijective` and then derive properties of `Φ.symm`, extract the common reasoning as private lemmas. Typical candidates: "if `Φ` has a shift property then `Φ⁻¹` has the corresponding inverse-shift property". These are short (4–5 line) proofs that tend to be copy-pasted verbatim across case lemmas.
+- **Parameterize repeated proof skeletons** — when multiple case lemmas share the same proof skeleton (define a coloring, derive shift equalities, dispatch witnesses) differing only in the coloring function and coverage lemma, extract the skeleton into a helper parameterized by those differences. Callers then just supply the case-specific parts.
+- **`Equiv.ofBijective` is definitionally transparent for forward application** — `(Equiv.ofBijective φ hbij) x` is definitionally `φ x`, so hypotheses about `φ` can be passed where `Φ` is expected without conversion. But `Φ.symm` uses `Classical.indefiniteDescription` and does NOT reduce — proofs about `Φ.symm` require `Equiv.apply_symm_apply` or `Equiv.symm_apply_eq`.
+- **`set` bindings affect definitional equality** — `set j := expr` makes subsequent goals see `j` instead of `expr`. If you hoist a proof out of its tactic block (e.g. into a universally quantified `have`), the `set` bindings are no longer in scope and terms involving `Equiv.symm` may not unify. Keep proofs that depend on `set` bindings together with those bindings.
+- **Prefer `grind` over `omega` and `ring`** — `grind` subsumes both for the goals that arise in this project. Don't replace `grind` with `omega` or `ring`.
+- **Don't extract tactic blocks that create typeclass instances** — `haveI : NeZero m := ⟨by grind⟩` introduces a local instance. Extracting such blocks into a helper requires threading instances explicitly, adding more complexity than it removes. Leave these inline.
+- **Keep readability when using callbacks** — when a helper takes a universally quantified hypothesis (e.g. `∀ n k, ...`), simple cases can pass the lemma directly (`fun n k => lemma _ _ _ k`). For cases needing non-trivial setup (e.g. deriving compatibility conditions from a projection argument), do the derivation inside the callback but keep the reasoning steps explicit rather than inlining everything into one expression.
+
 ## Golfing Process Tips
 
 When golfing Lean proofs, the following approaches work best (ordered by impact):
