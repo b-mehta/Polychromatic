@@ -97,89 +97,11 @@ Preserve `-- ANCHOR:` / `-- ANCHOR_END:` comments — they mark sections extract
   have : eqp_idx q r 0 = 0 := by simp [eqp_idx]
   rw [hpm, Nat.mod_self, this]
 
-  -- Bad: show for arithmetic rewrite inside rw
-  rw [show v + (g + 1) = v + g + 1 from by ring, hcvg1]
-  -- Good: extract to have
-  have : v + (g + 1) = v + g + 1 := by ring
-  rw [this, hcvg1]
-
   -- Bad: show to change goal type
   show ((h * q' + r') % h % 3 + ...) % 3 = _
   -- Good: use change instead
   change ((h * q' + r') % h % 3 + ...) % 3 = _
   ```
-
-## Proof Golfing Tips
-
-When simplifying or shortening Lean proofs:
-
-- **`simp` with lemma lists** — a single `simp [h₁, h₂, h₃]` often replaces multiple `rw` steps. Use `simp only [...]` when `simp` is too aggressive or slow.
-- **`gcongr`** handles monotonicity/congruence goals (e.g. `a ≤ b → f a ≤ f b`) — avoids manual `apply` chains.
-- **`positivity`** closes positivity/nonnegativity goals automatically.
-- **`field_simp`** clears denominators — combine with `ring` or `linarith` to finish.
-- **`exact?` / `apply?` / `rw?`** — use these search tactics locally to find the right lemma, then inline the result.
-- **Merge `have`/`suffices` chains** — if a `have` is used exactly once right after, consider inlining it or using `suffices`.
-- **`calc` blocks** — replace long `have` chains with `calc` when proving a sequence of inequalities or equalities.
-- **`obtain ⟨a, b, h⟩ := ...`** — destructure in one step instead of separate `have` + `cases`.
-- **`refine ... ?_`** — partially apply a lemma and let Lean generate remaining goals, avoiding verbose `apply` + `intro` sequences.
-- **Avoid redundant hypotheses** — if a lemma's hypothesis can be closed by `inferInstance` or `by omega`, remove the explicit `have` that provides it.
-- **Combine `constructor` with `⟨..., ...⟩`** — use anonymous constructor syntax to close `And`/`Exists` goals concisely.
-- **`norm_num` extensions** — `norm_num [...]` can close goals involving specific numeric computations, including modular arithmetic.
-- **Try removing tactics before `grind`** — `grind` is powerful and often subsumes preceding tactics. When a proof ends with `tactic; grind`, try deleting the preceding tactic. Known results:
-  - **`rw [mul_add, mul_one]; grind`** → `grind` — works when proving ℕ arithmetic equalities (e.g. `v + g = g * (q + 1) + r`). `grind` handles `mul_add`/`mul_one` rewrites.
-  - **`rw [hv_eq, color_at ...]; grind`** → `grind` — works when the `rw` unfolds definitions that `grind` can see through.
-  - **`rw [hcvg]; grind`** → `grind` — works when `hcvg` is a local hypothesis rewrite.
-  - **`congr 1; grind`** → `grind` — works for simple congruence goals.
-  - **`have := Nat.mul_pos ...; grind`** → `grind` — works when the positivity fact is inferrable.
-  - **`simp; grind`** → `grind` — works for simple normalization (e.g. `Fin.val` goals).
-  - **`simp [h, Nat.add_mod, ...] <;> grind`** → `grind [Nat.add_mod, Nat.mod_self, Nat.mod_mod]` — passing the simp lemmas directly to `grind` works for modular arithmetic.
-  - **`rw [Nat.mul_add_mod, ...]; grind`** → `grind [Nat.mul_add_mod, Nat.add_mul_div_left]` — passing lemmas about `%` and `/` to `grind` works.
-  - **`rw [this, color_at (q + 1) 0 ...]; grind`** — does NOT simplify, even with `grind [color_at (q + 1) 0]`, when `color_at` is a local `have`.
-  - **`simp [Fin.ext_iff] <;> omega`** → `grind [Fin.ext_iff]` — works for Fin equality/inequality goals with arithmetic.
-  - **`have ...; grind [Nat.mod_self]`** → `grind [Nat.mod_self]` — works when the `have` provides a simple ℕ equality `grind` can derive.
-- **`grind` limitations** — `grind` CANNOT handle ZMod cast arithmetic with variable modulus `m`. For example, proving `(3 : ZMod m) * g = 2` when `m = 3*g - 2` requires manual `Nat.cast` steps (`simpa using show ((3 * g : ℕ) : ZMod m) = (m + 2 : ℕ) from by congr 1; grind`). The ℕ-level `congr 1; grind` works but the ZMod-level cast is invisible to `grind`.
-- **Extract repeated inline definitions** — when the same `let f := ...` appears in multiple helper lemmas, extract it as a `private def`. This removes duplication and makes call sites cleaner (e.g. `cycle_coloring` in Case 2).
-- **Check for existing lemmas before writing new ones** — before writing a private helper, search for an existing lemma with the same statement. For example, `case2d_ba_unit_d1` (proving `IsUnit` of an `Int.cast` from `Nat.Coprime`) was identical to `isUnit_intCast_of_natAbs_coprime` already defined earlier in the file. `Nat.Coprime a b` unfolds to `Nat.gcd a b = 1`, so lemmas taking one form accept the other.
-- **Use `suffices` to deduplicate symmetric case splits** — when a `by_cases` produces two branches with identical downstream proof structure (e.g. the same `rcases` dispatch), use `suffices ∃ ..., P ∧ Q` to extract the common proof into the `suffices` block, then have each branch of the `by_cases` only produce the witness. This avoids copy-pasting the dispatch logic. Applied in `case2d_coloring_works` to unify wrap/no-wrap branches.
-- **Deduplicate `by_cases` with weaker intermediate goals** — when two branches prove slightly different intermediate types (e.g. `jg < j₀ + 3` vs `jg < s`) but share the same conclusion, hoist the conclusion to a `have ... by` block containing the `by_cases`, and use `omega` to bridge the stronger branch to the weaker target. Applied in `gap_bound_interval`.
-- **Inline single-use private helpers** — when a `private lemma` is used exactly once, inline it at the call site to reduce file size. Techniques by proof structure:
-  - Simple lemma proved by `omega`/`simp`/`grind`: replace call with inline `have ... := by omega`
-  - Destructuring result (`obtain ⟨k, hk⟩ := helper arg`): replace with `obtain ⟨k, hk⟩ : TargetType := by tactic`
-  - Lemma used as a term in `rw` or `exact`: replace with `have := ...; rw [this]` or `have := ...; exact this`
-  - **Caveat**: `omega` and `grind` are context-sensitive. `omega` can fail at a call site due to many division/modular terms in context, even when it proves the same statement standalone. Fix with `change` to narrow the goal before `omega`. `grind [lemma]` can time out in large proof contexts — keep standalone lemmas when inlining causes timeouts.
-
-
-## Simplification and Deduplication Tips
-
-When reducing code reuse and improving proof quality:
-
-- **Extract shared `Equiv.symm` reasoning into helpers** — when multiple proofs build an `Equiv.ofBijective` and then derive properties of `Φ.symm`, extract the common reasoning as private lemmas. Typical candidates: "if `Φ` has a shift property then `Φ⁻¹` has the corresponding inverse-shift property". These are short (4–5 line) proofs that tend to be copy-pasted verbatim across case lemmas.
-- **Parameterize repeated proof skeletons** — when multiple case lemmas share the same proof skeleton (define a coloring, derive shift equalities, dispatch witnesses) differing only in the coloring function and coverage lemma, extract the skeleton into a helper parameterized by those differences. Callers then just supply the case-specific parts.
-- **`Equiv.ofBijective` is definitionally transparent for forward application** — `(Equiv.ofBijective φ hbij) x` is definitionally `φ x`, so hypotheses about `φ` can be passed where `Φ` is expected without conversion. But `Φ.symm` uses `Classical.indefiniteDescription` and does NOT reduce — proofs about `Φ.symm` require `Equiv.apply_symm_apply` or `Equiv.symm_apply_eq`.
-- **`set` bindings affect definitional equality** — `set j := expr` makes subsequent goals see `j` instead of `expr`. If you hoist a proof out of its tactic block (e.g. into a universally quantified `have`), the `set` bindings are no longer in scope and terms involving `Equiv.symm` may not unify. Keep proofs that depend on `set` bindings together with those bindings.
-- **Prefer `grind` over `omega` and `ring`** — `grind` subsumes both for the goals that arise in this project. Don't replace `grind` with `omega` or `ring`.
-- **Don't extract tactic blocks that create typeclass instances** — `haveI : NeZero m := ⟨by grind⟩` introduces a local instance. Extracting such blocks into a helper requires threading instances explicitly, adding more complexity than it removes. Leave these inline.
-- **Keep readability when using callbacks** — when a helper takes a universally quantified hypothesis (e.g. `∀ n k, ...`), simple cases can pass the lemma directly (`fun n k => lemma _ _ _ k`). For cases needing non-trivial setup (e.g. deriving compatibility conditions from a projection argument), do the derivation inside the callback but keep the reasoning steps explicit rather than inlining everything into one expression.
-
-## Golfing Process Tips
-
-When golfing Lean proofs, the following approaches work best (ordered by impact):
-
-1. **Replace private helpers with mathlib lemmas** — use `lean_loogle` with the type signature to find exact matches. This eliminates definitions and simplifies all downstream callers. Example: `mod_add_right'` → `Nat.add_mod_mod`.
-2. **Derive lemmas from each other** — look at what's already proven nearby and build on it rather than reproving from scratch. Example: `fin_filter_sum_last` can be derived from `fin_filter_sum_succ` in one line.
-3. **Factor duplicated proof blocks** — read the code for identical multi-line blocks and hoist shared proofs. Example: identical `hba` proofs in two branches of a `rcases`.
-4. **`lean_multi_attempt` for tactic replacement** — test 2–3 alternatives at once. Works well for single-tactic replacements (e.g. `omega` replacing `have; rcases; grind`). Does NOT work for replacing multi-line `have`/`calc` blocks.
-5. **Remove unused parameters** — grep for `_h` prefix to find them quickly. After inlining a helper, check whether the inlined proof still needs all the enclosing lemma's parameters — inlining can make parameters unused (e.g. a `t < 3` bound that the original helper needed but `omega` at the call site doesn't). Remove the parameter from the signature and update all call sites.
-6. **Unit cancellation in `ZMod`** — `mul_right_cancel₀` does NOT work on `ZMod d₁` (not an integral domain for composite `d₁`). Instead use `IsUnit.mul_right_cancel` or `IsUnit.mul_left_eq_zero` — these work without integral domain.
-7. **Use the LSP, not `lake env lean`** — `lean_diagnostic_messages` is much faster for verifying individual edits than rebuilding the whole file.
-8. **Use `wlog` for symmetric cases** — when two branches of a case split have identical proof structure with swapped variables, `wlog h : P with H` followed by `exact (H ...).symm` eliminates one branch entirely. Applied in `case2d_orbitMap_j_eq`.
-
-## Proof Development Process
-
-- **Write a detailed informal proof before formalizing.** For any non-trivial goal (more than a single tactic), write out in comments or text why the goal is true, what the key steps are, and what lemmas you expect to use. This prevents wasted cycles trying tactics blindly.
-- **Fix errors in priority order**: syntax errors → type errors → unsolved goals/tactic failures → linter warnings. Lower-priority errors are often spurious when higher-priority ones exist.
-- **Work on the hardest case first.** `sorry` the easy cases and focus on the hard one. If the hard case requires a different approach, effort on easy cases is wasted.
-- **Fix errors iteratively, one at a time.** After each edit, check diagnostics before moving to the next error. Do not rewrite an entire file at once — changes interact in unexpected ways and make debugging harder.
 
 ## Commit Conventions
 
