@@ -62,7 +62,7 @@ def zmod_set (m : ℕ) (a b : ℤ) : Finset (ZMod m) :=
   ({0, b - a, b, 2 * b - a} : Finset ℤ).image Int.cast
 
 /- Aristotle alternative for `polychromNumber_zmod` (10 lines vs 12 original, -2).
-   Full proof: `aristotle_results/result_polychromNumber_zmod.lean`
+
 
 def zmod_set (m : ℕ) (a b : ℤ) : Finset (ZMod m) :=
   ({0, b - a, b, 2 * b - a} : Finset ℤ).image Int.cast
@@ -162,7 +162,7 @@ private lemma checkLinearPolychrom_spec {offsets : List ℕ} {L : List (Fin 3)}
 /-- Frobenius representation for consecutive block sizes r, r+1:
     any m ≥ r(r-1) can be written as r·h + (r+1)·k. -/
 /- Aristotle alternative for `frobenius_consec` (10 lines vs 11 original, -1).
-   Full proof: `aristotle_results/result_frobenius_consec.lean`
+
 
 private lemma frobenius_consec {rA m : ℕ} (hrA : 1 < rA) (hm : m ≥ rA * (rA - 1)) :
     ∃ h k, rA * h + (rA + 1) * k = m ∧ 0 < h + k := by
@@ -285,6 +285,22 @@ private lemma sub_add_eq {i j s r q : ℕ} (hge : r ≤ j + s)
     (hi : j + q = i) :
     i + s - (q + r) = j + s - r := by grind
 
+/- Aristotle alternative for sub_region_eq (12 vs 13 lines, -1)
+
+
+private lemma sub_region_eq {i s r h : ℕ} (hr : 0 < r)
+    (hi_lo : r * (h - 1) ≤ i) (hi_hi : i < r * h)
+    (hjs_ge : r ≤ i % r + s) :
+    i + s - r * h = i % r + s - r := by
+      have h_mod : i = r * (h - 1) + (i % r) := by
+        have h_div_alg : i = r * (i / r) + (i % r) := by
+          rw [ Nat.div_add_mod ];
+        have h_div_eq : i / r < h ∧ h - 1 ≤ i / r := by
+          exact ⟨ Nat.div_lt_of_lt_mul <| by linarith, Nat.le_div_iff_mul_le hr |>.2 <| by linarith ⟩;
+        grind +ring;
+      rw [h_mod];
+      rcases h with ( _ | _ | h ) <;> norm_num [ Nat.add_mod, Nat.mul_succ ] at * ; omega;
+-/
 /-- When i is in the last block before boundary `r*h`, and j = i%r:
     `i + s - r*h = j + s - r`. -/
 private lemma sub_region_eq {i s r h : ℕ} (hr : 0 < r)
@@ -498,6 +514,36 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
     rw [List.getElem?_append_right
       (by grind : B.length ≤ j + s)]
 
+/- Aristotle alternative for case_wrap_BB (20 vs 33 lines, -13)
+
+
+private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
+    (k m i : ℕ)
+    (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hBB : checkLinearPolychrom offsets (B ++ B) = true)
+    (hm : B.length * k = m)
+    (hi : i < m)
+    (h_wrap : m ≤ i + offsets.foldr max 0)
+    (hk_pos : 0 < k) :
+    CaseGoal A B offsets 0 m i := by
+      use B ++ B, i % (A.length + 1);
+      have h_third_part : ∀ s ≤ List.foldr Max.max 0 offsets, (B ++ B)[i % (A.length + 1) + s]? = Option.some (blockColorVal A B 0 ((i + s) % m)) := by
+        intros s hs; rw [ blockColorVal ] ; simp +decide [ Nat.mod_eq_of_lt, * ] ;
+        rw [ show ( i + s ) % m % ( A.length + 1 ) = ( i % ( A.length + 1 ) + s ) % ( A.length + 1 ) from ?_ ];
+        · by_cases h : i % ( A.length + 1 ) + s < B.length <;> simp_all +decide [ Nat.mod_eq_of_lt ];
+          · rw [ List.getElem?_append ] ; aesop;
+          · have h_mod : (i + s) % (A.length + 1) = (i % (A.length + 1) + s) % (A.length + 1) := by
+              simp +decide [ Nat.add_mod ];
+            obtain ⟨r, hr⟩ : ∃ r, i % (A.length + 1) + s = (A.length + 1) + r ∧ r < A.length + 1 := by
+              exact ⟨ i % ( A.length + 1 ) + s - ( A.length + 1 ), by rw [ Nat.add_sub_cancel' h ], by rw [ tsub_lt_iff_left h ] ; linarith [ Nat.mod_lt i ( Nat.succ_pos A.length ) ] ⟩;
+            simp +decide [ hr, h_mod ];
+            simp +decide [ List.getElem?_append, hr.2, Nat.mod_eq_of_lt ];
+            simp +decide [ hBlen, hr.2 ];
+        · rw [ Nat.mod_mod_of_dvd _ ( show A.length + 1 ∣ m from hm ▸ dvd_mul_of_dvd_left ( by aesop ) _ ) ] ; simp +decide [ Nat.add_mod ] ;
+      simp_all +decide [ Nat.mod_lt ];
+      linarith [ Nat.mod_lt i ( Nat.succ_pos A.length ) ]
+-/
 /-! ### Case 6: Wrap, B region, h = 0 → BB -/
 private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     (k m i : ℕ)
@@ -543,6 +589,51 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     rw [List.getElem?_append_right
       (by grind : B.length ≤ j + s)]
 
+/- Aristotle alternative for blockColor_polychrom (34 vs 46 lines, -12)
+
+theorem blockColor_polychrom
+    (A B : List (Fin 3)) (offsets : List ℕ)
+    (hA : 0 < A.length) (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hpairs : checkBlockPairs offsets A B = true)
+    {h k : ℕ} (hhk : 0 < h + k) {m : ℕ}
+    (hm : A.length * h + B.length * k = m)
+    {i : ℕ} (hi : i < m) (c : Fin 3) :
+    ∃ s ∈ offsets, blockColorVal A B h ((i + s) % m) = c := by
+      have h_case : CaseGoal A B offsets h m i := by
+        by_cases h_no_wrap : i + offsets.foldr Max.max 0 < m;
+        · by_cases hA_region : i < A.length * h;
+          · by_cases h_cross : A.length * h ≤ i + offsets.foldr Max.max 0;
+            · apply case_no_wrap_AB A B offsets h k m i hA hBlen hmaxOff (by
+              unfold checkBlockPairs at hpairs; aesop;) hm h_no_wrap hA_region h_cross;
+            · apply case_no_wrap_AA A B offsets h k m i hA hmaxOff (by
+              unfold checkBlockPairs at hpairs; aesop;) hm h_no_wrap (by
+              grind);
+          · apply case_no_wrap_BB A B offsets h k m i hBlen hmaxOff (by
+            unfold checkBlockPairs at hpairs; aesop;) hm h_no_wrap (by
+            grind);
+        · by_cases hB_region : A.length * h ≤ i;
+          · by_cases hk_pos : 0 < k;
+            · by_cases hh_pos : 0 < h;
+              · apply case_wrap_BA A B offsets h k m i hA hBlen hmaxOff (by
+                unfold checkBlockPairs at hpairs; aesop;) hm hi (by
+                linarith) hB_region hh_pos hk_pos;
+              · have h_case : CaseGoal A B offsets 0 m i := by
+                  have hBB : checkLinearPolychrom offsets (B ++ B) = true := by
+                    unfold checkBlockPairs at hpairs; aesop;
+                  apply case_wrap_BB A B offsets k m i hBlen hmaxOff hBB (by
+                  aesop) hi (by
+                  grind) hk_pos;
+                aesop;
+            · grind;
+          · apply case_wrap_A;
+            all_goals try linarith;
+            · unfold checkBlockPairs at hpairs; aesop;
+            · nlinarith [ show k = 0 by nlinarith ];
+      obtain ⟨ XY, j, hj₁, hj₂, hj₃ ⟩ := h_case;
+      have := checkLinearPolychrom_spec hj₁ hj₂ c; simp_all +decide ;
+      obtain ⟨ s, hs₁, hs₂ ⟩ := this; specialize hj₃ s ( le_foldr_max hs₁ ) ; aesop;
+-/
 /-! ### Main theorem: combine all cases -/
 /-- The main theorem: if all block-pair checks pass, the block coloring is
     polychromatic for any m expressible as rA·h + rB·k. -/
@@ -1410,7 +1501,7 @@ private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
     ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by grind
 
 /- Aristotle alternative for `endgame_witness` (1 lines vs 5 original, -4).
-   Full proof: `aristotle_results/result_endgame_witness.lean`
+
 
     ((k + 3 - s) % 3 = 0 → s = k) ∧
     ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
@@ -1446,7 +1537,7 @@ private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ}
 
 /-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
 /- Aristotle alternative for `lift_coloring_witness` (7 lines vs 11 original, -4).
-   Full proof: `aristotle_results/result_lift_coloring_witness.lean`
+
 
 private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
     (hg_lt : g + 1 < m) {c : ℕ → ℕ} (hc_lt : ∀ p, c p < 3)
@@ -1841,7 +1932,7 @@ When `3 ∣ m`, multiplication by 3 is not available. Instead:
 /-- (1d), g ≢ 0 (mod 3): the periodic coloring 012012...012 works because
     each translate of {0,1,g,g+1} hits all 3 residue classes mod 3. -/
 /- Aristotle alternative for `case_one_div_g_not_three` (13 lines vs 14 original, -1).
-   Full proof: `aristotle_results/result_case_one_div_g_not_three.lean`
+
 
 lemma case_one_div_g_not_three (g : ℕ)
     (h_div : m = 3 * g ∨ m = 3 * g + 3)
@@ -1941,7 +2032,7 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
 
 /-- (1d), m = 3g+3, g ≡ 0 (mod 3): reversed diagonal coloring of period `g+1`. -/
 /- Aristotle alternative for `case_one_div_3g3` (40 lines vs 53 original, -13).
-   Full proof: `aristotle_results/result_case_one_div_3g3.lean`
+
 
     ((r + 1) % 3 + (3 - q % 3)) % 3 =
       ((r % 3 + (3 - q % 3)) % 3 + 1) % 3 := by admit
@@ -2089,7 +2180,7 @@ lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3
     - (1d): 2⌊m/s⌋ ≤ g ≤ ⌈m/(s-3)⌉ with 3 ∣ m (paper shows s = 6 here),
             handled by explicit periodic colorings -/
 /- Aristotle alternative for `case_one_dispatch` (17 body + 32 helpers = 49 vs 50 original, -1).
-   Full proof: `aristotle_results/result_case_one_dispatch.lean`
+
 
     HasPolychromColouring (Fin 3) ({0, 1, 2, 3} : Finset (ZMod m)) := by admit
 
@@ -2339,7 +2430,7 @@ private lemma isUnit_intCast_of_natAbs_coprime {n : ℕ} {b : ℤ}
 /-- When gcd(b, m) = 1, there exists 2 ≤ g ≤ m - 2 with gb ≡ b - a (mod m),
     and zmod_set m a b = (image of {0,1,g,g+1} under ×b). -/
 /- Aristotle alternative for `exists_g_of_coprime` (39 lines vs 49 original, -10).
-   Full proof: `aristotle_results/result_exists_g_of_coprime.lean`
+
 
   ({0, b - a, b, 2 * b - a} : Finset ℤ).image Int.cast
 
@@ -2642,7 +2733,7 @@ private lemma orbitMap_i_eq {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   exact hba_unit.mul_right_cancel this
 
 /- Aristotle alternative for `orbitMap_j_eq` (7 lines vs 10 original, -3).
-   Full proof: `aristotle_results/result_new_orbitMap_j_eq.lean`
+
 
 private lemma orbitMap_j_eq {m : ℕ} {b : ℤ} {e₁ : ℕ} [NeZero e₁]
     (hord : addOrderOf (b : ZMod m) = e₁)
@@ -2674,7 +2765,7 @@ private lemma orbitMap_j_eq {m : ℕ} {b : ℤ} {e₁ : ℕ} [NeZero e₁]
     exact ZMod.val_injective _ (by grind)
 
 /- Aristotle alternative for `orbitMap_injective` (7 lines vs 8 original, -1).
-   Full proof: `aristotle_results/result_new_orbitMap_injective.lean`
+
 
 private def orbitMap (m : ℕ) (a b : ℤ) (d₁ e₁ : ℕ) :
     ZMod d₁ × ZMod e₁ → ZMod m :=
@@ -3213,7 +3304,7 @@ private def case2c_pattern (d₁ k₀ i : ℕ) : Fin 3 :=
 
 -- General coverage: if (j₁ + p₁) % 3 ≠ (j₂ + p₂) % 3, all 3 colors appear.
 /- Aristotle alternative for `cover_mod3_general` (2 lines vs 3 original, -1).
-   Full proof: `aristotle_results/result_cover_mod3_general.lean`
+
 
 private lemma cover_mod3_general (p₁ p₂ : Fin 3)
     (j₁ j₂ : ℕ)
@@ -3306,7 +3397,7 @@ private def intervalColors : Fin 3 → Finset (Fin 3)
 
 /-- Any two distinct interval color pairs union to {0, 1, 2}. -/
 /- Aristotle alternative for `intervalColors_union_covers` (1 lines vs 2 original, -1).
-   Full proof: `aristotle_results/result_intervalColors_union_covers.lean`
+
 
 private def intervalColors : Fin 3 → Finset (Fin 3)
   | 0 => {0, 1}
@@ -3408,7 +3499,7 @@ private lemma rotation_changes_interval {e₁ j : ℕ}
 /-- Key polychromaticity lemma: if the base pattern is rotated by r ∈ [u, e₁-u],
     then at every position j, the 2×2 block covers all 3 colors. -/
 /- Aristotle alternative for `basePattern_rotation_covers` (15 lines vs 19 original, -4).
-   Full proof: `aristotle_results/result_basePattern_rotation_covers.lean`
+
 
 private def case2d_u (e₁ : ℕ) : ℕ := e₁ / 3 + e₁ % 3
 
@@ -3545,7 +3636,7 @@ private lemma case2d_wrap_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   exact hφq.symm
 
 /- Aristotle alternative for `case2d_shift_ba_wrap` (13 lines vs 23 original, -10).
-   Full proof: `aristotle_results/result_case2d_shift_ba_wrap.lean`
+
 
 private def orbitMap (m : ℕ) (a b : ℤ) (d₁ e₁ : ℕ) :
     ZMod d₁ × ZMod e₁ → ZMod m :=
@@ -3610,7 +3701,7 @@ private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
 /-- Given d₁ ≥ 3 values each in [u, e₁-u] can sum to any target mod e₁,
     since the range has width ≥ e₁/3 and d₁ ≥ 3. -/
 /- Aristotle alternative for `case2d_rotation_sum_exists` (31 lines vs 80 original, -49).
-   Full proof: `aristotle_results/result_case2d_rotation_sum_exists.lean`
+
 
 private def case2d_u (e₁ : ℕ) : ℕ := e₁ / 3 + e₁ % 3
 
@@ -3786,7 +3877,7 @@ private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
 
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 /- Aristotle alternative for `pos_shift_succ'` (2 lines vs 4 original, -2).
-   Full proof: `aristotle_results/result_pos_shift_succ'.lean`
+
 
 private lemma pos_shift_succ' (j S V n : ℕ) :
     (j + (S + V) % n) % n = ((j + S % n) % n + V) % n := by
@@ -4057,7 +4148,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
     m ≥ 289 this forces m = 289 = 17², but then gcd(d₁,d₂) = 1 with
     d₁,d₂ | 17² and d₁,d₂ > 1 is impossible. -/
 /- Aristotle alternative for `no_both_e_small` (18 lines vs 20 original, -2).
-   Full proof: `aristotle_results/result_no_both_e_small.lean`
+
 
 private lemma no_both_e_small {m d₁ d₂ : ℕ}
     (hm : m ≥ 289)
