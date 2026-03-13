@@ -1816,9 +1816,8 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
   have hc_period : ∀ p, c (p % m) = c p := by
     intro p; simp only [c, hm_eq]
     rw [Nat.mod_mod_of_dvd p (dvd_mul_right 3 g)]
-    have h1 : (3 * (p / (3 * g))) * g = 3 * g * (p / (3 * g)) := by grind
-    have h2 : p = p % (3 * g) + (3 * (p / (3 * g))) * g := by
-      rw [h1]; exact (Nat.mod_add_div p (3 * g)).symm
+    have h2 : p = p % (3 * g) + 3 * (p / (3 * g)) * g := by
+      grind [(Nat.mod_add_div p (3 * g)).symm]
     have h3 : p / g = p % (3 * g) / g + 3 * (p / (3 * g)) := by
       conv_lhs => rw [h2]; exact Nat.add_mul_div_right _ _ hg
     conv_rhs => rw [h3]
@@ -1888,9 +1887,8 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   by_cases hrg : r = g
   · have hcv : c v = (3 - q % 3) % 3 := by grind
     have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
-      have h1 : v + g = h * (q + 1) + (g - 1) := by grind
-      have h2 : 3 * t - 1 = 3 * (t - 1) + 2 := by grind
-      rw [h1, color_at (q + 1) (g - 1) (by grind), ht, h2]; simp
+      have : v + g = h * (q + 1) + (g - 1) := by grind
+      rw [this, color_at (q + 1) (g - 1) (by grind), ht]; omega
     have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
       have : v + 1 = h * (q + 1) + 0 := by grind
       rw [this, color_at (q + 1) 0 (by grind)]; grind
