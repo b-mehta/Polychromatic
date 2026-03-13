@@ -2083,12 +2083,13 @@ private lemma intCast_2ba_eq :
     ((2 * b - a : ℤ) : ZMod m) = ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by
   push_cast; ring
 
-private lemma zmod_val_add_one (d : ℕ) [NeZero d] (hd : d ≥ 2) (i : ZMod d) :
+private lemma ZMod.val_add_one {n : ℕ} [NeZero n] (x : ZMod n) :
+    (x + 1).val = (x.val + 1) % n := by
+  rw [ZMod.val_add, ZMod.val_one_eq_one_mod, Nat.add_mod_mod]
+
+private lemma zmod_val_add_one (d : ℕ) [NeZero d] (_hd : d ≥ 2) (i : ZMod d) :
     (i + 1).val = if i.val + 1 < d then i.val + 1 else 0 := by
-  have hival : (i + 1).val = (i.val + 1) % d := by
-    rw [ZMod.val_add]; congr 1
-    haveI : Fact (1 < d) := ⟨by grind⟩; simp [ZMod.val_one]
-  rw [hival]; split_ifs with h
+  rw [ZMod.val_add_one]; split_ifs with h
   · exact Nat.mod_eq_of_lt h
   · grind [Nat.mod_self]
 
@@ -2160,10 +2161,6 @@ private lemma color_covers_even (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
       (f_ne_missing_color d₁ e₁ i (j₁ + 1)) hk with h | h
     · exact Or.inl h
     · exact Or.inr (Or.inl h)
-
-private lemma ZMod.val_add_one {n : ℕ} [NeZero n] (x : ZMod n) :
-    (x + 1).val = (x.val + 1) % n := by
-  rw [ZMod.val_add, ZMod.val_one_eq_one_mod, Nat.add_mod_mod]
 
 /--
 The orbit map $\phi : \mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \to \mathbb{Z}_m$ defined by
@@ -2425,10 +2422,9 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hd₁_ge2 : d₁ ≥ 2 := by grind
   have hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2 :=
     parity_flip_even e₁ he1_even he₁_ge2
-  have hΦ_cycle_shift : ∀ x : ZMod m,
-      (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1 := fun x => by
-    rw [hΦ_cycle, hα_ba, ← hΦ_cycle]
-  exact orbit_coloring_polychrom Φ hΦ_add_b hΦ_cycle_shift (cycle_coloring d₁ e₁)
+  exact orbit_coloring_polychrom Φ hΦ_add_b
+    (fun x => by rw [hΦ_cycle, hα_ba, ← hΦ_cycle])
+    (cycle_coloring d₁ e₁)
     (fun n k => color_covers_even d₁ e₁ hd₁_ge2 hparity _ _ _ k)
 
 /-! ### Subcase (2b) construction: d₁ even, e₁ odd
