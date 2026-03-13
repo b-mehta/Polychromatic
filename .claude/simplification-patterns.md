@@ -26,7 +26,10 @@ Patterns for shortening, simplifying, and deduplicating Lean proofs.
 - **`simp; grind`** → `grind` — works for simple normalization.
 - **`simp [lemmas] <;> grind`** → `grind [lemmas]` — passing the simp lemmas directly to `grind` often works.
 - **`simp [Fin.ext_iff] <;> omega`** → `grind [Fin.ext_iff]` — works for Fin equality/inequality goals with arithmetic.
+- **`grind [mathlib_lemma]`** — passing a mathlib lemma (like `Nat.mod_add_div`) directly to grind works when grind needs the fact but can handle the surrounding commutativity/rearrangement.
+- **`rw [ht]; omega`** → `grind` — when `ht` is a substitution like `g = 3*t`, grind handles the rewrite+arithmetic.
 - Does NOT work when `rw` unfolds a local `have`-bound definition that `grind` can't see through.
+- Does NOT work for `simp only [vadd_finset_insert, ...]; grind` — grind can't handle `vadd` on finsets without `simp` normalizing first.
 
 ## grind limitations
 
@@ -37,7 +40,8 @@ Patterns for shortening, simplifying, and deduplicating Lean proofs.
 
 - `omega` treats variable multiplication as nonlinear — `g * (q + 1)` won't distribute. Fix: `rw [show g * (q + 1) = g * q + g from by ring]; omega`. Use `ring` to expand to a form where all multiplications have at least one literal operand.
 - `set m := (expr).toNat` leaves an `if` in context that confuses `omega`. Use `by linarith` when an `(m : ℤ) = expr` hypothesis is available. Alternatively, need explicit positivity facts for omega to work.
-- `omega` can fail at a call site due to many division/modular terms in context, even when it proves the same statement standalone. Fix with `change` to narrow the goal before `omega`.
+- `omega` can fail at a call site due to many division/modular terms in context, even when it proves the same statement standalone. Fix with `change` to narrow the goal before `omega`. In particular, `Nat.div_add_mod` introduces both `/` and `%` terms — place it *after* any `omega` call that would choke on them.
+- `omega` cannot prove `k = 0` from `A.length * h + (A.length + 1) * k = m` and `i < A.length * h` — this is nonlinear. Use `nlinarith` with relevant hypotheses instead.
 
 ## Deduplication strategies
 
@@ -73,6 +77,20 @@ Replaces manual decomposition into quotient/remainder of the outer modulus.
 ## Deriving "zero remainder" from a general mod helper
 Given `h : ∀ k a, (g * k + a) % d = a % d`, derive `∀ k, (g * k) % d = 0`
 via `fun k => by simpa using h k 0`.
+
+## Successful golfing patterns (from Combi.lean)
+
+- **`calc` → `rw + gcongr`** — a 2-step `calc` like `m = d * (m/d); _ ≤ d * 17 := by gcongr` becomes `rw [(Nat.mul_div_cancel' h).symm]; gcongr`.
+- **`calc` → `le_trans`** — `calc ep ≤ X; _ ≤ m` becomes `le_trans ep_le X_le` or `le_trans ... .le`.
+- **Chained `rw`** — separate `have h1; rw [h1]; have h2; rw [h2]` collapses to `rw [h1, h2]` when the intermediate hypothesis isn't used elsewhere.
+- **`Nat.pos_of_ne_zero (by intro h; simp [h] at hfoo)`** → `(by grind)` — grind derives positivity from `min ... > 1` directly.
+- **Reuse nearby lemmas** — if a private lemma like `ZMod.val_add_one` exists locally, use it to shorten proofs of related results rather than reproving from `ZMod.val_add`.
+- **Single-use `hΦ_cycle_shift`** — `fun x => by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]` can be passed inline to `orbit_coloring_polychrom`.
+
+## Formatting conventions
+
+- **Don't join separate tactics with `;`** — `rw [...]; omega` should be `rw [...]` then `omega` on the next line, unless they are very closely related (e.g. `subst h; simp`).
+- **Use the full 100-character line limit** — don't break lines at 80 characters when the project allows 100.
 
 ## Proof development process
 
