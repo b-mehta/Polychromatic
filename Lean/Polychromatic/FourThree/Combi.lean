@@ -161,7 +161,6 @@ private lemma frobenius_consec {rA m : ℕ} (hrA : 1 < rA) (hm : m ≥ rA * (rA 
     (by rw [(Nat.coprime_self_add_right.mpr (Nat.coprime_one_right _)).gcd_eq_one]; exact one_dvd _)
     (by grind [Nat.pred_eq_sub_one, mul_comm rA (rA - 1)])
   refine ⟨a, b, by grind [mul_comm a rA, mul_comm b (rA + 1)], ?_⟩
-  -- a + b = 0 → a = b = 0 → m = 0, but m ≥ rA * (rA - 1) > 0
   by_contra hle; push_neg at hle
   have ha0 : a = 0 := by omega
   have hb0 : b = 0 := by omega
@@ -224,7 +223,8 @@ private lemma ge_mul_of_mod_add_ge {i s r n : ℕ} (hr : 0 < r) (hn : 0 < n)
     r * n ≤ i + s := by
   have := Nat.mod_add_div i r
   have := Nat.mod_lt i hr
-  have : n - 1 ≤ i / r := by rw [Nat.le_div_iff_mul_le hr]; grind [mul_comm r (n - 1)]
+  have : n - 1 ≤ i / r := by
+    rw [Nat.le_div_iff_mul_le hr]; grind [mul_comm r (n - 1)]
   have : n ≤ i / r + 1 := by omega
   grind [Nat.mul_le_mul_left r this]
 
@@ -269,17 +269,12 @@ private lemma sub_region_eq {i s r h : ℕ} (hr : 0 < r)
     (hi_lo : r * (h - 1) ≤ i) (hi_hi : i < r * h)
     (hjs_ge : r ≤ i % r + s) :
     i + s - r * h = i % r + s - r := by
-  have hmod := Nat.mod_lt i hr
   have hdiv := Nat.mod_add_div i r
   have hle : h - 1 ≤ i / r := by
     rw [Nat.le_div_iff_mul_le hr]; grind [mul_comm r (h - 1)]
   have hlt : i / r < h := Nat.div_lt_of_lt_mul (by grind [mul_comm r h])
-  have hq : i / r = h - 1 := by grind
-  set Q := r * (i / r) with hQ_def
-  have hQr : r * h = Q + r := by
-    rw [hQ_def, hq]
-    have : h = (h - 1) + 1 := by grind
-    conv_lhs => rw [this, Nat.mul_add, Nat.mul_one]
+  have hQr : r * h = r * (i / r) + r := by
+    grind [Nat.sub_add_cancel (by omega : 1 ≤ h)]
   rw [hQr]
   exact sub_add_eq hjs_ge hdiv
 
@@ -342,8 +337,7 @@ private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
   set j := i % A.length
   have hj_lt : j < A.length := Nat.mod_lt _ hA
   have hh_pos : 0 < h := by grind
-  have hi_lo : A.length * (h - 1) ≤ i := by
-    grind [Nat.mul_sub]
+  have hi_lo : A.length * (h - 1) ≤ i := by grind [Nat.mul_sub]
   refine ⟨A ++ B, j, hAB, by grind, fun s hsle => ?_⟩
   rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
   by_cases hjs_lt : j + s < A.length
@@ -405,8 +399,7 @@ private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
   have hj_lt : j < A.length := Nat.mod_lt _ hA
   have hh_pos : 0 < h := by grind
   have hi_lo : A.length * (h - 1) ≤ i := by grind [Nat.mul_sub]
-  have hAh : A.length ≤ A.length * h :=
-    Nat.le_mul_of_pos_right _ hh_pos
+  have hAh : A.length ≤ A.length * h := Nat.le_mul_of_pos_right _ hh_pos
   refine ⟨A ++ A, j, hAA, by grind, fun s hsle => ?_⟩
   by_cases hjs_lt : j + s < A.length
   · have his_lt : i + s < A.length * h :=
@@ -440,15 +433,12 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
     (hh_pos : 0 < h) (hk_pos : 0 < k) :
     CaseGoal A B offsets h m i := by
   set maxOff := offsets.foldr max 0
-  have hAh : A.length ≤ A.length * h :=
-    Nat.le_mul_of_pos_right _ hh_pos
-  have hBk : B.length ≤ B.length * k :=
-    Nat.le_mul_of_pos_right _ hk_pos
+  have hAh : A.length ≤ A.length * h := Nat.le_mul_of_pos_right _ hh_pos
+  have hBk : B.length ≤ B.length * k := Nat.le_mul_of_pos_right _ hk_pos
   set j := (i - A.length * h) % B.length
   have hj_lt : j < B.length := Nat.mod_lt _ (by grind)
   have hi_B : i - A.length * h < B.length * k := by grind
-  have hk_lo : B.length * (k - 1) ≤ i - A.length * h := by
-    grind [Nat.mul_sub]
+  have hk_lo : B.length * (k - 1) ≤ i - A.length * h := by grind [Nat.mul_sub]
   refine ⟨B ++ A, j, hBA, by grind, fun s hsle => ?_⟩
   by_cases hjs_lt : j + s < B.length
   · -- Still in B
@@ -465,9 +455,7 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
         hk_pos hk_lo hjs_lt; grind
     have hmod : (i + s) % m = i + s - m := mod_eq_sub his_ge (by grind)
     have hsub_eq : i + s - m = j + s - B.length := by
-      have key : (i - A.length * h) + s - B.length * k =
-          j + s - B.length :=
-        sub_region_eq (by grind) hk_lo hi_B hjs_lt
+      have := sub_region_eq (by grind : 0 < B.length) hk_lo hi_B hjs_lt
       grind
     have hjs_idx : j + s - B.length < A.length := by grind
     refine bcv_eq_A A B h _ _ _ _ (by grind)
@@ -488,12 +476,10 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     (hk_pos : 0 < k) :
     CaseGoal A B offsets 0 m i := by
   set maxOff := offsets.foldr max 0
-  have hBk : B.length ≤ B.length * k :=
-    Nat.le_mul_of_pos_right _ hk_pos
+  have hBk : B.length ≤ B.length * k := Nat.le_mul_of_pos_right _ hk_pos
   set j := i % B.length
   have hj_lt : j < B.length := Nat.mod_lt _ (by grind)
-  have hk_lo : B.length * (k - 1) ≤ i := by
-    grind [Nat.mul_sub]
+  have hk_lo : B.length * (k - 1) ≤ i := by grind [Nat.mul_sub]
   refine ⟨B ++ B, j, hBB, by grind, fun s hsle => ?_⟩
   by_cases hjs_lt : j + s < B.length
   · have his_lt : i + s < B.length * k :=
@@ -501,7 +487,7 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
     exact bcv_eq_B A B 0 _ _ _ _
       (by omega)
-      (by simp only [mul_zero, tsub_zero]; exact add_mod_of_lt hjs_lt)
+      (by grind [add_mod_of_lt hjs_lt])
       hjs_lt (List.getElem?_append_left hjs_lt)
   · push_neg at hjs_lt
     have his_ge : m ≤ i + s := by
@@ -514,9 +500,9 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     have hjs_idx : j + s - B.length < B.length := by grind
     refine bcv_eq_B A B 0 _ _ _ _
       (by omega)
-      (by simp only [mul_zero, tsub_zero]
-          rw [hmod, Nat.mod_eq_of_lt
-            (by grind : i + s - m < B.length), hsub_eq])
+      (by rw [Nat.mul_zero, Nat.sub_zero, hmod,
+            Nat.mod_eq_of_lt (by grind : i + s - m < B.length),
+            hsub_eq])
       hjs_idx ?_
     rw [List.getElem?_append_right
       (by grind : B.length ≤ j + s)]
@@ -562,17 +548,12 @@ theorem blockColor_polychrom
   · push_neg at h_wrap
     by_cases hA_region : i < A.length * h
     · have hk0 : k = 0 := by
-        by_contra hle; push_neg at hle
-        have : 0 < k := by grind
-        have : B.length ≤ B.length * k :=
-          Nat.le_mul_of_pos_right _ this; grind
+        rw [hBlen] at hm; nlinarith [hmaxOff]
       subst hk0; simp only [mul_zero, add_zero] at hm
       exact case_wrap_A A B offsets h m i hA hmaxOff hAA hm
         hi h_wrap hA_region
     · push_neg at hA_region
-      have hk_pos : 0 < k := by
-        by_contra hle; push_neg at hle; have : k = 0 := by grind
-        subst this; simp [mul_zero] at hm; grind
+      have hk_pos : 0 < k := by nlinarith [hm, hA_region, hi]
       by_cases hh_pos : 0 < h
       · exact case_wrap_BA A B offsets h k m i hA hBlen hmaxOff
           hBA hm hi h_wrap hA_region hh_pos hk_pos
@@ -614,11 +595,9 @@ private lemma table1_of_blockColor (A B : List (Fin 3)) (offsets : List ℕ)
     (hm : m ≥ A.length * (A.length - 1))
     (hS : ∀ a : ZMod m, a ∈ S ↔ ∃ s ∈ offsets, (s : ZMod m) = a) :
     HasPolychromColouring (Fin 3) S := by
-  have hA_lt_m : A.length < m :=
-    calc A.length < A.length * 2 := by omega
-    _ ≤ A.length * (A.length - 1) := by gcongr; omega
-    _ ≤ m := hm
-  have hm_pos : 0 < m := by omega
+  have hA_lt_m : A.length < m := by
+    have : A.length * 2 ≤ A.length * (A.length - 1) := by gcongr; omega
+    omega
   haveI : NeZero m := ⟨by omega⟩
   haveI : Fact (1 < m) := ⟨by omega⟩
   obtain ⟨h, k, hm_eq, hhk⟩ := frobenius_consec (by omega : 1 < A.length) hm
