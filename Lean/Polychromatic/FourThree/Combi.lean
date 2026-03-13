@@ -829,7 +829,6 @@ private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s)
     have := Nat.le_div_iff_mul_le hs |>.mpr this; omega
 
 open Finpartition in
-open Finpartition in
 private lemma shift_within_two' (m s g : ℕ)
     (h_ub : g < 2 * (m / s))
     (j p : ℕ) (hhi : p < equiEndpoint m s (j + 1)) :
@@ -2775,10 +2774,6 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     (fun n k => by
       set p := Φ.symm n; set j := p.2
       set j' := (Φ.symm (n + ↑(b - a))).2
-      -- π(n) and π(n+(b-a)) give the same ZMod d₂ value
-      have hπ_eq : π (n + ↑(b - a)) = π n := by
-        simp only [π, map_add, map_intCast]
-        rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba, add_zero]
       have hπn : π n = (j.val : ZMod d₂) * π (↑b) := by
         have : n = Φ p := (Equiv.apply_symm_apply Φ n).symm
         conv_lhs => rw [this]; exact hπ_φ p.1 j
