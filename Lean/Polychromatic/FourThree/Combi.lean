@@ -2443,8 +2443,8 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   have he₁_ge2 : e₁ ≥ 2 := by
-    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd)
-      (Nat.pos_of_ne_zero (by intro h; simp [h] at h_min)); grind
+    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) (by grind)
+    grind
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
@@ -3443,11 +3443,9 @@ private lemma no_both_e_small {m d₁ d₂ : ℕ}
     (hd₁_dvd : d₁ ∣ m) (hd₂_dvd : d₂ ∣ m)
     (he₁_le : m / d₁ ≤ 17) (he₂_le : m / d₂ ≤ 17) : False := by
   have hd₁_bound : m ≤ d₁ * 17 := by
-    calc m = d₁ * (m / d₁) := (Nat.mul_div_cancel' hd₁_dvd).symm
-      _ ≤ d₁ * 17 := by gcongr
+    rw [(Nat.mul_div_cancel' hd₁_dvd).symm]; gcongr
   have hd₂_bound : m ≤ d₂ * 17 := by
-    calc m = d₂ * (m / d₂) := (Nat.mul_div_cancel' hd₂_dvd).symm
-      _ ≤ d₂ * 17 := by gcongr
+    rw [(Nat.mul_div_cancel' hd₂_dvd).symm]; gcongr
   have hprod_le : d₁ * d₂ ≤ m :=
     Nat.le_of_dvd (by grind)
       (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by rwa [Nat.Coprime]) hd₁_dvd hd₂_dvd)
@@ -3549,12 +3547,9 @@ lemma main_case_two (hm : m ≥ 289)
             · -- Both odd after swap. Show e₁' ≥ 19 by contradiction.
               have he₁'_ge : m / Nat.gcd b''.natAbs m ≥ 19 := by
                 by_contra hlt; push_neg at hlt
-                have hle : m / Nat.gcd b''.natAbs m ≤ 17 := by grind
-                have hd₁_gt1 : d₁ > 1 := by grind
-                have hd₂_gt1 : d₂ > 1 := by grind
                 rw [Nat.gcd_comm] at hcop
-                exact no_both_e_small hm hcop hd₂_gt1 hd₁_gt1
-                  hd₂_dvd hd₁_dvd hle he_le
+                exact no_both_e_small hm hcop (by grind) (by grind)
+                  hd₂_dvd hd₁_dvd (by grind) he_le
               exact case2d_coloring_works hm hcop' hmin' hd' ho'
                 he₁'_ge h3d₂
       · have he₁_ge : e₁ ≥ 19 := by grind
