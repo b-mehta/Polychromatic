@@ -160,73 +160,53 @@ private lemma frobenius_consec {rA m : ℕ} (hrA : 1 < rA) (hm : m ≥ rA * (rA 
   obtain ⟨a, b, hab⟩ := Nat.exists_add_mul_eq_of_gcd_dvd_of_mul_pred_le rA (rA + 1) m
     (by rw [(Nat.coprime_self_add_right.mpr (Nat.coprime_one_right _)).gcd_eq_one]; exact one_dvd _)
     (by grind [Nat.pred_eq_sub_one, mul_comm rA (rA - 1)])
-  refine ⟨a, b, by grind [mul_comm a rA, mul_comm b (rA + 1)], ?_⟩
-  -- a + b = 0 → a = b = 0 → m = 0, but m ≥ rA * (rA - 1) > 0
-  by_contra hle; push_neg at hle
-  have ha0 : a = 0 := by omega
-  have hb0 : b = 0 := by omega
-  subst ha0; subst hb0; simp only [zero_mul, zero_add] at hab; subst hab
-  have : 0 < rA * (rA - 1) := Nat.mul_pos (by omega) (by omega)
-  omega
+  refine ⟨a, b, by grind [mul_comm a rA, mul_comm b (rA + 1)], by
+    by_contra hle; push_neg at hle
+    have : a = 0 := by omega; have : b = 0 := by omega
+    subst_vars; simp at hab; subst hab; omega⟩
 
 /-- Bridge: a cyclic coloring function yields HasPolychromColouring. -/
 private lemma hasPolychromColouring_of_cyclic {m : ℕ} [NeZero m] [Fact (1 < m)]
     (c : ℕ → Fin 3) (S : Finset (ZMod m))
     (hpoly : ∀ n : ZMod m, ∀ k : Fin 3, ∃ a ∈ S, c (n + a).val = k) :
     HasPolychromColouring (Fin 3) S :=
-  ⟨fun x => c x.val, fun n k => by
-    obtain ⟨a, ha, heq⟩ := hpoly n k
-    exact ⟨a, ha, by change c (n + a).val = k; exact heq⟩⟩
+  ⟨fun x => c x.val, fun n k => by obtain ⟨a, ha, heq⟩ := hpoly n k; exact ⟨a, ha, heq⟩⟩
 
 /-- Key: offsets in a list are bounded by foldr max. -/
 private lemma le_foldr_max {offsets : List ℕ} {s : ℕ} (hs : s ∈ offsets) :
     s ≤ offsets.foldr max 0 :=
   List.le_max_of_le' 0 hs le_rfl
 
-/-- If `i % r + s < r`, then `(i + s) % r = i % r + s`. -/
 private lemma add_mod_of_lt {i s r : ℕ} (h : i % r + s < r) :
     (i + s) % r = i % r + s := by
-  have hs : s < r := by omega
-  rw [Nat.add_mod, Nat.mod_eq_of_lt hs]
-  exact Nat.mod_eq_of_lt h
+  rw [Nat.add_mod, Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt h]
 
-/-- If `r ≤ i % r + s < 2r`, then `(i + s) % r = i % r + s - r`. -/
 private lemma add_mod_sub {i s r : ℕ} (hr : 0 < r) (hge : r ≤ i % r + s)
     (hlt : i % r + s < 2 * r) :
     (i + s) % r = i % r + s - r := by
-  have h1 := Nat.mod_add_div i r
-  have h2 := Nat.mod_lt i hr
-  have key : i + s = (i % r + s - r) + (i / r + 1) * r := by
-    grind [Nat.sub_add_cancel hge, mul_comm r (i / r)]
-  conv_lhs => rw [key]
-  rw [Nat.add_mul_mod_self_right]
-  exact Nat.mod_eq_of_lt (by omega)
+  conv_lhs => rw [show i + s = (i % r + s - r) + (i / r + 1) * r by
+    grind [Nat.sub_add_cancel hge, mul_comm r (i / r)]]
+  rw [Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt (by omega)]
 
-/-- If `M ≤ n` and `n - M < M`, then `n % M = n - M`. -/
 private lemma mod_eq_sub {n M : ℕ} (hge : M ≤ n) (hlt : n - M < M) :
     n % M = n - M := by
-  conv_lhs => rw [← Nat.sub_add_cancel hge]
-  rw [Nat.add_mod_right, Nat.mod_eq_of_lt hlt]
+  rw [← Nat.sub_add_cancel hge, Nat.add_mod_right, Nat.mod_eq_of_lt hlt]
 
 /-- If `i < r * n` and `i % r + s < r`, then `i + s < r * n`. -/
 private lemma add_lt_of_mod_add_lt {i s r n : ℕ} (hr : 0 < r)
     (hi : i < r * n) (h : i % r + s < r) :
     i + s < r * n := by
-  have h1 := Nat.mod_add_div i r
-  have h2 := Nat.mod_lt i hr
-  have h3 : i / r < n := Nat.div_lt_of_lt_mul hi
-  have : i / r + 1 ≤ n := by omega
-  grind [Nat.mul_le_mul_left r this]
+  have := Nat.mod_add_div i r; have := Nat.mod_lt i hr
+  grind [Nat.mul_le_mul_left r (show i / r + 1 ≤ n by omega)]
 
 /-- If `r * (n-1) ≤ i` and `r ≤ i % r + s`, then `r * n ≤ i + s`. -/
 private lemma ge_mul_of_mod_add_ge {i s r n : ℕ} (hr : 0 < r) (hn : 0 < n)
     (hi_lo : r * (n - 1) ≤ i) (hge : r ≤ i % r + s) :
     r * n ≤ i + s := by
-  have := Nat.mod_add_div i r
-  have := Nat.mod_lt i hr
-  have : n - 1 ≤ i / r := by rw [Nat.le_div_iff_mul_le hr]; grind [mul_comm r (n - 1)]
-  have : n ≤ i / r + 1 := by omega
-  grind [Nat.mul_le_mul_left r this]
+  have := Nat.mod_add_div i r; have := Nat.mod_lt i hr
+  grind [Nat.mul_le_mul_left r (show n ≤ i / r + 1 by
+    have : n - 1 ≤ i / r := by rw [Nat.le_div_iff_mul_le hr]; grind [mul_comm r (n - 1)]
+    omega)]
 
 /-! ### Bridge lemmas
 
@@ -242,9 +222,8 @@ private lemma bcv_eq_A (A B : List (Fin 3)) (h : ℕ)
     (hmod : p % A.length = idx) (hidx : idx < A.length)
     (hxy : XY[js]? = A[idx]?) :
     XY[js]? = some (blockColorVal A B h p) := by
-  rw [hxy, List.getElem?_eq_getElem hidx]
-  simp only [blockColorVal, if_pos hp]
-  rw [hmod, List.getElem?_eq_getElem hidx, Option.getD_some]
+  simp only [blockColorVal, if_pos hp, hmod, hxy,
+    List.getElem?_eq_getElem hidx, Option.getD_some]
 
 /-- If `XY[js]? = B[idx]?` and `p` is in the B-region with
     `(p - |A|*h) % |B| = idx`, then `XY[js]? = some (blockColorVal A B h p)`. -/
@@ -254,9 +233,8 @@ private lemma bcv_eq_B (A B : List (Fin 3)) (h : ℕ)
     (hmod : (p - A.length * h) % B.length = idx) (hidx : idx < B.length)
     (hxy : XY[js]? = B[idx]?) :
     XY[js]? = some (blockColorVal A B h p) := by
-  rw [hxy, List.getElem?_eq_getElem hidx]
-  simp only [blockColorVal, if_neg hp]
-  rw [hmod, List.getElem?_eq_getElem hidx, Option.getD_some]
+  simp only [blockColorVal, if_neg hp, hmod, hxy,
+    List.getElem?_eq_getElem hidx, Option.getD_some]
 
 /-- When `i = j + q` and `j + s ≥ r`, then `i + s - (q + r) = j + s - r`. -/
 private lemma sub_add_eq {i j s r q : ℕ} (hge : r ≤ j + s)
@@ -269,19 +247,13 @@ private lemma sub_region_eq {i s r h : ℕ} (hr : 0 < r)
     (hi_lo : r * (h - 1) ≤ i) (hi_hi : i < r * h)
     (hjs_ge : r ≤ i % r + s) :
     i + s - r * h = i % r + s - r := by
-  have hmod := Nat.mod_lt i hr
-  have hdiv := Nat.mod_add_div i r
-  have hle : h - 1 ≤ i / r := by
-    rw [Nat.le_div_iff_mul_le hr]; grind [mul_comm r (h - 1)]
-  have hlt : i / r < h := Nat.div_lt_of_lt_mul (by grind [mul_comm r h])
-  have hq : i / r = h - 1 := by grind
-  set Q := r * (i / r) with hQ_def
-  have hQr : r * h = Q + r := by
-    rw [hQ_def, hq]
-    have : h = (h - 1) + 1 := by grind
-    conv_lhs => rw [this, Nat.mul_add, Nat.mul_one]
-  rw [hQr]
-  exact sub_add_eq hjs_ge hdiv
+  have := Nat.mod_lt i hr; have := Nat.mod_add_div i r
+  have hq : i / r = h - 1 := by
+    have := Nat.div_lt_of_lt_mul (by grind [mul_comm r h])
+    have : h - 1 ≤ i / r := by rw [Nat.le_div_iff_mul_le hr]; grind [mul_comm r (h - 1)]
+    omega
+  exact sub_add_eq hjs_ge ‹_› |>.symm ▸ by
+    rw [show r * h = r * (i / r) + r by rw [hq]; grind]; exact sub_add_eq hjs_ge ‹_›
 
 /-! ### Common goal type for each case
 
@@ -614,8 +586,7 @@ private lemma table1_of_blockColor (A B : List (Fin 3)) (offsets : List ℕ)
     (hm : m ≥ A.length * (A.length - 1))
     (hS : ∀ a : ZMod m, a ∈ S ↔ ∃ s ∈ offsets, (s : ZMod m) = a) :
     HasPolychromColouring (Fin 3) S := by
-  have hA_lt_m : A.length < m :=
-    calc A.length < A.length * 2 := by omega
+  have hA_lt_m : A.length < m := by calc A.length < A.length * 2 := by omega
     _ ≤ A.length * (A.length - 1) := by gcongr; omega
     _ ≤ m := hm
   have hm_pos : 0 < m := by omega
@@ -854,15 +825,12 @@ private lemma idx_range_from_endpoints' (m s : ℕ)
     (hj_lo : equiEndpoint m s j ≤ p)
     (hj_hi : p < equiEndpoint m s (j + 1)) :
     a ≤ j ∧ j < b := by
-  constructor
-  · by_contra h; push_neg at h
-    have : equiEndpoint m s (j + 1) ≤ equiEndpoint m s a :=
-      equiEndpoint_monotone (by omega)
-    omega
-  · by_contra h; push_neg at h
-    have : equiEndpoint m s b ≤ equiEndpoint m s j :=
-      equiEndpoint_monotone (by omega)
-    omega
+  exact ⟨by
+    by_contra h; push_neg at h
+    exact absurd hj_hi (not_lt.mpr (le_trans (equiEndpoint_monotone (by omega)) ha_le)),
+  by
+    by_contra h; push_neg at h
+    exact absurd hp_lt (not_lt.mpr (le_trans (equiEndpoint_monotone (by omega)) hj_lo))⟩
 
 /-- Gap bound: idx of (v+g)%m differs from idx(v) by 1 or 2 mod s.
     This is the key arithmetic fact for interval colorings. -/
@@ -997,23 +965,17 @@ private def eqp_off (q r : ℕ) (p : ℕ) : ℕ :=
 private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) :
     eqp_idx q r (s * q + r) = s := by
   have hge : ¬(s * q + r < r * (q + 1)) := by nlinarith
-  simp only [eqp_idx, if_neg hge]
-  have hle : r * (q + 1) ≤ s * q + r := by nlinarith
-  have hsub : s * q + r - r * (q + 1) = (s - r) * q := by
-    zify [hle, (by omega : r ≤ s)]; ring
-  rw [hsub, Nat.mul_div_cancel _ hq]; omega
+  simp only [eqp_idx, if_neg (by nlinarith)]
+  rw [show s * q + r - r * (q + 1) = (s - r) * q by zify [by nlinarith, by omega : r ≤ s]; ring,
+    Nat.mul_div_cancel _ hq]; omega
 
 -- General fact: consecutive ℕ quotients differ by 0 or 1
 private lemma div_step (a b : ℕ) (hb : 0 < b) :
     (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by
-  have hle : a / b ≤ (a + 1) / b :=
-    Nat.div_le_div_right (Nat.le_succ a)
-  suffices h : (a + 1) / b ≤ a / b + 1 by omega
-  have h1 := Nat.div_add_mod a b
-  have hmod := Nat.mod_lt a hb
-  have hub : a + 1 ≤ b * (a / b + 1) := by grind
-  calc (a + 1) / b
-      ≤ b * (a / b + 1) / b := Nat.div_le_div_right hub
+  have := Nat.div_le_div_right (Nat.le_succ a)
+  have := Nat.div_add_mod a b; have := Nat.mod_lt a hb
+  suffices (a + 1) / b ≤ a / b + 1 by omega
+  calc (a + 1) / b ≤ b * (a / b + 1) / b := Nat.div_le_div_right (by grind)
     _ = a / b + 1 := Nat.mul_div_cancel_left _ hb
 
 private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
@@ -1046,15 +1008,10 @@ private lemma mod_step (a b : ℕ)
     (a + 1) % b = a % b + 1 := by
   grind [Nat.div_add_mod a b, Nat.div_add_mod (a + 1) b]
 
--- Helper: if quotient increases by 1, remainder resets to 0
 private lemma mod_zero_step (a b : ℕ) (hb : 0 < b)
     (h : (a + 1) / b = a / b + 1) :
     (a + 1) % b = 0 := by
-  have h1 := Nat.div_add_mod a b
-  have h2 := Nat.div_add_mod (a + 1) b
-  have h3 := Nat.mod_lt a hb
-  have h4 : b * ((a + 1) / b) = b * (a / b) + b := by grind
-  grind
+  grind [Nat.div_add_mod a b, Nat.div_add_mod (a + 1) b, Nat.mod_lt a hb]
 
 private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
@@ -1142,8 +1099,7 @@ private lemma gap_mod_cases_gen (s j₀ jg d : ℕ)
   · grind
 
 private lemma equiEndpoint_diff_ge (m s j : ℕ) :
-    m / s ≤ Finpartition.equiEndpoint m s (j + 1) -
-        Finpartition.equiEndpoint m s j := by
+    m / s ≤ Finpartition.equiEndpoint m s (j + 1) - Finpartition.equiEndpoint m s j := by
   grind [Finpartition.equiEndpoint]
 
 open Finpartition in
@@ -1328,12 +1284,9 @@ private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
     (hm_eq : m = s * q + r)
     (hp : p < m) :
     p + 1 < m ∨ eqp_idx q r (p + 1) = s := by
-  by_cases h : p + 1 < m
+  rcases eq_or_lt_of_le (Nat.succ_le_of_lt hp) with h | h
+  · exact Or.inr (h ▸ hm_eq ▸ eqp_idx_m q r s hq_pos hr_lt)
   · exact Or.inl h
-  · have hpm : p + 1 = m := by omega
-    right
-    rw [hpm, hm_eq]
-    exact eqp_idx_m q r s hq_pos hr_lt
 
 private lemma non_straddle_witness (q r p : ℕ)
     (hq_pos : 0 < q)
@@ -1380,8 +1333,7 @@ private lemma straddle_boundary_color (q r s p : ℕ)
 
 private lemma vg_mod_shift (v g d : ℕ) :
     (v + (g + d)) % m = ((v + g) % m + d) % m := by
-  grind [Nat.add_mod (v + g) d m, Nat.add_mod ((v + g) % m) d m,
-    Nat.mod_mod_of_dvd _ (dvd_refl m)]
+  rw [show v + (g + d) = v + g + d by omega, Nat.add_mod, Nat.mod_mod_of_dvd _ (dvd_refl m)]
 
 private lemma gap2_jg_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
@@ -1450,11 +1402,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
   set r := m % s
   have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
   have hr_lt : r < s := Nat.mod_lt m hs
-  have hq_pos : 0 < q := by
-    nlinarith [Nat.div_mul_le_self m s, h_lb, h_ub]
+  have hq_pos : 0 < q := by nlinarith [Nat.div_mul_le_self m s, h_lb, h_ub]
   have hs_le : s ≤ m := by nlinarith [Nat.div_mul_le_self m s]
-  have hg1_lt_m : g + 1 < m := by
-    nlinarith [Nat.div_mul_le_self m s, Nat.le_of_dvd hs hs3]
+  have hg1_lt_m : g + 1 < m := by nlinarith [Nat.div_mul_le_self m s, Nat.le_of_dvd hs hs3]
   haveI : NeZero m := ⟨by omega⟩
   haveI : Fact (1 < m) := ⟨by omega⟩
   set bd := r * (q + 1)
@@ -1666,10 +1616,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
 lemma hasPolychromColouring_mul_unit (u : (ZMod m)ˣ) (S : Finset (ZMod m)) :
     HasPolychromColouring (Fin 3) (S.image (u.val * ·)) ↔
     HasPolychromColouring (Fin 3) S := by
-  have key : polychromNumber (S.image (u.val * ·)) = polychromNumber S :=
-    polychromNumber_iso (AddAut.mulLeft u)
-  exact ⟨fun h => hasPolychromColouring_fin_of_le (by grind) (key ▸ le_polychromNumber h),
-    fun h => hasPolychromColouring_fin_of_le (by grind) (key.symm ▸ le_polychromNumber h)⟩
+  have key := polychromNumber_iso (AddAut.mulLeft u) (S := S)
+  constructor <;> intro h <;>
+    exact hasPolychromColouring_fin_of_le (by simp) (by first | rw [key] | rw [← key]; exact le_polychromNumber h)
 
 /-! ### Subcase (1c): per-residue lemmas (paper §4.1, case 3 ∤ m)
 
@@ -1938,8 +1887,8 @@ lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   by_cases hg3 : g % 3 = 0
   · rcases h_div with h | h
-    · exact case_one_div_3g m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)
-    · exact case_one_div_3g3 m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)
+    exacts [case_one_div_3g m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind),
+            case_one_div_3g3 m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)]
   · exact case_one_div_g_not_three m g h_div hg3
 
 end Case1d
@@ -2013,25 +1962,20 @@ lemma case_one_complement (g : ℕ) (hg : g < m) :
       ({0, 1, (↑(m - g) : ZMod m), (↑(m - g) : ZMod m) + 1} : Finset (ZMod m)) ↔
     HasPolychromColouring (Fin 3)
       ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  have key : (↑(m - g) : ZMod m) = -(↑g : ZMod m) := by
-    rw [Nat.cast_sub hg.le, ZMod.natCast_self, zero_sub]
-  have hset : ({0, 1, -(↑g : ZMod m), -(↑g : ZMod m) + 1} : Finset (ZMod m)) =
-      (-(↑g : ZMod m)) +ᵥ ({0, 1, (↑g : ZMod m), (↑g : ZMod m) + 1} : Finset (ZMod m)) := by
-    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add, neg_add_cancel]
-    grind
-  rw [key, hset]
+  rw [show (↑(m - g) : ZMod m) = -(↑g : ZMod m) from by
+    rw [Nat.cast_sub hg.le, ZMod.natCast_self, zero_sub],
+    show ({0, 1, -(↑g : ZMod m), -(↑g : ZMod m) + 1} : Finset (ZMod m)) =
+      (-(↑g : ZMod m)) +ᵥ ({0, 1, (↑g : ZMod m), (↑g : ZMod m) + 1} : Finset (ZMod m)) from by
+    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add, neg_add_cancel]; grind]
   exact hasPolychromColouring_vadd
 
 private lemma isUnit_intCast_of_natAbs_coprime {n : ℕ} {b : ℤ}
     (h : Nat.gcd b.natAbs n = 1) :
     IsUnit (Int.cast b : ZMod n) := by
-  have hu : IsUnit (b.natAbs : ZMod n) :=
-    (ZMod.isUnit_iff_coprime _ _).mpr h
+  have hu := (ZMod.isUnit_iff_coprime _ _).mpr h
   rcases Int.natAbs_eq b with hb | hb
-  · have : (Int.cast b : ZMod n) = ↑b.natAbs := by rw [hb]; simp
-    rwa [this]
-  · have : (Int.cast b : ZMod n) = -↑b.natAbs := by rw [hb]; simp
-    rw [this]; exact hu.neg
+  · rwa [show (Int.cast b : ZMod n) = ↑b.natAbs by rw [hb]; simp]
+  · rw [show (Int.cast b : ZMod n) = -↑b.natAbs by rw [hb]; simp]; exact hu.neg
 
 /-- **Key reduction for Case 1.** When gcd(b, m) = 1, finds the gap parameter g
     such that zmod_set m a b = (image of {0,1,g,g+1} under ×b). -/
@@ -2098,19 +2042,15 @@ lemma main_case_one (a b : ℤ) (hm : m ≥ 289)
     (hcard : (zmod_set m a b).card = 4)
     (h_gcd : Nat.gcd b.natAbs m = 1 ∨ Nat.gcd (b - a).natAbs m = 1) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  suffices ∀ a' b' : ℤ, Nat.gcd b'.natAbs m = 1 →
-      (zmod_set m a' b').card = 4 →
+  suffices ∀ a' b' : ℤ, Nat.gcd b'.natAbs m = 1 → (zmod_set m a' b').card = 4 →
       HasPolychromColouring (Fin 3) (zmod_set m a' b') by
     rcases h_gcd with hb | hba
     · exact this a b hb hcard
-    · rw [← zmod_set_swap m a b]
-      apply this (-a) (b - a) hba
-      rwa [zmod_set_swap]
+    · rw [← zmod_set_swap m a b]; exact this (-a) (b - a) hba (by rwa [zmod_set_swap])
   intro a' b' hd hcard'
   obtain ⟨g, hg_ge, hg_le, hset⟩ := exists_g_of_coprime m a' b' hd (by grind) hcard'
   obtain ⟨u, hu⟩ := isUnit_intCast_of_natAbs_coprime hd
-  rw [hset, ← hu]
-  rw [hasPolychromColouring_mul_unit]
+  rw [hset, ← hu, hasPolychromColouring_mul_unit]
   by_cases hg_half : g ≤ m / 2
   · exact case_one_dispatch m g hm hg_ge hg_half
   · push_neg at hg_half
@@ -2251,16 +2191,14 @@ private lemma addOrderOf_b_eq {m : ℕ} {b : ℤ} {d₁ : ℕ} (hm : 0 < m)
   have key : addOrderOf (b.natAbs : ZMod m) = m / d₁ := by
     rw [ZMod.addOrderOf_coe b.natAbs (by grind), Nat.gcd_comm, hd1_def]
   rcases Int.natAbs_eq b with h | h
-  · have : (b : ZMod m) = (b.natAbs : ZMod m) := by rw [h]; simp
-    rw [this]; exact key
-  · have : (b : ZMod m) = -(b.natAbs : ZMod m) := by rw [h]; simp
-    rw [this, addOrderOf_neg]; exact key
+  · rwa [show (b : ZMod m) = (b.natAbs : ZMod m) by rw [h]; simp]
+  · rw [show (b : ZMod m) = -(b.natAbs : ZMod m) by rw [h]; simp, addOrderOf_neg]; exact key
 
 private lemma b_zero_mod_d1 {m : ℕ} {b : ℤ} {d₁ : ℕ}
     (hd1_def : Nat.gcd b.natAbs m = d₁) [NeZero d₁] :
-    (b : ZMod d₁) = 0 := by
-  rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-  exact Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m)
+    (b : ZMod d₁) = 0 :=
+  (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr
+    (Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m))
 
 private lemma ba_coprime_d1 {m : ℕ} {a b : ℤ} {d₁ : ℕ}
     (hd1_dvd : d₁ ∣ m)
@@ -2355,9 +2293,8 @@ private lemma orbitMap_shift_ba {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero 
     (hi : i.val + 1 < d₁) :
     orbitMap m a b d₁ e₁ (i, j) + ((b - a : ℤ) : ZMod m) =
       orbitMap m a b d₁ e₁ (i + 1, j) := by
-  simp only [orbitMap]
-  have : (i + 1).val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
-  rw [this]; push_cast; ring
+  simp only [orbitMap]; rw [show (i + 1).val = i.val + 1 from by
+    rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi]; push_cast; ring
 
 /-- The cycle index α(x) = castHom(x) * u⁻¹ satisfies α(φ(i,j)) = i. -/
 private lemma orbitMap_cycle_index {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
@@ -2390,10 +2327,8 @@ private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid �
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) {b : γ}
     (hΦ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, Φ (i, j + 1) = Φ (i, j) + b)
     (x : γ) :
-    Φ.symm (x + b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := by
-  have key := hΦ (Φ.symm x).1 (Φ.symm x).2
-  rw [Equiv.apply_symm_apply] at key
-  exact Φ.symm_apply_eq.mpr key.symm
+    Φ.symm (x + b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) :=
+  Φ.symm_apply_eq.mpr (by rw [← Equiv.apply_symm_apply Φ x]; exact (hΦ _ _).symm)
 
 /-- If α(Φ(i,j)) = i for all i,j, then (Φ⁻¹(x)).1 = α(x). -/
 private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
@@ -2401,8 +2336,7 @@ private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
     (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i)
     (x : γ) :
     (Φ.symm x).1 = α x := by
-  have h := hα (Φ.symm x).1 (Φ.symm x).2
-  rw [Equiv.apply_symm_apply] at h; exact h.symm
+  rw [← hα (Φ.symm x).1 (Φ.symm x).2, Equiv.apply_symm_apply]
 
 /-! ### Orbit coloring framework -/
 
@@ -2463,7 +2397,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   have he₁_ge2 : e₁ ≥ 2 := by
-    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd)
+    have := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd)
       (Nat.pos_of_ne_zero (by intro h; simp [h] at h_min)); grind
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
@@ -2572,10 +2506,8 @@ private lemma case2b_odd_degenerate_pos (d₁ e₁ : ℕ) [NeZero d₁] [NeZero 
   grind
 
 -- Fin 3 helpers for Case 2b.
-private lemma case2b_fin3_eq_one {a : Fin 3} (h0 : a ≠ 0) (h2 : a ≠ 2) : a = 1 := by
-  grind [Fin.ext_iff]
-private lemma case2b_fin3_eq_two {a : Fin 3} (h0 : a ≠ 0) (h1 : a ≠ 1) : a = 2 := by
-  grind [Fin.ext_iff]
+private lemma case2b_fin3_eq_one {a : Fin 3} (h0 : a ≠ 0) (h2 : a ≠ 2) : a = 1 := by fin_cases a <;> simp_all
+private lemma case2b_fin3_eq_two {a : Fin 3} (h0 : a ≠ 0) (h1 : a ≠ 1) : a = 2 := by fin_cases a <;> simp_all
 
 -- Lemma 9: Coverage — any 2×2 block covers all 3 colors.
 -- Generalized for independent j₁, j₂ with compatibility constraints.
@@ -2671,11 +2603,10 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   set d₁ := Nat.gcd b.natAbs m with hd₁_def
   set e₁ := m / d₁ with he₁_def
   have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
-  have hd₁_pos : 0 < d₁ := Nat.pos_of_ne_zero (by intro h; simp [h] at h_min)
+  have hd₁_pos : 0 < d₁ := by positivity
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   -- e₁ ≥ 3: e₁ is odd and e₁ = 1 would give d₁ = m, contradicting gcd(d₁,d₂) = 1
-  have he₁_pos : 0 < e₁ :=
-    Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) hd₁_pos
+  have he₁_pos : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) hd₁_pos
   have he₁_ge3 : e₁ ≥ 3 := by
     by_contra h; push_neg at h
     rcases (by grind : e₁ = 1 ∨ e₁ = 2) with he | he
@@ -2758,11 +2689,9 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     have hd₂_dvd_diff : d₂ ∣ (e₁ - 2) :=
       (ZMod.natCast_eq_zero_iff _ _).mp hval_eq.symm
     have hd₂_dvd_2 : d₂ ∣ 2 := by
-      have h := Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
-      have h2 : e₁ - (e₁ - 2) = 2 := by grind
-      rwa [h2] at h
-    have hd₂_eq2 : d₂ = 2 := by have := Nat.le_of_dvd (by grind) hd₂_dvd_2; grind
-    obtain ⟨k, hk⟩ := hd₂_dvd_e₁; obtain ⟨l, hl⟩ := he1_odd; grind
+      rwa [show e₁ - (e₁ - 2) = 2 from by grind] at Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
+    obtain ⟨k, hk⟩ := hd₂_dvd_e₁; obtain ⟨l, hl⟩ := he1_odd
+    grind [show d₂ = 2 from by grind [Nat.le_of_dvd (by grind : 0 < 2) hd₂_dvd_2]]
   -- Define coloring and prove polychromaticity via orbit helper
   have hΦ_cycle_shift : ∀ x : ZMod m,
       (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1 := fun x => by
@@ -2851,8 +2780,7 @@ private def case2d_v (e₁ : ℕ) : ℕ :=
 
 
 private lemma case2d_uv_le {e₁ : ℕ} (hge : e₁ ≥ 19) :
-    case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
-  grind [case2d_u, case2d_v]
+    case2d_u e₁ + case2d_v e₁ ≤ e₁ := by grind [case2d_u, case2d_v]
 
 /-- The base pattern: three alternating bicolor intervals on {0,...,e₁-1}.
     Positions 0..u-1: alternating 0,1 (starts and ends with 0 since u is odd)
@@ -3157,20 +3085,13 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
       Nat.add_sub_cancel' hle
     rw [hadd, Nat.add_mul_mod_self_left]
 
-private lemma zero_mem_zmod_set (m : ℕ) (a b : ℤ) : (0 : ZMod m) ∈ zmod_set m a b := by
-  simp [zmod_set]
-
+private lemma zero_mem_zmod_set (m : ℕ) (a b : ℤ) : (0 : ZMod m) ∈ zmod_set m a b := by simp [zmod_set]
 private lemma intCast_b_mem_zmod_set (m : ℕ) (a b : ℤ) :
-    ((b : ℤ) : ZMod m) ∈ zmod_set m a b := by
-  simp [zmod_set]
-
+    ((b : ℤ) : ZMod m) ∈ zmod_set m a b := by simp [zmod_set]
 private lemma intCast_ba_mem_zmod_set (m : ℕ) (a b : ℤ) :
-    ((b - a : ℤ) : ZMod m) ∈ zmod_set m a b := by
-  simp [zmod_set]
-
+    ((b - a : ℤ) : ZMod m) ∈ zmod_set m a b := by simp [zmod_set]
 private lemma intCast_2ba_mem_zmod_set (m : ℕ) (a b : ℤ) :
-    ((2 * b - a : ℤ) : ZMod m) ∈ zmod_set m a b := by
-  simp [zmod_set]
+    ((2 * b - a : ℤ) : ZMod m) ∈ zmod_set m a b := by simp [zmod_set]
 
 /-- Splitting a ZMod filter sum at a boundary -/
 private lemma zmod_filter_sum_succ {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i : ZMod n) :
@@ -3200,15 +3121,13 @@ private lemma zmod_filter_sum_last {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i 
 /-- Position shift by 1: adding 1 to ZMod coordinate shifts position by 1 mod n. -/
 private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
     ((j + 1).val + c) % n = ((j.val + c) % n + 1) % n := by
-  rw [ZMod.val_add_one, Nat.mod_add_mod, Nat.mod_add_mod]; grind
+  rw [ZMod.val_add_one, Nat.mod_add_mod, Nat.mod_add_mod]; omega
 
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
     (j + (S + V) % n) % n = ((j + S % n) % n + V) % n := by
-  have h1 : j + (S + V) = j + S + V := by grind
-  have h2 : (j + S) % n = (j + S % n) % n :=
-    (Nat.add_mod_mod j S n).symm
-  rw [Nat.add_mod_mod, h1, ← Nat.mod_add_mod (j + S) n V, h2]
+  rw [Nat.add_mod_mod, show j + (S + V) = j + S + V from by omega,
+    ← Nat.mod_add_mod (j + S) n V, (Nat.add_mod_mod j S n).symm]
 
 /-- Wrap case: if (S + V) % n = k₀ % n, then
     (j + k₀) % n = ((j + S % n) % n + V) % n -/
@@ -3467,25 +3386,16 @@ private lemma no_both_e_small {m d₁ d₂ : ℕ}
     (hd₁_dvd : d₁ ∣ m) (hd₂_dvd : d₂ ∣ m)
     (he₁_le : m / d₁ ≤ 17) (he₂_le : m / d₂ ≤ 17) : False := by
   have hd₁_bound : m ≤ d₁ * 17 := by
-    calc m = d₁ * (m / d₁) := (Nat.mul_div_cancel' hd₁_dvd).symm
-      _ ≤ d₁ * 17 := by gcongr
+    calc m = d₁ * (m / d₁) := (Nat.mul_div_cancel' hd₁_dvd).symm; _ ≤ d₁ * 17 := by gcongr
   have hd₂_bound : m ≤ d₂ * 17 := by
-    calc m = d₂ * (m / d₂) := (Nat.mul_div_cancel' hd₂_dvd).symm
-      _ ≤ d₂ * 17 := by gcongr
+    calc m = d₂ * (m / d₂) := (Nat.mul_div_cancel' hd₂_dvd).symm; _ ≤ d₂ * 17 := by gcongr
   have hprod_le : d₁ * d₂ ≤ m :=
     Nat.le_of_dvd (by grind)
       (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by rwa [Nat.Coprime]) hd₁_dvd hd₂_dvd)
-  -- d₁*d₂ ≤ m ≤ d₁*17 → d₂ ≤ 17; similarly d₁ ≤ 17
-  have hd₂_le : d₂ ≤ 17 :=
-    Nat.le_of_mul_le_mul_left (hprod_le.trans hd₁_bound) (by grind)
-  have hd₁_le : d₁ ≤ 17 :=
-    Nat.le_of_mul_le_mul_left
-      (mul_comm d₁ d₂ ▸ hprod_le.trans hd₂_bound) (by grind)
-  -- 289 ≤ m ≤ d₁*17 → d₁ ≥ 17; similarly d₂ ≥ 17
-  -- So d₁ = d₂ = 17, gcd(17,17) = 17 ≠ 1.
-  have hd₁_eq : d₁ = 17 := by grind
-  have hd₂_eq : d₂ = 17 := by grind
-  rw [hd₁_eq, hd₂_eq] at hcop; simp at hcop
+  have hd₂_le := Nat.le_of_mul_le_mul_left (hprod_le.trans hd₁_bound) (by grind : 0 < d₁)
+  have hd₁_le := Nat.le_of_mul_le_mul_left (mul_comm d₁ d₂ ▸ hprod_le.trans hd₂_bound) (by grind)
+  have : d₁ = 17 := by grind; have : d₂ = 17 := by grind
+  subst_vars; simp at hcop
 
 /-! ### Aggregation of Case 2 -/
 
@@ -3605,12 +3515,12 @@ lemma zmod_set_card_eq_four {a b : ℤ} {m : ℕ}
       (x : ZMod m) ≠ (y : ZMod m) := fun _ _ hx1 hx2 hy1 hy2 hxy h =>
     hxy (by rwa [ZMod.intCast_eq_intCast_iff', Int.emod_eq_of_lt hx1 hx2,
                   Int.emod_eq_of_lt hy1 hy2] at h)
-  have ne01 := hne 0 (b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne01 := hne 0 (b-a) (by grind) (by grind) (by grind) (by grind) (by grind)
   have ne02 := hne 0 b (by grind) (by grind) (by grind) (by grind) (by grind)
-  have ne03 := hne 0 (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
-  have ne12 := hne (b - a) b (by grind) (by grind) (by grind) (by grind) (by grind)
-  have ne13 := hne (b - a) (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
-  have ne23 := hne b (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne03 := hne 0 (2*b-a) (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne12 := hne (b-a) b (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne13 := hne (b-a) (2*b-a) (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne23 := hne b (2*b-a) (by grind) (by grind) (by grind) (by grind) (by grind)
   simp only [image_insert, image_singleton]
   rw [card_insert_of_notMem, card_insert_of_notMem, card_insert_of_notMem, card_singleton]
   · rw [mem_singleton]; exact ne23
@@ -3652,9 +3562,7 @@ lemma hasPolychromColouring_of_zmod_set {a b c : ℤ} {m : ℕ}
   apply HasPolychromColouring.of_image (Int.castAddHom (ZMod m))
   change HasPolychromColouring (Fin 3)
     (({0, a, b, c} : Finset ℤ).image (Int.cast : ℤ → ZMod m))
-  apply hasPolychromColouring_fin_of_le (by simp)
-  rw [polychromNumber_zmod hm_eq]
-  exact le_polychromNumber h
+  exact hasPolychromColouring_fin_of_le (by simp) (polychromNumber_zmod hm_eq ▸ le_polychromNumber h)
 
 /--
 **Main theorem of this file.** Every 4-element set $\{0, a, b, c\}$ satisfying the
@@ -3672,17 +3580,13 @@ theorem normal_bit :
   set m := (c - a + b).toNat
   have hm_eq : (m : ℤ) = c - a + b := Int.toNat_of_nonneg (by grind)
   have hm_pos : 0 < m := by grind
-  have hcard := zmod_set_card_eq_four ha hab (by linarith)
   apply hasPolychromColouring_of_zmod_set hm_eq
-  set d₁ := Nat.gcd b.natAbs m
-  set d₂ := Nat.gcd (b - a).natAbs m
+  set d₁ := Nat.gcd b.natAbs m; set d₂ := Nat.gcd (b - a).natAbs m
+  have hd₁_pos : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
+  have hd₂_pos : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
   by_cases hmin : min d₁ d₂ = 1
-  · apply main_case_one m a b (by grind) hcard
-    have hd₁_pos : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
-    have hd₂_pos : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
-    rcases min_choice d₁ d₂ with h | h <;> rw [h] at hmin <;> [left; right] <;> grind
-  · have : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
-    have : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
-    exact main_case_two m a b (by grind) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by grind)
+  · exact main_case_one m a b (by grind) (zmod_set_card_eq_four ha hab (by linarith))
+      (by rcases min_choice d₁ d₂ with h | h <;> rw [h] at hmin <;> [left; right] <;> grind)
+  · exact main_case_two m a b (by grind) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by grind)
 
 end Assembly
