@@ -89,8 +89,9 @@ via `fun k => by simpa using h k 0`.
 
 ## Formatting conventions
 
-- **Don't join separate tactics with `;`** — `rw [...]; omega` should be `rw [...]` then `omega` on the next line, unless they are very closely related (e.g. `subst h; simp`).
-- **Use the full 100-character line limit** — don't break lines at 80 characters when the project allows 100.
+- **Don't join separate tactics with `;` in multi-line proofs** — in a proof that already spans multiple lines, `rw [...]; omega` at the end is an antipattern. Either make the entire proof a one-liner (if it fits under 100 chars), or keep each tactic on its own line. Exception: single-line proofs like `by rw [h]; omega` are fine.
+- **Use the full 100-character line limit** — don't break lines at 80 characters when the project allows 100. Join continuation lines (`:=` assignments, `with` clauses, function arguments) onto the previous line whenever the result fits under 100 chars.
+- **`grind [lemma.symm]` → `grind [lemma]`** — grind handles commutativity/symmetry internally, so `.symm` is usually unnecessary.
 
 ## Proof development process
 
