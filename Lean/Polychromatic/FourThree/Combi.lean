@@ -2683,11 +2683,11 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     have hd₂_dvd_diff : d₂ ∣ (e₁ - 2) :=
       (ZMod.natCast_eq_zero_iff _ _).mp hval_eq.symm
     have hd₂_dvd_2 : d₂ ∣ 2 := by
-      have h := Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
-      have h2 : e₁ - (e₁ - 2) = 2 := by grind
-      rwa [h2] at h
-    have hd₂_eq2 : d₂ = 2 := by have := Nat.le_of_dvd (by grind) hd₂_dvd_2; grind
-    obtain ⟨k, hk⟩ := hd₂_dvd_e₁; obtain ⟨l, hl⟩ := he1_odd; grind
+      have := Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
+      have : e₁ - (e₁ - 2) = 2 := by grind
+      grind
+    obtain ⟨k, hk⟩ := hd₂_dvd_e₁; obtain ⟨l, hl⟩ := he1_odd
+    have := Nat.le_of_dvd (by grind) hd₂_dvd_2; grind
   -- Define coloring and prove polychromaticity via orbit helper
   have hΦ_cycle_shift : ∀ x : ZMod m,
       (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1 := fun x => by
@@ -3261,9 +3261,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
   set e₁ := m / d₁ with he1_def
   have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
   have hd1_gt1 : d₁ > 1 := by grind
-  have he1_ge3 : e₁ ≥ 3 := by
-    grind
-  have he1_pos : 0 < e₁ := by grind
+  have he1_ge3 : e₁ ≥ 3 := by grind
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd1_dvd).symm
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
@@ -3372,12 +3370,9 @@ lemma case_two_odd_small (hm : m ≥ 289)
         (j.val + k₀.val + 1 + p₀.val) % 3
       have hj'val : j'.val = (j.val + k₀.val) % e₁ := ZMod.val_add j k₀
       rw [ZMod.val_zero, hzmod_succ, hj'val]
-      rw [case2c_mod3 he1_div3 ((j.val + k₀.val) % e₁ + 1) p₀.val]
-      have h1 : (j.val + k₀.val) % e₁ + 1 + p₀.val =
-            (j.val + k₀.val) % e₁ + (1 + p₀.val) := by grind
-      have h2 : j.val + k₀.val + 1 + p₀.val =
-            j.val + k₀.val + (1 + p₀.val) := by grind
-      rw [h1, h2]
+      rw [case2c_mod3 he1_div3 ((j.val + k₀.val) % e₁ + 1) p₀.val,
+        Nat.add_assoc ((j.val + k₀.val) % e₁),
+        Nat.add_assoc (j.val + k₀.val)]
       exact case2c_mod3 he1_div3 (j.val + k₀.val) (1 + p₀.val)
 
 /-- Auxiliary: rules out both cycle lengths being ≤ 17 when m ≥ 289. -/
