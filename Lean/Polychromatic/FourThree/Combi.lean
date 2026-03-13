@@ -1484,8 +1484,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_hi hvg_lo
         hvg_hi hstrad1 hgap
       have hjg1_eq : (jg + 1) % 3 = j₀ % 3 := by
-        rcases gap_mod_cases_gen s j₀ jg 2 hj₀_lt hjg_lt hgap2
-          with h | h <;> grind
+        rcases gap_mod_cases_gen s j₀ jg 2 hj₀_lt hjg_lt hgap2 with h | h <;> grind
       rcases hk1 with hk_eq | hk_eq
       · -- k = j₀%3 = (jg+1)%3: pair 2 must be non-straddle
         rcases eqp_idx_step q r ((v + g) % m) hq_pos
@@ -1555,8 +1554,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi
         hvg_hi hstrad2 hgap
       have hj01_eq : (j₀ + 1) % 3 = jg % 3 := by
-        rcases gap_mod_cases_gen s j₀ jg 1 hj₀_lt hjg_lt hgap1
-          with h | h <;> grind
+        rcases gap_mod_cases_gen s j₀ jg 1 hj₀_lt hjg_lt hgap1 with h | h <;> grind
       rcases hk2 with hk_eq | hk_eq
       · -- k = jg%3 = (j₀+1)%3: pair 1 non-straddle
         rcases eqp_idx_step q r v hq_pos with h1_same | h1_step
@@ -1766,7 +1764,7 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
     intro p; simp only [c, hm_eq]
     rw [Nat.mod_mod_of_dvd p (dvd_mul_right 3 g)]
     have h2 : p = p % (3 * g) + 3 * (p / (3 * g)) * g := by
-      grind [(Nat.mod_add_div p (3 * g)).symm]
+      grind [Nat.mod_add_div p (3 * g)]
     have h3 : p / g = p % (3 * g) / g + 3 * (p / (3 * g)) := by
       conv_lhs => rw [h2]; exact Nat.add_mul_div_right _ _ hg
     conv_rhs => rw [h3]
@@ -1837,10 +1835,12 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   · have hcv : c v = (3 - q % 3) % 3 := by grind
     have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
       have : v + g = h * (q + 1) + (g - 1) := by grind
-      rw [this, color_at (q + 1) (g - 1) (by grind), ht]; omega
+      rw [this, color_at (q + 1) (g - 1) (by grind)]
+      grind
     have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
       have : v + 1 = h * (q + 1) + 0 := by grind
-      rw [this, color_at (q + 1) 0 (by grind)]; grind
+      rw [this, color_at (q + 1) 0 (by grind)]
+      grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
