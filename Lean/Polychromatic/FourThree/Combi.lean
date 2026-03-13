@@ -714,13 +714,6 @@ These are technical arithmetic lemmas used in the proof of `case_one_interval`.
 They are not important on their own.
 -/
 
-/-- Two pairs of consecutive mod-3 values with different phases cover {0,1,2}. -/
-private lemma two_pairs_cover (j₁ j₂ : ℕ) (hne : j₁ % 3 ≠ j₂ % 3)
-    (k : ℕ) (hk : k < 3) :
-    k = j₁ % 3 ∨ k = (j₁ + 1) % 3 ∨
-    k = j₂ % 3 ∨ k = (j₂ + 1) % 3 := by
-  omega
-
 private lemma lt_two' (n : ℕ) (h : n < 2) : n = 0 ∨ n = 1 := by omega
 
 /-- Phase differs when gap is 1 or 2 mod s, and 3 ∣ s. -/
@@ -1382,18 +1375,6 @@ private lemma vg_mod_shift (v g d : ℕ) :
   grind [Nat.add_mod (v + g) d m, Nat.add_mod ((v + g) % m) d m,
     Nat.mod_mod_of_dvd _ (dvd_refl m)]
 
-private lemma gap2_jg_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
-    (hj₀ : j₀ < s) (hjg : jg < s)
-    (hgap2 : (jg + s - j₀) % s = 2) :
-    (jg + 1) % 3 = j₀ % 3 := by
-  rcases gap_mod_cases_gen s j₀ jg 2 hj₀ hjg hgap2 with h | h <;> grind
-
-private lemma gap1_j0_mod3 (s j₀ jg : ℕ) (hs3 : 3 ∣ s)
-    (hj₀ : j₀ < s) (hjg : jg < s)
-    (hgap1 : (jg + s - j₀) % s = 1) :
-    (j₀ + 1) % 3 = jg % 3 := by
-  rcases gap_mod_cases_gen s j₀ jg 1 hj₀ hjg hgap1 with h | h <;> grind
-
 private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
     ((k + 3 - s) % 3 = 0 → s = k) ∧
     ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
@@ -1553,8 +1534,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
       have hgap2 := straddle1_gap2 s g m hs hs3_le hs_le h_lb
         h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_hi hvg_lo
         hvg_hi hstrad1 hgap
-      have hjg1_eq := gap2_jg_mod3 s j₀ jg hs3 hj₀_lt hjg_lt
-        hgap2
+      have hjg1_eq : (jg + 1) % 3 = j₀ % 3 := by
+        rcases gap_mod_cases_gen s j₀ jg 2 hj₀_lt hjg_lt hgap2
+          with h | h <;> grind
       rcases hk1 with hk_eq | hk_eq
       · -- k = j₀%3 = (jg+1)%3: pair 2 must be non-straddle
         rcases eqp_idx_step q r ((v + g) % m) hq_pos
@@ -1623,8 +1605,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
       have hgap1 := straddle2_gap1 s g m hs hs3_le hs_le h_lb
         h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi
         hvg_hi hstrad2 hgap
-      have hj01_eq := gap1_j0_mod3 s j₀ jg hs3 hj₀_lt hjg_lt
-        hgap1
+      have hj01_eq : (j₀ + 1) % 3 = jg % 3 := by
+        rcases gap_mod_cases_gen s j₀ jg 1 hj₀_lt hjg_lt hgap1
+          with h | h <;> grind
       rcases hk2 with hk_eq | hk_eq
       · -- k = jg%3 = (j₀+1)%3: pair 1 non-straddle
         rcases eqp_idx_step q r v hq_pos with h1_same | h1_step
