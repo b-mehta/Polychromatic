@@ -701,10 +701,8 @@ private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
     (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
     j₀ % 3 ≠ jg % 3 := by
   obtain ⟨t, ht⟩ := hs3; subst ht
-  have ht_pos : 0 < t := by omega
-  have h3t_pos : 0 < 3 * t := by omega
   have hqlt : (jg + 3 * t - j₀) / (3 * t) < 2 := by
-    rw [Nat.div_lt_iff_lt_mul h3t_pos]; omega
+    rw [Nat.div_lt_iff_lt_mul (by omega)]; omega
   have hdam := Nat.div_add_mod (jg + 3 * t - j₀) (3 * t)
   rcases hgap with hmod | hmod <;>
     rcases lt_two' _ hqlt with hq | hq <;>
@@ -909,10 +907,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
     rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
   · push_neg at hvg_wrap
     have hvg_eq : (v + g) % m = v + g - m := by
-      conv_lhs =>
-        rw [← Nat.sub_add_cancel (by omega : m ≤ v + g)]
-      rw [Nat.add_mod_right]
-      exact Nat.mod_eq_of_lt (by omega)
+      rw [Nat.mod_eq_sub_mod (by omega)]; exact Nat.mod_eq_of_lt (by omega)
     rw [hvg_eq] at hvg_lo hvg_hi
     have hj0_ge : j₀ ≥ s - 2 := by
       by_contra h; push_neg at h
@@ -937,8 +932,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
     have hvgm_ub : v + g - m <
         Finpartition.equiEndpoint m s
           (j₀ + 3 - s) := by
-      have hvgm_lt : v + g - m <
-          q * (j₀ + 3 - s) := by
+      have : v + g - m < q * (j₀ + 3 - s) := by
         rw [← hep_diff]; omega
       have : q * (j₀ + 3 - s) ≤
           Finpartition.equiEndpoint m s
@@ -1109,8 +1103,7 @@ private lemma gap_mod_cases_gen (s j₀ jg d : ℕ)
   have hq_lt : (jg + s - j₀) / s < 2 := by
     rw [Nat.div_lt_iff_lt_mul (by omega)]; omega
   rcases Nat.eq_zero_or_pos ((jg + s - j₀) / s) with h | h
-  · grind
-  · grind
+    <;> grind
 
 private lemma equiEndpoint_diff_ge (m s j : ℕ) :
     m / s ≤ Finpartition.equiEndpoint m s (j + 1) -
@@ -1163,10 +1156,8 @@ private lemma straddle1_gap2 (s g m : ℕ)
       omega
   · have hj₀_eq : j₀ = s - 1 := by omega
     have hjg_val : jg = 0 := by omega
-    rw [hj₀_eq] at hv_eq
-    have hep_s1 : equiEndpoint m s (s - 1 + 1) = m := by
-      rw [Nat.sub_add_cancel (by omega : 1 ≤ s)]; exact hep_s
-    rw [hep_s1] at hv_eq
+    rw [hj₀_eq, Nat.sub_add_cancel (by omega : 1 ≤ s),
+      hep_s] at hv_eq
     have hv_val : v = m - 1 := by omega
     have hg_pos : 0 < g := by
       have := gap_exceeds_ilen m s g hs h_lb 0
@@ -1236,8 +1227,7 @@ private lemma straddle2_gap1 (s g m : ℕ)
       omega
     · push_neg at hwrap
       have : (v + g) % m = v + g - m := by
-        rw [Nat.mod_eq_sub_mod hwrap]
-        exact Nat.mod_eq_of_lt (by omega)
+        rw [Nat.mod_eq_sub_mod hwrap]; exact Nat.mod_eq_of_lt (by omega)
       omega
   · have hjg_val : jg = j₀ + 2 - s := by omega
     have hpos_wrap : m ≤ v + g := by
@@ -1253,8 +1243,7 @@ private lemma straddle2_gap1 (s g m : ℕ)
         omega
       omega
     have hvg_mod : (v + g) % m = v + g - m := by
-      rw [Nat.mod_eq_sub_mod hpos_wrap]
-      exact Nat.mod_eq_of_lt (by omega)
+      rw [Nat.mod_eq_sub_mod hpos_wrap]; exact Nat.mod_eq_of_lt (by omega)
     by_cases hj₀_eq : j₀ = s - 2
     · have hjg0 : jg = 0 := by omega
       rw [hjg0] at hvg_eq
@@ -1265,29 +1254,19 @@ private lemma straddle2_gap1 (s g m : ℕ)
       have hd1 := equiEndpoint_diff_ge m s (s - 1)
       rw [Nat.sub_add_cancel (by omega : 1 ≤ s), hep_s]
         at hd1
-      have hep_s1_le :
-          equiEndpoint m s (s - 1) ≤ m := by
-        calc equiEndpoint m s (s - 1)
-            ≤ equiEndpoint m s s :=
-              equiEndpoint_monotone (by omega)
-          _ = m := hep_s
+      have hep_s1_le : equiEndpoint m s (s - 1) ≤ m :=
+        le_trans (equiEndpoint_monotone (by omega)) hep_s.le
       have hsac_m := Nat.sub_add_cancel hep_s1_le
       have hd2 := equiEndpoint_diff_ge m s 0
-      rw [hep0] at hd2
-      simp only [Nat.zero_add] at hd2
-      omega
+      rw [hep0, Nat.zero_add] at hd2; omega
     · have hj₀_eq2 : j₀ = s - 1 := by omega
       have hjg1 : jg = 1 := by omega
       rw [hjg1] at hvg_eq
       rw [hj₀_eq2] at hv_hi
-      have hep_s1 :
-          equiEndpoint m s (s - 1 + 1) = m := by
-        rw [Nat.sub_add_cancel (by omega : 1 ≤ s)]
-        exact hep_s
-      rw [hep_s1] at hv_hi
+      rw [Nat.sub_add_cancel (by omega : 1 ≤ s), hep_s]
+        at hv_hi
       have hd1 := equiEndpoint_diff_ge m s 0
-      rw [hep0] at hd1
-      simp only [Nat.zero_add] at hd1
+      rw [hep0, Nat.zero_add] at hd1
       have hd2 := equiEndpoint_diff_ge m s 1
       have hmono12 : equiEndpoint m s 1 ≤
           equiEndpoint m s (1 + 1) := by omega
@@ -1429,12 +1408,6 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
     lift_coloring_witness hg1_lt_m hc_lt3 hc_period ?_⟩
   set v := n.val
   have hv_lt : v < m := ZMod.val_lt n
-  -- c(p) ∈ {idx(p%m)%3, (idx(p%m)+1)%3}
-  have hc_phase : ∀ p, c p = idx (p % m) % 3 ∨
-      c p = (idx (p % m) + 1) % 3 := by
-    intro p; simp only [c]
-    have : off (p % m) % 2 = 0 ∨ off (p % m) % 2 = 1 := by omega
-    rcases this with h | h <;> simp [h]
   -- Gap bound: idx((v+g)%m) differs from idx(v) by 1 or 2 mod s
   set j₀ := idx v with hj₀_def
   set jg := idx ((v + g) % m) with hjg_def
@@ -1482,12 +1455,9 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         equiEndpoint m s (eqp_idx q r (p + 1)) ≤ p + 1 ∧ _ at hiv_p
       rw [hstep_p] at hiv_p; exact hiv_p.2.1
     · have hpm : p + 1 = m := by omega
-      rw [hpm]
-      calc equiEndpoint m s (eqp_idx q r p + 1)
-          ≤ equiEndpoint m s s :=
-            equiEndpoint_monotone (by omega)
-        _ = m := equiEndpoint_hi (by omega)
-  have hs3_le : 3 ≤ s := Nat.le_of_dvd hs hs3
+      rw [hpm]; exact le_trans
+        (equiEndpoint_monotone (by omega))
+        (equiEndpoint_hi (by omega) |>.le)
   -- Step 1: which pair covers k?
   have : (k.val = j₀ % 3 ∨ k.val = (j₀ + 1) % 3) ∨
       (k.val = jg % 3 ∨ k.val = (jg + 1) % 3) := by omega
