@@ -18,49 +18,47 @@ its polychromaticity in $\mathbb{Z}_m$.
 
 ## Main results
 
-- `normal_bit` — **the main theorem** of this file: every normalized 4-element set admits a
+- `normal_bit` — **the main theorem**: every normalized 4-element set admits a
   3-polychromatic coloring. This is the entry point used by `Main.lean`.
 
 ## Proof structure
 
-The proof dispatches into two main cases based on the subgroup structure of $\mathbb{Z}_m$:
+Let $d_1 = \gcd(b, m)$ and $d_2 = \gcd(b{-}a, m)$. The proof dispatches on whether
+one of these GCDs equals 1 (so the corresponding element generates all of
+$\mathbb{Z}_m$) or both are greater than 1 (so $\mathbb{Z}_m$ decomposes into
+shorter cycles):
 
 - `main_case_one` — **Case 1: Single Cycle (§4.1).**
-  Applies when $\min(\gcd(b,m), \gcd(b{-}a,m)) = 1$. The set reduces to $\{0,1,g,g{+}1\}$
-  via an affine transformation. Subcases:
+  Applies when $\min(d_1, d_2) = 1$. The set reduces to $\{0,1,g,g{+}1\}$ via an
+  affine transformation (`exists_g_of_coprime`). Subcases by the gap parameter $g$:
   - `case_one_small_g` — **(1a)** $g \in \{2,3,4\}$, via Table 1 block colorings.
   - `case_one_interval` — **(1b)** General $g$, via interval coloring.
   - `case_one_residues` — **(1c)** $3 \nmid m$, via multiplication by 3.
   - `case_one_divisible` — **(1d)** $3 \mid m$, via explicit periodic colorings.
 
 - `main_case_two` — **Case 2: Multiple Cycles (§4.2).**
-  Applies when both $d_1, d_2 > 1$. Uses the isomorphism
-  $\mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \cong \mathbb{Z}_m$. Subcases:
+  Applies when both $d_1, d_2 > 1$. Setting $e_1 = m/d_1$, we use the isomorphism
+  $\mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \cong \mathbb{Z}_m$ to define colorings
+  cycle-by-cycle. Subcases by the parity of $d_1$ and $e_1$:
   - `case_two_e1_even` — **(2a)** $e_1$ even: parity-based alternation.
   - `case_two_d1_even_e1_odd` — **(2b)** $d_1$ even, $e_1$ odd: alternation with fixup.
   - `case_two_odd_small` — **(2c)** Both odd, $e_1 \le 17$: shifted periodic colorings.
   - `case2d_coloring_works` — **(2d)** Both odd, $e_1 \ge 19$: rotating interval patterns.
 
-## Infrastructure
+## File organization
 
-- `blockColor_polychrom` — general tool for proving polychromaticity of cyclic colorings
-  formed by concatenating blocks of lengths $r$ and $r+1$. Used by Table 1.
-- `table1_*` — concrete block colorings for specific 4-element sets.
-- `hasPolychromColouring_mul_unit` — unit multiplication preserves polychromaticity.
-- `orbit_coloring_polychrom` — polychromaticity from cycle-coordinate colorings (Case 2).
+The file is organized into Lean `section`s:
 
-## Auxiliary results
+- `BlockColorInfra` — General tool (`blockColor_polychrom`) for proving polychromaticity
+  of cyclic colorings formed by concatenating two block sizes.
+- `Table1` — Concrete block colorings for six specific 4-element sets.
+- `Case1_SingleCycle` — Case 1 subcases (1a)–(1d) and their aggregation.
+- `Case2_MultipleCycles` — Case 2 subcases (2a)–(2d) and their aggregation.
+- `Assembly` — Glue connecting the $\mathbb{Z}_m$ analysis back to $\mathbb{Z}$,
+  culminating in `normal_bit`.
 
-Most private lemmas are modular arithmetic helpers or case-analysis infrastructure.
-Key auxiliary results include:
-- `exists_g_of_coprime` — finds the gap parameter $g$ for Case 1.
-- `zmod_set_card_eq_four` — the normalized set has exactly 4 elements.
-- `gcd_coprime_of_gcd_abc` — the coprimality reduction from $\gcd(a,b,c) = 1$.
-- `hasPolychromColouring_of_zmod_set` — lifts $\mathbb{Z}_m$ results back to $\mathbb{Z}$.
+Most `private` lemmas are modular arithmetic helpers or case-analysis plumbing.
 
-## Completion status
-
-Total: 9 sorries (5 Table 1 + 1 interval + 3 Case 2)
 -/
 
 open Finset Pointwise
@@ -98,18 +96,17 @@ lemma zmod_set_swap (m : ℕ) (a b : ℤ) :
     zmod_set m (-a) (b - a) = zmod_set m a b := by
   grind [zmod_set]
 
-/-! ## Block coloring infrastructure (for Table 1)
+/-! ## Block coloring infrastructure
 
-For each set S in Table 1 (paper §4), we define a block-based coloring:
-given blocks A (length r) and B (length r+1), concatenate h copies of A
-followed by k copies of B to color Z_m where m = r·h + (r+1)·k.
+Given blocks A (length r) and B (length r+1), concatenate h copies of A followed
+by k copies of B to color ℤ_m where m = r·h + (r+1)·k. Polychromaticity reduces
+to checking 4 block-pair boundaries (AA, AB, BA, BB), which is decidable for
+concrete blocks. The key result is `blockColor_polychrom` at the end of this section.
 
-The polychromaticity reduces to checking 4 block-pair boundaries (AA, AB, BA, BB),
-which is decidable for concrete blocks. The key result is `blockColor_polychrom`.
-
-The lemmas in this section are purely technical infrastructure — the important
-interface is `blockColor_polychrom` at the end.
+The remaining lemmas in this section are technical plumbing.
 -/
+
+section BlockColorInfra
 
 /--
 Check that every starting position in the list `L` hits all three colors {0, 1, 2}
@@ -585,11 +582,13 @@ theorem blockColor_polychrom
         exact case_wrap_BB A B offsets k m i hBlen hmaxOff
           hBB hm hi h_wrap hk_pos
 
+end BlockColorInfra
+
 /-! ## Table 1: Block concatenation colorings (paper §4, Table 1)
 
 Each `table1_*` lemma constructs a concrete 3-polychromatic coloring for a specific
-4-element set using the `blockColor_polychrom` infrastructure above. These are
-**intermediate results** used in subcases (1a) and (1c) of Case 1.
+4-element set using `blockColor_polychrom`. These are intermediate results used in
+subcases (1a) and (1c) of Case 1.
 
 | Lemma | Set | Block size r | Min m |
 |-------|-----|-------------|-------|
@@ -1680,6 +1679,8 @@ The six individual `case_one_res_*` lemmas are routine; the important interface
 is `case_one_residues` which dispatches to them.
 -/
 
+section Case1c
+
 /-- m = 3g - 2: ×3 maps {0,1,g,g+1} to {0,3,3g,3g+3} ≡ {0,2,3,5}. -/
 lemma case_one_res_3g_sub_2 (g : ℕ) (hm : m ≥ 289)
     (hg : m = 3 * g - 2) :
@@ -1784,6 +1785,8 @@ lemma case_one_residues (g : ℕ) (hm : m ≥ 289) (h_res : m % 3 ≠ 0)
   · exact case_one_res_3g_add_4 _ g hm rfl
   · exact case_one_res_3g_add_5 _ g hm rfl
 
+end Case1c
+
 /-! ### Subcase (1d): 3 ∣ m, split by g mod 3 (paper §4.1, case 3 ∣ m)
 
 When `3 ∣ m`, multiplication by 3 is not available. Instead, explicit periodic
@@ -1791,6 +1794,8 @@ colorings are constructed. The three individual lemmas (`case_one_div_g_not_thre
 `case_one_div_3g`, `case_one_div_3g3`) are routine; `case_one_divisible` dispatches
 to them.
 -/
+
+section Case1d
 
 /-- (1d), g ≢ 0 (mod 3): the periodic coloring 012012...012 works because
     each translate of {0,1,g,g+1} hits all 3 residue classes mod 3. -/
@@ -1936,6 +1941,8 @@ lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3
     · exact case_one_div_3g m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)
     · exact case_one_div_3g3 m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)
   · exact case_one_div_g_not_three m g h_div hg3
+
+end Case1d
 
 /-! ### Combined dispatch for Case 1 -/
 
@@ -2495,7 +2502,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
   exact orbit_coloring_polychrom Φ hΦ_add_b hΦ_cycle_shift (cycle_coloring d₁ e₁)
     (fun n k => color_covers_even d₁ e₁ hd₁_ge2 hparity _ _ _ k)
 
-/-! #### Case (2b): d₁ even, e₁ odd
+/-! ### Subcase (2b) construction: d₁ even, e₁ odd
 
 The coloring assigns each even cycle the pattern `01010…011` and each odd cycle
 the pattern `22020…020`. The degenerate pairs `{1,1}` and `{2,2}` occur at
@@ -2650,7 +2657,7 @@ private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
       · exact Or.inl h.symm
       · exact Or.inr (Or.inl h.symm)
 
-/-! ### Subcase (2b): d₁ even, e₁ odd -/
+/-! ### Subcase (2b) main lemma -/
 
 /-- **Subcase (2b).** $d_1$ is even and $e_1$ is odd.
     Alternating patterns with a "degenerate" position fixup at different positions
@@ -3583,12 +3590,10 @@ end Case2_MultipleCycles
 /-! ## Assembly: connecting ZMod m back to ℤ
 
 The remaining lemmas are the glue between the Case 1/Case 2 analysis in $\mathbb{Z}_m$
-and the final statement over $\mathbb{Z}$. The key results here are:
-- `zmod_set_card_eq_four` — the normalized set has 4 elements (auxiliary).
-- `gcd_coprime_of_gcd_abc` — the coprimality assumption lifts (auxiliary).
-- `hasPolychromColouring_of_zmod_set` — lifts polychromaticity from ZMod m to ℤ (auxiliary).
-- `normal_bit` — **the main theorem of this file**.
+and the final statement over $\mathbb{Z}$, culminating in `normal_bit`.
 -/
+
+section Assembly
 
 /-- Auxiliary: the set zmod_set m a b has 4 elements when 0 < a < b and 2b - a < m. -/
 lemma zmod_set_card_eq_four {a b : ℤ} {m : ℕ}
@@ -3679,3 +3684,5 @@ theorem normal_bit :
   · have : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
     have : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
     exact main_case_two m a b (by grind) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by grind)
+
+end Assembly
