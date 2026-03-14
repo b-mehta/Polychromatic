@@ -1153,8 +1153,7 @@ private lemma straddle2_gap1 (s g m : ℕ)
     · have hj₀_eq2 : j₀ = s - 1 := by omega
       have hjg1 : jg = 1 := by omega
       rw [hjg1] at hvg_eq
-      rw [hj₀_eq2] at hv_hi
-      rw [Nat.sub_add_cancel (by omega), hep_s] at hv_hi
+      rw [hj₀_eq2, Nat.sub_add_cancel (by omega), hep_s] at hv_hi
       have hd1 := equiEndpoint_diff_ge m s 0
       rw [hep0, Nat.zero_add] at hd1
       have hd2 := equiEndpoint_diff_ge m s 1
@@ -1883,8 +1882,7 @@ lemma main_case_one (a b : ℤ) (hm : m ≥ 289)
   intro a' b' hd hcard'
   obtain ⟨g, hg_ge, hg_le, hset⟩ := exists_g_of_coprime m a' b' hd (by grind) hcard'
   obtain ⟨u, hu⟩ := isUnit_intCast_of_natAbs_coprime hd
-  rw [hset, ← hu]
-  rw [hasPolychromColouring_mul_unit]
+  rw [hset, ← hu, hasPolychromColouring_mul_unit]
   by_cases hg_half : g ≤ m / 2
   · exact case_one_dispatch m g hm hg_ge hg_half
   · push_neg at hg_half
