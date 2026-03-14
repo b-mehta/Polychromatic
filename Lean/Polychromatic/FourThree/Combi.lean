@@ -173,9 +173,6 @@ private lemma hasPolychromColouring_of_cyclic {m : ℕ} [NeZero m] [Fact (1 < m)
     obtain ⟨a, ha, heq⟩ := hpoly n k
     exact ⟨a, ha, by change c (n + a).val = k; exact heq⟩⟩
 
-/-- Key: offsets in a list are bounded by foldr max. -/
-private lemma le_foldr_max {offsets : List ℕ} {s : ℕ} (hs : s ∈ offsets) :
-    s ≤ offsets.foldr max 0 := List.le_max_of_le' 0 hs le_rfl
 
 /-- If `i % r + s < r`, then `(i + s) % r = i % r + s`. -/
 private lemma add_mod_of_lt {i s r : ℕ} (h : i % r + s < r) : (i + s) % r = i % r + s := by
@@ -217,7 +214,7 @@ private lemma ge_mul_of_mod_add_ge {i s r n : ℕ} (hr : 0 < r) (hn : 0 < n)
   have := Nat.mod_add_div i r
   have := Nat.mod_lt i hr
   have : n - 1 ≤ i / r := by
-    rw [Nat.le_div_iff_mul_le hr]; grind [mul_comm r (n - 1)]
+    rw [Nat.le_div_iff_mul_le hr]; grind
   have : n ≤ i / r + 1 := by omega
   grind [Nat.mul_le_mul_left r this]
 
@@ -262,11 +259,10 @@ private lemma sub_region_eq {i s r h : ℕ} (hr : 0 < r)
     (hjs_ge : r ≤ i % r + s) :
     i + s - r * h = i % r + s - r := by
   have hdiv := Nat.mod_add_div i r
-  have hle : h - 1 ≤ i / r := by
-    rw [Nat.le_div_iff_mul_le hr]; grind
-  have hlt : i / r < h := Nat.div_lt_of_lt_mul (by grind [mul_comm r h])
-  have hQr : r * h = r * (i / r) + r := by
-    grind [Nat.sub_add_cancel (by omega : 1 ≤ h)]
+  have hle : h - 1 ≤ i / r := by rw [Nat.le_div_iff_mul_le hr]; grind
+  have hlt : i / r < h := Nat.div_lt_of_lt_mul (by grind)
+  have hh : 1 ≤ h := by omega
+  have hQr : r * h = r * (i / r) + r := by grind [Nat.sub_add_cancel]
   rw [hQr]
   exact sub_add_eq hjs_ge hdiv
 
@@ -510,7 +506,7 @@ theorem blockColor_polychrom
     obtain ⟨XY, j, hXY_check, hj_bound, hcorr⟩ := hg
     obtain ⟨s, hs_mem, hs_eq⟩ := checkLinearPolychrom_spec hXY_check hj_bound c
     refine ⟨s, hs_mem, ?_⟩
-    have := hcorr s (le_foldr_max hs_mem)
+    have := hcorr s (List.le_max_of_le' 0 hs_mem le_rfl)
     rw [hs_eq] at this; exact Option.some.inj this.symm
   -- Dispatch to case lemmas
   by_cases h_wrap : i + maxOff < m
@@ -581,7 +577,7 @@ private lemma table1_of_blockColor (A B : List (Fin 3)) (offsets : List ℕ)
   obtain ⟨s, hs_mem, hs_eq⟩ := blockColor_polychrom A B offsets (by omega) hBlen hmaxOff
     hpairs hhk hm_eq' (ZMod.val_lt n) target
   refine ⟨(s : ZMod m), (hS _).mpr ⟨s, hs_mem, rfl⟩, ?_⟩
-  have : s < m := lt_of_le_of_lt (le_trans (le_foldr_max hs_mem) hmaxOff) hA_lt_m
+  have : s < m := lt_of_le_of_lt (le_trans (List.le_max_of_le' 0 hs_mem le_rfl) hmaxOff) hA_lt_m
   rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt this]
   exact hs_eq
 
