@@ -2003,14 +2003,16 @@ private lemma addOrderOf_b_eq {m : ℕ} {b : ℤ} {d₁ : ℕ} (hm : 0 < m)
   have key : addOrderOf (b.natAbs : ZMod m) = m / d₁ := by
     rw [ZMod.addOrderOf_coe b.natAbs (by grind), Nat.gcd_comm, hd1_def]
   rcases Int.natAbs_eq b with h | h
-  · rwa [show (b : ZMod m) = (b.natAbs : ZMod m) by rw [h]; simp]
-  · rw [show (b : ZMod m) = -(b.natAbs : ZMod m) by rw [h]; simp, addOrderOf_neg]; exact key
+  · have : (b : ZMod m) = (b.natAbs : ZMod m) := by rw [h]; simp
+    rwa [this]
+  · have : (b : ZMod m) = -(b.natAbs : ZMod m) := by rw [h]; simp
+    rw [this, addOrderOf_neg]; exact key
 
 private lemma b_zero_mod_d1 {m : ℕ} {b : ℤ} {d₁ : ℕ}
     (hd1_def : Nat.gcd b.natAbs m = d₁) [NeZero d₁] :
-    (b : ZMod d₁) = 0 :=
-  (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr
-    (Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m))
+    (b : ZMod d₁) = 0 := by
+  rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
+  exact Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m)
 
 private lemma ba_coprime_d1 {m : ℕ} {a b : ℤ} {d₁ : ℕ}
     (hd1_dvd : d₁ ∣ m)
@@ -2302,11 +2304,9 @@ private lemma case2b_odd_degenerate_pos (d₁ e₁ : ℕ) [NeZero d₁] [NeZero 
   grind
 
 -- Fin 3 helpers for Case 2b.
-/-- `Fin 3` helper: not 0 and not 2 implies 1. -/
 private lemma case2b_fin3_eq_one {a : Fin 3} (h0 : a ≠ 0) (h2 : a ≠ 2) : a = 1 := by
   grind [Fin.ext_iff]
 
-/-- `Fin 3` helper: not 0 and not 1 implies 2. -/
 private lemma case2b_fin3_eq_two {a : Fin 3} (h0 : a ≠ 0) (h1 : a ≠ 1) : a = 2 := by
   grind [Fin.ext_iff]
 
@@ -3259,8 +3259,8 @@ lemma zmod_set_card_eq_four {a b : ℤ} {m : ℕ}
   have ne02 := hne 0 b (by grind) (by grind) (by grind) (by grind) (by grind)
   have ne03 := hne 0 (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
   have ne12 := hne (b - a) b (by grind) (by grind) (by grind) (by grind) (by grind)
-  have ne13 :=
-    hne (b - a) (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
+  have ne13 := hne (b - a) (2 * b - a)
+    (by grind) (by grind) (by grind) (by grind) (by grind)
   have ne23 := hne b (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
   simp only [image_insert, image_singleton]
   rw [card_insert_of_notMem, card_insert_of_notMem, card_insert_of_notMem, card_singleton]
@@ -3328,12 +3328,17 @@ theorem normal_bit :
   have hm_eq : (m : ℤ) = c - a + b := Int.toNat_of_nonneg (by grind)
   have hm_pos : 0 < m := by grind
   apply hasPolychromColouring_of_zmod_set hm_eq
-  set d₁ := Nat.gcd b.natAbs m; set d₂ := Nat.gcd (b - a).natAbs m
-  have hd₁_pos : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
-  have hd₂_pos : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
+  have hcard := zmod_set_card_eq_four ha hab (by linarith)
+  apply hasPolychromColouring_of_zmod_set hm_eq
+  set d₁ := Nat.gcd b.natAbs m
+  set d₂ := Nat.gcd (b - a).natAbs m
   by_cases hmin : min d₁ d₂ = 1
-  · exact main_case_one m a b (by grind) (zmod_set_card_eq_four ha hab (by linarith))
-      (by rcases min_choice d₁ d₂ with h | h <;> rw [h] at hmin <;> [left; right] <;> grind)
-  · exact main_case_two m a b (by grind) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by grind)
+  · apply main_case_one m a b (by grind) hcard
+    have hd₁_pos : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
+    have hd₂_pos : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
+    rcases min_choice d₁ d₂ with h | h <;> rw [h] at hmin <;> [left; right] <;> grind
+  · have : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
+    have : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
+    exact main_case_two m a b (by grind) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by grind)
 
 end Assembly
