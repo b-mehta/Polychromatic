@@ -4,7 +4,7 @@ Instructions for AI coding agents working on this repository.
 
 ## Project Overview
 
-Formalization of polychromatic colourings of integers in Lean 4. A colouring of integers is *S*-polychromatic if every translate of set *S* contains an element of each colour class. The main theorem (`Lean/Polychromatic/Main.lean:final_result`) states that every set of 4 integers admits a 3-polychromatic colouring. The proof is complete modulo the computational verification in `FourThree/Compute.lean` (currently `sorry`'d for CI performance).
+Formalization of polychromatic colourings of integers in Lean 4. A colouring of integers is *S*-polychromatic if every translate of set *S* contains an element of each colour class. The main theorem (`Lean/Polychromatic/Main.lean:final_result`) states that every set of 4 integers admits a 3-polychromatic colouring. The proof is complete modulo the computational verification in `FourThree/Compute.lean` (temporarily `sorry`'d to check CI).
 
 **Primary Language**: Lean 4 (formal proof)
 **Supporting Languages**: C++, Python, Ruby/Jekyll
@@ -36,7 +36,7 @@ lake env lean Polychromatic/FourThree/Combi.lean  # Fast single-file check (no l
 
 ### Other Components
 
-- **Verso docs**: `cd Verso && lake exe docs` (requires the Lean build to have completed first). The docs build shells out to `../Lean` to run `subverso-extract-mod` using the Lean project's toolchain. Lean code is pulled into the site via `` ```anchor name (module := Module.Name) `` blocks, which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
+- **Verso docs**: `cd Verso && lake exe docs` (requires the Lean build to have completed first). The docs build shells out to `../Lean` to run `subverso-extract-mod` using the Lean project's toolchain. Lean code is pulled into the site via fenced `anchor` code blocks (e.g. ````anchor name (module := Module.Name)````), which reference `-- ANCHOR:` / `-- ANCHOR_END:` comments in the Lean source files.
 - **Jekyll site**: `cd site && bundle exec jekyll serve` (Ruby 3.1+)
 - **Generation**: C++ code in `Generation/` produces colouring log files consumed by `FourThree/Compute.lean`
 - **API docs**: `cd Lean && ../scripts/build_docs.sh`
