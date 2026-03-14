@@ -279,8 +279,7 @@ private def CaseGoal (A B : List (Fin 3)) (offsets : List ℕ) (h m i : ℕ) : P
   ∃ (XY : List (Fin 3)) (j : ℕ),
     checkLinearPolychrom offsets XY = true ∧
     j + offsets.foldr max 0 < XY.length ∧
-    ∀ s, s ≤ offsets.foldr max 0 → (XY[j + s]? : Option (Fin 3)) =
-        some (blockColorVal A B h ((i + s) % m))
+    ∀ s, s ≤ offsets.foldr max 0 → XY[j + s]? = some (blockColorVal A B h ((i + s) % m))
 
 /-! ### Case 1: No wrap, AA interior -/
 private lemma case_no_wrap_AA (A B : List (Fin 3)) (offsets : List ℕ)
@@ -431,11 +430,11 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
   · -- Wrapped to A region
     push_neg at hjs_lt
     have his_ge : m ≤ i + s := by
-      have := ge_mul_of_mod_add_ge (by grind : 0 < B.length) hk_pos hk_lo hjs_lt
+      have := ge_mul_of_mod_add_ge (by grind) hk_pos hk_lo hjs_lt
       grind
     have hmod : (i + s) % m = i + s - m := mod_eq_sub his_ge (by grind)
     have hsub_eq : i + s - m = j + s - B.length := by
-      have := sub_region_eq (by grind : 0 < B.length) hk_lo hi_B hjs_lt
+      have := sub_region_eq (by grind) hk_lo hi_B hjs_lt
       grind
     have hjs_idx : j + s - B.length < A.length := by grind
     refine bcv_eq_A A B h _ _ _ _ (by grind)
@@ -469,7 +468,7 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
       hjs_lt (List.getElem?_append_left hjs_lt)
   · push_neg at hjs_lt
     have his_ge : m ≤ i + s := by
-      have := ge_mul_of_mod_add_ge (by grind : 0 < B.length) hk_pos hk_lo hjs_lt
+      have := ge_mul_of_mod_add_ge (by grind) hk_pos hk_lo hjs_lt
       grind
     have hmod : (i + s) % m = i + s - m := mod_eq_sub his_ge (by grind)
     have hsub_eq : i + s - m = j + s - B.length := by
@@ -478,9 +477,7 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     have hjs_idx : j + s - B.length < B.length := by grind
     refine bcv_eq_B A B 0 _ _ _ _
       (by omega)
-      (by rw [Nat.mul_zero, Nat.sub_zero, hmod,
-            Nat.mod_eq_of_lt (by grind),
-            hsub_eq])
+      (by rw [Nat.mul_zero, Nat.sub_zero, hmod, Nat.mod_eq_of_lt (by grind), hsub_eq])
       hjs_idx ?_
     rw [List.getElem?_append_right (by grind)]
 
