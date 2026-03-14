@@ -169,9 +169,7 @@ private lemma hasPolychromColouring_of_cyclic {m : ℕ} [NeZero m] [Fact (1 < m)
     (c : ℕ → Fin 3) (S : Finset (ZMod m))
     (hpoly : ∀ n : ZMod m, ∀ k : Fin 3, ∃ a ∈ S, c (n + a).val = k) :
     HasPolychromColouring (Fin 3) S :=
-  ⟨fun x => c x.val, fun n k => by
-    obtain ⟨a, ha, heq⟩ := hpoly n k
-    exact ⟨a, ha, by change c (n + a).val = k; exact heq⟩⟩
+  ⟨fun x => c x.val, hpoly⟩
 
 
 /-- If `i % r + s < r`, then `(i + s) % r = i % r + s`. -/
@@ -774,10 +772,10 @@ private lemma idx_range_from_endpoints' (m s : ℕ)
     (hj_hi : p < equiEndpoint m s (j + 1)) :
     a ≤ j ∧ j < b := by
   constructor
-  · by_contra h; push_neg at h
+  · by_contra! h
     have : equiEndpoint m s (j + 1) ≤ equiEndpoint m s a := equiEndpoint_monotone (by omega)
     omega
-  · by_contra h; push_neg at h
+  · by_contra! h
     have : equiEndpoint m s b ≤ equiEndpoint m s j := equiEndpoint_monotone (by omega)
     omega
 
@@ -843,7 +841,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
       rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
     rw [hvg_eq] at hvg_lo hvg_hi
     have hj0_ge : j₀ ≥ s - 2 := by
-      by_contra h; push_neg at h
+      by_contra! h
       have : Finpartition.equiEndpoint m s (j₀ + 3) ≤
           Finpartition.equiEndpoint m s s := Finpartition.equiEndpoint_monotone (by omega)
       have := Finpartition.equiEndpoint_hi (by omega : s ≠ 0) (n := m) (k := s)
@@ -1130,7 +1128,7 @@ private lemma straddle2_gap1 (s g m : ℕ)
       omega
   · have hjg_val : jg = j₀ + 2 - s := by omega
     have hpos_wrap : m ≤ v + g := by
-      by_contra h; push_neg at h
+      by_contra! h
       have : (v + g) % m = v + g := Nat.mod_eq_of_lt h
       have : equiEndpoint m s (jg + 1) ≤ equiEndpoint m s j₀ := equiEndpoint_monotone (by omega)
       have : 0 < g := by
@@ -1774,7 +1772,7 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
         set q := (m - 1) / (3 * (g - 1))
         have hq_lb : q * (3 * (g - 1)) ≤ m - 1 := Nat.div_mul_le_self _ _
         have hq2 : q ≥ 2 := by
-          by_contra hlt; push_neg at hlt
+          by_contra! hlt
           exact absurd ((Nat.div_lt_iff_lt_mul h3g1).mp hlt) (by grind)
         have hq_ub : m - 1 < 3 * (g - 1) * (q + 1) := Nat.lt_mul_div_succ _ h3g1
         have hm_lb : m ≥ q * (3 * (g - 1)) + 1 := by grind
@@ -1849,7 +1847,7 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
   have hcard4 : ({0, 1, g', g' + 1} : Finset (ZMod m)).card = 4 := by
     rwa [hset, Finset.card_image_of_injective _ hinj] at hcard
   refine ⟨g'.val, ?_, ?_, ?_⟩
-  · by_contra hlt; push_neg at hlt
+  · by_contra! hlt
     have hcases : g'.val = 0 ∨ g'.val = 1 := by grind
     rcases hcases with h | h
     · have hg'0 : g' = 0 := by rw [← hval, h, Nat.cast_zero]
@@ -1861,7 +1859,7 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
         rw [hg'1]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]
       grind [Finset.card_le_card hsub,
         Finset.card_le_three (a := (0 : ZMod m)) (b := 1) (c := (1 : ZMod m) + 1)]
-  · by_contra hgt; push_neg at hgt
+  · by_contra! hgt
     have hval_lt := ZMod.val_lt g'
     have hgm1 : g'.val = m - 1 := by grind
     have hg'p1 : g' + 1 = 0 := by
@@ -2364,8 +2362,7 @@ private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     have hi1 : (i + 1).val % 2 = 1 := by grind
     fin_cases k
     · -- k = 0: by contradiction via degenerate position argument
-      by_contra h_not
-      push_neg at h_not
+      by_contra! h_not
       have hev1 : case2b_coloring d₁ e₁ (i, j₁) = 1 :=
         case2b_fin3_eq_one (fun h => h_not.1 h.symm) (case2b_even_ne_two d₁ e₁ i j₁ hi)
       have hev2 : case2b_coloring d₁ e₁ (i, j₁ + 1) = 1 :=
@@ -2391,8 +2388,7 @@ private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
     have hi1 : (i + 1).val % 2 = 0 := by grind
     fin_cases k
     · -- k = 0: by contradiction
-      by_contra h_not
-      push_neg at h_not
+      by_contra! h_not
       have hod1 : case2b_coloring d₁ e₁ (i, j₁) = 2 :=
         case2b_fin3_eq_two (fun h => h_not.1 h.symm) (case2b_odd_ne_one d₁ e₁ i j₁ hi)
       have hod2 : case2b_coloring d₁ e₁ (i, j₁ + 1) = 2 :=
@@ -2433,7 +2429,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   -- e₁ ≥ 3: e₁ is odd and e₁ = 1 would give d₁ = m, contradicting gcd(d₁,d₂) = 1
   have he₁_pos : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) hd₁_pos
   have he₁_ge3 : e₁ ≥ 3 := by
-    by_contra h; push_neg at h
+    by_contra! h
     rcases (by grind : e₁ = 1 ∨ e₁ = 2) with he | he
     · have hba_dvd_d₁ : Nat.gcd (b - a).natAbs m ∣ d₁ := by
         rw [hm_eq, he, mul_one]; exact Nat.gcd_dvd_right _ _
@@ -2557,7 +2553,7 @@ private lemma cover_mod3_general (p₁ p₂ : Fin 3)
     k = ⟨(j₁ + 1 + p₁.val) % 3, Nat.mod_lt _ (by grind)⟩ ∨
     k = ⟨(j₂ + p₂.val) % 3, Nat.mod_lt _ (by grind)⟩ ∨
     k = ⟨(j₂ + 1 + p₂.val) % 3, Nat.mod_lt _ (by grind)⟩ := by
-  by_contra hall; push_neg at hall
+  by_contra! hall
   obtain ⟨h1, h2, h3, h4⟩ := hall
   grind [Fin.ext_iff]
 
@@ -2833,7 +2829,7 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
   set r := deficit % w
   have hr_lt : r < w := Nat.mod_lt _ hw_pos
   have hq_lt : q < d₁ := by
-    by_contra hge; push_neg at hge
+    by_contra! hge
     have h1 : deficit ≥ d₁ * w :=
       calc deficit ≥ deficit / w * w := Nat.div_mul_le_self deficit w
         _ = q * w := rfl
