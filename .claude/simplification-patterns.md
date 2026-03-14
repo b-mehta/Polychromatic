@@ -78,6 +78,13 @@ Replaces manual decomposition into quotient/remainder of the outer modulus.
 Given `h : ∀ k a, (g * k + a) % d = a % d`, derive `∀ k, (g * k) % d = 0`
 via `fun k => by simpa using h k 0`.
 
+## Drop unnecessary type annotations
+
+- **`(by grind : 0 < B.length)` → `(by grind)`** — Lean infers the expected type from the function argument position. Drop type ascriptions from `rw` arguments, function call arguments, and `grind`/`omega` hints.
+- **`grind [mul_comm r h]`** — try dropping `mul_comm` hints; grind often handles commutativity itself.
+- **`grind [gap_mod_cases_gen s j₀ jg 2 ...]` → `grind [gap_mod_cases_gen]`** — try the shortest form (just the lemma name) first; grind may find the right instantiation.
+- **Extract hypotheses for grind** — if `grind [Nat.sub_add_cancel (by omega : 1 ≤ h)]` is needed, extract `have : 1 ≤ h := by omega` first so `grind [Nat.sub_add_cancel]` works.
+
 ## Successful golfing patterns (from Combi.lean)
 
 - **`calc` → `rw + gcongr`** — a 2-step `calc` like `m = d * (m/d); _ ≤ d * 17 := by gcongr` becomes `rw [← Nat.mul_div_cancel' h]; gcongr`.
