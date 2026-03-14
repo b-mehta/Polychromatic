@@ -4,7 +4,7 @@ Instructions for AI coding agents working on this repository.
 
 ## Project Overview
 
-Formalization of polychromatic colourings of integers in Lean 4. A colouring of integers is *S*-polychromatic if every translate of set *S* contains an element of each colour class. The main theorem (`Lean/Polychromatic/Main.lean:final_result`) states that every set of 4 integers admits a 3-polychromatic colouring. The proof is complete modulo the computational verification in `FourThree/Compute.lean` (temporarily `sorry`'d to check CI).
+Formalization of polychromatic colourings of integers in Lean 4. A colouring of integers is *S*-polychromatic if every translate of set *S* contains an element of each colour class. The main theorem (`Lean/Polychromatic/Main.lean:final_result`) proves that every set of 4 integers admits a 3-polychromatic colouring.
 
 **Primary Language**: Lean 4 (formal proof)
 **Supporting Languages**: C++, Python, Ruby/Jekyll
