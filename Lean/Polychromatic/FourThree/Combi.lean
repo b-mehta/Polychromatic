@@ -263,7 +263,7 @@ private lemma sub_region_eq {i s r h : ℕ} (hr : 0 < r)
     i + s - r * h = i % r + s - r := by
   have hdiv := Nat.mod_add_div i r
   have hle : h - 1 ≤ i / r := by
-    rw [Nat.le_div_iff_mul_le hr]; grind [mul_comm r (h - 1)]
+    rw [Nat.le_div_iff_mul_le hr]; grind
   have hlt : i / r < h := Nat.div_lt_of_lt_mul (by grind [mul_comm r h])
   have hQr : r * h = r * (i / r) + r := by
     grind [Nat.sub_add_cancel (by omega : 1 ≤ h)]
@@ -310,7 +310,7 @@ private lemma case_no_wrap_AA (A B : List (Fin 3)) (offsets : List ℕ)
     have hjs_2r : i % A.length + s < 2 * A.length := by grind
     exact bcv_eq_A A B h _ _ _ _ his_A
       (add_mod_sub hA hjs_lt hjs_2r) hjs_sub
-      (by rw [List.getElem?_append_right (by grind : A.length ≤ j + s)])
+      (by rw [List.getElem?_append_right (by grind)])
 
 /-! ### Case 2: No wrap, AB boundary -/
 private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
@@ -342,7 +342,7 @@ private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
     refine bcv_eq_B A B h _ _ _ _ hnot_A ?_ hjs_B ?_
     · rw [sub_region_eq hA hi_lo hA_region hjs_lt,
         Nat.mod_eq_of_lt (by grind)]
-    · rw [List.getElem?_append_right (by grind : A.length ≤ j + s)]
+    · rw [List.getElem?_append_right (by grind)]
 
 /-! ### Case 3: No wrap, BB -/
 private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
@@ -368,7 +368,7 @@ private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     exact bcv_eq_B A B h _ _ _ _ (by grind)
       (by rw [Nat.sub_add_comm hB_region]; exact add_mod_sub (by grind) hjs_lt (by grind))
       hjs_sub
-      (by rw [List.getElem?_append_right (by grind : B.length ≤ j + s)])
+      (by rw [List.getElem?_append_right (by grind)])
 
 /-! ### Case 4: Wrap, A region (k = 0) -/
 private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
@@ -402,7 +402,7 @@ private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
     refine bcv_eq_A A B h _ _ _ _ (by grind)
       (by rw [hmod, Nat.mod_eq_of_lt (by grind), hsub_eq])
       hjs_idx ?_
-    rw [List.getElem?_append_right (by grind : A.length ≤ j + s)]
+    rw [List.getElem?_append_right (by grind)]
 
 /-! ### Case 5: Wrap, B region, h > 0 → BA -/
 private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
@@ -445,7 +445,7 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
     refine bcv_eq_A A B h _ _ _ _ (by grind)
       (by rw [hmod, Nat.mod_eq_of_lt (by grind), hsub_eq])
       hjs_idx ?_
-    rw [List.getElem?_append_right (by grind : B.length ≤ j + s)]
+    rw [List.getElem?_append_right (by grind)]
 
 /-! ### Case 6: Wrap, B region, h = 0 → BB -/
 private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
@@ -486,7 +486,7 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
             Nat.mod_eq_of_lt (by grind : i + s - m < B.length),
             hsub_eq])
       hjs_idx ?_
-    rw [List.getElem?_append_right (by grind : B.length ≤ j + s)]
+    rw [List.getElem?_append_right (by grind)]
 
 /-! ### Main result of the block coloring infrastructure -/
 
@@ -524,8 +524,7 @@ theorem blockColor_polychrom
       exact case_no_wrap_BB A B offsets h k m i hBlen hmaxOff hBB hm h_wrap hA_region
   · push_neg at h_wrap
     by_cases hA_region : i < A.length * h
-    · have hk0 : k = 0 := by
-        rw [hBlen] at hm; nlinarith [hmaxOff]
+    · have hk0 : k = 0 := by rw [hBlen] at hm; nlinarith [hmaxOff]
       subst hk0; simp only [mul_zero, add_zero] at hm
       exact case_wrap_A A B offsets h m i hA hmaxOff hAA hm hi h_wrap hA_region
     · push_neg at hA_region
@@ -848,7 +847,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
     rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
   · push_neg at hvg_wrap
     have hvg_eq : (v + g) % m = v + g - m := by
-      rw [Nat.mod_eq_sub_mod (by omega)]; exact Nat.mod_eq_of_lt (by omega)
+      rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
     rw [hvg_eq] at hvg_lo hvg_hi
     have hj0_ge : j₀ ≥ s - 2 := by
       by_contra h; push_neg at h
@@ -1066,7 +1065,7 @@ private lemma straddle1_gap2 (s g m : ℕ)
     · push_neg at hwrap
       rw [hjg_val] at hvg_lo
       have hvg_mod : (v + g) % m = v + g - m := by
-        rw [Nat.mod_eq_sub_mod hwrap]; exact Nat.mod_eq_of_lt (by omega)
+        rw [Nat.mod_eq_sub_mod hwrap, Nat.mod_eq_of_lt (by omega)]
       rw [hvg_mod] at hvg_lo
       omega
   · have hj₀_eq : j₀ = s - 1 := by omega
@@ -1135,7 +1134,7 @@ private lemma straddle2_gap1 (s g m : ℕ)
       omega
     · push_neg at hwrap
       have : (v + g) % m = v + g - m := by
-        rw [Nat.mod_eq_sub_mod hwrap]; exact Nat.mod_eq_of_lt (by omega)
+        rw [Nat.mod_eq_sub_mod hwrap, Nat.mod_eq_of_lt (by omega)]
       omega
   · have hjg_val : jg = j₀ + 2 - s := by omega
     have hpos_wrap : m ≤ v + g := by
@@ -1148,7 +1147,7 @@ private lemma straddle2_gap1 (s g m : ℕ)
         omega
       omega
     have hvg_mod : (v + g) % m = v + g - m := by
-      rw [Nat.mod_eq_sub_mod hpos_wrap]; exact Nat.mod_eq_of_lt (by omega)
+      rw [Nat.mod_eq_sub_mod hpos_wrap, Nat.mod_eq_of_lt (by omega)]
     by_cases hj₀_eq : j₀ = s - 2
     · have hjg0 : jg = 0 := by omega
       rw [hjg0] at hvg_eq
@@ -1345,11 +1344,10 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
     · have hiv_p := idx_in_interval' s m hs hs_le (p + 1) hp1
       simp only at hiv_p
       change eqp_idx q r (p + 1) < s ∧ equiEndpoint m s (eqp_idx q r (p + 1)) ≤ p + 1 ∧ _ at hiv_p
-      rw [hstep_p] at hiv_p; exact hiv_p.2.1
+      rw [hstep_p] at hiv_p
+      exact hiv_p.2.1
     · have hpm : p + 1 = m := by omega
-      rw [hpm]; exact le_trans
-        (equiEndpoint_monotone (by omega))
-        (equiEndpoint_hi (by omega) |>.le)
+      rw [hpm]; exact (equiEndpoint_monotone (by omega)).trans (equiEndpoint_hi (by omega)).le
   -- Step 1: which pair covers k?
   have : (k.val = j₀ % 3 ∨ k.val = (j₀ + 1) % 3) ∨
       (k.val = jg % 3 ∨ k.val = (jg + 1) % 3) := by omega
@@ -1373,7 +1371,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_hi hvg_lo
         hvg_hi hstrad1 hgap
       have hjg1_eq : (jg + 1) % 3 = j₀ % 3 := by
-        rcases gap_mod_cases_gen s j₀ jg 2 hj₀_lt hjg_lt hgap2 with h | h <;> grind
+        grind [gap_mod_cases_gen s j₀ jg 2 hj₀_lt hjg_lt hgap2]
       rcases hk1 with hk_eq | hk_eq
       · -- k = j₀%3 = (jg+1)%3: pair 2 must be non-straddle
         rcases eqp_idx_step q r ((v + g) % m) hq_pos with h2_same | h2_step
@@ -1429,7 +1427,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi
         hvg_hi hstrad2 hgap
       have hj01_eq : (j₀ + 1) % 3 = jg % 3 := by
-        rcases gap_mod_cases_gen s j₀ jg 1 hj₀_lt hjg_lt hgap1 with h | h <;> grind
+        grind [gap_mod_cases_gen s j₀ jg 1 hj₀_lt hjg_lt hgap1]
       rcases hk2 with hk_eq | hk_eq
       · -- k = jg%3 = (j₀+1)%3: pair 1 non-straddle
         rcases eqp_idx_step q r v hq_pos with h1_same | h1_step
@@ -1879,7 +1877,7 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1, g'} := by grind
     grind [Finset.card_le_card hsub,
       Finset.card_le_three (a := (0 : ZMod m)) (b := 1) (c := g')]
-  · conv at hset => rhs; rw [hval.symm]
+  · conv at hset => rhs; rw [← hval]
     exact hset
 
 /-- **Main Case 1 (Single Cycle).** Aggregates all subcases (1a)–(1d).
@@ -3197,9 +3195,9 @@ private lemma no_both_e_small {m d₁ d₂ : ℕ}
     (hd₁_dvd : d₁ ∣ m) (hd₂_dvd : d₂ ∣ m)
     (he₁_le : m / d₁ ≤ 17) (he₂_le : m / d₂ ≤ 17) : False := by
   have hd₁_bound : m ≤ d₁ * 17 := by
-    rw [(Nat.mul_div_cancel' hd₁_dvd).symm]; gcongr
+    rw [← Nat.mul_div_cancel' hd₁_dvd]; gcongr
   have hd₂_bound : m ≤ d₂ * 17 := by
-    rw [(Nat.mul_div_cancel' hd₂_dvd).symm]; gcongr
+    rw [← Nat.mul_div_cancel' hd₂_dvd]; gcongr
   have hprod_le : d₁ * d₂ ≤ m :=
     Nat.le_of_dvd (by grind)
       (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by rwa [Nat.Coprime]) hd₁_dvd hd₂_dvd)
