@@ -35,8 +35,9 @@ variable {G : Type*} [AddCommGroup G] {S : Finset G} {K : Type*}
 
 open Finset Fintype Pointwise
 
-/-- The polychromatic number of a finite set `S`, defined as the supremum of all `n`
-such that there exists a `Fin n`-valued `S`-polychromatic colouring. -/
+/-- The polychromatic number of a finite set `S`, defined as the supremum
+of all `n` such that there exists a `Fin n`-valued `S`-polychromatic
+colouring. -/
 noncomputable
 -- ANCHOR: polychromNumber
 def polychromNumber (S : Finset G) : ℕ :=
@@ -69,8 +70,7 @@ lemma card_le_polychromNumber [Fintype K] (hn : HasPolychromColouring K S) :
 lemma one_le_polychromNumber (hS : S.Nonempty) : 1 ≤ polychromNumber S :=
   le_polychromNumber (hasPolychromColouring_subsingleton hS)
 
-lemma polychromNumber_pos (hS : S.Nonempty) : 0 < polychromNumber S :=
-  one_le_polychromNumber hS
+lemma polychromNumber_pos (hS : S.Nonempty) : 0 < polychromNumber S := one_le_polychromNumber hS
 
 /-- There exists an optimal colouring achieving the polychromatic number. -/
 lemma hasPolychromColouring_fin (hS : S.Nonempty) :
@@ -80,10 +80,7 @@ lemma hasPolychromColouring_fin (hS : S.Nonempty) :
 lemma hasPolychromColouring_of_card_le [Fintype K] [hK : Nonempty K]
     (hK : card K ≤ polychromNumber S) :
     HasPolychromColouring K S := by
-  have hS : S.Nonempty := by
-    rw [nonempty_iff_ne_empty]
-    rintro rfl
-    simp at hK
+  have hS : S.Nonempty := by rw [nonempty_iff_ne_empty]; rintro rfl; simp at hK
   exact .of_injective (hasPolychromColouring_fin hS)
     (((equivFin K).toEmbedding.trans (Fin.castLEEmb hK)).injective)
 
@@ -101,16 +98,14 @@ lemma polychromNumber_le_card : polychromNumber S ≤ #S := by
   simpa using (hasPolychromColouring_fin hS').card_le
 
 lemma le_polychromNumber_iff_hasPolychromColouring {n : ℕ} (hn : n ≠ 0) {S : Finset G} :
-    n ≤ polychromNumber S ↔ HasPolychromColouring (Fin n) S := by
-  constructor
-  · exact hasPolychromColouring_fin_of_le hn
-  · exact le_polychromNumber
+    n ≤ polychromNumber S ↔ HasPolychromColouring (Fin n) S :=
+  ⟨hasPolychromColouring_fin_of_le hn, le_polychromNumber⟩
 
 lemma polychromNumber_subset {S' : Finset G} (hS' : S' ⊆ S) :
     polychromNumber S' ≤ polychromNumber S := by
-  obtain rfl | hS'' := S'.eq_empty_or_nonempty
+  obtain rfl | hne := S'.eq_empty_or_nonempty
   · simp
-  exact le_polychromNumber ((hasPolychromColouring_fin hS'').subset hS')
+  exact le_polychromNumber ((hasPolychromColouring_fin hne).subset hS')
 
 @[simp] lemma polychromNumber_singleton {x : G} : polychromNumber {x} = 1 :=
   (polychromNumber_le_card.trans (by simp)).antisymm (one_le_polychromNumber (by simp))
@@ -119,15 +114,11 @@ lemma polychromNumber_eq_card_of_subsingleton (hS : (S : Set G).Subsingleton) :
     polychromNumber S = #S := by
   obtain rfl | ⟨x, hx⟩ := S.eq_empty_or_nonempty
   · simp
-  rw [Set.subsingleton_iff_singleton (by simpa using hx)] at hS
-  simp only [coe_eq_singleton] at hS
-  simp [hS]
+  rw [Set.subsingleton_iff_singleton (by simpa using hx), coe_eq_singleton] at hS; simp [hS]
 
 @[simp] lemma polychromNumber_univ [Fintype G] :
-    polychromNumber (univ : Finset G) = Fintype.card G := by
-  apply le_antisymm
-  · exact polychromNumber_le_card
-  · exact card_le_polychromNumber hasPolychromColouring_univ
+    polychromNumber (univ : Finset G) = Fintype.card G :=
+  le_antisymm polychromNumber_le_card (card_le_polychromNumber hasPolychromColouring_univ)
 
 /-- The polychromatic number does not increase under group homomorphisms. -/
 -- Lemma 9
@@ -146,7 +137,8 @@ lemma polychromNumber_iso {H : Type*} [DecidableEq H] [AddCommGroup H]
     polychromNumber (S.image φ) = polychromNumber S :=
   le_antisymm (polychromNumber_image φ) <| by
     classical
-    have : polychromNumber ((S.image φ).image (φ : G ≃ H).symm) ≤ polychromNumber (S.image φ) :=
+    have : polychromNumber ((S.image φ).image
+        (φ : G ≃ H).symm) ≤ polychromNumber (S.image φ) :=
       polychromNumber_image (φ : G ≃+ H).symm
     simpa [Finset.image_image] using this
 
@@ -297,7 +289,9 @@ lemma polychromNumber_three_eq_two : polychromNumber (G := ℤ) {0, 1, 3} = 2 :=
     apply polychromNumber_le_of_forall
     intro χ hχ
     have h1 : ∃ i ∈ S, χ i = χ 2 := by simpa using hχ 0 (χ 2)
-    have h2 : ∀ i ∈ S, ∃ n ∈ ({-1, 1, 2} : Finset ℤ), i ∈ n +ᵥ S ∧ 2 ∈ n +ᵥ S := by decide
+    have h2 : ∀ i ∈ S, ∃ n ∈ ({-1, 1, 2} : Finset ℤ),
+        i ∈ n +ᵥ S ∧ 2 ∈ n +ᵥ S := by
+      decide
     obtain ⟨n, hn⟩ : ∃ n : ℤ, ¬ Set.InjOn χ (n +ᵥ S) := by
       obtain ⟨i, hi, hi2⟩ := h1
       obtain ⟨n, hn, hin, h2n⟩ := h2 i (by simpa)

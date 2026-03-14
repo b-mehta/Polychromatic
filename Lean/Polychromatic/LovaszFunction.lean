@@ -133,7 +133,8 @@ lemma straussFunction_le_of_forall_three_mul_sq {k : ℕ} :
   intro S hS
   exact exists_colouring_of_sq_le hk (S := S) hS
 
-lemma straussFunction_le_of_forall_mBound {k : ℕ} (hk : 4 ≤ k) : straussFunction k ≤ mBound k :=
+lemma straussFunction_le_of_forall_mBound
+    {k : ℕ} (hk : 4 ≤ k) : straussFunction k ≤ mBound k :=
   straussFunction_le_of_forall fun _ ↦ hasPolychromColouring_mBound hk
 
 open Asymptotics Filter
