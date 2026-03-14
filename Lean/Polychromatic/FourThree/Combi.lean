@@ -826,6 +826,17 @@ private lemma two_pairs_cover (j₁ j₂ : ℕ) (hne : j₁ % 3 ≠ j₂ % 3)
 private lemma lt_two' (n : ℕ) (h : n < 2) : n = 0 ∨ n = 1 := by omega
 
 /-- Phase differs when gap is 1 or 2 mod s, and 3 ∣ s. -/
+/- Aristotle alternative for `phase_ne_of_gap` (4 lines vs 13 original, -9).
+
+private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
+    j₀ % 3 ≠ jg % 3 := by
+      -- Since $s$ is a multiple of 3, we can simplify the gap condition modulo 3.
+      have h_mod3 : (jg + s - j₀) % 3 = 1 ∨ (jg + s - j₀) % 3 = 2 := by
+        obtain h | h := hgap <;> rw [ ← Nat.mod_mod_of_dvd _ hs3, h ] <;> norm_num [ Nat.mod_eq_of_lt ] ;
+      omega
+-/
 private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
     (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
@@ -1096,6 +1107,15 @@ private def eqp_off (q r : ℕ) (p : ℕ) : ℕ :=
   if p < r * (q + 1) then p % (q + 1)
   else (p - r * (q + 1)) % q
 
+/- Aristotle alternative for `eqp_idx_m` (4 lines vs 6 original, -2).
+
+private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) :
+    eqp_idx q r (s * q + r) = s := by
+      unfold eqp_idx;
+      split_ifs <;> simp_all +decide [ Nat.add_div, Nat.mul_div_cancel, hq ];
+      · nlinarith;
+      · exact Eq.symm ( by nlinarith [ Nat.div_mul_le_self ( s * q + r - r * ( q + 1 ) ) q, Nat.sub_add_cancel ( by linarith : r * ( q + 1 ) ≤ s * q + r ), Nat.div_add_mod ( s * q + r - r * ( q + 1 ) ) q, Nat.mod_lt ( s * q + r - r * ( q + 1 ) ) hq ] )
+-/
 private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) :
     eqp_idx q r (s * q + r) = s := by
   have hge : ¬(s * q + r < r * (q + 1)) := by nlinarith
@@ -1106,6 +1126,17 @@ private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) :
   rw [hsub, Nat.mul_div_cancel _ hq]; omega
 
 -- General fact: consecutive ℕ quotients differ by 0 or 1
+/- Aristotle alternative for `div_step` (6 lines vs 9 original, -3).
+
+private lemma div_step (a b : ℕ) (hb : 0 < b) :
+    (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by
+      -- Since $a \geq b$, we can write $a = b * k + r$ where $0 \leq r < b$.
+      obtain ⟨k, r, hr⟩ : ∃ k r, a = b * k + r ∧ 0 ≤ r ∧ r < b := by
+        exact ⟨ a / b, a % b, by rw [ Nat.div_add_mod ], Nat.zero_le _, Nat.mod_lt _ hb ⟩;
+      norm_num [ hr, Nat.add_div, hb ];
+      rcases b with ( _ | _ | b ) <;> simp_all +decide [ Nat.div_eq_of_lt, Nat.mod_eq_of_lt ];
+      exact lt_or_ge _ _
+-/
 private lemma div_step (a b : ℕ) (hb : 0 < b) :
     (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by
   have hle : a / b ≤ (a + 1) / b :=
@@ -1118,6 +1149,25 @@ private lemma div_step (a b : ℕ) (hb : 0 < b) :
       ≤ b * (a / b + 1) / b := Nat.div_le_div_right hub
     _ = a / b + 1 := Nat.mul_div_cancel_left _ hb
 
+/- Aristotle alternative for `eqp_idx_step` (13 lines vs 20 original, -7).
+
+private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
+    eqp_idx q r (p + 1) = eqp_idx q r p ∨
+    eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
+      -- By definition of eqp_idx, we have two cases to consider.
+      unfold eqp_idx;
+      split_ifs <;> simp_all +decide [ Nat.succ_div ];
+      · tauto;
+      · linarith;
+      · -- Since $p < r * (q + 1)$ and $r * (q + 1) \leq p + 1$, we have $p = r * (q + 1) - 1$.
+        have hp : p = r * (q + 1) - 1 := by
+          omega;
+        cases r <;> cases q <;> simp_all +decide [ Nat.succ_mul ];
+        simp +arith +decide [ Nat.add_div ];
+        norm_num [ Nat.div_eq_of_lt, Nat.mod_eq_of_lt ];
+      · rw [ show p + 1 - r * ( q + 1 ) = ( p - r * ( q + 1 ) ) + 1 by rw [ tsub_add_eq_add_tsub ( by linarith ) ] ] ; simp +arith +decide [ Nat.succ_div ] ;
+        exact em' _
+-/
 private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
     eqp_idx q r (p + 1) = eqp_idx q r p ∨
     eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
@@ -1158,6 +1208,30 @@ private lemma mod_zero_step (a b : ℕ) (hb : 0 < b)
   have h4 : b * ((a + 1) / b) = b * (a / b) + b := by grind
   grind
 
+/- Aristotle alternative for `eqp_off_succ_same` (18 lines vs 34 original, -16).
+
+private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
+    (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
+    eqp_off q r (p + 1) = eqp_off q r p + 1 := by
+      -- By definition of eqp_off, we have eqp_off q r (p + 1) = (p + 1) % (q + 1) if p + 1 < r * (q + 1), otherwise it's (p + 1 - r * (q + 1)) % q.
+      by_cases h_case : p + 1 < r * (q + 1);
+      · unfold eqp_idx eqp_off at *;
+        split_ifs at * <;> simp_all +decide [ Nat.succ_eq_add_one, Nat.add_div ];
+        · rcases q with ( _ | q ) <;> simp_all +decide [ Nat.div_eq_of_lt, Nat.mod_eq_of_lt ];
+          rw [ Nat.add_mod, Nat.mod_eq_of_lt ] <;> aesop;
+        · grind;
+      · unfold eqp_off;
+        -- Since $p + 1 \geq r * (q + 1)$, we have $p \geq r * (q + 1)$. Therefore, $p = r * (q + 1) + k$ for some $k$.
+        obtain ⟨k, hk⟩ : ∃ k, p = r * (q + 1) + k := by
+          use p - r * (q + 1);
+          unfold eqp_idx at h;
+          split_ifs at h <;> try omega;
+          norm_num [ show p + 1 - r * ( q + 1 ) = 0 by omega ] at h;
+          nlinarith [ Nat.div_mul_le_self p ( q + 1 ) ];
+        simp_all +decide [ eqp_idx ];
+        split_ifs at * <;> simp_all +decide [ add_assoc, Nat.add_sub_add_left ];
+        rw [ mod_step ] ; aesop
+-/
 private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
     eqp_off q r (p + 1) = eqp_off q r p + 1 := by
@@ -1196,6 +1270,22 @@ private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
       unfold eqp_idx; rw [if_neg h2]
     rw [h3, h4, hsub] at h; omega
 
+/- Aristotle alternative for `eqp_off_succ_new` (10 lines vs 30 original, -20).
+
+private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
+    (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
+    eqp_off q r (p + 1) = 0 := by
+      unfold eqp_idx eqp_off at *;
+      split_ifs at h <;> simp_all +decide [ Nat.succ_div ];
+      · exact Nat.mod_eq_zero_of_dvd h;
+      · linarith;
+      · cases lt_or_eq_of_le ‹_› <;> first | linarith | aesop;
+      · split_ifs <;> simp_all +decide [ Nat.succ_sub ];
+        · linarith;
+        · cases k : ( p - r * ( q + 1 ) ) / q <;> simp_all +decide [ Nat.succ_div ];
+          · exact Nat.mod_eq_zero_of_dvd h;
+          · exact Nat.mod_eq_zero_of_dvd h
+-/
 private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
     eqp_off q r (p + 1) = 0 := by
@@ -1230,6 +1320,19 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
     have := div_step (p - r * (q + 1)) q hq
     omega
 
+/- Aristotle alternative for `gap_mod_cases_gen` (6 lines vs 8 original, -2).
+
+private lemma gap_mod_cases_gen (s j₀ jg d : ℕ)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hmod : (jg + s - j₀) % s = d) :
+    jg + s - j₀ = d ∨ jg + s - j₀ = s + d := by
+      -- Since $(jg + s - j₀) \mod s = d$, we have $jg + s - j₀ = k * s + d$ for some integer $k$.
+      obtain ⟨k, hk⟩ : ∃ k : ℕ, jg + s - j₀ = k * s + d := by
+        -- By the division algorithm, we can write $jg + s - j₀$ as $k * s + d$ for some integer $k$.
+        use (jg + s - j₀) / s;
+        rw [ ← hmod, Nat.div_add_mod' ];
+      rcases k with ( _ | _ | k ) <;> simp_all +decide [ Nat.succ_mul ] ; omega;
+-/
 private lemma gap_mod_cases_gen (s j₀ jg d : ℕ)
     (hj₀ : j₀ < s) (hjg : jg < s)
     (hmod : (jg + s - j₀) % s = d) :
@@ -1425,6 +1528,19 @@ private lemma straddle2_gap1 (s g m : ℕ)
       have hsac12 := Nat.sub_add_cancel hmono12
       omega
 
+/- Aristotle alternative for `eqp_idx_succ_lt_m` (5 lines vs 6 original, -1).
+
+private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
+    (hq_pos : 0 < q) (hr_lt : r < s)
+    (hm_eq : m = s * q + r)
+    (hp : p < m) :
+    p + 1 < m ∨ eqp_idx q r (p + 1) = s := by
+      -- Apply the lemma eqp_idx_m with the given conditions.
+      have h_eqp_idx_m : eqp_idx q r (s * q + r) = s := by
+        -- Apply the lemma eqp_idx_m with the given conditions to conclude the proof.
+        apply eqp_idx_m q r s hq_pos hr_lt;
+      grind +ring
+-/
 private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
     (hq_pos : 0 < q) (hr_lt : r < s)
     (hm_eq : m = s * q + r)
@@ -1437,6 +1553,25 @@ private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
     rw [hpm, hm_eq]
     exact eqp_idx_m q r s hq_pos hr_lt
 
+/- Aristotle alternative for `non_straddle_witness` (7 lines vs 10 original, -3).
+
+private lemma non_straddle_witness (q r p : ℕ)
+    (hq_pos : 0 < q)
+    (hp : p < m) (hp1 : p + 1 < m)
+    (hsame : eqp_idx q r (p + 1) = eqp_idx q r p)
+    (j : ℕ) (hj : j = eqp_idx q r p)
+    (t : ℕ) (ht : t < 3) (hpair : t = j % 3 ∨ t = (j + 1) % 3) :
+    ∃ d ∈ ({0, 1} : Finset ℕ),
+      (eqp_idx q r ((p + d) % m) +
+        eqp_off q r ((p + d) % m) % 2) % 3 = t := by
+          -- By Lemma `eqp_off_succ_same`, we know that `eqp_off q r (p + 1) = eqp_off q r p + 1`.
+          have h_off_succ : eqp_off q r (p + 1) = eqp_off q r p + 1 := by
+            -- Since $eqp_idx q r (p + 1) = eqp_idx q r p$, we can apply the definition of $eqp_off$ to conclude that $eqp_off q r (p + 1) = eqp_off q r p + 1$.
+            apply eqp_off_succ_same q r p hq_pos hsame;
+          cases hpair <;> simp_all +decide [ Nat.mod_eq_of_lt ];
+          · cases Nat.mod_two_eq_zero_or_one ( eqp_off q r p ) <;> simp +decide [ *, Nat.add_mod ];
+          · cases Nat.mod_two_eq_zero_or_one ( eqp_off q r p ) <;> simp +decide [ *, Nat.add_mod ]
+-/
 private lemma non_straddle_witness (q r p : ℕ)
     (hq_pos : 0 < q)
     (hp : p < m) (hp1 : p + 1 < m)
@@ -2685,6 +2820,15 @@ private lemma cycle_index_shift_ba {m : ℕ} {a b : ℤ} {d₁ : ℕ}
   rw [← hu]; ring_nf; rw [u.inv_mul]; ring
 
 /-- If Φ(i, j+1) = Φ(i, j) + b, then Φ⁻¹(x+b) = (same_i, j+1). -/
+/- Aristotle alternative for `equiv_symm_shift_b` (1 lines vs 3 original, -2).
+
+private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid γ]
+    (Φ : ZMod d₁ × ZMod e₁ ≃ γ) {b : γ}
+    (hΦ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, Φ (i, j + 1) = Φ (i, j) + b)
+    (x : γ) :
+    Φ.symm (x + b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := by
+      grind
+-/
 private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid γ]
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) {b : γ}
     (hΦ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, Φ (i, j + 1) = Φ (i, j) + b)
@@ -2695,6 +2839,15 @@ private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid �
   exact Φ.symm_apply_eq.mpr key.symm
 
 /-- If α(Φ(i,j)) = i for all i,j, then (Φ⁻¹(x)).1 = α(x). -/
+/- Aristotle alternative for `equiv_symm_fst_eq` (1 lines vs 2 original, -1).
+
+private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
+    (Φ : ZMod d₁ × ZMod e₁ ≃ γ) (α : γ → ZMod d₁)
+    (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i)
+    (x : γ) :
+    (Φ.symm x).1 = α x := by
+      grind
+-/
 private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) (α : γ → ZMod d₁)
     (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i)
@@ -2706,6 +2859,27 @@ private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
 /-- Polychromaticity from an orbit coloring.
     Given an orbit equivalence Φ with shift properties and a coloring f,
     if f covers all colors at any translate, then f ∘ Φ.symm is polychromatic. -/
+/- Aristotle alternative for `orbit_coloring_polychrom` (4 lines vs 24 original, -20).
+
+private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁] [NeZero e₁]
+    (Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m)
+    (hΦ_add_b : ∀ x : ZMod m,
+      Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1))
+    (hΦ_cycle_shift : ∀ x : ZMod m,
+      (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1)
+    (f : ZMod d₁ × ZMod e₁ → Fin 3)
+    (hcovers : ∀ (n : ZMod m) (k : Fin 3),
+      k = f ((Φ.symm n).1, (Φ.symm n).2) ∨
+      k = f ((Φ.symm n).1, (Φ.symm n).2 + 1) ∨
+      k = f ((Φ.symm n).1 + 1, (Φ.symm (n + ↑(b - a))).2) ∨
+      k = f ((Φ.symm n).1 + 1, (Φ.symm (n + ↑(b - a))).2 + 1)) :
+    HasPolychromColouring (Fin 3) (zmod_set m a b) := by
+      refine' ⟨ fun x => f ( Φ.symm x ), fun n k => _ ⟩;
+      obtain h|h|h|h := hcovers n k <;> simp_all +decide [ zmod_set ];
+      · grind;
+      · rw [ show ( n + ( 2 * b - a : ZMod m ) ) = ( n + ( b - a : ZMod m ) ) + b by ring, hΦ_add_b ] ; aesop;
+-/
 private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     [NeZero m] [NeZero d₁] [NeZero e₁]
     (Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m)
