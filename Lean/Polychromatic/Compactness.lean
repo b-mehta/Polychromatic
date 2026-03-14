@@ -49,16 +49,13 @@ theorem Finset.rado_selection {α : Type*} {β : α → Type*}
   have instDiscr (a : α) : DiscreteTopology (β a) := discreteTopology_bot _
   let e (s : Finset α) : Set ((a : α) → β a) := {f | ∃ t, s ⊆ t ∧ ∀ x ∈ s, f x = g t x}
   let restr (s : Finset α) : ((a : α) → β a) → (a : s) → β a := fun f a ↦ f a
-  have hrestr (s : Finset α) : Continuous (restr s) := by fun_prop
-  have (s : Finset α) : restr s ⁻¹' {f | ∃ t, s ⊆ t ∧ ∀ x, f x = g t x} = e s := by simp [e, restr]
   have he' (s : Finset α) : IsClosed (e s) := by
-    rw [← this]
-    exact (isClosed_discrete _).preimage (hrestr _)
-  have he'' (B : Finset (Finset α)) : (⋂ i ∈ B, e i).Nonempty := by
-    refine ⟨g (B.biUnion id), ?_⟩
-    simp only [Set.mem_iInter, Set.mem_setOf_eq, e]
-    intro i hi
-    exact ⟨_, Finset.subset_biUnion_of_mem id hi, by simp⟩
+    have : (restr s) ⁻¹' {f | ∃ t, s ⊆ t ∧ ∀ x, f x = g t x} = e s := by simp [e, restr]
+    rw [← this]; exact (isClosed_discrete _).preimage (by fun_prop)
+  have he'' (B : Finset (Finset α)) : (⋂ i ∈ B, e i).Nonempty :=
+    ⟨g (B.biUnion id), by
+      simp only [Set.mem_iInter, Set.mem_setOf_eq, e]
+      exact fun i hi ↦ ⟨_, Finset.subset_biUnion_of_mem id hi, by simp⟩⟩
   simpa using CompactSpace.iInter_nonempty he' he''
 
 theorem Finset.rado_selection_subtype {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
@@ -83,7 +80,8 @@ theorem Set.Finite.rado_selection {α : Type*} {β : α → Type*} [∀ a, Finit
 theorem Set.Finite.rado_selection_subtype {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
     (g : (s : Set α) → s.Finite → (a : s) → β a) :
     ∃ χ : (a : α) → β a, ∀ s : Set α, s.Finite →
-      ∃ (t : Set α) (ht : t.Finite) (hst : s ⊆ t), ∀ x : s, χ x = g t ht (Set.inclusion hst x) := by
+      ∃ (t : Set α) (ht : t.Finite) (hst : s ⊆ t),
+        ∀ x : s, χ x = g t ht (Set.inclusion hst x) := by
   classical
   obtain ⟨χ, hχ⟩ := Finset.rado_selection_subtype (β := β) (fun s ↦ g s s.finite_toSet)
   refine ⟨χ, fun s hs ↦ ?_⟩
@@ -95,13 +93,12 @@ theorem nonempty_hom_of_forall_finite_subgraph_hom {V W : Type*} [Finite W]
     {G : SimpleGraph V} {F : SimpleGraph W}
     (h : ∀ G' : G.Subgraph, G'.verts.Finite → G'.coe →g F) : Nonempty (G →g F) := by
   have := G.toSubgraph
-  let g : (s : Set V) → s.Finite → s → W := fun s hs ↦ h (SimpleGraph.Subgraph.induce ⊤ s) hs
+  let g : (s : Set V) → s.Finite → s → W := fun s hs ↦
+    h (SimpleGraph.Subgraph.induce ⊤ s) hs
   obtain ⟨χ, hχ⟩ := Set.Finite.rado_selection_subtype (β := fun _ ↦ W) g
-  refine ⟨⟨χ, ?_⟩⟩
-  intro a b hab
+  refine ⟨⟨χ, fun {a b} hab ↦ ?_⟩⟩
   let a' : (G.subgraphOfAdj hab).verts := ⟨a, by simp⟩
   let b' : (G.subgraphOfAdj hab).verts := ⟨b, by simp⟩
-  have hab' : (G.subgraphOfAdj hab).Adj a' b' := by simp [a', b']
   change F.Adj (χ a') (χ b')
   obtain ⟨H, hHfin, hHsub, hHeq⟩ := hχ (G.subgraphOfAdj hab).verts (by simp)
   rw [hHeq, hHeq]

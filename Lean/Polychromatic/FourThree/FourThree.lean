@@ -73,15 +73,11 @@ lemma accept_3_5 (a b c : ℕ)
 
 lemma allA_of_3_0 (A b c : ℕ)
     (hb : (b.mod (nat_lit 3)).beq (nat_lit 1)) (hc : (c.mod (nat_lit 3)).beq (nat_lit 2)) :
-    allA A b c := by
-  intro a _ _ _ _ _
-  apply accept_3_0 a b c hb hc
+    allA A b c := fun a _ _ _ _ _ ↦ accept_3_0 a b c hb hc
 
 lemma allA_of_3_1 (A b c : ℕ)
     (hb : (b.mod (nat_lit 3)).beq (nat_lit 2)) (hc : (c.mod (nat_lit 3)).beq (nat_lit 1)) :
-    allA A b c := by
-  intro a _ _ _ _ _
-  apply accept_3_1 a b c hb hc
+    allA A b c := fun a _ _ _ _ _ ↦ accept_3_1 a b c hb hc
 
 -- 0,1,3,4;6;1,2,1,2,3,3,
 -- 0,2,3,5;4;1,2,1,3,

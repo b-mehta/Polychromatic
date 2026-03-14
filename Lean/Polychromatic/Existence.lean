@@ -91,10 +91,8 @@ lemma prob_bad_event [DecidableEq G] {k m : ℕ} {S X : Finset G} {x : X} (hm : 
       forall_exists_index, Subtype.mk.injEq, add]
     peel with c
     constructor
-    · rintro h y hy s hs rfl
-      exact h _ hs
-    · rintro h s hs
-      exact h _ _ _ hs rfl
+    · rintro h y hy s hs rfl; exact h _ hs
+    · rintro h s hs; exact h _ _ _ hs rfl
   calc
     _ = P.real (⋃ c : Fin k, (add x '' Set.univ).pi fun _ ↦ {c}ᶜ) := by rw [this]
     _ ≤ ∑ c, P.real ((add x '' Set.univ).pi fun _ ↦ {c}ᶜ) := measureReal_iUnion_fintype_le _
@@ -135,9 +133,8 @@ lemma nonempty_of_uniformOn_apply_pos' {Ω : Type*} [MeasurableSpace Ω] {s t : 
 
 lemma nonempty_of_uniformOn_apply_pos {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSingletonClass Ω] {s t : Set Ω} (h : 0 < uniformOn s t) :
-    (s ∩ t).Nonempty := by
-  have hs_fin : s.Finite := finite_of_uniformOn_ne_zero h.ne'
-  exact nonempty_of_uniformOn_apply_pos' h (hs_fin.measurableSet)
+    (s ∩ t).Nonempty :=
+  nonempty_of_uniformOn_apply_pos' h (finite_of_uniformOn_ne_zero h.ne').measurableSet
 
 /-- A condition on `k` (number of colours) and `m` (size of set) that guarantees the existence
 of a polychromatic colouring. -/

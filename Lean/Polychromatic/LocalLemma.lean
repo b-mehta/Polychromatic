@@ -59,8 +59,7 @@ lemma indepFrom_iff_indepSets {P : Measure Ω} [IsZeroOrProbabilityMeasure P]
     IndepFrom s t P ↔ IndepSets {s} (generatePiSystem t) P := by
   rw [IndepFrom, ← generateFrom_generatePiSystem_eq (g := t)]
   constructor
-  · intro h
-    exact h.indepSets
+  · intro h; exact h.indepSets
   · intro h
     apply h.indep' _ _ (.singleton s) (isPiSystem_generatePiSystem _)
     · simpa
@@ -71,11 +70,7 @@ lemma IndepFrom.prob_inter_iInter [Countable ι] (h : IndepFrom s t P) {A : ι �
   rw [IndepFrom, Indep_iff] at h
   rw [h]
   · exact .basic _ (by simp)
-  apply MeasurableSet.iInter
-  intro i
-  obtain h | h := ht i
-  · exact .basic _ h
-  · exact .of_compl (.basic _ h)
+  exact .iInter fun i ↦ (ht i).elim (.basic _ ·) (.of_compl <| .basic _ ·)
 
 lemma IndepFrom.prob_inter_biInter (h : IndepFrom s t P) {C : Set ι} {A : ι → Set Ω}
     (hC : C.Countable) (ht : ∀ i ∈ C, A i ∈ t ∨ (A i)ᶜ ∈ t) :
@@ -85,8 +80,7 @@ lemma IndepFrom.prob_inter_biInter (h : IndepFrom s t P) {C : Set ι} {A : ι �
 
 lemma IndepFrom.prob_inter_sInter (h : IndepFrom s t P) (ht' : t'.Countable)
     (ht : ∀ i ∈ t', i ∈ t ∨ iᶜ ∈ t) : P (s ∩ ⋂₀ t') = P s * P (⋂₀ t') := by
-  rw [Set.sInter_eq_biInter]
-  exact h.prob_inter_biInter ht' ht
+  rw [Set.sInter_eq_biInter]; exact h.prob_inter_biInter ht' ht
 
 variable [IsProbabilityMeasure P]
 
@@ -98,8 +92,8 @@ lemma IndepFrom.cond_iInter [Countable ι] (h : IndepFrom s t P)
     ENNReal.inv_mul_cancel ht₀ (by simp), mul_one]
 
 lemma IndepFrom.cond_biInter (h : IndepFrom s t P) {C : Set ι}
-    {A : ι → Set Ω} (hC : C.Countable) (hs : MeasurableSet s) (ht : ∀ i ∈ C, A i ∈ t ∨ (A i)ᶜ ∈ t)
-    (ht₀ : P (⋂ i ∈ C, A i) ≠ 0) :
+    {A : ι → Set Ω} (hC : C.Countable) (hs : MeasurableSet s)
+    (ht : ∀ i ∈ C, A i ∈ t ∨ (A i)ᶜ ∈ t) (ht₀ : P (⋂ i ∈ C, A i) ≠ 0) :
     P[s | ⋂ i ∈ C, A i] = P s := by
   have : Countable C := by simpa
   simpa using h.cond_iInter (ι := C) (A := A ∘ Subtype.val) hs (by simpa) (by simpa)
@@ -111,7 +105,6 @@ lemma IndepFrom.cond_sInter (h : IndepFrom s t P) (hs : MeasurableSet s)
   exact h.cond_biInter ht' hs ht (by simpa using ht₀)
 
 end
-
 
 variable {A : ι → Set Ω} {N : ι → Finset ι} {x : ι → ℝ} {i j : ι} {S T : Finset ι}
 
@@ -141,12 +134,11 @@ lemma lopsidedCondition_of_standardCondition [IsProbabilityMeasure P]
   rw [h.prob_inter_biInter (C := (S : Set ι)) (A := fun i ↦ (A i)ᶜ) S.countable_toSet _]
   intro j hj
   simp only [Finset.mem_coe] at hj
-  right
-  simp only [compl_compl]
-  rw [Finset.disjoint_right] at hS
+  right; simp only [compl_compl]
   apply Set.mem_image_of_mem
-  simp only [Set.mem_compl_iff, Set.mem_insert_iff, Finset.mem_coe] -- TODO: try removing the simp
-  grind
+  simp only [Set.mem_compl_iff, Set.mem_insert_iff, Finset.mem_coe]
+  push_neg
+  exact ⟨by rintro rfl; exact hiS hj, Finset.disjoint_right.mp hS hj⟩
 
 /-- An upper bound on `P(A i ∩ ⋂_{j ∈ S} Aⱼᶜ)`. -/
 def IndividualBound (P : Measure Ω) (A : ι → Set Ω) (x : ι → ℝ) (i : ι) (S : Finset ι) : Prop :=
@@ -163,10 +155,7 @@ open Finset
 
 lemma iteration [DecidableEq ι] [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
     {t t' : Finset ι} (ht : Disjoint t t')
-    (hx₁ : ∀ i, x i ≤ 1)
-    (S : Finset ι)
-    (htS : t ⊆ S)
-    (ht'S : t' ⊆ S)
+    (hx₁ : ∀ i, x i ≤ 1) (S : Finset ι) (htS : t ⊆ S) (ht'S : t' ⊆ S)
     (h : ∀ T ⊂ S, ∀ {i}, i ∉ T → IndividualBound P A x i T) :
     (∏ j ∈ t, (1 - x j)) * P.real (⋂ j ∈ t', (A j)ᶜ) ≤ P.real (⋂ j ∈ t ∪ t', (A j)ᶜ) := by
   induction t using cons_induction_on with
@@ -181,36 +170,30 @@ lemma iteration [DecidableEq ι] [IsProbabilityMeasure P] (hA : ∀ i, Measurabl
       _ ≤ (1 - x a) * P.real (⋂ j ∈ t ∪ t', (A j)ᶜ) := by
         gcongr
         · simp [hx₁]
-        · apply ih htt ((subset_insert _ _).trans htS)
+        · exact ih htt ((subset_insert _ _).trans htS)
       _ ≤ _ := by
         have ha : a ∉ t ∪ t' := by simp [hat, hat']
-        have : insert a (t ∪ t') ⊆ S := by
-          simpa [insert_subset_iff, union_subset_iff, ht'S] using htS
-        exact (h _ (Finset.ssubset_of_ssubset_of_subset (ssubset_insert ha) this) ha).compl (hA _)
+        exact (h _ (Finset.ssubset_of_ssubset_of_subset (ssubset_insert ha)
+          (by simpa [insert_subset_iff, union_subset_iff, ht'S] using htS)) ha).compl (hA _)
 
 lemma iteration_all [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
-    {t : Finset ι}
-    (hx₁ : ∀ i, x i ≤ 1)
+    {t : Finset ι} (hx₁ : ∀ i, x i ≤ 1)
     (h : ∀ i : ι, ∀ S : Finset ι, i ∉ S → IndividualBound P A x i S) :
     ∏ j ∈ t, (1 - x j) ≤ P.real (⋂ j ∈ t, (A j)ᶜ) := by
-  have : ∀ T ⊂ t, ∀ {i}, i ∉ T → IndividualBound P A x i T := by
-    intro T hTt i hiT
-    exact h i T hiT
   classical
-  simpa using iteration (P := P) hA (t' := ∅) (by simp) hx₁ t (by simp) (by simp) this
+  simpa using iteration (P := P) hA (t' := ∅) (by simp) hx₁ t (by simp) (by simp)
+    fun T _ i hiT ↦ h i T hiT
 
 lemma prod_le_prod_of_subset_of_le_one {α : Type*} [CommMonoidWithZero α] [PartialOrder α]
     [PosMulMono α] [ZeroLEOneClass α]
     {x : ι → α} {s t : Finset ι} (hst : s ⊆ t)
     (hx₀ : ∀ i, 0 ≤ x i) (hx₁ : ∀ i, x i ≤ 1) :
     ∏ j ∈ t, x j ≤ ∏ j ∈ s, x j := by classical calc
-  ∏ j ∈ t, x j = (∏ j ∈ t ∩ s, x j) * ∏ j ∈ t \ s, x j := by
-    rw [prod_inter_mul_prod_diff]
+  ∏ j ∈ t, x j = (∏ j ∈ t ∩ s, x j) * ∏ j ∈ t \ s, x j := by rw [prod_inter_mul_prod_diff]
   _ ≤ (∏ j ∈ t ∩ s, x j) * 1 := by
     gcongr
-    · apply prod_nonneg
-      simp [hx₀]
-    · apply prod_le_one (by simp [hx₀]) (by simp [hx₁])
+    · exact prod_nonneg (by simp [hx₀])
+    · exact prod_le_one (by simp [hx₀]) (by simp [hx₁])
   _ = ∏ j ∈ s, x j := by simp [inter_eq_right.2 hst]
 
 lemma individualBound [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
@@ -229,9 +212,7 @@ lemma individualBound [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
     calc
       P.real (A i ∩ ⋂ j ∈ S, (A j)ᶜ) ≤ P.real (A i ∩ ⋂ j ∈ S₂, (A j)ᶜ) := by
         rw [← hS, Finset.set_biInter_inter]
-        refine measureReal_mono ?_
-        gcongr
-        exact Set.inter_subset_right
+        refine measureReal_mono ?_; gcongr; exact Set.inter_subset_right
       _ ≤ P.real (A i) * P.real (⋂ j ∈ S₂, (A j)ᶜ) :=
         hN.real (by simp [S₂, hiS]) (by simp [S₂, S₁, disjoint_sdiff])
       _ ≤ x i * (∏ j ∈ N i, (1 - x j)) * P.real (⋂ j ∈ S₂, (A j)ᶜ) := by gcongr; exact hAx i
@@ -243,8 +224,7 @@ lemma individualBound [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
       _ ≤ x i * P.real (⋂ j ∈ S, (A j)ᶜ) := by
         gcongr
         · exact hx₀ i
-        rw [← hS]
-        exact iteration hA disjoint_sdiff hx₁ _ (by simp [S₁]) (by simp [S₂]) ih
+        rw [← hS]; exact iteration hA disjoint_sdiff hx₁ _ (by simp [S₁]) (by simp [S₂]) ih
 
 /-- The general Lovász Local Lemma with individual bounds: if `P(A i) ≤ x i * ∏_{j ∈ N i} (1 - x j)`
 for all `i`, then `P(⋂ᵢ Aᵢᶜ) ≥ ∏ᵢ (1 - xᵢ) > 0`. -/
@@ -253,11 +233,8 @@ theorem localLemma [Fintype ι] [IsProbabilityMeasure P] (hA : ∀ i, Measurable
     (h : lopsidedCondition P A N)
     (hAx : ∀ i, P.real (A i) ≤ x i * ∏ j ∈ N i, (1 - x j)) :
     ∏ i, (1 - x i) ≤ P.real (⋂ i, (A i)ᶜ) := by
-  have : ∀ i, ∀ S, i ∉ S → IndividualBound P A x i S := by
-    intro i S hiS
-    classical
-    exact individualBound hA h hx₀ hx₁ hAx hiS
-  simpa using iteration_all hA hx₁ this (t := univ)
+  simpa using iteration_all hA hx₁
+    (fun i S hiS ↦ by classical exact individualBound hA h hx₀ hx₁ hAx hiS) (t := univ)
 
 lemma add_one_div_pow_le_exp {t : ℝ} {n : ℕ} (hn : n ≠ 0) (ht : 0 ≤ 1 + t / n) :
     (1 + t / n) ^ n ≤ Real.exp t := by
@@ -292,8 +269,7 @@ theorem symmetricLocalLemma [Finite ι] [IsProbabilityMeasure P] (hA : ∀ i, Me
     _ ≤ (d + 1 : ℝ)⁻¹ * (1 + (↑d)⁻¹)⁻¹ ^ d := by
       grw [inv_pow, add_one_inv_pow_le_exp]
     _ = (d + 1 : ℝ)⁻¹ * (1 - (d + 1 : ℝ)⁻¹) ^ d := by
-      congr! 2
-      simp [field]
+      congr! 2; simp [field]
     _ ≤ (d + 1 : ℝ)⁻¹ * ∏ j ∈ N i, (1 - (d + 1 : ℝ)⁻¹) := by
       simp only [prod_const]
       gcongr _ * ?_
@@ -306,12 +282,10 @@ lemma eq_sInter_of_mem_generatePiSystem {Ω : Type*} {t : Set (Set Ω)} {A : Set
     (hA : A ∈ generatePiSystem t) :
     ∃ S : Set (Set Ω), S ⊆ t ∧ A = ⋂₀ S := by
   induction hA with
-  | @base s hs =>
-    refine ⟨{s}, by simpa, by simp⟩
+  | @base s hs => exact ⟨{s}, by simpa, by simp⟩
   | @inter s₁ s₂ _ _ h hs₁ hs₂ =>
-    obtain ⟨S₁, hS₁, rfl⟩ := hs₁
-    obtain ⟨S₂, hS₂, rfl⟩ := hs₂
-    refine ⟨S₁ ∪ S₂, Set.union_subset hS₁ hS₂, by simp [Set.sInter_union]⟩
+    obtain ⟨S₁, hS₁, rfl⟩ := hs₁; obtain ⟨S₂, hS₂, rfl⟩ := hs₂
+    exact ⟨S₁ ∪ S₂, Set.union_subset hS₁ hS₂, by simp [Set.sInter_union]⟩
 
 lemma dependsOn_mem_iff_exists_preimage {α β : Type*} {t : Set α} {A : Set (α → β)} :
     DependsOn (· ∈ A) t ↔ ∃ B : Set (t → β), A = t.restrict ⁻¹' B :=
@@ -329,9 +303,7 @@ lemma standardCondition_of {α β : Type*} [Finite ι] [MeasurableSpace β] [IsP
   have := Fintype.ofFinite ι
   rw [standardCondition]
   have hA' (i : ι) : MeasurableSet (A i) := by
-    obtain ⟨S, hS, -, h⟩ := hA i
-    rw [h]
-    exact MeasurableSet.preimage hS (by fun_prop)
+    obtain ⟨S, hS, -, h⟩ := hA i; rw [h]; exact MeasurableSet.preimage hS (by fun_prop)
   intro i
   rw [indepFrom_iff_indepSets (hA' _) (by grind), IndepSets_iff]
   intro X₁ X₂ hX₁ hX₂
@@ -342,8 +314,7 @@ lemma standardCondition_of {α β : Type*} [Finite ι] [MeasurableSpace β] [IsP
   obtain ⟨J, ⟨hiJ, hJ⟩, rfl⟩ := hX₂
   obtain ⟨Si, hSi, hSDi, hAi⟩ := hA i
   have hAj' : MeasurableSet (⋂ j ∈ J, A j) := by
-    apply MeasurableSet.biInter (Set.to_countable _)
-    simp [hA']
+    apply MeasurableSet.biInter (Set.to_countable _); simp [hA']
   lift J to Finset ι using Set.toFinite _
   simp only [SetLike.mem_coe, disjoint_coe] at hiJ hJ hAj' ⊢
   classical
@@ -352,8 +323,7 @@ lemma standardCondition_of {α β : Type*} [Finite ι] [MeasurableSpace β] [IsP
         (⋂ j ∈ J, A j) = (fun ω a ↦ I a ω) ⁻¹' Sj := by
     choose S hSm hSd hSA using hA
     refine ⟨⋂ j ∈ J, S j, MeasurableSet.biInter (Set.to_countable _) (by simp [hSm]), ?_, ?_⟩
-    · simp [DependsOn] at hSd ⊢
-      grind
+    · simp [DependsOn] at hSd ⊢; grind
     · simp [Set.preimage_iInter₂, hSA]
   rw [hAi, hAj]
   obtain rfl | hi := Si.eq_empty_or_nonempty
