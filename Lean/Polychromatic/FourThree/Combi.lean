@@ -878,7 +878,8 @@ private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) : eqp_idx q r (s
   have hge : ¬(s * q + r < r * (q + 1)) := by nlinarith
   simp only [eqp_idx, if_neg (by nlinarith)]
   have hsub : s * q + r - r * (q + 1) = (s - r) * q := by
-    zify [by nlinarith, (by omega : r ≤ s)]; ring
+    have hle : r * (q + 1) ≤ s * q + r := by nlinarith
+    zify [hle, (by omega : r ≤ s)]; ring
   rw [hsub, Nat.mul_div_cancel _ hq]; omega
 
 -- General fact: consecutive ℕ quotients differ by 0 or 1
@@ -920,6 +921,7 @@ private lemma mod_step (a b : ℕ)
     (a + 1) % b = a % b + 1 := by
   grind [Nat.div_add_mod a b, Nat.div_add_mod (a + 1) b]
 
+-- Helper: if quotient increases by 1, remainder resets to 0
 private lemma mod_zero_step (a b : ℕ) (hb : 0 < b)
     (h : (a + 1) / b = a / b + 1) :
     (a + 1) % b = 0 := by
@@ -1438,9 +1440,10 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
 lemma hasPolychromColouring_mul_unit (u : (ZMod m)ˣ) (S : Finset (ZMod m)) :
     HasPolychromColouring (Fin 3) (S.image (u.val * ·)) ↔
     HasPolychromColouring (Fin 3) S := by
-  have key := polychromNumber_iso (AddAut.mulLeft u) (S := S)
-  constructor <;> intro h <;>
-    exact hasPolychromColouring_fin_of_le (by simp) (by first | rw [key] | rw [← key]; exact le_polychromNumber h)
+  have key : polychromNumber (S.image (u.val * ·)) = polychromNumber S :=
+    polychromNumber_iso (AddAut.mulLeft u)
+  exact ⟨fun h => hasPolychromColouring_fin_of_le (by grind) (key ▸ le_polychromNumber h),
+    fun h => hasPolychromColouring_fin_of_le (by grind) (key.symm ▸ le_polychromNumber h)⟩
 
 /-! ### Subcase (1c): per-residue lemmas (paper §4.1, case 3 ∤ m)
 
@@ -1709,8 +1712,8 @@ lemma case_one_divisible (g : ℕ) (hm : m ≥ 289) (h_div : m = 3 * g ∨ m = 3
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   by_cases hg3 : g % 3 = 0
   · rcases h_div with h | h
-    exacts [case_one_div_3g m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind),
-            case_one_div_3g3 m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)]
+    · exact case_one_div_3g m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)
+    · exact case_one_div_3g3 m g h (Nat.dvd_of_mod_eq_zero hg3) (by grind)
   · exact case_one_div_g_not_three m g h_div hg3
 
 end Case1d
@@ -1792,8 +1795,10 @@ private lemma isUnit_intCast_of_natAbs_coprime {n : ℕ} {b : ℤ}
     IsUnit (Int.cast b : ZMod n) := by
   have hu : IsUnit (b.natAbs : ZMod n) := (ZMod.isUnit_iff_coprime _ _).mpr h
   rcases Int.natAbs_eq b with hb | hb
-  · rwa [show (Int.cast b : ZMod n) = ↑b.natAbs by rw [hb]; simp]
-  · rw [show (Int.cast b : ZMod n) = -↑b.natAbs by rw [hb]; simp]; exact hu.neg
+  · have : (Int.cast b : ZMod n) = ↑b.natAbs := by rw [hb]; simp
+    rwa [this]
+  · have : (Int.cast b : ZMod n) = -↑b.natAbs := by rw [hb]; simp
+    rw [this]; exact hu.neg
 
 /-- **Key reduction for Case 1.** When gcd(b, m) = 1, finds the gap parameter g
     such that zmod_set m a b = (image of {0,1,g,g+1} under ×b). -/
