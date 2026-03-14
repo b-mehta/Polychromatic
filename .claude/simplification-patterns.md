@@ -80,7 +80,7 @@ via `fun k => by simpa using h k 0`.
 
 ## Successful golfing patterns (from Combi.lean)
 
-- **`calc` → `rw + gcongr`** — a 2-step `calc` like `m = d * (m/d); _ ≤ d * 17 := by gcongr` becomes `rw [(Nat.mul_div_cancel' h).symm]; gcongr`.
+- **`calc` → `rw + gcongr`** — a 2-step `calc` like `m = d * (m/d); _ ≤ d * 17 := by gcongr` becomes `rw [← Nat.mul_div_cancel' h]; gcongr`.
 - **`calc` → `le_trans`** — `calc ep ≤ X; _ ≤ m` becomes `le_trans ep_le X_le` or `le_trans ... .le`.
 - **Chained `rw`** — separate `have h1; rw [h1]; have h2; rw [h2]` collapses to `rw [h1, h2]` when the intermediate hypothesis isn't used elsewhere.
 - **`Nat.pos_of_ne_zero (by intro h; simp [h] at hfoo)`** → `(by grind)` — grind derives positivity from `min ... > 1` directly.
