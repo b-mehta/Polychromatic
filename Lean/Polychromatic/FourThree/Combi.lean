@@ -140,7 +140,6 @@ def blockColorVal (A B : List (Fin 3)) (h : ℕ) (p : ℕ) : Fin 3 :=
   if p < A.length * h then (A[p % A.length]?).getD 0
   else (B[(p - A.length * h) % B.length]?).getD 0
 
-
 private lemma checkLinearPolychrom_spec {offsets : List ℕ} {L : List (Fin 3)}
     (hcheck : checkLinearPolychrom offsets L = true)
     {i : ℕ} (hi : i + offsets.foldr max 0 < L.length) (c : Fin 3) :
@@ -170,7 +169,6 @@ private lemma hasPolychromColouring_of_cyclic {m : ℕ} [NeZero m] [Fact (1 < m)
     (hpoly : ∀ n : ZMod m, ∀ k : Fin 3, ∃ a ∈ S, c (n + a).val = k) :
     HasPolychromColouring (Fin 3) S :=
   ⟨fun x => c x.val, hpoly⟩
-
 
 /-- If `i % r + s < r`, then `(i + s) % r = i % r + s`. -/
 private lemma add_mod_of_lt {i s r : ℕ} (h : i % r + s < r) : (i + s) % r = i % r + s := by
@@ -615,7 +613,6 @@ lemma table1_0145 (hm : m ≥ 42) : HasPolychromColouring (Fin 3) ({0, 1, 4, 5} 
     (by intro a; simp; tauto)
 
 end Table1
-
 
 /-! ## Main Case 1: Single Cycle (paper §4.1)
 
@@ -2591,7 +2588,6 @@ private def case2d_u (e₁ : ℕ) : ℕ := e₁ / 3 + e₁ % 3
     r=0: v = k   r=1: v = k+1   r=2: v = k -/
 private def case2d_v (e₁ : ℕ) : ℕ :=
   if e₁ % 3 = 1 then e₁ / 3 + 1 else e₁ / 3
-
 
 private lemma case2d_uv_le {e₁ : ℕ} (hge : e₁ ≥ 19) : case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
   grind [case2d_u, case2d_v]
