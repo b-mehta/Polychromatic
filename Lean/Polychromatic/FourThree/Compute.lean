@@ -27,9 +27,7 @@ set_option linter.all false
 
 -- set_option trace.Elab.definition.body true
 
--- should be 289 and 900000, temporarily downgraded to check CI
 /-- Proves `allC 289`, establishing that all quadruples with `c < 289` have
 3-polychromatic colourings. -/
 lemma allC_289 : allC 289 := by
-  sorry
-  -- prove_allC 900000
+  prove_allC 900000
