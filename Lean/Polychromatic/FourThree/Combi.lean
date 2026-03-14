@@ -180,8 +180,9 @@ private lemma add_mod_of_lt {i s r : ℕ} (h : i % r + s < r) : (i + s) % r = i 
 private lemma add_mod_sub {i s r : ℕ} (hr : 0 < r) (hge : r ≤ i % r + s)
     (hlt : i % r + s < 2 * r) :
     (i + s) % r = i % r + s - r := by
+  have h1 := Nat.mod_add_div i r
   have key : i + s = (i % r + s - r) + (i / r + 1) * r := by
-    grind [Nat.sub_add_cancel hge, mul_comm r (i / r)]
+    rw [Nat.sub_add_cancel hge, mul_comm r (i / r)]; omega
   conv_lhs => rw [key]
   rw [Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt (by omega)]
 
@@ -2135,8 +2136,10 @@ private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid �
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) {b : γ}
     (hΦ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, Φ (i, j + 1) = Φ (i, j) + b)
     (x : γ) :
-    Φ.symm (x + b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) :=
-  Φ.symm_apply_eq.mpr (by rw [← Equiv.apply_symm_apply Φ x]; exact (hΦ _ _).symm)
+    Φ.symm (x + b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := by
+  have key := hΦ (Φ.symm x).1 (Φ.symm x).2
+  rw [Equiv.apply_symm_apply] at key
+  exact Φ.symm_apply_eq.mpr key.symm
 
 /-- If α(Φ(i,j)) = i for all i,j, then (Φ⁻¹(x)).1 = α(x). -/
 private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
@@ -2888,7 +2891,7 @@ private lemma zmod_filter_sum_last {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i 
 /-- Position shift by 1: adding 1 to ZMod coordinate shifts position by 1 mod n. -/
 private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
     ((j + 1).val + c) % n = ((j.val + c) % n + 1) % n := by
-  rw [ZMod.val_add_one, Nat.mod_add_mod, Nat.mod_add_mod]; omega
+  rw [ZMod.val_add_one, Nat.mod_add_mod, Nat.mod_add_mod]; grind
 
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
@@ -3327,7 +3330,6 @@ theorem normal_bit :
   set m := (c - a + b).toNat
   have hm_eq : (m : ℤ) = c - a + b := Int.toNat_of_nonneg (by grind)
   have hm_pos : 0 < m := by grind
-  apply hasPolychromColouring_of_zmod_set hm_eq
   have hcard := zmod_set_card_eq_four ha hab (by linarith)
   apply hasPolychromColouring_of_zmod_set hm_eq
   set d₁ := Nat.gcd b.natAbs m
