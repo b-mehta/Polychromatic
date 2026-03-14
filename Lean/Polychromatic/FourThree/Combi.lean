@@ -300,7 +300,7 @@ private lemma case_no_wrap_AA (A B : List (Fin 3)) (offsets : List ℕ)
   set j := i % A.length
   have hj_lt : j < A.length := Nat.mod_lt _ hA
   refine ⟨A ++ A, j, hAA, by grind, fun s hsle => ?_⟩
-  rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
+  rw [Nat.mod_eq_of_lt (by grind)]
   have his_A : i + s < A.length * h := by grind
   by_cases hjs_lt : j + s < A.length
   · exact bcv_eq_A A B h _ _ _ _ his_A
@@ -329,7 +329,7 @@ private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
   have hh_pos : 0 < h := by grind
   have hi_lo : A.length * (h - 1) ≤ i := by grind [Nat.mul_sub]
   refine ⟨A ++ B, j, hAB, by grind, fun s hsle => ?_⟩
-  rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
+  rw [Nat.mod_eq_of_lt (by grind)]
   by_cases hjs_lt : j + s < A.length
   · exact bcv_eq_A A B h _ _ _ _
       (add_lt_of_mod_add_lt hA hA_region hjs_lt)
@@ -358,7 +358,7 @@ private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
   set j := (i - A.length * h) % B.length
   have hj_lt : j < B.length := Nat.mod_lt _ (by grind)
   refine ⟨B ++ B, j, hBB, by grind, fun s hsle => ?_⟩
-  rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
+  rw [Nat.mod_eq_of_lt (by grind)]
   by_cases hjs_lt : j + s < B.length
   · exact bcv_eq_B A B h _ _ _ _ (by grind)
       (by rw [Nat.sub_add_comm hB_region]; exact add_mod_of_lt hjs_lt)
@@ -428,7 +428,7 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
   · -- Still in B
     have his_lt : (i - A.length * h) + s < B.length * k :=
       add_lt_of_mod_add_lt (by grind) hi_B hjs_lt
-    rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
+    rw [Nat.mod_eq_of_lt (by grind)]
     exact bcv_eq_B A B h _ _ _ _ (by grind)
       (by rw [Nat.sub_add_comm hB_region]; exact add_mod_of_lt hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
@@ -466,7 +466,7 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
   refine ⟨B ++ B, j, hBB, by grind, fun s hsle => ?_⟩
   by_cases hjs_lt : j + s < B.length
   · have his_lt : i + s < B.length * k := add_lt_of_mod_add_lt (by grind) (by grind) hjs_lt
-    rw [Nat.mod_eq_of_lt (by grind : i + s < m)]
+    rw [Nat.mod_eq_of_lt (by grind)]
     exact bcv_eq_B A B 0 _ _ _ _
       (by omega)
       (by grind [add_mod_of_lt hjs_lt])
@@ -483,7 +483,7 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     refine bcv_eq_B A B 0 _ _ _ _
       (by omega)
       (by rw [Nat.mul_zero, Nat.sub_zero, hmod,
-            Nat.mod_eq_of_lt (by grind : i + s - m < B.length),
+            Nat.mod_eq_of_lt (by grind),
             hsub_eq])
       hjs_idx ?_
     rw [List.getElem?_append_right (by grind)]
@@ -711,10 +711,10 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
     have hub : p < q * (j + 1) + (j + 1) := by grind
     refine ⟨by omega, ?_, ?_⟩
     · unfold equiEndpoint
-      rw [min_eq_right (by omega : j ≤ r)]
+      rw [min_eq_right (by omega)]
       change q * j + j ≤ p; exact hle
     · unfold equiEndpoint
-      rw [min_eq_right (by omega : j + 1 ≤ r)]
+      rw [min_eq_right (by omega)]
       change p < q * (j + 1) + (j + 1); exact hub
   · rename_i hge; push_neg at hge
     set d := (p - bd) / q
@@ -858,7 +858,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
     have hr_lt : r < s := Nat.mod_lt m hs
     have hep_j3 : Finpartition.equiEndpoint m s (j₀ + 3) = q * (j₀ + 3) + r := by
       unfold Finpartition.equiEndpoint
-      rw [min_eq_left (by omega : r ≤ j₀ + 3)]
+      rw [min_eq_left (by omega)]
     have hm_eq : m = q * s + r := by grind [Nat.div_add_mod m s]
     have hm_le_ep : m ≤ Finpartition.equiEndpoint m s (j₀ + 3) := by grind
     have hep_diff :
@@ -1070,7 +1070,7 @@ private lemma straddle1_gap2 (s g m : ℕ)
       omega
   · have hj₀_eq : j₀ = s - 1 := by omega
     have hjg_val : jg = 0 := by omega
-    rw [hj₀_eq, Nat.sub_add_cancel (by omega : 1 ≤ s),
+    rw [hj₀_eq, Nat.sub_add_cancel (by omega),
       hep_s] at hv_eq
     have hv_val : v = m - 1 := by omega
     have hg_pos : 0 < g := by
@@ -1156,7 +1156,7 @@ private lemma straddle2_gap1 (s g m : ℕ)
       have : s - 2 + 1 = s - 1 := by omega
       rw [this] at hv_hi
       have hd1 := equiEndpoint_diff_ge m s (s - 1)
-      rw [Nat.sub_add_cancel (by omega : 1 ≤ s), hep_s] at hd1
+      rw [Nat.sub_add_cancel (by omega), hep_s] at hd1
       have hep_s1_le : equiEndpoint m s (s - 1) ≤ m :=
         le_trans (equiEndpoint_monotone (by omega)) hep_s.le
       have hsac_m := Nat.sub_add_cancel hep_s1_le
@@ -1166,7 +1166,7 @@ private lemma straddle2_gap1 (s g m : ℕ)
       have hjg1 : jg = 1 := by omega
       rw [hjg1] at hvg_eq
       rw [hj₀_eq2] at hv_hi
-      rw [Nat.sub_add_cancel (by omega : 1 ≤ s), hep_s] at hv_hi
+      rw [Nat.sub_add_cancel (by omega), hep_s] at hv_hi
       have hd1 := equiEndpoint_diff_ge m s 0
       rw [hep0, Nat.zero_add] at hd1
       have hd2 := equiEndpoint_diff_ge m s 1
@@ -1313,7 +1313,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
   have hidx_lt : ∀ p, p < m → idx p < s := by
     intro p hp; simp only [idx]; split
     · have : p / (q + 1) < r := by
-        rw [Nat.div_lt_iff_lt_mul (by omega : 0 < q + 1)]
+        rw [Nat.div_lt_iff_lt_mul (by omega)]
         exact ‹_›
       omega
     · rename_i hge; push_neg at hge
@@ -1371,7 +1371,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_hi hvg_lo
         hvg_hi hstrad1 hgap
       have hjg1_eq : (jg + 1) % 3 = j₀ % 3 := by
-        grind [gap_mod_cases_gen s j₀ jg 2 hj₀_lt hjg_lt hgap2]
+        grind [gap_mod_cases_gen]
       rcases hk1 with hk_eq | hk_eq
       · -- k = j₀%3 = (jg+1)%3: pair 2 must be non-straddle
         rcases eqp_idx_step q r ((v + g) % m) hq_pos with h2_same | h2_step
@@ -1427,7 +1427,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi
         hvg_hi hstrad2 hgap
       have hj01_eq : (j₀ + 1) % 3 = jg % 3 := by
-        grind [gap_mod_cases_gen s j₀ jg 1 hj₀_lt hjg_lt hgap1]
+        grind [gap_mod_cases_gen]
       rcases hk2 with hk_eq | hk_eq
       · -- k = jg%3 = (j₀+1)%3: pair 1 non-straddle
         rcases eqp_idx_step q r v hq_pos with h1_same | h1_step
@@ -1786,12 +1786,12 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
         have hq_ub : m - 1 < 3 * (g - 1) * (q + 1) := Nat.lt_mul_div_succ _ h3g1
         have hm_lb : m ≥ q * (3 * (g - 1)) + 1 := by grind
         exact case_one_interval m (3 * (q + 1)) g (by grind) ⟨q + 1, rfl⟩ (by -- ⌈m/s⌉ < g
-            rw [Nat.div_lt_iff_lt_mul (by grind : 0 < 3 * (q + 1))]
+            rw [Nat.div_lt_iff_lt_mul (by grind)]
             have : g * (3 * (q + 1)) = (g - 1 + 1) * (3 * (q + 1)) := by grind
             grind)
           (by -- g < 2⌊m/s⌋
             suffices h : (g + 2) / 2 ≤ m / (3 * (q + 1)) by grind
-            rw [Nat.le_div_iff_mul_le (by grind : 0 < 3 * (q + 1))]
+            rw [Nat.le_div_iff_mul_le (by grind)]
             suffices (g + 2) * (3 * (q + 1)) ≤ 2 * m by
               have := Nat.div_mul_le_self (g + 2) 2; nlinarith
             by_cases hg10 : g ≥ 10
