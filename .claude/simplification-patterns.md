@@ -84,6 +84,7 @@ via `fun k => by simpa using h k 0`.
 - **`calc` → `rw + gcongr`** — a 2-step `calc` like `m = d * (m/d); _ ≤ d * 17 := by gcongr` becomes `rw [← Nat.mul_div_cancel' h]; gcongr`.
 - **`calc` → `le_trans`** — `calc ep ≤ X; _ ≤ m` becomes `le_trans ep_le X_le` or `le_trans ... .le`.
 - **Chained `rw`** — separate `have h1; rw [h1]; have h2; rw [h2]` collapses to `rw [h1, h2]` when the intermediate hypothesis isn't used elsewhere.
+- **Consecutive `rw` on same target** — `rw [a]; rw [b]` → `rw [a, b]`, and `rw [x] at h; rw [y] at h` → `rw [x, y] at h`. Only combine when both are at the same indent level and rewrite the same target (goal or same hypothesis).
 - **`Nat.pos_of_ne_zero (by intro h; simp [h] at hfoo)`** → `(by grind)` — grind derives positivity from `min ... > 1` directly.
 - **Reuse nearby lemmas** — if a private lemma like `ZMod.val_add_one` exists locally, use it to shorten proofs of related results rather than reproving from `ZMod.val_add`.
 - **Single-use `hΦ_cycle_shift`** — `fun x => by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]` can be passed inline to `orbit_coloring_polychrom`.
