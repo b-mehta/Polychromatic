@@ -3261,7 +3261,7 @@ lemma main_case_two (hm : m ≥ 289)
         by_cases h3d₂ : 3 ∣ d₂
         · have h3m : 3 ∣ m := dvd_trans h3d₂ hd₂_dvd
           have h3e₁ : 3 ∣ e₁ := by
-            have h3de : 3 ∣ d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm ▸ h3m
+            have h3de : 3 ∣ d₁ * e₁ := Nat.mul_div_cancel' hd₁_dvd ▸ h3m
             have hcop3 : Nat.Coprime 3 d₁ := (Nat.Prime.coprime_iff_not_dvd (by decide)).mpr h3_nd₁
             exact hcop3.dvd_of_dvd_mul_left h3de
           exact case_two_odd_small m a' b' hm hcop hmin hd₁_odd he₁_odd he_le h3e₁
@@ -3334,8 +3334,14 @@ lemma gcd_coprime_of_gcd_abc {a b c : ℤ} {m : ℕ}
   have hd_ba : (d : ℤ) ∣ (b - a) := Int.natCast_dvd.mpr
     ((Nat.gcd_dvd_right (Nat.gcd _ _) _).trans (Nat.gcd_dvd_left _ _))
   -- d | a and d | c follow from d | b, d | (b-a), d | m
-  have hd_a : (d : ℤ) ∣ a := (by ring : a = b - (b - a)) ▸ dvd_sub hd_b hd_ba
-  have hd_c : (d : ℤ) ∣ c := (by grind : (c : ℤ) = ↑m - b + a) ▸ dvd_add (dvd_sub hd_m hd_b) hd_a
+  have hd_a : (d : ℤ) ∣ a := by
+    have : a = b - (b - a) := by ring
+    rw [this]
+    exact dvd_sub hd_b hd_ba
+  have hd_c : (d : ℤ) ∣ c := by
+    have : (c : ℤ) = ↑m - b + a := by grind
+    rw [this]
+    exact dvd_add (dvd_sub hd_m hd_b) hd_a
   have hd_dvd_gcd : (d : ℤ) ∣ Finset.gcd {a, b, c} id :=
     Finset.dvd_gcd (fun x hx => by
       simp only [Finset.mem_insert, Finset.mem_singleton] at hx
