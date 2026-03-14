@@ -15,6 +15,7 @@ Patterns for shortening, simplifying, and deduplicating Lean proofs.
 - **`refine ... ?_`** — partially apply a lemma and let Lean generate remaining goals, avoiding verbose `apply` + `intro` sequences.
 - **Combine `constructor` with `⟨..., ...⟩`** — use anonymous constructor syntax to close `And`/`Exists` goals concisely.
 - **Merge `have`/`suffices` chains** — if a `have` is used exactly once right after, consider inlining it or using `suffices`.
+- **`by_contra!`** — combines `by_contra` + `push_neg` in one step. Replaces the verbose `by_contra h; push_neg at h` pattern.
 - **Avoid redundant hypotheses** — if a lemma's hypothesis can be closed by `inferInstance` or `by omega`, remove the explicit `have` that provides it.
 
 ## grind subsumption
