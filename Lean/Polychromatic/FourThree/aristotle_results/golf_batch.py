@@ -74,6 +74,15 @@ COMBI_PATH = Path(__file__).parent.parent / "Combi.lean"
 RESULTS_DIR = Path(__file__).parent
 STATUS_FILE = RESULTS_DIR / "status.json"
 
+
+def sanitize_filename(name: str) -> str:
+    """Sanitize a Lean identifier for use in filenames.
+
+    Lean identifiers can contain apostrophes (e.g. pos_shift_succ'), which are
+    fragile in filenames across platforms and shells. Replace them with `_prime`.
+    """
+    return name.replace("'", "_prime")
+
 # Stub definitions to replace `import Polychromatic.*` so Aristotle doesn't
 # pull in the full project (which has files incompatible with its mathlib).
 IMPORT_STUBS = """\
@@ -397,8 +406,9 @@ async def run_batch(proofs: list[dict], all_proofs: list[dict], batch_size: int)
             print(f"  Skipping {name} (already done)")
             continue
 
-        scratch_path = RESULTS_DIR / f"scratch_{name}.lean"
-        output_path = RESULTS_DIR / f"result_{name}.lean"
+        safe_name = sanitize_filename(name)
+        scratch_path = RESULTS_DIR / f"scratch_{safe_name}.lean"
+        output_path = RESULTS_DIR / f"result_{safe_name}.lean"
 
         create_scratch_file(COMBI_PATH, proof, scratch_path, all_proofs)
 
