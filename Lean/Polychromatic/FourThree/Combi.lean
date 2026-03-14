@@ -1063,8 +1063,7 @@ private lemma straddle1_gap2 (s g m : ℕ)
       omega
   · have hj₀_eq : j₀ = s - 1 := by omega
     have hjg_val : jg = 0 := by omega
-    rw [hj₀_eq, Nat.sub_add_cancel (by omega),
-      hep_s] at hv_eq
+    rw [hj₀_eq, Nat.sub_add_cancel (by omega), hep_s] at hv_eq
     have hv_val : v = m - 1 := by omega
     have hg_pos : 0 < g := by
       have := gap_exceeds_ilen m s g hs h_lb 0
