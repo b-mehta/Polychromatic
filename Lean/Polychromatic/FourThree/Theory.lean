@@ -47,7 +47,8 @@ lemma suffices_minimal
 
 /-- It suffices to verify all ordered triples `0 < a < b < c`. -/
 lemma suffices_triple
-    (h : ∀ a b c : ℤ, 0 < a → a < b → b < c → HasPolychromColouring (Fin 3) {0, a, b, c}) :
+    (h : ∀ a b c : ℤ, 0 < a → a < b → b < c →
+      HasPolychromColouring (Fin 3) {0, a, b, c}) :
     ∀ S : Finset ℤ, #S = 4 → Minimal (· ∈ S) 0 → HasPolychromColouring (Fin 3) S := by
   intro S hS hS'
   have : #(S.erase 0) = 3 := by rw [card_erase_of_mem hS'.1, hS]
@@ -130,9 +131,11 @@ lemma suffices_gcd
     apply Int.ediv_le_ediv hd₀ hbc
 
 lemma suffices_cases (C : ℕ)
-    (h₁ : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → c < C → Finset.gcd {a, b, c} id = 1 →
+    (h₁ : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c →
+      c < C → Finset.gcd {a, b, c} id = 1 →
       HasPolychromColouring (Fin 3) {0, a, b, c})
-    (h₂ : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → C ≤ c → Finset.gcd {a, b, c} id = 1 →
+    (h₂ : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c →
+      C ≤ c → Finset.gcd {a, b, c} id = 1 →
       HasPolychromColouring (Fin 3) {0, a, b, c}) :
     ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → Finset.gcd {a, b, c} id = 1 →
       HasPolychromColouring (Fin 3) {0, a, b, c} := by
@@ -143,17 +146,17 @@ def Accept (a b c : ℕ) : Prop :=
   HasPolychromColouring (Fin 3) {0, (a : ℤ), (b : ℤ), (c : ℤ)}
 
 /-- All `{0, a, b, c}` with `a < A` satisfy `Accept`. -/
--- it works for all {0,a,b,c} with a < A
 def allA (A : ℕ) (b c : ℕ) : Prop :=
-  ∀ a : ℕ, 0 < a → a < b → a < A → a + b ≤ c → Nat.gcd a (Nat.gcd b c) = 1 → Accept a b c
+  ∀ a : ℕ, 0 < a → a < b → a < A → a + b ≤ c →
+    Nat.gcd a (Nat.gcd b c) = 1 → Accept a b c
 
 /-- All `{0, a, b, c}` with `b < B` satisfy `Accept`. -/
--- it works for all {0,a,b,c} with a < b < B
-def allB (B : ℕ) (c : ℕ) : Prop := ∀ b : ℕ, b < B → b < c → allA b b c
+def allB (B : ℕ) (c : ℕ) : Prop :=
+  ∀ b : ℕ, b < B → b < c → allA b b c
 
 /-- All `{0, a, b, c}` with `c < C` satisfy `Accept`. -/
--- it works for all {0,a,b,c} with a < b < c < C}
-def allC (C : ℕ) : Prop := ∀ c : ℕ, c < C → allB c c
+def allC (C : ℕ) : Prop :=
+  ∀ c : ℕ, c < C → allB c c
 
 lemma suffices_nat (C : ℕ) (h : allC C) :
     ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → c < C → Finset.gcd {a, b, c} id = 1 →
@@ -174,8 +177,7 @@ lemma allC_two : allC (nat_lit 2) := by grind [allC, allB, allA]
 lemma allC_three : allC (nat_lit 3) := by grind [allC, allB, allA]
 
 lemma allC_succ (C : ℕ) (hb : allB C C) (hC : allC C) : allC C.succ := by
-  intro c hc
-  obtain hc | rfl : c < C ∨ c = C := by grind
+  intro c hc; obtain hc | rfl : c < C ∨ c = C := by grind
   · exact hC c hc
   · exact hb
 
@@ -185,8 +187,7 @@ lemma allB_two (c : ℕ) : allB (nat_lit 2) c := by grind [allB, allA]
 
 lemma allB_succ (B c : ℕ) (ha : allA B B c) (hB : allB B c) :
     allB B.succ c := by
-  intro b hbB hbc
-  obtain hbB | rfl : b < B ∨ b = B := by grind
+  intro b hbB hbc; obtain hbB | rfl : b < B ∨ b = B := by grind
   · exact hB _ hbB hbc
   · exact ha
 
@@ -208,7 +209,7 @@ lemma allA_succ (A b c : ℕ) (h : Accept A b c ∨ A.gcd (b.gcd c) ≠ 1) (hA :
   intro a ha0 hab haA habc hgcd
   obtain haA | rfl : a < A ∨ a = A := by grind
   · exact hA a ha0 hab haA habc hgcd
-  grind
+  · grind
 
 lemma allA_succ_of_gcd (A b c g ga gb gc : ℕ) (hga : A.beq (ga.mul g)) (hgb : b.beq (gb.mul g))
     (hg : Nat.ble (nat_lit 2) g)
@@ -259,6 +260,7 @@ def toBitVector (a b c : ℕ) : ℕ :=
 @[simp] lemma Nat.lor_eq {x y : ℕ} : x.lor y = x ||| y := rfl
 @[simp] lemma Nat.land_eq {x y : ℕ} : x.land y = x &&& y := rfl
 
+/-- Alternative form of `toBitVector` for kernel reduction. -/
 def toBitVectorK (a b c : ℕ) : ℕ :=
   Nat.lor (Nat.lor (Nat.lor (nat_lit 1) (Nat.shiftLeft (nat_lit 1) a))
     (Nat.shiftLeft (nat_lit 1) b)) (Nat.shiftLeft (nat_lit 1) c)
@@ -267,6 +269,7 @@ def toBitVectorK (a b c : ℕ) : ℕ :=
 def toDoubleBitVector (q a b c : ℕ) : ℕ :=
   toBitVector a b c ||| (toBitVector a b c <<< q)
 
+/-- Alternative form of `toDoubleBitVector` for kernel reduction. -/
 def toDoubleBitVectorK (q a b c : ℕ) : ℕ :=
   Nat.lor (toBitVectorK a b c) (Nat.shiftLeft (toBitVectorK a b c) q)
 
@@ -306,7 +309,9 @@ lemma testBit_toDoubleBitVector_shiftRight {q a b c i k : ℕ} (hkq : k ≤ q) :
 
 lemma testBit_shiftRight_toDoubleBitVector {q a b c k z : ℕ} (hkq : k ≤ q) (hz : z < 2 ^ q)
     (h : 0 < (toDoubleBitVector q a b c >>> (q - k)) &&& z) :
-    ∃ i < q, (i - k : ZMod q) ∈ ({0, (a : ZMod q), (b : ZMod q), (c : ZMod q)} : Finset (ZMod q)) ∧
+    ∃ i < q, (i - k : ZMod q) ∈
+      ({0, (a : ZMod q), (b : ZMod q), (c : ZMod q)} :
+        Finset (ZMod q)) ∧
       z.testBit i = true := by
   simp only [Nat.pos_iff_ne_zero, ne_eq] at h
   obtain ⟨i, hi⟩ := Nat.exists_testBit_of_ne_zero h
@@ -317,6 +322,7 @@ lemma testBit_shiftRight_toDoubleBitVector {q a b c k z : ℕ} (hkq : k ≤ q) (
   · simp [Nat.testBit_lt_two_pow hz] at hi
   · simp
 
+/-- Checks that every translate of `(a, b, c)` hits all three colour classes. -/
 noncomputable def checkValid (q v x y z : ℕ) : Bool :=
   q.rec true fun i acc ↦
     let v' := v.shiftRight (q.sub i)

@@ -929,7 +929,8 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
           (j₀+1) (j₀+3) (v+g) hpast hwithin jg hvg_lo hvg_hi
       · have hvg_lt_ep : v + g <
             Finpartition.equiEndpoint m s s := by
-          grind [Finpartition.equiEndpoint_hi (show s ≠ 0 by omega) (n := m) (k := s)]
+          have hs : s ≠ 0 := by omega
+          grind [Finpartition.equiEndpoint_hi hs (n := m) (k := s)]
         have := idx_range_from_endpoints' m s
           (j₀+1) s (v+g) hpast hvg_lt_ep jg hvg_lo hvg_hi
         omega
@@ -984,12 +985,12 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
       omega
     exact mod_small _ this
 
--- Equi-partition index: which interval does position p fall in?
+/-- Equi-partition index: which interval does position `p` fall in. -/
 private def eqp_idx (q r : ℕ) (p : ℕ) : ℕ :=
   if p < r * (q + 1) then p / (q + 1)
   else r + (p - r * (q + 1)) / q
 
--- Equi-partition offset: position within the interval
+/-- Equi-partition offset: position within the interval. -/
 private def eqp_off (q r : ℕ) (p : ℕ) : ℕ :=
   if p < r * (q + 1) then p % (q + 1)
   else (p - r * (q + 1)) % q
@@ -1414,7 +1415,8 @@ private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ}
   set d := (k.val + 3 - s) % 3
   have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
   rcases this with h | h | h
-  exacts [⟨a₀, ha₀, hc₀ ▸ h1 h⟩, ⟨a₁, ha₁, hc₁ ▸ h2 h⟩, ⟨a₂, ha₂, hc₂ ▸ h3 h⟩]
+  exacts [⟨a₀, ha₀, hc₀ ▸ h1 h⟩, ⟨a₁, ha₁, hc₁ ▸ h2 h⟩,
+    ⟨a₂, ha₂, hc₂ ▸ h3 h⟩]
 
 /-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
 private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
@@ -2513,7 +2515,9 @@ are distinct, guaranteeing every 2×2 block contains all three colors.
 -- The coloring function for Case 2b.
 -- Even cycles: 01010...011 (alternating 0,1, last position overridden to 1)
 -- Odd cycles: 22020...020 (first position 2, then: even→0, odd→2)
-private def case2b_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
+/-- Colouring for Case 2b: `d₁` even, `e₁` odd. -/
+private def case2b_coloring (d₁ e₁ : ℕ) :
+    ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
   if i.val % 2 = 0 then  -- even cycle
     if j.val = e₁ - 1 then 1
     else if j.val % 2 = 0 then 0
@@ -2793,8 +2797,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
         (fun hj' hj => h_degenerate_false j' j hπ_jj'.symm hj' hj) k)
 
 -- Pattern assignment for Case 2c, parametrized by k₀ (the wrap shift).
--- Variant A (k₀ % 3 ≠ 2): even→0, odd→1, last→2.
--- Variant B (k₀ % 3 = 2): even→0, odd→2, last→1.
+/-- Colouring pattern for Case 2c: alternating with a fixup at the end. -/
 private def case2c_pattern (d₁ k₀ i : ℕ) : Fin 3 :=
   if i = d₁ - 1 ∧ d₁ % 2 = 1 then
     if k₀ % 3 = 2 then 1 else 2
@@ -3666,8 +3669,9 @@ dispatches to `main_case_one` or `main_case_two` based on
 $\min(\gcd(b, m), \gcd(b{-}a, m))$.
 -/
 theorem normal_bit :
-    ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → 289 ≤ c → Finset.gcd {a, b, c} id = 1 →
-          HasPolychromColouring (Fin 3) {0, a, b, c} := by
+    ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c →
+      289 ≤ c → Finset.gcd {a, b, c} id = 1 →
+        HasPolychromColouring (Fin 3) {0, a, b, c} := by
   intro a b c ha hab hbc hc hgcd
   set m := (c - a + b).toNat
   have hm_eq : (m : ℤ) = c - a + b := Int.toNat_of_nonneg (by grind)

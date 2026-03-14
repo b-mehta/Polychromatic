@@ -54,8 +54,11 @@ open MeasureTheory ProbabilityTheory
 lemma standardCondition_lovasz [DecidableEq G] {k : ℕ} {S X : Finset G} (hk : k ≠ 0) :
     standardCondition
       (Measure.pi (fun _ ↦ uniformOn Set.univ))
-      (fun x : X ↦ {χ : X + S → Fin k | ∃ c, ∀ s : S, χ ⟨x + s, add_mem_add x.2 s.2⟩ ≠ c})
-      (fun x : X ↦ X.attach.filter (fun i ↦ x.1 - i.1 ∈ (S - S).erase 0)) := by
+      (fun x : X ↦ {χ : X + S → Fin k |
+        ∃ c, ∀ s : S, χ ⟨x + s, add_mem_add x.2 s.2⟩ ≠ c})
+      (fun x : X ↦
+        X.attach.filter fun i ↦
+          x.1 - i.1 ∈ (S - S).erase 0) := by
   have : Nonempty (Fin k) := Fin.pos_iff_nonempty.1 (by grind)
   set add : X → S → X + S := fun x s ↦ ⟨x + s, add_mem_add x.2 s.2⟩
   set D : X → Finset (X + S) := fun x ↦ S.attach.image (fun s ↦ add x s)
@@ -76,7 +79,9 @@ lemma standardCondition_lovasz [DecidableEq G] {k : ℕ} {S X : Finset G} (hk : 
     peel with c s hs
     rw [h _ _ _ hs rfl]
 
-lemma prob_bad_event [DecidableEq G] {k m : ℕ} {S X : Finset G} {x : X} (hm : #S = m) (hk : k ≠ 0) :
+lemma prob_bad_event [DecidableEq G] {k m : ℕ}
+    {S X : Finset G} {x : X} (hm : #S = m)
+    (hk : k ≠ 0) :
     (Measure.pi (fun _ ↦ uniformOn Set.univ) : Measure (X + S → Fin k)).real
       {χ : X + S → Fin k | ∃ c, ∀ s : S, χ ⟨x + s, add_mem_add x.2 s.2⟩ ≠ c} ≤
         k * (1 - (k : ℝ)⁻¹) ^ m := by
@@ -114,7 +119,9 @@ lemma prob_bad_event [DecidableEq G] {k m : ℕ} {S X : Finset G} {x : X} (hm : 
 lemma card_neighbour [DecidableEq G] {m : ℕ} {S X : Finset G} (hm : #S = m) {x : X} :
     #(X.attach.filter (fun i ↦ x.1 - i.1 ∈ (S - S).erase 0)) ≤ m * (m - 1) := by
   calc
-    #({i ∈ X.attach | x.1 - i.1 ∈ (S - S).erase 0}) = #({i ∈ X | ↑x - i ∈ (S - S).erase 0}) := by
+    #({i ∈ X.attach |
+        x.1 - i.1 ∈ (S - S).erase 0}) =
+      #({i ∈ X | ↑x - i ∈ (S - S).erase 0}) := by
       rw [filter_attach (fun i ↦ x.1 - i ∈ (S - S).erase 0), card_map, card_attach]
     _ ≤ #(((S - S).erase 0).image (x.1 - ·)) := by
       apply card_le_card
@@ -135,9 +142,8 @@ lemma nonempty_of_uniformOn_apply_pos' {Ω : Type*} [MeasurableSpace Ω] {s t : 
 
 lemma nonempty_of_uniformOn_apply_pos {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSingletonClass Ω] {s t : Set Ω} (h : 0 < uniformOn s t) :
-    (s ∩ t).Nonempty := by
-  have hs_fin : s.Finite := finite_of_uniformOn_ne_zero h.ne'
-  exact nonempty_of_uniformOn_apply_pos' h (hs_fin.measurableSet)
+    (s ∩ t).Nonempty :=
+  nonempty_of_uniformOn_apply_pos' h (finite_of_uniformOn_ne_zero h.ne').measurableSet
 
 /-- A condition on `k` (number of colours) and `m` (size of set) that guarantees the existence
 of a polychromatic colouring. -/
@@ -196,7 +202,8 @@ lemma exists_of_le {k m : ℕ} {S : Finset G} (hm : #S = m) (hm₂ : 2 ≤ m) (h
     HasPolychromColouring (Fin k) S := by
 -- ANCHOR_END: exists_of_le
   classical
-  have (X : Finset G) : ∃ χ : G → Fin k, ∀ x ∈ X, ∀ (c : Fin k), ∃ i ∈ x +ᵥ S, χ i = c :=
+  have (X : Finset G) : ∃ χ : G → Fin k,
+      ∀ x ∈ X, ∀ (c : Fin k), ∃ i ∈ x +ᵥ S, χ i = c :=
     exists_finite_of_le X hm hm₂ hk hkm
   choose g hg using this
   obtain ⟨χ, hχ⟩ := Finset.rado_selection (α := G) (β := fun _ ↦ Fin k) g
@@ -216,8 +223,7 @@ lemma condition_of_mul_exp_le {k m : ℕ} (hk : k ≠ 0) (hm : m ≠ 0)
     (hm : m ^ 2 * k * Real.exp (-m / k + 1) ≤ 1) :
     polychromColouringBound k m := by
   have : 0 ≤ 1 - (k : ℝ)⁻¹ := by
-    simp only [sub_nonneg]
-    apply inv_le_one_of_one_le₀ (by simp; lia)
+    simp only [sub_nonneg]; apply inv_le_one_of_one_le₀ (by simp; lia)
   calc
     _ ≤ Real.exp 1 * m ^ 2 * k * (1 - (k : ℝ)⁻¹) ^ m := by
       gcongr
@@ -229,24 +235,20 @@ lemma condition_of_mul_exp_le {k m : ℕ} (hk : k ≠ 0) (hm : m ≠ 0)
       · simpa
       exact Real.add_one_le_exp _
     _ = m ^ 2 * k * (Real.exp 1 * Real.exp (- m / k)) := by
-      rw [← Real.exp_nat_mul]
-      ring_nf
-    _ = m ^ 2 * k * Real.exp (- m / k + 1) := by
-      grind [Real.exp_add]
+      rw [← Real.exp_nat_mul]; ring_nf
+    _ = m ^ 2 * k * Real.exp (- m / k + 1) := by grind [Real.exp_add]
     _ ≤ 1 := hm
 
 lemma polychromColouringBound_succ {k m : ℕ} (hk : k ≠ 0) (h : 2 * k ≤ m + 1)
     (hkm : polychromColouringBound k m) :
     polychromColouringBound k (m + 1) := by
   have : 0 ≤ 1 - (k : ℝ)⁻¹ := by
-    simp only [sub_nonneg]
-    apply inv_le_one_of_one_le₀ (by simp; lia)
+    simp only [sub_nonneg]; apply inv_le_one_of_one_le₀ (by simp; lia)
   rw [polychromColouringBound, mul_right_comm _ _ (k : ℝ), mul_assoc (_ * _)] at hkm ⊢
   refine hkm.trans' ?_
   rw [pow_succ', ← mul_assoc (_ + 1 : ℝ), Nat.cast_add_one]
   gcongr _ * (?_ * _)
-  simp only [add_sub_cancel_right, fieldLe]
-  rify at h
+  simp only [add_sub_cancel_right, fieldLe]; rify at h
   linear_combination (m : ℝ) * h
 
 lemma polychromColouringBound_mono {k m m' : ℕ} (hk : k ≠ 0) (h : 2 * k ≤ m + 1)
@@ -299,7 +301,8 @@ lemma condition_of_mul_sq {k m : ℕ} (hm : 3 * k ^ 2 ≤ m) :
   intro n hn
   simp only [g]
   suffices (1 / n + 1) ^ 5 ≤ Real.exp 3 by
-    simp only [Nat.cast_add_one, mul_add_one, neg_add_rev, Real.exp_add, ← mul_assoc, Real.exp_neg]
+    simp only [Nat.cast_add_one, mul_add_one, neg_add_rev,
+      Real.exp_add, ← mul_assoc, Real.exp_neg]
     gcongr ?_ * _ * _
     grw [← this]
     rw [← inv_pow, ← mul_pow]
@@ -352,8 +355,7 @@ lemma linear_le_mBound {k : ℕ} : 2 * k ≤ mBound k := by
 
 @[simp] lemma mBound_pos {k : ℕ} (hk : k ≠ 0) : 0 < mBound k := by
   grw [← linear_le_mBound]; positivity
-@[simp] lemma mBound_ne_zero {k : ℕ} (hk : k ≠ 0) : mBound k ≠ 0 := by
-  grind [mBound_pos]
+@[simp] lemma mBound_ne_zero {k : ℕ} (hk : k ≠ 0) : mBound k ≠ 0 := by grind [mBound_pos]
 
 lemma ceil_nat_mul_le {k : ℕ} {x : ℝ} : ⌈k * x⌉₊ ≤ k * ⌈x⌉₊ := by
   grw [Nat.ceil_le, Nat.cast_mul, ← Nat.le_ceil x]
@@ -406,7 +408,8 @@ lemma mBound_le_weak {k : ℕ} (hk : 4 ≤ k) : mBound k ≤ 8 * k * log k := by
 open Asymptotics Filter Topology
 
 lemma mBound_isLittleO :
-    ∃ f : ℕ → ℝ, f =o[atTop] (fun _ ↦ 1 : ℕ → ℝ) ∧ ∀ k ≥ 2, mBound k ≤ (3 + f k) * k * log k := by
+    ∃ f : ℕ → ℝ, f =o[atTop] (fun _ ↦ 1 : ℕ → ℝ) ∧
+      ∀ k ≥ 2, mBound k ≤ (3 + f k) * k * log k := by
   refine ⟨fun k ↦ (2 * log (log k) + 6.2) / log k, ?_, ?_⟩
   · rw [isLittleO_one_iff]
     suffices Tendsto (fun x : ℝ ↦ (2 * log x + 6.2) / x) atTop (𝓝 0) from

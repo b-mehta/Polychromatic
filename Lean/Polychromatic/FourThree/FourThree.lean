@@ -121,10 +121,14 @@ section
 
 open Lean Expr Meta
 
+/-- Converts a colouring list to a bit vector for colour `x`. -/
 def mkColourVector (l : Array (Fin 3)) (x : Fin 3) : Nat :=
   l.foldr (init := 0) fun k i ↦ Nat.bit (k == x) i
 
-def mkTable (tot : ℕ) : MetaM (Std.HashMap (ℕ × ℕ × ℕ × ℕ) Lean.Name × Array ℕ) :=
+/-- Builds a table of verified colourings from external data. -/
+def mkTable (tot : ℕ) :
+    MetaM (Std.HashMap (ℕ × ℕ × ℕ × ℕ) Lean.Name ×
+      Array ℕ) :=
   withTraceNode `allC (fun _ ↦ return "mkTable") do
   let i ← IO.FS.lines "../Generation/full-colors.log"
   let i := i.take tot
@@ -160,7 +164,10 @@ def mkTable (tot : ℕ) : MetaM (Std.HashMap (ℕ × ℕ × ℕ × ℕ) Lean.Nam
   trace[debug] "size of table is {table.size}"
   return (table, entries)
 
-def proveAccept (a b c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
+/-- Generates a proof of `Accept a b c`. -/
+def proveAccept (a b c : ℕ)
+    (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name)
+    (entries : Array ℕ) :
     StateT ℕ MetaM Expr := do
   if b % 3 = 1 ∧ c % 3 = 2 then
     return mkApp5 (mkConst ``accept_3_0)
@@ -191,7 +198,10 @@ def proveAccept (a b c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Na
     reflBoolTrue reflBoolTrue reflBoolTrue
   return pf
 
-def prove_allA (A b c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
+/-- Generates a proof of `allA A b c`. -/
+def prove_allA (A b c : ℕ)
+    (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name)
+    (entries : Array ℕ) :
     StateT ℕ MetaM Expr :=
   match A with
   | 0 => return mkApp2 (mkConst ``allA_zero) (mkRawNatLit b) (mkRawNatLit c)
@@ -217,7 +227,10 @@ def prove_allA (A b c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Nam
         (mkRawNatLit A) (mkRawNatLit b) (mkRawNatLit c) pf_a pf_rec
       return pf
 
-def prove_allB (B c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
+/-- Generates a proof of `allB B c`. -/
+def prove_allB (B c : ℕ)
+    (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name)
+    (entries : Array ℕ) :
     StateT ℕ MetaM Expr :=
   match B with
   | 0 => return mkApp (mkConst ``allB_zero) (mkRawNatLit c)
@@ -237,7 +250,10 @@ def prove_allB (B c : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name)
         (mkRawNatLit c) reflBoolTrue pf_a pf_b
       return pf
 
-def prove_allC (C : ℕ) (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name) (entries : Array ℕ) :
+/-- Generates a proof of `allC C`. -/
+def prove_allC (C : ℕ)
+    (table : Std.HashMap (ℕ × ℕ × ℕ × ℕ) Name)
+    (entries : Array ℕ) :
     StateT ℕ MetaM Expr :=
   match C with
   | 0 => return mkConst ``allC_zero

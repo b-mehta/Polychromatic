@@ -98,7 +98,9 @@ lemma IndepFrom.cond_iInter [Countable ι] (h : IndepFrom s t P)
     ENNReal.inv_mul_cancel ht₀ (by simp), mul_one]
 
 lemma IndepFrom.cond_biInter (h : IndepFrom s t P) {C : Set ι}
-    {A : ι → Set Ω} (hC : C.Countable) (hs : MeasurableSet s) (ht : ∀ i ∈ C, A i ∈ t ∨ (A i)ᶜ ∈ t)
+    {A : ι → Set Ω} (hC : C.Countable)
+    (hs : MeasurableSet s)
+    (ht : ∀ i ∈ C, A i ∈ t ∨ (A i)ᶜ ∈ t)
     (ht₀ : P (⋂ i ∈ C, A i) ≠ 0) :
     P[s | ⋂ i ∈ C, A i] = P s := by
   have : Countable C := by simpa
@@ -125,8 +127,7 @@ lemma lopsidedCondition.real [IsProbabilityMeasure P]
     (h : lopsidedCondition P A N) (hiS : i ∉ S) (hS : Disjoint (N i) S) :
     P.real (A i ∩ ⋂ j ∈ S, (A j)ᶜ) ≤ P.real (A i) * P.real (⋂ j ∈ S, (A j)ᶜ) := by
   rw [real_def, real_def, real_def, ← ENNReal.toReal_mul,
-    ENNReal.toReal_le_toReal (by finiteness) (by finiteness)]
-  exact h _ _ hiS hS
+    ENNReal.toReal_le_toReal (by finiteness) (by finiteness)]; exact h _ _ hiS hS
 
 /-- The standard independence condition for the local lemma, stronger than lopsided. -/
 def standardCondition (P : Measure Ω) (A : ι → Set Ω) (N : ι → Finset ι) : Prop :=
@@ -135,21 +136,16 @@ def standardCondition (P : Measure Ω) (A : ι → Set Ω) (N : ι → Finset ι
 lemma lopsidedCondition_of_standardCondition [IsProbabilityMeasure P]
     (h : standardCondition P A N) :
     lopsidedCondition P A N := by
-  intro i S hiS hS
-  specialize h i
+  intro i S hiS hS; specialize h i
   simp only [← Finset.mem_coe (s := S)]
   rw [h.prob_inter_biInter (C := (S : Set ι)) (A := fun i ↦ (A i)ᶜ) S.countable_toSet _]
-  intro j hj
-  simp only [Finset.mem_coe] at hj
-  right
-  simp only [compl_compl]
-  rw [Finset.disjoint_right] at hS
-  apply Set.mem_image_of_mem
-  simp only [Set.mem_compl_iff, Set.mem_insert_iff, Finset.mem_coe] -- TODO: try removing the simp
-  grind
+  intro j hj; simp only [Finset.mem_coe] at hj; right; simp only [compl_compl]
+  rw [Finset.disjoint_right] at hS; apply Set.mem_image_of_mem
+  simp only [Set.mem_compl_iff, Set.mem_insert_iff, Finset.mem_coe]; grind
 
 /-- An upper bound on `P(A i ∩ ⋂_{j ∈ S} Aⱼᶜ)`. -/
-def IndividualBound (P : Measure Ω) (A : ι → Set Ω) (x : ι → ℝ) (i : ι) (S : Finset ι) : Prop :=
+def IndividualBound (P : Measure Ω) (A : ι → Set Ω)
+    (x : ι → ℝ) (i : ι) (S : Finset ι) : Prop :=
   P.real (A i ∩ ⋂ j ∈ S, (A j)ᶜ) ≤ x i * P.real (⋂ j ∈ S, (A j)ᶜ)
 
 lemma IndividualBound.compl [IsProbabilityMeasure P] (hA : MeasurableSet (A i))
@@ -168,7 +164,8 @@ lemma iteration [DecidableEq ι] [IsProbabilityMeasure P] (hA : ∀ i, Measurabl
     (htS : t ⊆ S)
     (ht'S : t' ⊆ S)
     (h : ∀ T ⊂ S, ∀ {i}, i ∉ T → IndividualBound P A x i T) :
-    (∏ j ∈ t, (1 - x j)) * P.real (⋂ j ∈ t', (A j)ᶜ) ≤ P.real (⋂ j ∈ t ∪ t', (A j)ᶜ) := by
+    (∏ j ∈ t, (1 - x j)) * P.real (⋂ j ∈ t', (A j)ᶜ) ≤
+      P.real (⋂ j ∈ t ∪ t', (A j)ᶜ) := by
   induction t using cons_induction_on with
   | empty => simp
   | cons a t hat ih =>
@@ -234,7 +231,9 @@ lemma individualBound [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
         exact Set.inter_subset_right
       _ ≤ P.real (A i) * P.real (⋂ j ∈ S₂, (A j)ᶜ) :=
         hN.real (by simp [S₂, hiS]) (by simp [S₂, S₁, disjoint_sdiff])
-      _ ≤ x i * (∏ j ∈ N i, (1 - x j)) * P.real (⋂ j ∈ S₂, (A j)ᶜ) := by gcongr; exact hAx i
+      _ ≤ x i * (∏ j ∈ N i, (1 - x j)) *
+            P.real (⋂ j ∈ S₂, (A j)ᶜ) := by
+          gcongr; exact hAx i
       _ = x i * ((∏ j ∈ N i, (1 - x j)) * P.real (⋂ j ∈ S₂, (A j)ᶜ)) := by ring
       _ ≤ x i * ((∏ j ∈ S₁, (1 - x j)) * P.real (⋂ j ∈ S₂, (A j)ᶜ)) := by
         gcongr
@@ -246,8 +245,9 @@ lemma individualBound [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
         rw [← hS]
         exact iteration hA disjoint_sdiff hx₁ _ (by simp [S₁]) (by simp [S₂]) ih
 
-/-- The general Lovász Local Lemma with individual bounds: if `P(A i) ≤ x i * ∏_{j ∈ N i} (1 - x j)`
-for all `i`, then `P(⋂ᵢ Aᵢᶜ) ≥ ∏ᵢ (1 - xᵢ) > 0`. -/
+/-- The general Lovász Local Lemma with individual bounds:
+if `P(A i) ≤ x i * ∏_{j ∈ N i} (1 - x j)` for all `i`,
+then `P(⋂ᵢ Aᵢᶜ) ≥ ∏ᵢ (1 - xᵢ) > 0`. -/
 theorem localLemma [Fintype ι] [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
     (hx₀ : ∀ i, 0 ≤ x i) (hx₁ : ∀ i, x i ≤ 1)
     (h : lopsidedCondition P A N)
@@ -272,7 +272,9 @@ lemma add_one_inv_pow_le_exp {n : ℕ} : (1 + (n : ℝ)⁻¹) ^ n ≤ Real.exp 1
 /-- The symmetric Lovász Local Lemma: if all events have probability at most `p` and
 neighbourhood size at most `d`, and `e · p · (d + 1) ≤ 1`, then `P(⋂ᵢ Aᵢᶜ) > 0`. -/
 theorem symmetricLocalLemma [Finite ι] [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
-    {d : ℕ} (hd : d ≠ 0) {p : ℝ} (h : lopsidedCondition P A N) (hAp : ∀ i, P.real (A i) ≤ p)
+    {d : ℕ} (hd : d ≠ 0) {p : ℝ}
+    (h : lopsidedCondition P A N)
+    (hAp : ∀ i, P.real (A i) ≤ p)
     (hN : ∀ i, #(N i) ≤ d)
     (hpd : Real.exp 1 * p * (d + 1) ≤ 1) :
     0 < P.real (⋂ i, (A i)ᶜ) := by
@@ -306,12 +308,10 @@ lemma eq_sInter_of_mem_generatePiSystem {Ω : Type*} {t : Set (Set Ω)} {A : Set
     (hA : A ∈ generatePiSystem t) :
     ∃ S : Set (Set Ω), S ⊆ t ∧ A = ⋂₀ S := by
   induction hA with
-  | @base s hs =>
-    refine ⟨{s}, by simpa, by simp⟩
+  | @base s hs => exact ⟨{s}, by simpa, by simp⟩
   | @inter s₁ s₂ _ _ h hs₁ hs₂ =>
-    obtain ⟨S₁, hS₁, rfl⟩ := hs₁
-    obtain ⟨S₂, hS₂, rfl⟩ := hs₂
-    refine ⟨S₁ ∪ S₂, Set.union_subset hS₁ hS₂, by simp [Set.sInter_union]⟩
+    obtain ⟨S₁, hS₁, rfl⟩ := hs₁; obtain ⟨S₂, hS₂, rfl⟩ := hs₂
+    exact ⟨S₁ ∪ S₂, Set.union_subset hS₁ hS₂, by simp [Set.sInter_union]⟩
 
 lemma dependsOn_mem_iff_exists_preimage {α β : Type*} {t : Set α} {A : Set (α → β)} :
     DependsOn (· ∈ A) t ↔ ∃ B : Set (t → β), A = t.restrict ⁻¹' B :=
@@ -351,7 +351,9 @@ lemma standardCondition_of {α β : Type*} [Finite ι] [MeasurableSpace β] [IsP
       ∃ Sj : Set (α → β), MeasurableSet Sj ∧ DependsOn (· ∈ Sj) (J.biUnion D) ∧
         (⋂ j ∈ J, A j) = (fun ω a ↦ I a ω) ⁻¹' Sj := by
     choose S hSm hSd hSA using hA
-    refine ⟨⋂ j ∈ J, S j, MeasurableSet.biInter (Set.to_countable _) (by simp [hSm]), ?_, ?_⟩
+    refine ⟨⋂ j ∈ J, S j,
+      MeasurableSet.biInter (Set.to_countable _)
+        (by simp [hSm]), ?_, ?_⟩
     · simp [DependsOn] at hSd ⊢
       grind
     · simp [Set.preimage_iInter₂, hSA]
