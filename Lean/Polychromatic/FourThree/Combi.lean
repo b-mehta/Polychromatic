@@ -74,6 +74,22 @@ def zmod_set (m : ℕ) (a b : ℤ) : Finset (ZMod m) :=
 
 /-- Auxiliary: the polychromatic number is invariant under the translation that
     maps `{0, a, b, c}` to `zmod_set m a b`. -/
+/- Aristotle alternative for `polychromNumber_zmod` (10 lines vs 12 original, -2).
+
+lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
+    polychromNumber (({0, a, b, c} : Finset ℤ).image Int.cast : Finset (ZMod m)) =
+      polychromNumber (zmod_set m a b) := by
+        unfold zmod_set;
+        rw [ show c = a - b + m by linarith ] ; ring;
+        rw [ show ( Finset.image Int.cast { 0, -a + b, b, -a + b * 2 } : Finset ( ZMod m ) ) = ( Finset.image ( fun x : ℤ => x + ( -a + b ) ) { 0, a, b, a - b } |> Finset.image Int.cast ) from ?_ ];
+        · rw [ ← polychromNumber_vadd ] ; ring;
+          swap;
+          exact ↑b + -↑a;
+          congr ; ext ; ring;
+          simp +decide [ Finset.mem_vadd_finset, Finset.mem_insert, Finset.mem_singleton ] ; ring_nf ; aesop;
+        · ext; simp [Finset.mem_image];
+          grind +ring
+-/
 lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
     polychromNumber (({0, a, b, c} : Finset ℤ).image Int.cast : Finset (ZMod m)) =
       polychromNumber (zmod_set m a b) := by
@@ -439,6 +455,39 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
     rw [List.getElem?_append_right (by grind)]
 
 /-! ### Case 6: Wrap, B region, h = 0 → BB -/
+/- Aristotle alternative for `case_wrap_BB` (20 lines vs 27 original, -7).
+
+private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
+    (k m i : ℕ)
+    (hBlen : B.length = A.length + 1)
+    (hmaxOff : offsets.foldr max 0 ≤ A.length)
+    (hBB : checkLinearPolychrom offsets (B ++ B) = true)
+    (hm : B.length * k = m)
+    (hi : i < m)
+    (h_wrap : m ≤ i + offsets.foldr max 0)
+    (hk_pos : 0 < k) :
+    CaseGoal A B offsets 0 m i := by
+      -- Since $B$ is a list of length $A.length + 1$, and we're using $B ++ B$ (which has length $2 * (A.length + 1)$), the length of $XY$ must be at least $2 * (A.length + 1)$. But $j + \text{maxOff} < \text{length}(XY)$ implies that $\text{maxOff} < \text{length}(XY) - j$. Since $j$ is less than $m$ (which is $(A.length + 1) * k$), this should hold.
+      use B ++ B, i % (A.length + 1);
+      -- Since $B$ is a list of length $A.length + 1$, and we're using $B ++ B$ (which has length $2 * (A.length + 1)$), the length of $XY$ must be at least $2 * (A.length + 1)$. But $j + \text{maxOff} < \text{length}(XY)$ implies that $\text{maxOff} < \text{length}(XY) - j$. Since $j$ is less than $m$ (which is $(A.length + 1) * k$), this should hold. Therefore, the third part of the conjunction holds.
+      have h_third_part : ∀ s ≤ List.foldr Max.max 0 offsets, (B ++ B)[i % (A.length + 1) + s]? = Option.some (blockColorVal A B 0 ((i + s) % m)) := by
+        intros s hs; rw [ blockColorVal ] ; simp +decide [ Nat.mod_eq_of_lt, * ] ;
+        rw [ show ( i + s ) % m % ( A.length + 1 ) = ( i % ( A.length + 1 ) + s ) % ( A.length + 1 ) from ?_ ];
+        · by_cases h : i % ( A.length + 1 ) + s < B.length <;> simp_all +decide [ Nat.mod_eq_of_lt ];
+          · rw [ List.getElem?_append ] ; aesop;
+          · -- Since $i \% (A.length + 1) + s \geq A.length + 1$, we have $(i + s) \% (A.length + 1) = (i \% (A.length + 1) + s) \% (A.length + 1)$.
+            have h_mod : (i + s) % (A.length + 1) = (i % (A.length + 1) + s) % (A.length + 1) := by
+              simp +decide [ Nat.add_mod ];
+            -- Since $i \% (A.length + 1) + s \geq A.length + 1$, we can write $i \% (A.length + 1) + s = (A.length + 1) + r$ for some $r$ such that $0 \leq r < A.length + 1$.
+            obtain ⟨r, hr⟩ : ∃ r, i % (A.length + 1) + s = (A.length + 1) + r ∧ r < A.length + 1 := by
+              exact ⟨ i % ( A.length + 1 ) + s - ( A.length + 1 ), by rw [ Nat.add_sub_cancel' h ], by rw [ tsub_lt_iff_left h ] ; linarith [ Nat.mod_lt i ( Nat.succ_pos A.length ) ] ⟩;
+            simp +decide [ hr, h_mod ];
+            simp +decide [ List.getElem?_append, hr.2, Nat.mod_eq_of_lt ];
+            simp +decide [ hBlen, hr.2 ];
+        · rw [ Nat.mod_mod_of_dvd _ ( show A.length + 1 ∣ m from hm ▸ dvd_mul_of_dvd_left ( by aesop ) _ ) ] ; simp +decide [ Nat.add_mod ] ;
+      simp_all +decide [ Nat.mod_lt ];
+      linarith [ Nat.mod_lt i ( Nat.succ_pos A.length ) ]
+-/
 private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     (k m i : ℕ)
     (hBlen : B.length = A.length + 1)
@@ -651,6 +700,17 @@ They are not important on their own.
 private lemma lt_two' (n : ℕ) (h : n < 2) : n = 0 ∨ n = 1 := by omega
 
 /-- Phase differs when gap is 1 or 2 mod s, and 3 ∣ s. -/
+/- Aristotle alternative for `phase_ne_of_gap` (4 lines vs 11 original, -7).
+
+private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
+    (hj₀ : j₀ < s) (hjg : jg < s)
+    (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
+    j₀ % 3 ≠ jg % 3 := by
+      -- Since $s$ is a multiple of 3, we can simplify the gap condition modulo 3.
+      have h_mod3 : (jg + s - j₀) % 3 = 1 ∨ (jg + s - j₀) % 3 = 2 := by
+        obtain h | h := hgap <;> rw [ ← Nat.mod_mod_of_dvd _ hs3, h ] <;> norm_num [ Nat.mod_eq_of_lt ] ;
+      omega
+-/
 private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
     (hj₀ : j₀ < s) (hjg : jg < s)
     (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
@@ -880,6 +940,15 @@ private def eqp_off (q r : ℕ) (p : ℕ) : ℕ :=
   if p < r * (q + 1) then p % (q + 1)
   else (p - r * (q + 1)) % q
 
+/- Aristotle alternative for `eqp_idx_m` (4 lines vs 6 original, -2).
+
+private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) :
+    eqp_idx q r (s * q + r) = s := by
+      unfold eqp_idx;
+      split_ifs <;> simp_all +decide [ Nat.add_div, Nat.mul_div_cancel, hq ];
+      · nlinarith;
+      · exact Eq.symm ( by nlinarith [ Nat.div_mul_le_self ( s * q + r - r * ( q + 1 ) ) q, Nat.sub_add_cancel ( by linarith : r * ( q + 1 ) ≤ s * q + r ), Nat.div_add_mod ( s * q + r - r * ( q + 1 ) ) q, Nat.mod_lt ( s * q + r - r * ( q + 1 ) ) hq ] )
+-/
 private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) : eqp_idx q r (s * q + r) = s := by
   have hge : ¬(s * q + r < r * (q + 1)) := by nlinarith
   simp only [eqp_idx, if_neg hge]
@@ -889,6 +958,17 @@ private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) : eqp_idx q r (s
   rw [hsub, Nat.mul_div_cancel _ hq]; omega
 
 -- General fact: consecutive ℕ quotients differ by 0 or 1
+/- Aristotle alternative for `div_step` (6 lines vs 7 original, -1).
+
+private lemma div_step (a b : ℕ) (hb : 0 < b) :
+    (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by
+      -- Since $a \geq b$, we can write $a = b * k + r$ where $0 \leq r < b$.
+      obtain ⟨k, r, hr⟩ : ∃ k r, a = b * k + r ∧ 0 ≤ r ∧ r < b := by
+        exact ⟨ a / b, a % b, by rw [ Nat.div_add_mod ], Nat.zero_le _, Nat.mod_lt _ hb ⟩;
+      norm_num [ hr, Nat.add_div, hb ];
+      rcases b with ( _ | _ | b ) <;> simp_all +decide [ Nat.div_eq_of_lt, Nat.mod_eq_of_lt ];
+      exact lt_or_ge _ _
+-/
 private lemma div_step (a b : ℕ) (hb : 0 < b) : (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by
   have hle : a / b ≤ (a + 1) / b := Nat.div_le_div_right (Nat.le_succ a)
   suffices h : (a + 1) / b ≤ a / b + 1 by omega
@@ -898,6 +978,25 @@ private lemma div_step (a b : ℕ) (hb : 0 < b) : (a + 1) / b = a / b ∨ (a + 1
   calc (a + 1) / b ≤ b * (a / b + 1) / b := Nat.div_le_div_right hub
     _ = a / b + 1 := Nat.mul_div_cancel_left _ hb
 
+/- Aristotle alternative for `eqp_idx_step` (13 lines vs 19 original, -6).
+
+private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
+    eqp_idx q r (p + 1) = eqp_idx q r p ∨
+    eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
+      -- By definition of eqp_idx, we have two cases to consider.
+      unfold eqp_idx;
+      split_ifs <;> simp_all +decide [ Nat.succ_div ];
+      · tauto;
+      · linarith;
+      · -- Since $p < r * (q + 1)$ and $r * (q + 1) \leq p + 1$, we have $p = r * (q + 1) - 1$.
+        have hp : p = r * (q + 1) - 1 := by
+          omega;
+        cases r <;> cases q <;> simp_all +decide [ Nat.succ_mul ];
+        simp +arith +decide [ Nat.add_div ];
+        norm_num [ Nat.div_eq_of_lt, Nat.mod_eq_of_lt ];
+      · rw [ show p + 1 - r * ( q + 1 ) = ( p - r * ( q + 1 ) ) + 1 by rw [ tsub_add_eq_add_tsub ( by linarith ) ] ] ; simp +arith +decide [ Nat.succ_div ] ;
+        exact em' _
+-/
 private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
     eqp_idx q r (p + 1) = eqp_idx q r p ∨
     eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
@@ -937,6 +1036,30 @@ private lemma mod_zero_step (a b : ℕ) (hb : 0 < b)
   have h4 : b * ((a + 1) / b) = b * (a / b) + b := by grind
   grind
 
+/- Aristotle alternative for `eqp_off_succ_same` (18 lines vs 30 original, -12).
+
+private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
+    (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
+    eqp_off q r (p + 1) = eqp_off q r p + 1 := by
+      -- By definition of eqp_off, we have eqp_off q r (p + 1) = (p + 1) % (q + 1) if p + 1 < r * (q + 1), otherwise it's (p + 1 - r * (q + 1)) % q.
+      by_cases h_case : p + 1 < r * (q + 1);
+      · unfold eqp_idx eqp_off at *;
+        split_ifs at * <;> simp_all +decide [ Nat.succ_eq_add_one, Nat.add_div ];
+        · rcases q with ( _ | q ) <;> simp_all +decide [ Nat.div_eq_of_lt, Nat.mod_eq_of_lt ];
+          rw [ Nat.add_mod, Nat.mod_eq_of_lt ] <;> aesop;
+        · grind;
+      · unfold eqp_off;
+        -- Since $p + 1 \geq r * (q + 1)$, we have $p \geq r * (q + 1)$. Therefore, $p = r * (q + 1) + k$ for some $k$.
+        obtain ⟨k, hk⟩ : ∃ k, p = r * (q + 1) + k := by
+          use p - r * (q + 1);
+          unfold eqp_idx at h;
+          split_ifs at h <;> try omega;
+          norm_num [ show p + 1 - r * ( q + 1 ) = 0 by omega ] at h;
+          nlinarith [ Nat.div_mul_le_self p ( q + 1 ) ];
+        simp_all +decide [ eqp_idx ];
+        split_ifs at * <;> simp_all +decide [ add_assoc, Nat.add_sub_add_left ];
+        rw [ mod_step ] ; aesop
+-/
 private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
     eqp_off q r (p + 1) = eqp_off q r p + 1 := by
@@ -971,6 +1094,22 @@ private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
       unfold eqp_idx; rw [if_neg h2]
     rw [h3, h4, hsub] at h; omega
 
+/- Aristotle alternative for `eqp_off_succ_new` (10 lines vs 27 original, -17).
+
+private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
+    (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
+    eqp_off q r (p + 1) = 0 := by
+      unfold eqp_idx eqp_off at *;
+      split_ifs at h <;> simp_all +decide [ Nat.succ_div ];
+      · exact Nat.mod_eq_zero_of_dvd h;
+      · linarith;
+      · cases lt_or_eq_of_le ‹_› <;> first | linarith | aesop;
+      · split_ifs <;> simp_all +decide [ Nat.succ_sub ];
+        · linarith;
+        · cases k : ( p - r * ( q + 1 ) ) / q <;> simp_all +decide [ Nat.succ_div ];
+          · exact Nat.mod_eq_zero_of_dvd h;
+          · exact Nat.mod_eq_zero_of_dvd h
+-/
 private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
     (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
     eqp_off q r (p + 1) = 0 := by
@@ -1161,6 +1300,19 @@ private lemma straddle2_gap1 (s g m : ℕ)
       have hsac12 := Nat.sub_add_cancel hmono12
       omega
 
+/- Aristotle alternative for `eqp_idx_succ_lt_m` (5 lines vs 6 original, -1).
+
+private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
+    (hq_pos : 0 < q) (hr_lt : r < s)
+    (hm_eq : m = s * q + r)
+    (hp : p < m) :
+    p + 1 < m ∨ eqp_idx q r (p + 1) = s := by
+      -- Apply the lemma eqp_idx_m with the given conditions.
+      have h_eqp_idx_m : eqp_idx q r (s * q + r) = s := by
+        -- Apply the lemma eqp_idx_m with the given conditions to conclude the proof.
+        apply eqp_idx_m q r s hq_pos hr_lt;
+      grind +ring
+-/
 private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
     (hq_pos : 0 < q) (hr_lt : r < s)
     (hm_eq : m = s * q + r)
@@ -1173,6 +1325,25 @@ private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
     rw [hpm, hm_eq]
     exact eqp_idx_m q r s hq_pos hr_lt
 
+/- Aristotle alternative for `non_straddle_witness` (7 lines vs 9 original, -2).
+
+private lemma non_straddle_witness (q r p : ℕ)
+    (hq_pos : 0 < q)
+    (hp : p < m) (hp1 : p + 1 < m)
+    (hsame : eqp_idx q r (p + 1) = eqp_idx q r p)
+    (j : ℕ) (hj : j = eqp_idx q r p)
+    (t : ℕ) (ht : t < 3) (hpair : t = j % 3 ∨ t = (j + 1) % 3) :
+    ∃ d ∈ ({0, 1} : Finset ℕ),
+      (eqp_idx q r ((p + d) % m) +
+        eqp_off q r ((p + d) % m) % 2) % 3 = t := by
+          -- By Lemma `eqp_off_succ_same`, we know that `eqp_off q r (p + 1) = eqp_off q r p + 1`.
+          have h_off_succ : eqp_off q r (p + 1) = eqp_off q r p + 1 := by
+            -- Since $eqp_idx q r (p + 1) = eqp_idx q r p$, we can apply the definition of $eqp_off$ to conclude that $eqp_off q r (p + 1) = eqp_off q r p + 1$.
+            apply eqp_off_succ_same q r p hq_pos hsame;
+          cases hpair <;> simp_all +decide [ Nat.mod_eq_of_lt ];
+          · cases Nat.mod_two_eq_zero_or_one ( eqp_off q r p ) <;> simp +decide [ *, Nat.add_mod ];
+          · cases Nat.mod_two_eq_zero_or_one ( eqp_off q r p ) <;> simp +decide [ *, Nat.add_mod ]
+-/
 private lemma non_straddle_witness (q r p : ℕ)
     (hq_pos : 0 < q)
     (hp : p < m) (hp1 : p + 1 < m)
@@ -1222,6 +1393,20 @@ private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
     ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
     ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by grind
 
+/- Aristotle alternative for `endgame_witness` (1 lines vs 5 original, -4).
+
+private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ}
+    {v s : ℕ} {k : Fin 3} (hs : s < 3)
+    (a₀ a₁ a₂ : ℕ)
+    (ha₀ : a₀ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (ha₁ : a₁ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (ha₂ : a₂ ∈ ({0, 1, g, g + 1} : Finset ℕ))
+    (hc₀ : c (v + a₀) = s)
+    (hc₁ : c (v + a₁) = (s + 1) % 3)
+    (hc₂ : c (v + a₂) = (s + 2) % 3) :
+    ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by
+      grind
+-/
 private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ}
     {v s : ℕ} {k : Fin 3} (hs : s < 3)
     (a₀ a₁ a₂ : ℕ)
@@ -1239,6 +1424,23 @@ private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ}
   exacts [⟨a₀, ha₀, hc₀ ▸ h1 h⟩, ⟨a₁, ha₁, hc₁ ▸ h2 h⟩, ⟨a₂, ha₂, hc₂ ▸ h3 h⟩]
 
 /-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
+/- Aristotle alternative for `lift_coloring_witness` (7 lines vs 11 original, -4).
+
+private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
+    (hg_lt : g + 1 < m) {c : ℕ → ℕ} (hc_lt : ∀ p, c p < 3)
+    (hc_period : ∀ p, c (p % m) = c p)
+    {n : ZMod m} {k : Fin 3}
+    (h : ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (n.val + a) = k.val) :
+    ∃ s ∈ ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)),
+      (⟨c (n + s).val, hc_lt _⟩ : Fin 3) = k := by
+        rcases h with ⟨ a, ha, hk ⟩ ; use a; simp_all +decide [ Fin.ext_iff ] ;
+        convert hk using 1;
+        -- Apply the periodicity property of $c$ to rewrite the goal.
+        have h_periodic : c (n.val + a) = c ((n.val + a) % m) := by
+          rw [ hc_period ];
+        simp +decide [ ← ZMod.val_natCast, h_periodic ];
+        rcases ha with ( rfl | rfl | rfl | rfl ) <;> norm_num
+-/
 private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
     (hg_lt : g + 1 < m) {c : ℕ → ℕ} (hc_lt : ∀ p, c p < 3)
     (hc_period : ∀ p, c (p % m) = c p)
@@ -1663,6 +1865,52 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
       hcv (by grind) (by grind)
 
 /-- (1d), m = 3g+3, g ≡ 0 (mod 3): reversed diagonal coloring of period `g+1`. -/
+/- Aristotle alternative for `case_one_div_3g3` (40 lines vs 52 original, -12).
+
+lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0 < g) :
+    HasPolychromColouring (Fin 3)
+      ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
+        -- We'll use the fact that if the graph is a union of disjoint cycles, then it has a polychromatic coloring.
+        have h_coloring : ∃ c : ℕ → ℕ, (∀ p, c p < 3) ∧ (∀ p, c (p % m) = c p) ∧ ∀ n ∈ Finset.range m, ∀ k : Fin 3, ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (n + a) = k.val := by
+          obtain ⟨ k, rfl ⟩ := hg3; simp_all +decide [ Nat.add_mod, Nat.mul_mod ] ;
+          refine' ⟨ fun n => ( n + n / ( 3 * k + 1 ) ) % 3, _, _, _ ⟩ <;> norm_num [ Nat.add_mod, Nat.mod_lt ];
+          · intro p; rw [ ← Nat.mod_add_div p ( 3 * ( 3 * k ) + 3 ) ] ; norm_num [ Nat.add_div, Nat.mul_div_assoc, Nat.mul_mod, Nat.add_mod ] ; ring;
+            norm_num [ show 3 % ( 1 + k * 3 ) = 3 by rw [ Nat.mod_eq_of_lt ] ; linarith ] ; ring;
+            norm_num [ show k * ( p / ( 3 + k * 9 ) ) * 9 + p / ( 3 + k * 9 ) * 3 = ( 1 + k * 3 ) * ( p / ( 3 + k * 9 ) * 3 ) by ring, Nat.add_mod, Nat.mul_mod ];
+            split_ifs <;> norm_num ; linarith [ Nat.mod_lt ( p % ( 3 + k * 9 ) ) ( by linarith : 0 < 1 + k * 3 ) ] ;
+          · -- Let's consider the possible values of $n$ modulo $3$.
+            intro n hn k_1
+            by_cases hn0 : n % 3 = 0 ∨ n % 3 = 1 ∨ n % 3 = 2;
+            · fin_cases k_1 <;> simp_all +decide [ Nat.add_div ] ;
+              · split_ifs <;> simp_all +decide [ Nat.div_eq_of_lt, Nat.mod_eq_of_lt ] ; omega;
+                · omega;
+                · omega;
+                · grind;
+              · split_ifs <;> simp_all +decide [ Nat.div_eq_of_lt, Nat.mod_eq_of_lt ] ; omega;
+                · grind +ring;
+                · omega;
+                · -- Since $n \% (3 * k + 1) < 1$, we have $n = q * (3 * k + 1)$ for some integer $q$.
+                  obtain ⟨q, hq⟩ : ∃ q, n = q * (3 * k + 1) := by
+                    exact exists_eq_mul_left_of_dvd ( Nat.dvd_of_mod_eq_zero ( by omega ) )
+                  generalize_proofs at *; (
+                  norm_num [ hq, Nat.add_mod, Nat.mul_mod, Nat.mod_eq_of_lt ( by linarith : 3 * k + 1 > 1 ) ] at * ; omega;);
+              · split_ifs <;> simp_all +decide [ Nat.div_eq_of_lt, Nat.mod_eq_of_lt ] ; omega;
+                · omega;
+                · grind;
+                · grind;
+            · grind
+        generalize_proofs at *; (
+        obtain ⟨c, hc⟩ := h_coloring
+        use fun n => ⟨c n.val, hc.1 n.val⟩
+        intro n k
+        obtain ⟨a, ha₁, ha₂⟩ := hc.2.2 n.val (Finset.mem_range.mpr (by
+        convert n.val_lt
+        generalize_proofs at *; (
+        exact ⟨ by linarith ⟩))) k
+        generalize_proofs at *; (
+        use a; simp_all +decide [ Fin.ext_iff ] ; (
+        haveI := Fact.mk ( by linarith : 1 < m ) ; erw [ ZMod.val_add ] ; aesop;)))
+-/
 lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0 < g) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   haveI : NeZero m := ⟨by grind⟩
@@ -1813,6 +2061,54 @@ private lemma isUnit_intCast_of_natAbs_coprime {n : ℕ} {b : ℤ}
 
 /-- **Key reduction for Case 1.** When gcd(b, m) = 1, finds the gap parameter g
     such that zmod_set m a b = (image of {0,1,g,g+1} under ×b). -/
+/- Aristotle alternative for `exists_g_of_coprime` (39 lines vs 48 original, -9).
+
+lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
+    (hm : 0 < m) (hcard : (zmod_set m a b).card = 4) :
+    ∃ g : ℕ, 2 ≤ g ∧ g ≤ m - 2 ∧
+      zmod_set m a b =
+        ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)).image
+          ((b : ZMod m) * ·) := by
+            -- Since $g$ is a unit in $\mathbb{Z}/m\mathbb{Z}$, we can choose $g$ such that $g \equiv 2 \pmod{m}$.
+            obtain ⟨g, hg⟩ : ∃ g : ZMod m, g ≠ 0 ∧ g ≠ 1 ∧ zmod_set m a b = Finset.image (fun x : ZMod m => x * b) {0, 1, g, g + 1} := by
+              -- Since $g$ is a unit in $\mathbb{Z}/m\mathbb{Z}$, we can choose $g$ such that $g \equiv 2 \pmod{m}$ and $g \neq 0, 1$.
+              obtain ⟨g, hg⟩ : ∃ g : ZMod m, g ≠ 0 ∧ g ≠ 1 ∧ Finset.image (fun x : ℤ => x : ℤ → ZMod m) {0, b - a, b, 2 * b - a} = Finset.image (fun x : ZMod m => x * b) {0, 1, g, g + 1} := by
+                -- Since $b - a$ is a unit in $\mathbb{Z}/m\mathbb{Z}$, we can write $b - a = k \cdot b$ for some $k \in \mathbb{Z}/m\mathbb{Z}$.
+                obtain ⟨k, hk⟩ : ∃ k : ZMod m, b - a = k * b := by
+                  have h_unit : IsUnit (b : ZMod m) := by
+                    have h_unit : ∃ x : ℤ, b * x ≡ 1 [ZMOD m] := by
+                      -- By Bezout's identity, since gcd(b, m) = 1, there exist integers x and y such that b*x + m*y = 1.
+                      obtain ⟨x, y, h_bezout⟩ : ∃ x y : ℤ, b * x + m * y = 1 := by
+                        have := Int.gcd_eq_gcd_ab b m;
+                        exact ⟨ _, _, this.symm.trans ( mod_cast hd ) ⟩;
+                      exact ⟨ x, Int.modEq_iff_dvd.mpr ⟨ y, by linarith ⟩ ⟩;
+                    obtain ⟨ x, hx ⟩ := h_unit; exact isUnit_iff_exists_inv.mpr ⟨ x, by simpa [ ← ZMod.intCast_eq_intCast_iff ] using hx ⟩ ;
+                  exact ⟨ ( b - a ) * h_unit.unit.inv, by simp +decide [ mul_assoc, h_unit.unit.inv_mul ] ⟩;
+                refine' ⟨ k, _, _, _ ⟩ <;> simp_all +decide [ Finset.ext_iff ];
+                · contrapose! hcard; simp_all +decide [ zmod_set ] ;
+                  exact ne_of_lt ( lt_of_le_of_lt ( Finset.card_insert_le _ _ ) ( lt_of_le_of_lt ( add_le_add_right ( Finset.card_insert_le _ _ ) _ ) ( by norm_num ) ) );
+                · intro h; simp_all +decide [ sub_eq_iff_eq_add ] ;
+                  unfold zmod_set at hcard; simp_all +decide [ Finset.card_image_of_injective, Function.Injective ] ;
+                  exact hcard.not_lt ( lt_of_le_of_lt ( Finset.card_insert_le _ _ ) ( lt_of_le_of_lt ( add_le_add_right ( Finset.card_insert_le _ _ ) _ ) ( by norm_num ) ) );
+                · grind +ring;
+              unfold zmod_set; aesop;
+            -- Since $g$ is a unit in $\mathbb{Z}/m\mathbb{Z}$, we can choose $g$ such that $2 \leq g \leq m-2$.
+            obtain ⟨g', hg'⟩ : ∃ g' : ℕ, 2 ≤ g' ∧ g' < m ∧ g = g' := by
+              refine' ⟨ g.val, _, _, _ ⟩ <;> rcases m with ( _ | _ | m ) <;> simp_all +decide [ ZMod ];
+              any_goals fin_cases g ; trivial;
+              · fin_cases g ; simp_all +decide [ Fin.eq_zero ];
+              · contrapose! hg; rcases g with ( _ | _ | g ) <;> simp_all +decide ;
+                rcases g with ( _ | _ | g ) <;> tauto;
+              · grind;
+              · exact ZMod.val_lt g;
+              · exact Eq.symm ( Fin.ext ( Nat.mod_eq_of_lt ( show g.val < m + 1 + 1 from g.val_lt ) ) );
+            -- Since $g \neq m-1$, we have $g' \leq m-2$.
+            have hg'_le : g' ≤ m - 2 := by
+              by_contra hg'_gt; push_neg at hg'_gt; (
+              norm_num [ show g' = m - 1 by omega ] at * ; simp_all +decide [ Nat.cast_sub hm ] ;
+              exact hcard.not_lt ( lt_of_le_of_lt ( Finset.card_insert_le _ _ ) ( lt_of_le_of_lt ( add_le_add_right ( Finset.card_insert_le _ _ ) _ ) ( by norm_num ) ) ));
+            exact ⟨ g', hg'.1, hg'_le, by simpa [ mul_comm, hg'.2.2 ] using hg.2.2 ⟩
+-/
 lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     (hm : 0 < m) (hcard : (zmod_set m a b).card = 4) :
     ∃ g : ℕ, 2 ≤ g ∧ g ≤ m - 2 ∧ zmod_set m a b =
@@ -2028,6 +2324,15 @@ private lemma b_zero_mod_d1 {m : ℕ} {b : ℤ} {d₁ : ℕ}
   rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
   exact Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m)
 
+/- Aristotle alternative for `ba_coprime_d1` (2 lines vs 5 original, -3).
+
+private lemma ba_coprime_d1 {m : ℕ} {a b : ℤ} {d₁ : ℕ}
+    (hd1_dvd : d₁ ∣ m)
+    (h_gcd_coprime : d₁.gcd (Nat.gcd (b - a).natAbs m) = 1) :
+    Nat.Coprime (b - a).natAbs d₁ := by
+      refine' Nat.Coprime.symm <| Nat.coprime_of_dvd _;
+      intro k hk hk' hk''; have := Nat.dvd_gcd hk' ( Nat.dvd_gcd hk'' ( show k ∣ m from dvd_trans hk' hd1_dvd ) ) ; aesop;
+-/
 private lemma ba_coprime_d1 {m : ℕ} {a b : ℤ} {d₁ : ℕ}
     (hd1_dvd : d₁ ∣ m)
     (h_gcd_coprime : d₁.gcd (Nat.gcd (b - a).natAbs m) = 1) :
@@ -2049,6 +2354,21 @@ private lemma orbitMap_i_eq {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   simp only [hb_zero, mul_zero, add_zero, ZMod.natCast_val, ZMod.cast_id] at this
   exact hba_unit.mul_right_cancel this
 
+/- Aristotle alternative for `orbitMap_j_eq` (7 lines vs 10 original, -3).
+
+private lemma orbitMap_j_eq {m : ℕ} {b : ℤ} {e₁ : ℕ} [NeZero e₁]
+    (hord : addOrderOf (b : ZMod m) = e₁)
+    {j₁ j₂ : ZMod e₁}
+    (hj_smul : (j₁.val : ℕ) • (b : ZMod m) = (j₂.val : ℕ) • (b : ZMod m)) :
+    j₁ = j₂ := by
+      -- Since $j₁.val • b = j₂.val • b$, we have $(j₁.val - j₂.val) • b = 0$.
+      have h_diff_smul : (j₁.val - j₂.val : ℤ) • (b : ZMod m) = 0 := by
+        simp_all +decide [ sub_smul ];
+      -- Since $e₁$ is the order of $b$, we have that $e₁$ divides $(j₁.val - j₂.val)$.
+      have h_div : (e₁ : ℤ) ∣ (j₁.val - j₂.val : ℤ) := by
+        have := hord ▸ addOrderOf_dvd_iff_zsmul_eq_zero.mpr h_diff_smul; aesop;
+      simp_all +decide [ ← ZMod.intCast_zmod_eq_zero_iff_dvd, sub_eq_zero ]
+-/
 private lemma orbitMap_j_eq {m : ℕ} {b : ℤ} {e₁ : ℕ} [NeZero e₁]
     (hord : addOrderOf (b : ZMod m) = e₁)
     {j₁ j₂ : ZMod e₁}
@@ -2064,6 +2384,23 @@ private lemma orbitMap_j_eq {m : ℕ} {b : ℤ} {e₁ : ℕ} [NeZero e₁]
     have := Nat.eq_zero_of_dvd_of_lt hdvd (by grind [j₁.val_lt (n := e₁), j₂.val_lt (n := e₁)])
     exact ZMod.val_injective _ (by grind)
 
+/- Aristotle alternative for `orbitMap_injective` (7 lines vs 8 original, -1).
+
+private lemma orbitMap_injective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁] [NeZero e₁]
+    (hd1_dvd : d₁ ∣ m)
+    (hb_zero : (b : ZMod d₁) = 0)
+    (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
+    (hord : addOrderOf (b : ZMod m) = e₁) :
+    Function.Injective (orbitMap m a b d₁ e₁) := by
+      intro x y hxy
+      have h_i : x.1 = y.1 := by
+        apply orbitMap_i_eq hd1_dvd hb_zero hba_unit hxy
+      have h_j : x.2 = y.2 := by
+        apply orbitMap_j_eq hord;
+        unfold orbitMap at hxy; aesop;
+      aesop
+-/
 private lemma orbitMap_injective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     [NeZero m] [NeZero d₁] [NeZero e₁]
     (hd1_dvd : d₁ ∣ m)
@@ -2145,6 +2482,15 @@ private lemma cycle_index_shift_ba {m : ℕ} {a b : ℤ} {d₁ : ℕ}
   rw [← hu]; ring_nf; rw [u.inv_mul]; ring
 
 /-- If Φ(i, j+1) = Φ(i, j) + b, then Φ⁻¹(x+b) = (same_i, j+1). -/
+/- Aristotle alternative for `equiv_symm_shift_b` (1 lines vs 3 original, -2).
+
+private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid γ]
+    (Φ : ZMod d₁ × ZMod e₁ ≃ γ) {b : γ}
+    (hΦ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, Φ (i, j + 1) = Φ (i, j) + b)
+    (x : γ) :
+    Φ.symm (x + b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := by
+      grind
+-/
 private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid γ]
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) {b : γ}
     (hΦ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, Φ (i, j + 1) = Φ (i, j) + b)
@@ -2155,6 +2501,15 @@ private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid �
   exact Φ.symm_apply_eq.mpr key.symm
 
 /-- If α(Φ(i,j)) = i for all i,j, then (Φ⁻¹(x)).1 = α(x). -/
+/- Aristotle alternative for `equiv_symm_fst_eq` (1 lines vs 2 original, -1).
+
+private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
+    (Φ : ZMod d₁ × ZMod e₁ ≃ γ) (α : γ → ZMod d₁)
+    (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i)
+    (x : γ) :
+    (Φ.symm x).1 = α x := by
+      grind
+-/
 private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) (α : γ → ZMod d₁)
     (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i)
@@ -2169,6 +2524,27 @@ private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
     given an orbit equivalence Φ with shift properties and a coloring f,
     if f covers all colors at any translate, then f ∘ Φ.symm is polychromatic.
     All four Case 2 subcases use this as their final step. -/
+/- Aristotle alternative for `orbit_coloring_polychrom` (4 lines vs 23 original, -19).
+
+private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁] [NeZero e₁]
+    (Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m)
+    (hΦ_add_b : ∀ x : ZMod m,
+      Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1))
+    (hΦ_cycle_shift : ∀ x : ZMod m,
+      (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1)
+    (f : ZMod d₁ × ZMod e₁ → Fin 3)
+    (hcovers : ∀ (n : ZMod m) (k : Fin 3),
+      k = f ((Φ.symm n).1, (Φ.symm n).2) ∨
+      k = f ((Φ.symm n).1, (Φ.symm n).2 + 1) ∨
+      k = f ((Φ.symm n).1 + 1, (Φ.symm (n + ↑(b - a))).2) ∨
+      k = f ((Φ.symm n).1 + 1, (Φ.symm (n + ↑(b - a))).2 + 1)) :
+    HasPolychromColouring (Fin 3) (zmod_set m a b) := by
+      refine' ⟨ fun x => f ( Φ.symm x ), fun n k => _ ⟩;
+      obtain h|h|h|h := hcovers n k <;> simp_all +decide [ zmod_set ];
+      · grind;
+      · rw [ show ( n + ( 2 * b - a : ZMod m ) ) = ( n + ( b - a : ZMod m ) ) + b by ring, hΦ_add_b ] ; aesop;
+-/
 private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     [NeZero m] [NeZero d₁] [NeZero e₁]
     (Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m)
@@ -2530,6 +2906,19 @@ private def case2c_pattern (d₁ k₀ i : ℕ) : Fin 3 :=
   else if k₀ % 3 = 2 then 2 else 1
 
 -- General coverage: if (j₁ + p₁) % 3 ≠ (j₂ + p₂) % 3, all 3 colors appear.
+/- Aristotle alternative for `cover_mod3_general` (2 lines vs 3 original, -1).
+
+private lemma cover_mod3_general (p₁ p₂ : Fin 3)
+    (j₁ j₂ : ℕ)
+    (hne : (j₁ + p₁.val) % 3 ≠ (j₂ + p₂.val) % 3)
+    (k : Fin 3) :
+    k = ⟨(j₁ + p₁.val) % 3, Nat.mod_lt _ (by omega)⟩ ∨
+    k = ⟨(j₁ + 1 + p₁.val) % 3, Nat.mod_lt _ (by omega)⟩ ∨
+    k = ⟨(j₂ + p₂.val) % 3, Nat.mod_lt _ (by omega)⟩ ∨
+    k = ⟨(j₂ + 1 + p₂.val) % 3, Nat.mod_lt _ (by omega)⟩ := by
+      fin_cases k <;> simp +decide [ Fin.ext_iff ] at * <;> omega
+      skip
+-/
 private lemma cover_mod3_general (p₁ p₂ : Fin 3)
     (j₁ j₂ : ℕ)
     (hne : (j₁ + p₁.val) % 3 ≠ (j₂ + p₂.val) % 3)
@@ -2609,6 +2998,12 @@ private def intervalColors : Fin 3 → Finset (Fin 3)
   | 2 => {0, 2}
 
 /-- Any two distinct interval color pairs union to {0, 1, 2}. -/
+/- Aristotle alternative for `intervalColors_union_covers` (1 lines vs 2 original, -1).
+
+private lemma intervalColors_union_covers {i₁ i₂ : Fin 3} (h : i₁ ≠ i₂) :
+    ∀ k : Fin 3, k ∈ intervalColors i₁ ∨ k ∈ intervalColors i₂ := by
+      native_decide +revert
+-/
 private lemma intervalColors_union_covers {i₁ i₂ : Fin 3} (h : i₁ ≠ i₂) :
     ∀ k : Fin 3, k ∈ intervalColors i₁ ∨ k ∈ intervalColors i₂ := by
   intro k; fin_cases i₁ <;> fin_cases i₂ <;> fin_cases k <;>
@@ -2695,6 +3090,31 @@ private lemma rotation_changes_interval {e₁ j : ℕ}
 
 /-- Key polychromaticity lemma: if the base pattern is rotated by r ∈ [u, e₁-u],
     then at every position j, the 2×2 block covers all 3 colors. -/
+/- Aristotle alternative for `basePattern_rotation_covers` (15 lines vs 18 original, -3).
+
+private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19)
+    {r : ℕ} (hr_lo : case2d_u e₁ ≤ r) (hr_hi : r ≤ e₁ - case2d_u e₁)
+    (hj : j < e₁) :
+    ∀ k : Fin 3, k ∈
+      ({basePattern e₁ j, basePattern e₁ ((j + 1) % e₁),
+        basePattern e₁ ((j + r) % e₁),
+        basePattern e₁ ((j + r + 1) % e₁)} : Finset (Fin 3)) := by
+          -- By definition of $basePattern$, we know that $basePattern e₁ j$ and $basePattern e₁ ((j + 1) % e₁)$ cover all three colors.
+          have h_basePattern_j : intervalColors (whichInterval e₁ j) ⊆ {basePattern e₁ j, basePattern e₁ ((j + 1) % e₁)} := by
+            exact basePattern_consec_pair he hge hj
+          have h_basePattern_r : intervalColors (whichInterval e₁ ((j + r) % e₁)) ⊆ {basePattern e₁ ((j + r) % e₁), basePattern e₁ ((j + r + 1) % e₁)} := by
+            convert basePattern_consec_pair he hge _ using 1;
+            · norm_num [ add_assoc, Nat.mod_eq_of_lt hj ];
+            · exact Nat.mod_lt _ ( by linarith )
+          have h_union : intervalColors (whichInterval e₁ j) ∪ intervalColors (whichInterval e₁ ((j + r) % e₁)) = Finset.univ := by
+            have h_union : whichInterval e₁ j ≠ whichInterval e₁ ((j + r) % e₁) := by
+              apply rotation_changes_interval hge hj hr_lo hr_hi;
+            have h_union : ∀ i₁ i₂ : Fin 3, i₁ ≠ i₂ → intervalColors i₁ ∪ intervalColors i₂ = Finset.univ := by
+              native_decide +revert;
+            exact h_union _ _ ‹_›;
+          intro k; replace h_union := Finset.ext_iff.mp h_union k; simp_all +decide [ Finset.subset_iff ] ;
+          grind +ring
+-/
 private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19)
     {r : ℕ} (hr_lo : case2d_u e₁ ≤ r) (hr_hi : r ≤ e₁ - case2d_u e₁)
     (hj : j < e₁) :
@@ -2753,6 +3173,31 @@ private lemma case2d_wrap_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   simp only [nsmul_eq_mul] at hφq ⊢
   exact hφq.symm
 
+/- Aristotle alternative for `case2d_shift_ba_wrap` (13 lines vs 23 original, -10).
+
+private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero e₁] [NeZero d₁]
+    (he1_b_zero : e₁ • (b : ZMod m) = 0)
+    (k₀ : ZMod e₁)
+    (hk₀ : (d₁ : ℕ) • ((b - a : ℤ) : ZMod m) = (k₀.val : ℕ) • (b : ZMod m))
+    (i : ZMod d₁) (hi : i.val = d₁ - 1) :
+    ∀ (j : ZMod e₁),
+      orbitMap m a b d₁ e₁ (i, j) + ((b - a : ℤ) : ZMod m) =
+        orbitMap m a b d₁ e₁ (0, j + k₀) := by
+          -- Substitute $i.val = d₁ - 1$ into the orbit map expression.
+          have h_orbit_map_subst : ∀ j : ZMod e₁, orbitMap m a b d₁ e₁ (i, j) = (d₁ - 1) * (b - a) + j.val * b := by
+            -- Substitute $i.val = d₁ - 1$ into the orbit map expression and simplify.
+            intros j
+            simp [orbitMap, hi];
+            rw [ Nat.cast_pred ( NeZero.pos d₁ ) ];
+          simp_all +decide [ sub_mul, add_mul, Finset.sum_add_distrib ];
+          intro j; rw [ show orbitMap m a b d₁ e₁ ( 0, j + k₀ ) = ( ( j + k₀ ).val : ZMod m ) * ( b : ZMod m ) by unfold orbitMap; simp +decide ] ; ring;
+          cases e₁ <;> simp_all +decide [ ZMod.val_add ] ; ring;
+          rw [ Nat.mod_def ] ; ring;
+          rw [ Nat.cast_sub ] <;> norm_num ; ring;
+          · grind;
+          · nlinarith [ Nat.div_mul_le_self ( j.val + k₀.val ) ( 1 + ‹_› ), show j.val < ‹_› + 1 from j.val_lt, show k₀.val < ‹_› + 1 from k₀.val_lt ]
+-/
 private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     [NeZero e₁] [NeZero d₁]
     (he1_b_zero : e₁ • (b : ZMod m) = 0)
@@ -2786,6 +3231,46 @@ private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
 
 /-- Given d₁ ≥ 3 values each in [u, e₁-u] can sum to any target mod e₁,
     since the range has width ≥ e₁/3 and d₁ ≥ 3. -/
+/- Aristotle alternative for `case2d_rotation_sum_exists` (31 lines vs 75 original, -44).
+
+private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
+    (hd1_ge : d₁ ≥ 5) (he1_ge : e₁ ≥ 19) (he1_odd : Odd e₁)
+    (target : ℕ) :
+    ∃ vals : ZMod d₁ → ℕ,
+      (∀ i, case2d_u e₁ ≤ vals i ∧ vals i ≤ e₁ - case2d_u e₁) ∧
+      (Finset.univ.sum vals) % e₁ = target % e₁ := by
+        -- Since the range is symmetric around the midpoint, we can adjust the elements to reach any residue.
+        have h_symm : ∀ r : ℕ, r < e₁ → ∃ vals : ZMod d₁ → ℕ, (∀ i, case2d_u e₁ ≤ vals i ∧ vals i ≤ e₁ - case2d_u e₁) ∧ (Finset.sum Finset.univ vals) % e₁ = r % e₁ := by
+          intro r hr
+          obtain ⟨k, hk⟩ : ∃ k : ℕ, (case2d_u e₁ * d₁ + k * 1) % e₁ = r % e₁ ∧ k ≤ (e₁ - 2 * case2d_u e₁) * d₁ := by
+            -- Since $e₁$ is odd and $case2d_u e₁$ is an integer, we can find $k$ such that $(case2d_u e₁ * d₁ + k) \equiv r \pmod{e₁}$.
+            obtain ⟨k, hk⟩ : ∃ k : ℕ, (case2d_u e₁ * d₁ + k) % e₁ = r % e₁ ∧ k < e₁ := by
+              use ( r + e₁ - ( case2d_u e₁ * d₁ ) % e₁ ) % e₁;
+              norm_num [ Nat.add_mod ];
+              exact ⟨ by simp +decide [ add_tsub_cancel_of_le ( show case2d_u e₁ * d₁ % e₁ ≤ r + e₁ from by linarith [ Nat.zero_le ( case2d_u e₁ * d₁ % e₁ ), Nat.mod_lt ( case2d_u e₁ * d₁ ) ( by linarith : 0 < e₁ ) ] ) ], Nat.mod_lt _ ( by linarith ) ⟩;
+            refine' ⟨ k, by simpa using hk.1, _ ⟩;
+            unfold case2d_u at *;
+            rw [ tsub_mul ];
+            exact le_tsub_of_add_le_left ( by nlinarith [ Nat.div_add_mod e₁ 3, Nat.mod_lt e₁ zero_lt_three, show e₁ / 3 + e₁ % 3 ≤ e₁ / 2 from by omega ] );
+          -- We can distribute $k$ units among the elements of $vals$.
+          obtain ⟨vals, hvals⟩ : ∃ vals : ZMod d₁ → ℕ, (∀ i, vals i ≤ e₁ - 2 * case2d_u e₁) ∧ (Finset.sum Finset.univ vals) = k := by
+            -- We can distribute $k$ units among the elements of $vals$ by setting $vals i = k / d₁$ for all $i$ and then adjusting the remaining units to reach exactly $k$.
+            obtain ⟨q, r, hr⟩ : ∃ q r : ℕ, k = q * d₁ + r ∧ r < d₁ := by
+              exact ⟨ k / d₁, k % d₁, by rw [ Nat.div_add_mod' ], Nat.mod_lt _ <| NeZero.pos d₁ ⟩;
+            use fun i => q + if i.val < r then 1 else 0;
+            -- Show that each element in the sum is less than or equal to $e₁ - 2 * case2d_u e₁$.
+            have h_le : ∀ i : ZMod d₁, q + (if i.val < r then 1 else 0) ≤ e₁ - 2 * case2d_u e₁ := by
+              intro i; split_ifs <;> nlinarith;
+            simp_all +decide [ Finset.sum_add_distrib ];
+            rw [ mul_comm, show ( Finset.univ.filter fun x : ZMod d₁ => x.val < r ) = Finset.image ( fun x : ℕ => x : ℕ → ZMod d₁ ) ( Finset.range r ) from ?_, Finset.card_image_of_injOn ] <;> norm_num [ Function.Injective ];
+            · exact fun x hx y hy hxy => Nat.mod_eq_of_lt ( show x < d₁ from lt_of_lt_of_le hx.out ( by linarith ) ) ▸ Nat.mod_eq_of_lt ( show y < d₁ from lt_of_lt_of_le hy.out ( by linarith ) ) ▸ by simpa [ ZMod.natCast_eq_natCast_iff' ] using hxy;
+            · ext x; simp [Finset.mem_image];
+              exact ⟨ fun hx => ⟨ x.val, hx, by erw [ ZMod.natCast_zmod_val ] ⟩, by rintro ⟨ a, ha, rfl ⟩ ; exact by simpa [ ZMod.val_cast_of_lt ( show a < d₁ from by linarith ) ] using ha ⟩;
+          use fun i => case2d_u e₁ + vals i;
+          simp_all +decide [ Finset.sum_add_distrib ];
+          exact ⟨ fun i => by linarith [ hvals.1 i, Nat.sub_add_cancel ( show 2 * case2d_u e₁ ≤ e₁ from by { unfold case2d_u; omega } ), Nat.sub_add_cancel ( show case2d_u e₁ ≤ e₁ from by { unfold case2d_u; omega } ) ], by simpa only [ mul_comm ] using hk.1 ⟩;
+        exact h_symm ( target % e₁ ) ( Nat.mod_lt _ ( by linarith ) ) |> fun ⟨ vals, hvals₁, hvals₂ ⟩ => ⟨ vals, hvals₁, by simpa [ Nat.mod_mod ] using hvals₂ ⟩
+-/
 private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
     (hd1_ge : d₁ ≥ 5) (he1_ge : e₁ ≥ 19) (he1_odd : Odd e₁)
     (target : ℕ) :
@@ -2910,6 +3395,13 @@ private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
   rw [ZMod.val_add_one, Nat.mod_add_mod, Nat.mod_add_mod]; grind
 
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
+/- Aristotle alternative for `pos_shift_succ'` (2 lines vs 3 original, -1).
+
+private lemma pos_shift_succ' (j S V n : ℕ) :
+    (j + (S + V) % n) % n = ((j + S % n) % n + V) % n := by
+      -- By the associativity of addition modulo n, we can rearrange the terms inside the modulo operation.
+      simp [Nat.add_assoc]
+-/
 private lemma pos_shift_succ' (j S V n : ℕ) :
     (j + (S + V) % n) % n = ((j + S % n) % n + V) % n := by
   have h1 : j + (S + V) = j + S + V := by grind
