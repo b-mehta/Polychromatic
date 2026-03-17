@@ -39,8 +39,7 @@ They are not important on their own.
 private lemma lt_two' (n : ℕ) (h : n < 2) : n = 0 ∨ n = 1 := by omega
 
 /-- Phase differs when gap is 1 or 2 mod s, and 3 ∣ s. -/
-private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
-    (hj₀ : j₀ < s) (hjg : jg < s)
+private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s) (hj₀ : j₀ < s) (hjg : jg < s)
     (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
     j₀ % 3 ≠ jg % 3 := by
   obtain ⟨t, ht⟩ := hs3; subst ht
@@ -55,8 +54,7 @@ private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s)
   · grind
 
 open Finpartition in
-private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m)
-    (p : ℕ) (hp : p < m) :
+private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : ℕ) (hp : p < m) :
     let q := m / s
     let r := m % s
     let bd := r * (q + 1)
@@ -117,8 +115,7 @@ private lemma equiEndpoint_diff' (m s j : ℕ) : Finpartition.equiEndpoint m s (
   Finpartition.card_of_mem_equipartitionToIco_parts_aux
 
 open Finpartition in
-private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s)
-    (h_lb : (m + s - 1) / s < g) (j : ℕ) :
+private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s) (h_lb : (m + s - 1) / s < g) (j : ℕ) :
     equiEndpoint m s (j + 1) - equiEndpoint m s j < g := by
   rw [equiEndpoint_diff']
   set q := m / s; set r := m % s
@@ -131,8 +128,7 @@ private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s)
     have := Nat.le_div_iff_mul_le hs |>.mpr this; omega
 
 open Finpartition in
-private lemma shift_within_two' (m s g : ℕ)
-    (h_ub : g < 2 * (m / s))
+private lemma shift_within_two' (m s g : ℕ) (h_ub : g < 2 * (m / s))
     (j p : ℕ) (hhi : p < equiEndpoint m s (j + 1)) :
     p + g < equiEndpoint m s (j + 3) := by
   have hm1 : equiEndpoint m s (j + 2) - equiEndpoint m s (j + 1) ≥ m / s := by
@@ -144,8 +140,7 @@ private lemma shift_within_two' (m s g : ℕ)
   omega
 
 open Finpartition in
-private lemma idx_range_from_endpoints' (m s : ℕ)
-    (a b p : ℕ)
+private lemma idx_range_from_endpoints' (m s : ℕ) (a b p : ℕ)
     (ha_le : equiEndpoint m s a ≤ p)
     (hp_lt : p < equiEndpoint m s b)
     (j : ℕ)
@@ -162,8 +157,7 @@ private lemma idx_range_from_endpoints' (m s : ℕ)
 
 /-- Gap bound: idx of (v+g)%m differs from idx(v) by 1 or 2 mod s.
     This is the key arithmetic fact for interval colorings. -/
-private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
-    (hs3 : 3 ≤ s) (hs_le : s ≤ m)
+private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
     (v : ℕ) (hv_lt : v < m) :
     let bd := (m % s) * (m / s + 1)
@@ -233,8 +227,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s)
       rw [min_eq_left (by omega)]
     have hm_eq : m = q * s + r := by grind [Nat.div_add_mod m s]
     have hm_le_ep : m ≤ Finpartition.equiEndpoint m s (j₀ + 3) := by grind
-    have hep_diff :
-        Finpartition.equiEndpoint m s (j₀ + 3) - m =
+    have hep_diff : Finpartition.equiEndpoint m s (j₀ + 3) - m =
         q * (j₀ + 3 - s) := by rw [hep_j3, hm_eq]; grind [Nat.mul_add]
     have hvgm_ub : v + g - m < Finpartition.equiEndpoint m s
           (j₀ + 3 - s) := by
@@ -278,8 +271,7 @@ private lemma div_step (a b : ℕ) (hb : 0 < b) : (a + 1) / b = a / b ∨ (a + 1
   calc (a + 1) / b ≤ b * (a / b + 1) / b := Nat.div_le_div_right hub
     _ = a / b + 1 := Nat.mul_div_cancel_left _ hb
 
-private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
-    eqp_idx q r (p + 1) = eqp_idx q r p ∨
+private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) : eqp_idx q r (p + 1) = eqp_idx q r p ∨
     eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
   unfold eqp_idx
   split_ifs with h1 h2
@@ -299,13 +291,11 @@ private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) :
     have := div_step (p - r * (q + 1)) q hq; omega
 
 -- Helper: if quotient stays same, remainder increases by 1
-private lemma mod_step (a b : ℕ)
-    (h : (a + 1) / b = a / b) :
+private lemma mod_step (a b : ℕ) (h : (a + 1) / b = a / b) :
     (a + 1) % b = a % b + 1 := by grind [Nat.div_add_mod a b, Nat.div_add_mod (a + 1) b]
 
 -- Helper: if quotient increases by 1, remainder resets to 0
-private lemma mod_zero_step (a b : ℕ) (hb : 0 < b)
-    (h : (a + 1) / b = a / b + 1) :
+private lemma mod_zero_step (a b : ℕ) (hb : 0 < b) (h : (a + 1) / b = a / b + 1) :
     (a + 1) % b = 0 := by
   have h1 := Nat.div_add_mod a b
   have h2 := Nat.div_add_mod (a + 1) b
@@ -313,8 +303,7 @@ private lemma mod_zero_step (a b : ℕ) (hb : 0 < b)
   have h4 : b * ((a + 1) / b) = b * (a / b) + b := by grind
   grind
 
-private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
-    (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
+private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
     eqp_off q r (p + 1) = eqp_off q r p + 1 := by
   unfold eqp_off
   by_cases h1 : p + 1 < r * (q + 1) <;>
@@ -341,8 +330,7 @@ private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q)
     have h4 : eqp_idx q r p = r + (p - r * (q + 1)) / q := by unfold eqp_idx; rw [if_neg h2]
     rw [h3, h4, hsub] at h; omega
 
-private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
-    (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
+private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
     eqp_off q r (p + 1) = 0 := by
   unfold eqp_off
   by_cases h1 : p + 1 < r * (q + 1) <;>
@@ -369,8 +357,7 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q)
     have := div_step (p - r * (q + 1)) q hq
     omega
 
-private lemma gap_mod_cases_gen (s j₀ jg d : ℕ)
-    (hj₀ : j₀ < s) (hjg : jg < s)
+private lemma gap_mod_cases_gen (s j₀ jg d : ℕ) (hj₀ : j₀ < s) (hjg : jg < s)
     (hmod : (jg + s - j₀) % s = d) :
     jg + s - j₀ = d ∨ jg + s - j₀ = s + d := by
   have hd_hi : jg + s - j₀ < 2 * s := by omega
@@ -383,8 +370,7 @@ private lemma equiEndpoint_diff_ge (m s j : ℕ) : m / s ≤ Finpartition.equiEn
         Finpartition.equiEndpoint m s j := by grind [Finpartition.equiEndpoint]
 
 open Finpartition in
-private lemma straddle1_gap2 (s g m : ℕ)
-    (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
+private lemma straddle1_gap2 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
     (v j₀ jg : ℕ) (hv : v < m)
     (hj₀_lt : j₀ < s) (hjg_lt : jg < s)
@@ -444,8 +430,7 @@ private lemma straddle1_gap2 (s g m : ℕ)
     omega
 
 open Finpartition in
-private lemma straddle2_gap1 (s g m : ℕ)
-    (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
+private lemma straddle2_gap1 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
     (v j₀ jg : ℕ) (hv : v < m)
     (hj₀_lt : j₀ < s) (hjg_lt : jg < s)
@@ -520,8 +505,7 @@ private lemma straddle2_gap1 (s g m : ℕ)
       have hsac12 := Nat.sub_add_cancel hmono12
       omega
 
-private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
-    (hq_pos : 0 < q) (hr_lt : r < s)
+private lemma eqp_idx_succ_lt_m (q r s p : ℕ) (hq_pos : 0 < q) (hr_lt : r < s)
     (hm_eq : m = s * q + r)
     (hp : p < m) :
     p + 1 < m ∨ eqp_idx q r (p + 1) = s := by
@@ -532,8 +516,7 @@ private lemma eqp_idx_succ_lt_m (q r s p : ℕ)
     rw [hpm, hm_eq]
     exact eqp_idx_m q r s hq_pos hr_lt
 
-private lemma non_straddle_witness (q r p : ℕ)
-    (hq_pos : 0 < q)
+private lemma non_straddle_witness (q r p : ℕ) (hq_pos : 0 < q)
     (hp : p < m) (hp1 : p + 1 < m)
     (hsame : eqp_idx q r (p + 1) = eqp_idx q r p)
     (j : ℕ) (hj : j = eqp_idx q r p)
@@ -550,8 +533,7 @@ private lemma non_straddle_witness (q r p : ℕ)
       rw [Nat.mod_eq_of_lt hp1, hsame, ← hj, hoff]
       exact h⟩
 
-private lemma straddle_boundary_color (q r s p : ℕ)
-    (hq_pos : 0 < q) (hr_lt : r < s)
+private lemma straddle_boundary_color (q r s p : ℕ) (hq_pos : 0 < q) (hr_lt : r < s)
     (hs3 : 3 ∣ s)
     (hm_eq : m = s * q + r)
     (hp : p < m)
@@ -575,13 +557,11 @@ private lemma vg_mod_shift (v g d : ℕ) : (v + (g + d)) % m = ((v + g) % m + d)
   grind [Nat.add_mod (v + g) d m, Nat.add_mod ((v + g) % m) d m,
     Nat.mod_mod_of_dvd _ (dvd_refl m)]
 
-private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) :
-    ((k + 3 - s) % 3 = 0 → s = k) ∧
+private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) : ((k + 3 - s) % 3 = 0 → s = k) ∧
     ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
     ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by grind
 
-private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ}
-    {v s : ℕ} {k : Fin 3} (hs : s < 3)
+private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ} {v s : ℕ} {k : Fin 3} (hs : s < 3)
     (a₀ a₁ a₂ : ℕ)
     (ha₀ : a₀ ∈ ({0, 1, g, g + 1} : Finset ℕ))
     (ha₁ : a₁ ∈ ({0, 1, g, g + 1} : Finset ℕ))
@@ -820,8 +800,7 @@ is `case_one_residues` which dispatches to them.
 section Case1c
 
 /-- m = 3g - 2: ×3 maps {0,1,g,g+1} to {0,3,3g,3g+3} ≡ {0,2,3,5}. -/
-lemma case_one_res_3g_sub_2 (g : ℕ) (hm : m ≥ 289)
-    (hg : m = 3 * g - 2) :
+lemma case_one_res_3g_sub_2 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g - 2) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
         Finset (ZMod m)) := by
   obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
@@ -835,8 +814,7 @@ lemma case_one_res_3g_sub_2 (g : ℕ) (hm : m ≥ 289)
     h3g1_mod, insert_comm] using table1_0235 m (by grind)
 
 /-- m = 3g - 1: ×3 maps {0,1,g,g+1} to {0,3,3g,3g+3} ≡ {0,1,3,4}. -/
-lemma case_one_res_3g_sub_1 (g : ℕ) (hm : m ≥ 289)
-    (hg : m = 3 * g - 1) :
+lemma case_one_res_3g_sub_1 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g - 1) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
   rw [← hasPolychromColouring_mul_unit m u]
@@ -849,8 +827,7 @@ lemma case_one_res_3g_sub_1 (g : ℕ) (hm : m ≥ 289)
     image_singleton, h3g1_mod, insert_comm] using table1_0134 m (by grind)
 
 /-- m = 3g + 1: ×3 maps {0,1,g,g+1} to {0,3,-1,2}, a translate of {0,1,3,4}. -/
-lemma case_one_res_3g_add_1 (g : ℕ) (hm : m ≥ 289)
-    (hg : m = 3 * g + 1) :
+lemma case_one_res_3g_add_1 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 1) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
   rw [← hasPolychromColouring_mul_unit m u]
@@ -865,8 +842,7 @@ lemma case_one_res_3g_add_1 (g : ℕ) (hm : m ≥ 289)
   simpa [hu, h3g_mod, h3g1_mod, this] using table1_0134 m (by grind)
 
 /-- m = 3g + 2: ×3 maps {0,1,g,g+1} to {0,3,-2,1}, a translate of {0,2,3,5}. -/
-lemma case_one_res_3g_add_2 (g : ℕ) (hm : m ≥ 289)
-    (hg : m = 3 * g + 2) :
+lemma case_one_res_3g_add_2 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 2) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
   rw [← hasPolychromColouring_mul_unit m u]
@@ -881,8 +857,7 @@ lemma case_one_res_3g_add_2 (g : ℕ) (hm : m ≥ 289)
   simpa [hu, h3g_mod, h3g1_mod, this] using table1_0235 m (by grind)
 
 /-- m = 3g + 4: ×3 maps {0,1,g,g+1} to {0,3,-4,-1}, a translate of {0,3,4,7}. -/
-lemma case_one_res_3g_add_4 (g : ℕ) (hm : m ≥ 289)
-    (hg : m = 3 * g + 4) :
+lemma case_one_res_3g_add_4 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 4) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
   rw [← hasPolychromColouring_mul_unit m u]
@@ -897,8 +872,7 @@ lemma case_one_res_3g_add_4 (g : ℕ) (hm : m ≥ 289)
   simpa [hu, h3g_mod, h3g1_mod, this] using table1_0347 m (by grind)
 
 /-- m = 3g + 5: ×3 maps {0,1,g,g+1} to {0,3,-5,-2}, a translate of {0,3,5,8}. -/
-lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289)
-    (hg : m = 3 * g + 5) :
+lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 5) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
   rw [← hasPolychromColouring_mul_unit m u]
@@ -942,8 +916,7 @@ section Case1d
 
 /-- (1d), g ≢ 0 (mod 3): the periodic coloring 012012...012 works because
     each translate of {0,1,g,g+1} hits all 3 residue classes mod 3. -/
-lemma case_one_div_g_not_three (g : ℕ)
-    (h_div : m = 3 * g ∨ m = 3 * g + 3)
+lemma case_one_div_g_not_three (g : ℕ) (h_div : m = 3 * g ∨ m = 3 * g + 3)
     (hg3 : g % 3 ≠ 0) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
         Finset (ZMod m)) := by
@@ -961,8 +934,7 @@ lemma case_one_div_g_not_three (g : ℕ)
   }
 
 /-- (1d), m = 3g, g ≡ 0 (mod 3): diagonal coloring `n ↦ (n%3 + n/g) % 3`. -/
-lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g)
-    (hg3 : 3 ∣ g) (hg : 0 < g) :
+lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g) (hg3 : 3 ∣ g) (hg : 0 < g) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
         Finset (ZMod m)) := by
   haveI : NeZero m := ⟨by grind⟩
@@ -1084,8 +1056,7 @@ end Case1d
 /-- **Case 1 combined dispatch:** applies subcases (1a)–(1d) for 2 ≤ g ≤ m/2 and m ≥ 289.
     This is the main lemma for the single-cycle case, assuming the set has already been
     reduced to the form {0, 1, g, g+1}. -/
-lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g)
-    (hg_le : g ≤ m / 2) :
+lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g) (hg_le : g ≤ m / 2) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   -- (1a): small g
   by_cases hg4 : g ≤ 4
@@ -1208,8 +1179,7 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
 /-- **Main Case 1 (Single Cycle).** Aggregates all subcases (1a)–(1d).
     Reduces to {0,1,g,g+1} via `exists_g_of_coprime`, applies WLOG g ≤ m/2,
     then dispatches via `case_one_dispatch`. -/
-lemma main_case_one (a b : ℤ) (hm : m ≥ 289)
-    (hcard : (zmod_set m a b).card = 4)
+lemma main_case_one (a b : ℤ) (hm : m ≥ 289) (hcard : (zmod_set m a b).card = 4)
     (h_gcd : Nat.gcd b.natAbs m = 1 ∨ Nat.gcd (b - a).natAbs m = 1) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   suffices ∀ a' b' : ℤ, Nat.gcd b'.natAbs m = 1 →
