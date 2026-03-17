@@ -557,10 +557,6 @@ private lemma vg_mod_shift (v g d : ℕ) : (v + (g + d)) % m = ((v + g) % m + d)
   grind [Nat.add_mod (v + g) d m, Nat.add_mod ((v + g) % m) d m,
     Nat.mod_mod_of_dvd _ (dvd_refl m)]
 
-private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) : ((k + 3 - s) % 3 = 0 → s = k) ∧
-    ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
-    ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by grind
-
 private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ} {v s : ℕ} {k : Fin 3} (hs : s < 3)
     (a₀ a₁ a₂ : ℕ)
     (ha₀ : a₀ ∈ ({0, 1, g, g + 1} : Finset ℕ))
@@ -570,7 +566,10 @@ private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ} {v s : ℕ} {k : Fin 3
     (hc₁ : c (v + a₁) = (s + 1) % 3)
     (hc₂ : c (v + a₂) = (s + 2) % 3) :
     ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by
-  obtain ⟨h1, h2, h3⟩ := mod3_witness hs k.isLt
+  have mod3w : ((k.val + 3 - s) % 3 = 0 → s = k.val) ∧
+      ((k.val + 3 - s) % 3 = 1 → (s + 1) % 3 = k.val) ∧
+      ((k.val + 3 - s) % 3 = 2 → (s + 2) % 3 = k.val) := by grind
+  obtain ⟨h1, h2, h3⟩ := mod3w
   set d := (k.val + 3 - s) % 3
   have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
   rcases this with h | h | h
