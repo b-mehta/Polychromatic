@@ -454,10 +454,8 @@ private lemma straddle2_gap1 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le :
     set e3 := equiEndpoint m s (j₀ + 1 + 1 + 1) with he3
     have hd1 := equiEndpoint_diff_ge m s (j₀ + 1)
     have hd2 := equiEndpoint_diff_ge m s (j₀ + 1 + 1)
-    have hmono1 : e1 ≤ e2 := by omega
-    have hsac1 := Nat.sub_add_cancel hmono1
-    have hmono2 : e2 ≤ e3 := by omega
-    have hsac2 := Nat.sub_add_cancel hmono2
+    have hsac1 := Nat.sub_add_cancel (show e1 ≤ e2 by omega)
+    have hsac2 := Nat.sub_add_cancel (show e2 ≤ e3 by omega)
     by_cases hwrap : v + g < m
     · have : (v + g) % m = v + g := Nat.mod_eq_of_lt hwrap
       omega
@@ -486,21 +484,18 @@ private lemma straddle2_gap1 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le :
       rw [this] at hv_hi
       have hd1 := equiEndpoint_diff_ge m s (s - 1)
       rw [Nat.sub_add_cancel (by omega), hep_s] at hd1
-      have hep_s1_le : equiEndpoint m s (s - 1) ≤ m :=
-        le_trans (equiEndpoint_monotone (by omega)) hep_s.le
-      have hsac_m := Nat.sub_add_cancel hep_s1_le
+      have hsac_m := Nat.sub_add_cancel
+        (le_trans (equiEndpoint_monotone (by omega)) hep_s.le : equiEndpoint m s (s - 1) ≤ m)
       have hd2 := equiEndpoint_diff_ge m s 0
       rw [hep0, Nat.zero_add] at hd2
       omega
     · have hj₀_eq2 : j₀ = s - 1 := by omega
-      have hjg1 : jg = 1 := by omega
-      rw [hjg1] at hvg_eq
+      rw [show jg = 1 from by omega] at hvg_eq
       rw [hj₀_eq2, Nat.sub_add_cancel (by omega), hep_s] at hv_hi
       have hd1 := equiEndpoint_diff_ge m s 0
       rw [hep0, Nat.zero_add] at hd1
       have hd2 := equiEndpoint_diff_ge m s 1
-      have hmono12 : equiEndpoint m s 1 ≤ equiEndpoint m s (1 + 1) := by omega
-      have hsac12 := Nat.sub_add_cancel hmono12
+      have hsac12 := Nat.sub_add_cancel (show equiEndpoint m s 1 ≤ equiEndpoint m s (1 + 1) by omega)
       omega
 
 private lemma eqp_idx_succ_lt_m (q r s p : ℕ) (hq_pos : 0 < q) (hr_lt : r < s)
@@ -910,10 +905,9 @@ lemma case_one_div_g_not_three (g : ℕ) (h_div : m = 3 * g ∨ m = 3 * g + 3)
   apply HasPolychromColouring.of_image (ZMod.castHom h3_dvd (ZMod 3))
   simp only [Finset.image_insert, Finset.image_singleton,
     map_zero, map_one, map_add, map_natCast]
-  have hg12 : g % 3 = 1 ∨ g % 3 = 2 := by grind
   suffices ({0, 1, (g : ZMod 3), (g : ZMod 3) + 1} : Finset (ZMod 3)) = Finset.univ by
     rw [this]; exact hasPolychromColouring_univ
-  rcases hg12 with h | h <;> {
+  rcases (by grind : g % 3 = 1 ∨ g % 3 = 2) with h | h <;> {
     have : (g : ZMod 3) = ↑(g % 3 : ℕ) := by rw [ZMod.natCast_mod]
     simp only [this, h]; decide
   }
@@ -1139,8 +1133,7 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     rwa [hset, Finset.card_image_of_injective _ hinj] at hcard
   refine ⟨g'.val, ?_, ?_, ?_⟩
   · by_contra! hlt
-    have hcases : g'.val = 0 ∨ g'.val = 1 := by grind
-    rcases hcases with h | h
+    rcases (by grind : g'.val = 0 ∨ g'.val = 1) with h | h
     · have hg'0 : g' = 0 := by rw [← hval, h, Nat.cast_zero]
       simp only [hg'0, zero_add] at hcard4; grind [Finset.card_pair]
     · have hg'1 : g' = 1 := by rw [← hval, h, Nat.cast_one]
