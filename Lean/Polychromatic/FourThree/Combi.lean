@@ -3,11 +3,49 @@ import Polychromatic.FourThree.Combi.CaseOne
 import Polychromatic.FourThree.Combi.CaseTwo
 
 /-!
-# Combinatorial case analysis — assembly
+# Combinatorial case analysis for the polychromatic coloring theorem
 
-This file re-exports the three components of the combinatorial argument
-(`BlockColor`, `CaseOne`, `CaseTwo`) and contains the final assembly
-that connects the $\mathbb{Z}_m$ analysis back to $\mathbb{Z}$.
+This file contains the final assembly for the polychromatic coloring theorem
+for 4-element sets, importing the three components of the proof:
+
+- `Combi.BlockColour` — block colouring infrastructure, Table 1, and shared utilities
+- `Combi.CaseOne` — Case 1 (single cycle)
+- `Combi.CaseTwo` — Case 2 (multiple cycles)
+
+## Main results
+
+- `normal_bit` — **the main theorem**: every normalized 4-element set admits a
+  3-polychromatic coloring. This is the entry point used by `Main.lean`.
+
+## Proof structure
+
+Following the reduction in `Main.lean`, we assume the set $S = \{0, a, b, c\}$ is normalized
+such that $0 < a < b < c$, $a + b \le c$, $c \ge 289$, and $\gcd(a, b, c) = 1$.
+The proof works in the cyclic group $\mathbb{Z}_m$ where $m = c - a + b$.
+As shown in §4 of the paper, the polychromaticity of $S$ in $\mathbb{Z}$ follows from
+its polychromaticity in $\mathbb{Z}_m$.
+
+Let $d_1 = \gcd(b, m)$ and $d_2 = \gcd(b{-}a, m)$. The proof dispatches on whether
+one of these GCDs equals 1 (so the corresponding element generates all of
+$\mathbb{Z}_m$) or both are greater than 1 (so $\mathbb{Z}_m$ decomposes into
+shorter cycles):
+
+- `main_case_one` — **Case 1: Single Cycle (§4.1).**
+  Applies when $\min(d_1, d_2) = 1$. The set reduces to $\{0,1,g,g{+}1\}$ via an
+  affine transformation (`exists_g_of_coprime`). Subcases by the gap parameter $g$:
+  - `case_one_small_g` — **(1a)** $g \in \{2,3,4\}$, via Table 1 block colorings.
+  - `case_one_interval` — **(1b)** General $g$, via interval coloring.
+  - `case_one_residues` — **(1c)** $3 \nmid m$, via multiplication by 3.
+  - `case_one_divisible` — **(1d)** $3 \mid m$, via explicit periodic colorings.
+
+- `main_case_two` — **Case 2: Multiple Cycles (§4.2).**
+  Applies when both $d_1, d_2 > 1$. Setting $e_1 = m/d_1$, we use the isomorphism
+  $\mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \cong \mathbb{Z}_m$ to define colorings
+  cycle-by-cycle. Subcases by the parity of $d_1$ and $e_1$:
+  - `case_two_e1_even` — **(2a)** $e_1$ even: parity-based alternation.
+  - `case_two_d1_even_e1_odd` — **(2b)** $d_1$ even, $e_1$ odd: alternation with fixup.
+  - `case_two_odd_small` — **(2c)** Both odd, $e_1 \le 17$: shifted periodic colorings.
+  - `case2d_coloring_works` — **(2d)** Both odd, $e_1 \ge 19$: rotating interval patterns.
 -/
 
 open Finset Pointwise
