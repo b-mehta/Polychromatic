@@ -1142,22 +1142,16 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     have hcases : g'.val = 0 ∨ g'.val = 1 := by grind
     rcases hcases with h | h
     · have hg'0 : g' = 0 := by rw [← hval, h, Nat.cast_zero]
-      have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1} := by
-        rw [hg'0, zero_add]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]
-      grind [Finset.card_le_card hsub, Finset.card_le_two (a := (0 : ZMod m)) (b := 1)]
+      simp only [hg'0, zero_add] at hcard4; grind [Finset.card_pair]
     · have hg'1 : g' = 1 := by rw [← hval, h, Nat.cast_one]
-      have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1, (1 : ZMod m) + 1} := by
-        rw [hg'1]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]
-      grind [Finset.card_le_card hsub,
-        Finset.card_le_three (a := (0 : ZMod m)) (b := 1) (c := (1 : ZMod m) + 1)]
+      simp only [hg'1] at hcard4; grind [Finset.card_le_three]
   · by_contra! hgt
     have hval_lt := ZMod.val_lt g'
     have hgm1 : g'.val = m - 1 := by grind
     have hg'p1 : g' + 1 = 0 := by
       rw [← hval, hgm1, Nat.cast_sub (by grind), Nat.cast_one, ZMod.natCast_self, zero_sub,
         neg_add_cancel]
-    have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1, g'} := by grind
-    grind [Finset.card_le_card hsub, Finset.card_le_three (a := (0 : ZMod m)) (b := 1) (c := g')]
+    simp only [hg'p1] at hcard4; grind [Finset.card_le_three]
   · conv at hset => rhs; rw [← hval]
     exact hset
 
