@@ -87,7 +87,8 @@ set s := ... with hs_def
 have hs_lt : s < 3 := Nat.mod_lt _ (by omega)
 rw [hs_def] at hcv
 set d := (k.val + 3 - s) % 3
-rcases show d = 0 ∨ d = 1 ∨ d = 2 from by omega with hd | hd | hd
+have hd : d = 0 ∨ d = 1 ∨ d = 2 := by omega
+rcases hd with hd | hd | hd
 ```
 The witness mapping (which of {0,1,g,g+1} gives color k) varies per case,
 so this can't easily be extracted further.
