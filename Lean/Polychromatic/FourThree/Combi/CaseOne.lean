@@ -192,12 +192,6 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
     have hqs : q * s ≤ m := Nat.div_mul_le_self m s
     have : 2 * q ≤ q * s := by nlinarith
     omega
-  have mod_small : ∀ d : ℕ, d = 1 ∨ d = 2 → d % s = 1 ∨ d % s = 2 := by
-    intro d hd; rcases hd with h | h <;> subst h
-    · left; exact Nat.mod_eq_of_lt (by omega)
-    · right; exact Nat.mod_eq_of_lt (by omega)
-  have mod_shift : ∀ d : ℕ, d = 1 ∨ d = 2 → (s + d) % s = 1 ∨ (s + d) % s = 2 := by
-    intro d hd; rw [Nat.add_comm, Nat.add_mod_right]; exact mod_small d hd
   by_cases hvg_wrap : v + g < m
   · have hvg_eq : (v + g) % m = v + g := Nat.mod_eq_of_lt hvg_wrap
     rw [hvg_eq] at hvg_lo hvg_hi
@@ -208,9 +202,12 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
           grind [Finpartition.equiEndpoint_hi (show s ≠ 0 by omega) (n := m) (k := s)]
         have := idx_range_from_endpoints' m s (j₀+1) s (v+g) hpast hvg_lt_ep jg hvg_lo hvg_hi
         omega
-    have : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
+    have hd : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
     have : jg + s - j₀ = s + (jg - j₀) := by omega
-    rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
+    rw [this, Nat.add_comm, Nat.add_mod_right]
+    rcases hd with h | h <;> rw [h]
+    · left; exact Nat.mod_eq_of_lt (by omega)
+    · right; exact Nat.mod_eq_of_lt (by omega)
   · push_neg at hvg_wrap
     have hvg_eq : (v + g) % m = v + g - m := by
       rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
@@ -241,8 +238,9 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
       0 (j₀ + 3 - s) (v + g - m)
       (by unfold Finpartition.equiEndpoint; simp)
       hvgm_ub jg hvg_lo hvg_hi
-    have : jg + s - j₀ = 1 ∨ jg + s - j₀ = 2 := by omega
-    exact mod_small _ this
+    rcases (by omega : jg + s - j₀ = 1 ∨ jg + s - j₀ = 2) with h | h <;> rw [h]
+    · left; exact Nat.mod_eq_of_lt (by omega)
+    · right; exact Nat.mod_eq_of_lt (by omega)
 
 -- Equi-partition index: which interval does position p fall in?
 private def eqp_idx (q r : ℕ) (p : ℕ) : ℕ :=
