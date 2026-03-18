@@ -450,10 +450,11 @@ private lemma straddle_boundary_color (q r s p : ℕ) (hq_pos : 0 < q) (hr_lt : 
     have hoff := eqp_off_succ_new q r p hq_pos (by omega)
     rw [hstep, ← hj, hoff]
   · have hpm : p + 1 = m := by omega
-    rw [hpm, Nat.mod_self, (by simp [eqp_idx] : eqp_idx q r 0 = 0),
-      (by simp [eqp_off] : eqp_off q r 0 = 0)]
+    have : eqp_idx q r 0 = 0 := by simp [eqp_idx]
+    have : eqp_off q r 0 = 0 := by simp [eqp_off]
+    rw [hpm, Nat.mod_self, ‹eqp_idx q r 0 = 0›, ‹eqp_off q r 0 = 0›]
     rw [hpm] at hstep
-    have : eqp_idx q r m = s := by rw [hm_eq]; exact eqp_idx_m q r s hq_pos hr_lt
+    have hm_idx : eqp_idx q r m = s := by rw [hm_eq]; exact eqp_idx_m q r s hq_pos hr_lt
     grind
 
 private lemma vg_mod_shift (v g d : ℕ) : (v + (g + d)) % m = ((v + g) % m + d) % m := by
@@ -698,15 +699,15 @@ lemma case_one_residues (g : ℕ) (hm : m ≥ 289) (h_res : m % 3 ≠ 0)
   · -- m = 3g - 2: {0,3,2,5} = {0,2,3,5}
     have h3g : (3 : ZMod m) * (g : ZMod m) = 2 := by
       have := cast_sub 2 hg; push_cast [ZMod.natCast_self] at this; grind
+    have h3g1 : (3 : ZMod m) * ((g : ZMod m) + 1) = 5 := by grind
     simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g, image_singleton,
-      (by grind : (3 : ZMod m) * ((g : ZMod m) + 1) = 5), insert_comm] using
-      table1_0235 m (by grind)
+      h3g1, insert_comm] using table1_0235 m (by grind)
   · -- m = 3g - 1: {0,3,1,4} = {0,1,3,4}
     have h3g : (3 : ZMod m) * g = 1 := by
       have := cast_sub 1 hg; push_cast [ZMod.natCast_self] at this; grind
+    have h3g1 : (3 : ZMod m) * ((g : ZMod m) + 1) = 4 := by grind
     simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g,
-      image_singleton, (by grind : (3 : ZMod m) * ((g : ZMod m) + 1) = 4),
-      insert_comm] using table1_0134 m (by grind)
+      image_singleton, h3g1, insert_comm] using table1_0134 m (by grind)
   · -- m = 3g + 1: {0,3,-1,2} = -1 +ᵥ {0,1,3,4}
     have h3g := cast_add 1 hg
     have h3g1 : (3 : ZMod m) * ((g : ZMod m) + 1) = 2 := by grind
