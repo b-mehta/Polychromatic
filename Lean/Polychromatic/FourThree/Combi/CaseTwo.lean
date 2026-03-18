@@ -745,37 +745,28 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
     have hsum_f : Finset.univ.sum f = d₁ * u + Finset.univ.sum g := by
       conv_lhs => arg 2; ext i; rw [hfg i]
       simp [Finset.sum_add_distrib, Finset.card_univ, ZMod.card]
-    have hsum_g : Finset.univ.sum g = q * w + r := by
-      have hg_split : ∀ i : ZMod d₁,
-          g i = (if i.val < q then w else 0) + (if i.val = q then r else 0) := by
-        grind
-      rw [Finset.sum_congr rfl (fun i _ => hg_split i), Finset.sum_add_distrib]
-      congr 1
-      · simp only [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const,
-          smul_eq_mul]
-        congr 1
-        trans (Finset.image ZMod.val (Finset.univ.filter (fun i : ZMod d₁ => i.val < q))).card
-        · rw [Finset.card_image_of_injective _ (ZMod.val_injective _)]
-        · have : Finset.image ZMod.val
-              (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)) =
-              Finset.range q := by
+    -- Helper: #{i : ZMod d₁ | p(i)} for decidable predicates on ZMod.val
+    have hcard_lt : (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)).card = q := by
+      rw [← Finset.card_image_of_injective _ (ZMod.val_injective _),
+        show Finset.image ZMod.val (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)) =
+          Finset.range q from by
             ext j; simp only [mem_image, mem_filter, mem_univ, true_and, mem_range]
-            constructor
-            · grind
-            · intro hj
-              exact ⟨(j : ZMod d₁),
-                by rwa [ZMod.val_natCast_of_lt (lt_trans hj hq_lt)],
-                ZMod.val_natCast_of_lt (lt_trans hj hq_lt)⟩
-          grind
-      · rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const, smul_eq_mul]
-        have : (Finset.univ.filter (fun i : ZMod d₁ => i.val = q)).card = 1 := by
-          have : Finset.univ.filter (fun i : ZMod d₁ => i.val = q) = {(q : ZMod d₁)} := by
-            ext i; simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
-            constructor
-            · intro h; exact ZMod.val_injective _ (by rwa [ZMod.val_natCast_of_lt hq_lt])
-            · intro h; rw [h, ZMod.val_natCast_of_lt hq_lt]
-          grind
-        rw [this, one_mul]
+            exact ⟨fun ⟨_, hx, he⟩ => he ▸ hx, fun hj => ⟨(j : ZMod d₁),
+              by rwa [ZMod.val_natCast_of_lt (lt_trans hj hq_lt)],
+              ZMod.val_natCast_of_lt (lt_trans hj hq_lt)⟩⟩,
+        Finset.card_range]
+    have hcard_eq : (Finset.univ.filter (fun i : ZMod d₁ => i.val = q)).card = 1 := by
+      rw [show Finset.univ.filter (fun i : ZMod d₁ => i.val = q) = {(q : ZMod d₁)} from by
+          ext i; simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
+          exact ⟨fun h => ZMod.val_injective _ (by rwa [ZMod.val_natCast_of_lt hq_lt]),
+            fun h => by rw [h, ZMod.val_natCast_of_lt hq_lt]⟩,
+        Finset.card_singleton]
+    have hsum_g : Finset.univ.sum g = q * w + r := by
+      have : ∀ i : ZMod d₁,
+          g i = (if i.val < q then w else 0) + (if i.val = q then r else 0) := by grind
+      rw [Finset.sum_congr rfl (fun i _ => this i), Finset.sum_add_distrib]
+      simp only [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const,
+        smul_eq_mul, hcard_lt, hcard_eq, one_mul]
     rw [hsum_f, hsum_g, Nat.mul_comm q w, hqr]
     simp only [deficit]
     rw [Nat.add_mod_mod]
@@ -1045,40 +1036,29 @@ lemma case_two_odd_small (hm : m ≥ 289)
       rw [hzmod_succ, case2c_mod3 he1_div3]
     · refine ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_ba, hχ_eq, h]; congr 1
-      change (j'.val + (case2c_pattern d₁ k₀.val (ZMod.val 0)).val) % 3 =
-        (j.val + k₀.val + p₀.val) % 3
-      have hj'val : j'.val = (j.val + k₀.val) % e₁ := ZMod.val_add j k₀
-      rw [ZMod.val_zero, hj'val]
+      change (j'.val + (case2c_pattern d₁ k₀.val (ZMod.val 0)).val) % 3 = _
+      rw [ZMod.val_zero, show j'.val = (j.val + k₀.val) % e₁ from ZMod.val_add j k₀]
       exact case2c_mod3 he1_div3 (j.val + k₀.val) p₀.val
     · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_2ba, hχ_eq, h]; congr 1
-      change ((j' + 1).val + (case2c_pattern d₁ k₀.val (ZMod.val 0)).val) % 3 =
-        (j.val + k₀.val + 1 + p₀.val) % 3
-      have hj'val : j'.val = (j.val + k₀.val) % e₁ := ZMod.val_add j k₀
-      rw [ZMod.val_zero, hzmod_succ, hj'val]
-      rw [case2c_mod3 he1_div3 ((j.val + k₀.val) % e₁ + 1) p₀.val,
-        Nat.add_assoc ((j.val + k₀.val) % e₁),
-        Nat.add_assoc (j.val + k₀.val)]
+      change ((j' + 1).val + (case2c_pattern d₁ k₀.val (ZMod.val 0)).val) % 3 = _
+      rw [ZMod.val_zero, hzmod_succ, show j'.val = (j.val + k₀.val) % e₁ from ZMod.val_add j k₀]
+      rw [case2c_mod3 he1_div3, Nat.add_assoc, Nat.add_assoc]
       exact case2c_mod3 he1_div3 (j.val + k₀.val) (1 + p₀.val)
 
 /-- Auxiliary: rules out both cycle lengths being ≤ 17 when m ≥ 289. -/
 private lemma no_both_e_small {m d₁ d₂ : ℕ}
-    (hm : m ≥ 289)
-    (hcop : Nat.gcd d₁ d₂ = 1)
+    (hm : m ≥ 289) (hcop : Nat.gcd d₁ d₂ = 1)
     (hd₁_gt1 : d₁ > 1) (hd₂_gt1 : d₂ > 1)
     (hd₁_dvd : d₁ ∣ m) (hd₂_dvd : d₂ ∣ m)
     (he₁_le : m / d₁ ≤ 17) (he₂_le : m / d₂ ≤ 17) : False := by
-  have hd₁_bound : m ≤ d₁ * 17 := by rw [← Nat.mul_div_cancel' hd₁_dvd]; gcongr
-  have hd₂_bound : m ≤ d₂ * 17 := by rw [← Nat.mul_div_cancel' hd₂_dvd]; gcongr
-  have hprod_le : d₁ * d₂ ≤ m :=
-    Nat.le_of_dvd (by grind)
-      (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by rwa [Nat.Coprime]) hd₁_dvd hd₂_dvd)
-  -- d₁*d₂ ≤ m ≤ d₁*17 → d₂ ≤ 17; similarly d₁ ≤ 17
-  have hd₂_le : d₂ ≤ 17 := Nat.le_of_mul_le_mul_left (hprod_le.trans hd₁_bound) (by grind)
-  have hd₁_le : d₁ ≤ 17 :=
-    Nat.le_of_mul_le_mul_left (mul_comm d₁ d₂ ▸ hprod_le.trans hd₂_bound) (by grind)
-  -- 289 ≤ m ≤ d₁*17 → d₁ ≥ 17; similarly d₂ ≥ 17
-  -- So d₁ = d₂ = 17, gcd(17,17) = 17 ≠ 1.
+  have hprod := Nat.le_of_dvd (by grind)
+    (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by rwa [Nat.Coprime]) hd₁_dvd hd₂_dvd)
+  have h₁ : m ≤ d₁ * 17 := by rw [← Nat.mul_div_cancel' hd₁_dvd]; gcongr
+  have h₂ : m ≤ d₂ * 17 := by rw [← Nat.mul_div_cancel' hd₂_dvd]; gcongr
+  -- d₁*d₂ ≤ m ≤ d₁*17 → d₂ ≤ 17 → d₁ = d₂ = 17 → gcd = 17 ≠ 1
+  have := Nat.le_of_mul_le_mul_left (hprod.trans h₁) (by grind)
+  have := Nat.le_of_mul_le_mul_left (mul_comm d₁ d₂ ▸ hprod.trans h₂) (by grind)
   grind
 
 /-! ### Aggregation of Case 2 -/
