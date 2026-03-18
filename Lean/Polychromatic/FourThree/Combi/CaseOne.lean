@@ -97,7 +97,6 @@ private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s) (h_lb : (m + s - 1) / 
     omega
 
 open Finpartition in
-open Finpartition in
 private lemma idx_range_from_endpoints' (m s : ℕ) (a b p : ℕ)
     (ha_le : equiEndpoint m s a ≤ p)
     (hp_lt : p < equiEndpoint m s b)
@@ -239,13 +238,9 @@ private lemma mod_step (a b : ℕ) (h : (a + 1) / b = a / b) :
     (a + 1) % b = a % b + 1 := by grind [Nat.div_add_mod a b, Nat.div_add_mod (a + 1) b]
 
 -- Helper: if quotient increases by 1, remainder resets to 0
-private lemma mod_zero_step (a b : ℕ) (hb : 0 < b) (h : (a + 1) / b = a / b + 1) :
+private lemma mod_zero_step (a b : ℕ) (h : (a + 1) / b = a / b + 1) :
     (a + 1) % b = 0 := by
-  have h1 := Nat.div_add_mod a b
-  have h2 := Nat.div_add_mod (a + 1) b
-  have h3 := Nat.mod_lt a hb
-  have h4 : b * ((a + 1) / b) = b * (a / b) + b := by grind
-  grind
+  rw [← Nat.dvd_iff_mod_eq_zero]; by_contra hdvd; simp [Nat.succ_div, hdvd] at h
 
 private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
     eqp_off q r (p + 1) = eqp_off q r p + 1 := by
@@ -264,13 +259,13 @@ private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p +
     exact mod_step (p - r * (q + 1)) q
       (by simp only [eqp_idx, if_neg h1, if_neg h2] at h; rw [hsub] at h; omega)
 
-private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
+private lemma eqp_off_succ_new (q r p : ℕ) (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
     eqp_off q r (p + 1) = 0 := by
   unfold eqp_off
   by_cases h1 : p + 1 < r * (q + 1) <;>
       by_cases h2 : p < r * (q + 1)
   · rw [if_pos h1]
-    exact mod_zero_step p (q + 1) (by omega)
+    exact mod_zero_step p (q + 1)
       (by simp only [eqp_idx, if_pos h1, if_pos h2] at h; have := div_step p (q + 1); omega)
   · omega
   · rw [if_neg h1]
@@ -279,7 +274,7 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 
   · rw [if_neg h1]
     have hsub : p + 1 - r * (q + 1) = (p - r * (q + 1)) + 1 := by omega
     rw [hsub]
-    exact mod_zero_step (p - r * (q + 1)) q hq (by
+    exact mod_zero_step (p - r * (q + 1)) q (by
       simp only [eqp_idx, if_neg h1, if_neg h2] at h
       rw [hsub] at h; have := div_step (p - r * (q + 1)) q; omega)
 
@@ -445,7 +440,7 @@ private lemma straddle_boundary_color (q r s p : ℕ) (hq_pos : 0 < q) (hr_lt : 
     (eqp_idx q r ((p + 1) % m) + eqp_off q r ((p + 1) % m) % 2) % 3 = (j + 1) % 3 := by
   by_cases h : p + 1 < m
   · rw [Nat.mod_eq_of_lt h]
-    have hoff := eqp_off_succ_new q r p hq_pos (by omega)
+    have hoff := eqp_off_succ_new q r p (by omega)
     rw [hstep, ← hj, hoff]
   · have hpm : p + 1 = m := by omega
     have : eqp_idx q r 0 = 0 := by simp [eqp_idx]
@@ -479,8 +474,7 @@ private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
     ∃ s ∈ ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)),
       (⟨c (n + s).val, hc_lt _⟩ : Fin 3) = k := by
   obtain ⟨a, ha, hca⟩ := h
-  have ha_lt : a < m := by
-    grind
+  have ha_lt : a < m := by grind
   exact ⟨(a : ZMod m),
     by simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
        rcases ha with rfl | rfl | rfl | rfl <;> simp,
@@ -787,21 +781,16 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g) (hg3 : 3 ∣ g) (hg : 0 < g)
     simp only [c, gk_mod3, Nat.mul_add_div hg, Nat.div_eq_of_lt hr', add_zero]
   by_cases hr_lt_gm1 : r + 1 < g
   · have hcv : c v = (r % 3 + q) % 3 := hv_eq ▸ color_at q r hr_lt
-    have hcvg : c (v + g) = (r % 3 + (q + 1)) % 3 := by
-      have : v + g = g * (q + 1) + r := by grind
-      rw [this, color_at (q + 1) r hr_lt]
+    have hcvg : c (v + g) = (r % 3 + (q + 1)) % 3 := by grind [color_at (q + 1) r hr_lt]
     have hcvg1 : c (v + g + 1) = ((r + 1) % 3 + (q + 1)) % 3 := by
-      have : v + g + 1 = g * (q + 1) + (r + 1) := by grind
-      grind
+      grind [color_at (q + 1) (r + 1) (by grind)]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g (g + 1)
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
   · push_neg at hr_lt_gm1
     have hr_eq : r = g - 1 := by grind
     have hcv : c v = (2 + q) % 3 := by grind
-    have hcv1 : c (v + 1) = (q + 1) % 3 := by
-      have : v + 1 = g * (q + 1) + 0 := by grind
-      grind
+    have hcv1 : c (v + 1) = (q + 1) % 3 := by grind [color_at (q + 1) 0 hg]
     have hcvg : c (v + g) = (2 + (q + 1)) % 3 := by
       have : v + g = g * (q + 1) + (g - 1) := by grind
       grind
