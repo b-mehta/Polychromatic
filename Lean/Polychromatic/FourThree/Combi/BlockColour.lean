@@ -109,7 +109,7 @@ private lemma checkLinearPolychrom_spec {offsets : List ℕ} {L : List (Fin 3)}
     ∃ s ∈ offsets, L[i + s]? = some c := by
   simp only [checkLinearPolychrom, List.all_eq_true, List.mem_range, List.any_eq_true,
     beq_iff_eq] at hcheck
-  exact hcheck i (by omega) c (by fin_cases c <;> simp)
+  exact hcheck i (by omega) c (by grind)
 
 /-- Frobenius representation for consecutive block sizes r, r+1:
     any m ≥ r(r-1) can be written as r·h + (r+1)·k. -/
@@ -222,8 +222,7 @@ private lemma sub_region_eq {i s r h : ℕ} (hr : 0 < r)
   have hlt : i / r < h := Nat.div_lt_of_lt_mul (by grind)
   have hh : 1 ≤ h := by omega
   have hQr : r * h = r * (i / r) + r := by grind [Nat.sub_add_cancel]
-  rw [hQr]
-  exact sub_add_eq hjs_ge hdiv
+  grind
 
 /-! ### Common goal type for each case
 
@@ -264,7 +263,7 @@ private lemma case_no_wrap_AA (A B : List (Fin 3)) (offsets : List ℕ)
     have hjs_2r : i % A.length + s < 2 * A.length := by grind
     exact bcv_eq_A A B h _ _ _ _ his_A
       (add_mod_sub hA hjs_lt hjs_2r) hjs_sub
-      (by rw [List.getElem?_append_right (by grind)])
+      (by grind)
 
 /-! ### Case 2: No wrap, AB boundary -/
 private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
@@ -296,7 +295,7 @@ private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
     refine bcv_eq_B A B h _ _ _ _ hnot_A ?_ hjs_B ?_
     · rw [sub_region_eq hA hi_lo hA_region hjs_lt,
         Nat.mod_eq_of_lt (by grind)]
-    · rw [List.getElem?_append_right (by grind)]
+    · grind
 
 /-! ### Case 3: No wrap, BB -/
 private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
@@ -322,7 +321,7 @@ private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
     exact bcv_eq_B A B h _ _ _ _ (by grind)
       (by rw [Nat.sub_add_comm hB_region]; exact add_mod_sub (by grind) hjs_lt (by grind))
       hjs_sub
-      (by rw [List.getElem?_append_right (by grind)])
+      (by grind)
 
 /-! ### Case 4: Wrap, A region (k = 0) -/
 private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
@@ -356,7 +355,7 @@ private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
     refine bcv_eq_A A B h _ _ _ _ (by grind)
       (by rw [hmod, Nat.mod_eq_of_lt (by grind), hsub_eq])
       hjs_idx ?_
-    rw [List.getElem?_append_right (by grind)]
+    grind
 
 /-! ### Case 5: Wrap, B region, h > 0 → BA -/
 private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
@@ -399,7 +398,7 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
     refine bcv_eq_A A B h _ _ _ _ (by grind)
       (by rw [hmod, Nat.mod_eq_of_lt (by grind), hsub_eq])
       hjs_idx ?_
-    rw [List.getElem?_append_right (by grind)]
+    grind
 
 /-! ### Case 6: Wrap, B region, h = 0 → BB -/
 private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
@@ -438,7 +437,7 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
       (by omega)
       (by rw [Nat.mul_zero, Nat.sub_zero, hmod, Nat.mod_eq_of_lt (by grind), hsub_eq])
       hjs_idx ?_
-    rw [List.getElem?_append_right (by grind)]
+    grind
 
 /-! ### Main result of the block coloring infrastructure -/
 
@@ -463,7 +462,7 @@ theorem blockColor_polychrom
     obtain ⟨s, hs_mem, hs_eq⟩ := checkLinearPolychrom_spec hXY_check hj_bound c
     refine ⟨s, hs_mem, ?_⟩
     have := hcorr s (List.le_max_of_le' 0 hs_mem le_rfl)
-    rw [hs_eq] at this; exact Option.some.inj this.symm
+    grind
   -- Dispatch to case lemmas
   by_cases h_wrap : i + maxOff < m
   · by_cases hA_region : i < A.length * h
@@ -527,7 +526,7 @@ private lemma table1_of_blockColor (A B : List (Fin 3)) (offsets : List ℕ)
   haveI : NeZero m := ⟨by omega⟩
   haveI : Fact (1 < m) := ⟨by omega⟩
   obtain ⟨h, k, hm_eq, hhk⟩ := frobenius_consec (by omega : 1 < A.length) hm
-  have hm_eq' : A.length * h + B.length * k = m := by rw [hBlen]; exact hm_eq
+  have hm_eq' : A.length * h + B.length * k = m := by grind
   apply hasPolychromColouring_of_cyclic (blockColorVal A B h) S
   intro n target
   obtain ⟨s, hs_mem, hs_eq⟩ := blockColor_polychrom A B offsets (by omega) hBlen hmaxOff
