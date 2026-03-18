@@ -447,8 +447,10 @@ private lemma straddle2_gap1 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le :
     set e3 := equiEndpoint m s (j₀ + 1 + 1 + 1) with he3
     have hd1 := equiEndpoint_diff_ge m s (j₀ + 1)
     have hd2 := equiEndpoint_diff_ge m s (j₀ + 1 + 1)
-    have hsac1 := Nat.sub_add_cancel (show e1 ≤ e2 by omega)
-    have hsac2 := Nat.sub_add_cancel (show e2 ≤ e3 by omega)
+    have hmono1 : e1 ≤ e2 := by omega
+    have hsac1 := Nat.sub_add_cancel hmono1
+    have hmono2 : e2 ≤ e3 := by omega
+    have hsac2 := Nat.sub_add_cancel hmono2
     by_cases hwrap : v + g < m
     · have : (v + g) % m = v + g := Nat.mod_eq_of_lt hwrap
       omega
@@ -477,18 +479,21 @@ private lemma straddle2_gap1 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le :
       rw [this] at hv_hi
       have hd1 := equiEndpoint_diff_ge m s (s - 1)
       rw [Nat.sub_add_cancel (by omega), hep_s] at hd1
-      have hsac_m := Nat.sub_add_cancel
-        (le_trans (equiEndpoint_monotone (by omega)) hep_s.le : equiEndpoint m s (s - 1) ≤ m)
+      have hep_s1_le : equiEndpoint m s (s - 1) ≤ m :=
+        le_trans (equiEndpoint_monotone (by omega)) hep_s.le
+      have hsac_m := Nat.sub_add_cancel hep_s1_le
       have hd2 := equiEndpoint_diff_ge m s 0
       rw [hep0, Nat.zero_add] at hd2
       omega
     · have hj₀_eq2 : j₀ = s - 1 := by omega
-      rw [show jg = 1 from by omega] at hvg_eq
+      have hjg1 : jg = 1 := by omega
+      rw [hjg1] at hvg_eq
       rw [hj₀_eq2, Nat.sub_add_cancel (by omega), hep_s] at hv_hi
       have hd1 := equiEndpoint_diff_ge m s 0
       rw [hep0, Nat.zero_add] at hd1
       have hd2 := equiEndpoint_diff_ge m s 1
-      have hsac12 := Nat.sub_add_cancel (show equiEndpoint m s 1 ≤ equiEndpoint m s (1 + 1) by omega)
+      have hmono12 : equiEndpoint m s 1 ≤ equiEndpoint m s (1 + 1) := by omega
+      have hsac12 := Nat.sub_add_cancel hmono12
       omega
 
 private lemma eqp_idx_succ_lt_m (q r s p : ℕ) (hq_pos : 0 < q) (hr_lt : r < s)
@@ -898,9 +903,10 @@ lemma case_one_div_g_not_three (g : ℕ) (h_div : m = 3 * g ∨ m = 3 * g + 3)
   apply HasPolychromColouring.of_image (ZMod.castHom h3_dvd (ZMod 3))
   simp only [Finset.image_insert, Finset.image_singleton,
     map_zero, map_one, map_add, map_natCast]
+  have hg12 : g % 3 = 1 ∨ g % 3 = 2 := by grind
   suffices ({0, 1, (g : ZMod 3), (g : ZMod 3) + 1} : Finset (ZMod 3)) = Finset.univ by
     rw [this]; exact hasPolychromColouring_univ
-  rcases (by grind : g % 3 = 1 ∨ g % 3 = 2) with h | h <;> {
+  rcases hg12 with h | h <;> {
     have : (g : ZMod 3) = ↑(g % 3 : ℕ) := by rw [ZMod.natCast_mod]
     simp only [this, h]; decide
   }
@@ -934,9 +940,11 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g) (hg3 : 3 ∣ g) (hg : 0 < g)
   by_cases hr_lt_gm1 : r + 1 < g
   · have hcv : c v = (r % 3 + q) % 3 := hv_eq ▸ color_at q r hr_lt
     have hcvg : c (v + g) = (r % 3 + (q + 1)) % 3 := by
-      rw [show v + g = g * (q + 1) + r from by grind, color_at (q + 1) r hr_lt]
+      have : v + g = g * (q + 1) + r := by grind
+      rw [this, color_at (q + 1) r hr_lt]
     have hcvg1 : c (v + g + 1) = ((r + 1) % 3 + (q + 1)) % 3 := by
-      rw [show v + g + 1 = g * (q + 1) + (r + 1) from by grind, color_at (q + 1) (r + 1) (by grind)]
+      have : v + g + 1 = g * (q + 1) + (r + 1) := by grind
+      rw [this, color_at (q + 1) (r + 1) (by grind)]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g (g + 1)
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
@@ -944,9 +952,13 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g) (hg3 : 3 ∣ g) (hg : 0 < g)
     have hr_eq : r = g - 1 := by grind
     have hcv : c v = (2 + q) % 3 := by grind
     have hcv1 : c (v + 1) = (q + 1) % 3 := by
-      rw [show v + 1 = g * (q + 1) + 0 from by grind, color_at (q + 1) 0 hg]; grind
+      have : v + 1 = g * (q + 1) + 0 := by grind
+      rw [this, color_at (q + 1) 0 hg]
+      grind
     have hcvg : c (v + g) = (2 + (q + 1)) % 3 := by
-      rw [show v + g = g * (q + 1) + (g - 1) from by grind]; grind
+      have : v + g = g * (q + 1) + (g - 1) := by grind
+      rw [this]
+      grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
@@ -980,17 +992,22 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   by_cases hrg : r = g
   · have hcv : c v = (3 - q % 3) % 3 := by grind
     have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
-      rw [show v + g = h * (q + 1) + (g - 1) from by grind, color_at (q + 1) (g - 1) (by grind)]
+      have : v + g = h * (q + 1) + (g - 1) := by grind
+      rw [this, color_at (q + 1) (g - 1) (by grind)]
       grind
     have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
-      rw [show v + 1 = h * (q + 1) + 0 from by grind, color_at (q + 1) 0 (by grind)]; grind
+      have : v + 1 = h * (q + 1) + 0 := by grind
+      rw [this, color_at (q + 1) 0 (by grind)]
+      grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
   · have hcv1 : c (v + 1) = ((r + 1) % 3 + (3 - q % 3)) % 3 := by
-      rw [show v + 1 = h * q + (r + 1) from by grind, color_at q (r + 1) (by grind)]
+      have : v + 1 = h * q + (r + 1) := by grind
+      rw [this, color_at q (r + 1) (by grind)]
     have hcvg1 : c (v + g + 1) = (r % 3 + (3 - (q + 1) % 3)) % 3 := by
-      rw [show v + g + 1 = h * (q + 1) + r from by grind, color_at (q + 1) r hr_lt]
+      have : v + g + 1 = h * (q + 1) + r := by grind
+      rw [this, color_at (q + 1) r hr_lt]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 1 (g + 1)
       (by simp) (by simp) (by simp) rfl
       (by rw [hcv1]
@@ -1115,7 +1132,8 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     rwa [hset, Finset.card_image_of_injective _ hinj] at hcard
   refine ⟨g'.val, ?_, ?_, ?_⟩
   · by_contra! hlt
-    rcases (by grind : g'.val = 0 ∨ g'.val = 1) with h | h
+    have hcases : g'.val = 0 ∨ g'.val = 1 := by grind
+    rcases hcases with h | h
     · have hg'0 : g' = 0 := by rw [← hval, h, Nat.cast_zero]
       simp only [hg'0, zero_add] at hcard4; grind [Finset.card_pair]
     · have hg'1 : g' = 1 := by rw [← hval, h, Nat.cast_one]
