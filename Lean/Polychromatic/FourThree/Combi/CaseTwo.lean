@@ -183,10 +183,8 @@ private lemma orbitMap_cycle_index {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZe
     (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁))
     (i : ZMod d₁) (j : ZMod e₁) :
     ZMod.castHom hd1_dvd (ZMod d₁) (orbitMap m a b d₁ e₁ (i, j)) * u⁻¹ = i := by
-  simp only [orbitMap]
-  rw [map_add, map_mul, map_mul, map_natCast, map_intCast, map_natCast,
-    map_intCast, hb_zero, mul_zero, add_zero, mul_assoc,
-    ← hu, u.mul_inv, mul_one]
+  simp only [orbitMap]; rw [map_add, map_mul, map_mul, map_natCast, map_intCast,
+    map_natCast, map_intCast, hb_zero, mul_zero, add_zero, mul_assoc, ← hu, u.mul_inv, mul_one]
   simp [ZMod.natCast_val]
 
 /-- The cycle index α shifts by 1 when (b-a) is added. -/
