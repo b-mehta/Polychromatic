@@ -29,8 +29,7 @@ variable (m : ℕ) (a b : ℤ)
 /-! ### Arithmetic helpers for cycle decomposition -/
 
 private lemma intCast_2ba_eq :
-    ((2 * b - a : ℤ) : ZMod m) = ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by
-  grind
+    ((2 * b - a : ℤ) : ZMod m) = ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by grind
 
 private lemma ZMod.val_add_one {n : ℕ} [NeZero n] (x : ZMod n) : (x + 1).val = (x.val + 1) % n := by
   rw [ZMod.val_add, ZMod.val_one_eq_one_mod, Nat.add_mod_mod]
@@ -42,8 +41,7 @@ private lemma zmod_val_add_one (d : ℕ) [NeZero d] (_hd : d ≥ 2) (i : ZMod d)
   · grind [Nat.mod_self]
 
 private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2)
-    (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by
-  grind [zmod_val_add_one e he2 j]
+    (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by grind [zmod_val_add_one e he2 j]
 
 /-- Coloring for Case 2a ($e_1$ even): alternating bicolors per cycle,
     missing colors chosen so adjacent cycles skip different colors. -/
@@ -132,8 +130,7 @@ private lemma orbitMap_injective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   have hi := orbitMap_i_eq hd1_dvd hb_zero hba_unit heq
   subst hi
   simp only [orbitMap] at heq
-  have hj_smul : (j₁.val : ℕ) • (b : ZMod m) = (j₂.val : ℕ) • (b : ZMod m) := by
-    grind
+  have hj_smul : (j₁.val : ℕ) • (b : ZMod m) = (j₂.val : ℕ) • (b : ZMod m) := by grind
   exact Prod.ext rfl (orbitMap_j_eq hord hj_smul)
 
 private lemma orbitMap_bijective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
@@ -207,16 +204,14 @@ private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid �
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) {b : γ}
     (hΦ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, Φ (i, j + 1) = Φ (i, j) + b)
     (x : γ) :
-    Φ.symm (x + b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := by
-  grind
+    Φ.symm (x + b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := by grind
 
 /-- If α(Φ(i,j)) = i for all i,j, then (Φ⁻¹(x)).1 = α(x). -/
 private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) (α : γ → ZMod d₁)
     (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i)
     (x : γ) :
-    (Φ.symm x).1 = α x := by
-  grind
+    (Φ.symm x).1 = α x := by grind
 
 /-! ### Orbit coloring framework -/
 
@@ -646,8 +641,7 @@ private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     rw [hi, ← Nat.cast_one (R := ZMod m), ← Nat.cast_add, hpred]
   have step1 : (↑i.val : ZMod m) * ((b - a : ℤ) : ZMod m) +
       ↑↑j.val * ((b : ℤ) : ZMod m) + ((b - a : ℤ) : ZMod m) =
-      (↑d₁ : ZMod m) * ((b - a : ℤ) : ZMod m) + ↑↑j.val * ((b : ℤ) : ZMod m) := by
-    grind
+      (↑d₁ : ZMod m) * ((b - a : ℤ) : ZMod m) + ↑↑j.val * ((b : ℤ) : ZMod m) := by grind
   rw [step1, ← nsmul_eq_mul (d₁), hk₀, nsmul_eq_mul, ← add_mul,
     ← Nat.cast_add (k₀.val) (j.val), ← nsmul_eq_mul, Nat.add_comm]
   -- Reduce (j+k₀) • b mod e₁ using he1_b_zero
@@ -1009,12 +1003,9 @@ lemma main_case_two (hm : m ≥ 289)
         · -- Swap roles of b and b-a
           rw [← zmod_set_swap m a b]
           set a' := (-a : ℤ); set b' := (b - a : ℤ)
-          have hba_eq : (b' - a').natAbs = b.natAbs := by
-            grind
-          have hcop' : (Nat.gcd b'.natAbs m).gcd (Nat.gcd (b' - a').natAbs m) = 1 := by
-            grind
-          have hmin' : min (Nat.gcd b'.natAbs m) (Nat.gcd (b' - a').natAbs m) > 1 := by
-            grind
+          have hba_eq : (b' - a').natAbs = b.natAbs := by grind
+          have hcop' : (Nat.gcd b'.natAbs m).gcd (Nat.gcd (b' - a').natAbs m) = 1 := by grind
+          have hmin' : min (Nat.gcd b'.natAbs m) (Nat.gcd (b' - a').natAbs m) > 1 := by grind
           have h3' : ¬ (3 ∣ Nat.gcd b'.natAbs m) := by
             intro h3d'; have := Nat.dvd_gcd h3 h3d'
             grind
@@ -1047,12 +1038,9 @@ lemma main_case_two (hm : m ≥ 289)
           -- After swap, new e₁' = m/d₂. If e₁' ≤ 17 too, contradiction.
           rw [← zmod_set_swap m a' b']
           set a'' := (-a' : ℤ); set b'' := (b' - a' : ℤ)
-          have hba_eq : (b'' - a'').natAbs = b'.natAbs := by
-            grind
-          have hcop' : (Nat.gcd b''.natAbs m).gcd (Nat.gcd (b'' - a'').natAbs m) = 1 := by
-            grind
-          have hmin' : min (Nat.gcd b''.natAbs m) (Nat.gcd (b'' - a'').natAbs m) > 1 := by
-            grind
+          have hba_eq : (b'' - a'').natAbs = b'.natAbs := by grind
+          have hcop' : (Nat.gcd b''.natAbs m).gcd (Nat.gcd (b'' - a'').natAbs m) = 1 := by grind
+          have hmin' : min (Nat.gcd b''.natAbs m) (Nat.gcd (b'' - a'').natAbs m) > 1 := by grind
           -- Dispatch on parity
           rcases Nat.even_or_odd (m / Nat.gcd b''.natAbs m) with he' | ho'
           · exact case_two_e1_even m a'' b'' hm hcop' hmin' he'
