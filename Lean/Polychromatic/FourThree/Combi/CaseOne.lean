@@ -346,7 +346,7 @@ private lemma straddle1_gap2 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le :
     omega
 
 open Finpartition in
-private lemma straddle2_gap1 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
+private lemma straddle2_gap1 (s g m : ℕ) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     (h_lb : (m + s - 1) / s < g) (h_ub : g < 2 * (m / s))
     (v j₀ jg : ℕ) (hv : v < m)
     (hj₀_lt : j₀ < s) (hjg_lt : jg < s)
@@ -604,7 +604,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
       endpoint_bridge ((v + g) % m) (Nat.mod_lt _ (by omega)) hjg_lt h2_step
     have hgap2 := straddle1_gap2 s g m hs hs3_le hs_le h_lb
       h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_hi hvg_lo hvg_hi hstrad1 hgap
-    have hgap1 := straddle2_gap1 s g m hs hs3_le hs_le
+    have hgap1 := straddle2_gap1 s g m hs3_le hs_le
       h_lb h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi hvg_hi hstrad2 hgap
     omega
   -- Step 1: which pair covers k?
@@ -640,7 +640,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         have hvg_lt : (v + g) % m < m := Nat.mod_lt _ (by omega)
         have hstrad2 : equiEndpoint m s (jg + 1) ≤ (v + g) % m + 1 :=
           endpoint_bridge ((v + g) % m) hvg_lt hjg_lt h2_step
-        exact straddle2_gap1 s g m hs hs3_le hs_le h_lb
+        exact straddle2_gap1 s g m hs3_le hs_le h_lb
           h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi hvg_hi hstrad2 hgap
       have hj01_eq : (j₀ + 1) % 3 = jg % 3 := by grind [gap_mod_cases_gen]
       rcases hk2 with hk_eq | hk_eq
