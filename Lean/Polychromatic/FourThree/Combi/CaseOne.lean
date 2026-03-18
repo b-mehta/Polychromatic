@@ -228,7 +228,8 @@ private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) : eqp_idx q r (p + 1) = eq
     have hne : p / (q + 1) ≠ r := fun heq =>
       absurd (heq ▸ Nat.div_mul_le_self p (q + 1)) (by omega)
     have := div_step p (q + 1)
-    rw [hpeq, Nat.sub_self, Nat.zero_div]; omega
+    rw [hpeq, Nat.sub_self, Nat.zero_div]
+    omega
   · have hsub : p + 1 - r * (q + 1) = (p - r * (q + 1)) + 1 := by omega
     rw [hsub]
     have := div_step (p - r * (q + 1)) q; omega
@@ -252,7 +253,7 @@ private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p +
   by_cases h1 : p + 1 < r * (q + 1) <;>
       by_cases h2 : p < r * (q + 1)
   · rw [if_pos h1, if_pos h2]
-    exact mod_step p (q + 1) (by simp only [eqp_idx, if_pos h1, if_pos h2] at h; exact h)
+    exact mod_step p (q + 1) (by simpa [eqp_idx, h1, h2] using h)
   · omega
   · exfalso
     simp only [eqp_idx, if_neg h1, if_pos h2] at h
