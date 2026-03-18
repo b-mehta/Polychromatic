@@ -212,7 +212,8 @@ private lemma orbitMap_shift_b {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   by_cases hj : j.val + 1 < e₁
   · have hv : (j + 1).val = j.val + 1 := by
       rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hj
-    rw [hv]; grind
+    rw [hv]
+    grind
   · have hje : j.val + 1 = e₁ := by grind [ZMod.val_lt]
     have hv : (j + 1).val = 0 := by rw [ZMod.val_add_one, hje, Nat.mod_self]
     have h1 : (j.val : ZMod m) * ↑b + ↑b = 0 := by
@@ -227,7 +228,8 @@ private lemma orbitMap_shift_ba {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero 
     orbitMap m a b d₁ e₁ (i, j) + ((b - a : ℤ) : ZMod m) = orbitMap m a b d₁ e₁ (i + 1, j) := by
   simp only [orbitMap]
   have : (i + 1).val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
-  rw [this]; grind
+  rw [this]
+  grind
 
 /-- The cycle index α(x) = castHom(x) * u⁻¹ satisfies α(φ(i,j)) = i. -/
 private lemma orbitMap_cycle_index {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
