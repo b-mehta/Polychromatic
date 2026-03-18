@@ -105,6 +105,26 @@ via `fun k => by simpa using h k 0`.
 - **Make atomic changes.** Edit one proof at a time, verify with `lean_diagnostic_messages` after each. Large batch changes consistently fail on complex arithmetic files.
 - **Use `grind` not `omega` for equiEndpoint.** `grind` handles `j+1+1` vs `j+2` normalisation that `omega` can't, especially with `grind [equiEndpoint_monotone]`.
 
+## Finding simplifications systematically
+
+### High-impact structural changes
+- **Inline nearly-identical lemmas into a single dispatch.** When 3+ lemmas share the same structure (e.g., `obtain ⟨u, hu⟩; rw [...]`) differing only in case-specific data, merge them into one proof with `rcases` dispatch. Factor common setup before the dispatch, and extract shared sub-computations as local `have` helpers. This was the single biggest win (6 `case_one_res_*` → 1 `case_one_residues`, ~55 lines saved).
+- **Remove single-use private helpers.** `grep` for each private lemma name; if it appears exactly twice (definition + one call), inline at the call site. But verify the proof still closes — `grind`/`omega` are context-sensitive and may need the old intermediate `have`s.
+- **Remove unused parameters.** After golfing, check `lean_diagnostic_messages` for "unused variable" warnings and remove the parameter + all caller arguments. `Nat.succ_div`-based proofs often make `hb : 0 < b` unnecessary.
+
+### Medium-impact tactic patterns
+- **`simp only [def, h₁, h₂] at h` to inline unfold+rw.** Instead of `unfold foo; rw [if_pos h1]; rw [if_neg h2]`, use `simp only [foo, h1, h2] at h`. This was very effective for `eqp_idx`/`eqp_off` case analysis.
+- **`refine ⟨..., ?_, ?_⟩ <;> grind [def, key_fact]`** to close multiple structurally similar goals at once. Works when the goals differ only in index values and `grind` can handle both.
+- **`<;> [left; right] <;> rw [h, ...]`** to compress symmetric disjunction dispatches. When `rcases` gives two branches that both end with `left; exact ...` / `right; exact ...` using the same tactic chain, combine with `<;>`.
+- **`grind [local_helper arg1 arg2]`** to skip intermediate `have` + `rw` steps. If a proof is `have : v + g = g * (q+1) + r := by grind; rw [this, color_at ...]`, try `grind [color_at (q+1) r hr_lt]` directly. This gives `grind` the rewrite target as a hint so it can compute the full chain. Works best when the `have` is simple arithmetic and the rewrite target is a function application.
+- **`Nat.succ_div` for division step lemmas.** `grind [Nat.succ_div]` subsumes `(a+1)/b = a/b` or `= a/b + 1` proofs. Also `rw [← Nat.dvd_iff_mod_eq_zero]; by_contra hdvd; simp [Nat.succ_div, hdvd] at h` for remainder-resets-to-zero proofs.
+- **`Nat.add_mod_left` not `Nat.add_mod_right`** for `(s + k) % s = k % s`. `Nat.add_mod_right` matches `(a + b) % b` (modulus is second addend), `Nat.add_mod_left` matches `(a + b) % a` (modulus is first addend).
+
+### Low-impact but reliable
+- **Remove duplicate `open Foo in` lines.** These accumulate during refactoring.
+- **Remove consecutive blank lines.** Keep exactly one between declarations.
+- **Join single-tactic `by` blocks** where the `have` declaration + body fits under 100 chars: `have foo : T := by grind` instead of splitting across two lines.
+
 ## Proof development process
 
 - **Write a detailed informal proof before formalizing.** For any non-trivial goal (more than a single tactic), write out why the goal is true, what the key steps are, and what lemmas you expect to use. This prevents wasted cycles trying tactics blindly.
