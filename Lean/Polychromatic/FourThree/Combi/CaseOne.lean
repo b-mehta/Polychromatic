@@ -190,8 +190,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
       Finpartition.equiEndpoint m s (j₀ + 3) := shift_within_two' m s g h_ub j₀ v hv_hi
   have hg_lt_m : g < m := by
     have hqs : q * s ≤ m := Nat.div_mul_le_self m s
-    have : 2 * q ≤ q * s := by nlinarith
-    omega
+    nlinarith [Nat.div_mul_le_self m s]
   by_cases hvg_wrap : v + g < m
   · have hvg_eq : (v + g) % m = v + g := Nat.mod_eq_of_lt hvg_wrap
     rw [hvg_eq] at hvg_lo hvg_hi
