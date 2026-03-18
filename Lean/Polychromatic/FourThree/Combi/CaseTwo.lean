@@ -342,7 +342,6 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   have hd₁_pos : 0 < d₁ := Nat.pos_of_ne_zero (by grind)
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   -- e₁ ≥ 3: e₁ is odd and e₁ = 1 would give d₁ = m, contradicting gcd(d₁,d₂) = 1
-  have he₁_pos : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) hd₁_pos
   have he₁_ge3 : e₁ ≥ 3 := by
     by_contra! h
     rcases (by grind : e₁ = 1 ∨ e₁ = 2) with he | he
@@ -613,23 +612,21 @@ private lemma case2d_wrap_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   set Φ := Equiv.ofBijective _ hbij
   set q := Φ.symm ((d₁ : ℕ) • ((b - a : ℤ) : ZMod m))
   have hq_i : q.1 = 0 := by
-    have hφq := Equiv.apply_symm_apply Φ ((d₁ : ℕ) • ((b - a : ℤ) : ZMod m))
     set f := ZMod.castHom hd1_dvd (ZMod d₁)
     have hfφ : f (Φ q) = q.1 * ((b - a : ℤ) : ZMod d₁) := by
       change f (orbitMap m a b d₁ e₁ q) = _
       simp only [orbitMap, map_add, map_mul, map_natCast, map_intCast, hb_zero, mul_zero, add_zero]
       rw [ZMod.natCast_val, ZMod.cast_id]
-    rw [hφq] at hfφ
-    have hf0 : f (d₁ • ((b - a : ℤ) : ZMod m)) = 0 := by
+    rw [Equiv.apply_symm_apply] at hfφ
+    have : f (d₁ • ((b - a : ℤ) : ZMod m)) = 0 := by
       rw [nsmul_eq_mul, map_mul, map_natCast, map_intCast, ZMod.natCast_self, zero_mul]
-    rw [hf0] at hfφ
+    rw [this] at hfφ
     exact hba_unit.mul_left_eq_zero.mp hfφ.symm
   refine ⟨q.2, ?_⟩
   have hφq := Equiv.apply_symm_apply Φ ((d₁ : ℕ) • ((b - a : ℤ) : ZMod m))
   change orbitMap m a b d₁ e₁ q = _ at hφq
   simp only [orbitMap] at hφq
-  have hq_eta : q = (q.1, q.2) := (Prod.eta q).symm
-  rw [hq_eta] at hφq
+  rw [(Prod.eta q).symm] at hφq
   simp only [hq_i, ZMod.val_zero, Nat.cast_zero, zero_mul, zero_add] at hφq
   grind
 
