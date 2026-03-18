@@ -170,7 +170,8 @@ private lemma orbitMap_cycle_index {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZe
     (hd1_dvd : d₁ ∣ m) (hb_zero : (b : ZMod d₁) = 0)
     (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁)) (i : ZMod d₁) (j : ZMod e₁) :
     ZMod.castHom hd1_dvd (ZMod d₁) (orbitMap m a b d₁ e₁ (i, j)) * u⁻¹ = i := by
-  simp only [orbitMap]; rw [map_add, map_mul, map_mul, map_natCast, map_intCast,
+  simp only [orbitMap]
+  rw [map_add, map_mul, map_mul, map_natCast, map_intCast,
     map_natCast, map_intCast, hb_zero, mul_zero, add_zero, mul_assoc, ← hu, u.mul_inv, mul_one]
   simp [ZMod.natCast_val]
 
@@ -292,7 +293,9 @@ positions `j = e₁ − 2` and `j = 0` respectively; since `e₁ ≥ 3` these po
 are distinct, guaranteeing every 2×2 block contains all three colors.
 -/
 
--- Case 2b coloring: even cycles `01010…011`, odd cycles `22020…020`.
+-- The coloring function for Case 2b.
+-- Even cycles: 01010...011 (alternating 0,1, last position overridden to 1)
+-- Odd cycles: 22020...020 (first position 2, then: even→0, odd→2)
 private def case2b_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
   if i.val % 2 = 0 then -- even cycle
     if j.val = e₁ - 1 then 1 else if j.val % 2 = 0 then 0 else 1
