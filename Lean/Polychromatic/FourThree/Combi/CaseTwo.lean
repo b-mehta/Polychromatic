@@ -220,6 +220,31 @@ private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
 
 /-! ### Orbit coloring framework -/
 
+/-- Build the orbit equivalence and its shift properties from the standard hypotheses. -/
+private noncomputable def orbitEquiv {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
+    [NeZero m] [NeZero d₁] [NeZero e₁]
+    (hm_eq : m = d₁ * e₁) (hd1_dvd : d₁ ∣ m)
+    (hb_zero : (b : ZMod d₁) = 0) (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
+    (hord : addOrderOf (b : ZMod m) = e₁) :
+    { Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m //
+      (∀ x : ZMod m, Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1)) ∧
+      (∀ x : ZMod m, (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1) } := by
+  have he1_b : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
+  let φ := orbitMap m a b d₁ e₁
+  have hφ_add_b : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
+      φ (i, j + 1) = φ (i, j) + ↑b := by
+    intro i j; exact (orbitMap_shift_b he1_b (i, j)).symm
+  let Φ := Equiv.ofBijective φ (orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord)
+  let u_ba := hba_unit.choose
+  have hu_ba : ↑u_ba = ((b - a : ℤ) : ZMod d₁) := hba_unit.choose_spec
+  let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom hd1_dvd (ZMod d₁) x * u_ba⁻¹
+  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 := cycle_index_shift_ba hd1_dvd u_ba hu_ba
+  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i :=
+    orbitMap_cycle_index hd1_dvd hb_zero u_ba hu_ba
+  have hΦ_add_b := equiv_symm_shift_b Φ hφ_add_b
+  have hΦ_cycle := equiv_symm_fst_eq Φ α hα_φ
+  exact ⟨Φ, hΦ_add_b, fun x => by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]⟩
+
 /-- **Key infrastructure for Case 2.** Polychromaticity from an orbit coloring. -/
 private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     [NeZero m] [NeZero d₁] [NeZero e₁]
@@ -272,32 +297,16 @@ lemma case_two_e1_even (hm : m ≥ 289)
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
   have hb_zero : (Int.cast b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
-  have hba_unit : IsUnit (Int.cast (b - a) : ZMod d₁) :=
-    isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
-  -- addOrderOf b in ZMod m is e₁
+  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
-  have he1_b : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
-  -- Define the cycle map φ = orbitMap and derive bijectivity from shared infrastructure
-  let φ := orbitMap m a b d₁ e₁
-  have hφ_add_b : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
-      φ (i, j + 1) = φ (i, j) + ↑b := by
-    intro i j; exact (orbitMap_shift_b he1_b (i, j)).symm
-  -- φ is bijective (from shared orbitMap infrastructure)
-  let Φ := Equiv.ofBijective φ (orbitMap_bijective hm_eq hd₁_dvd hb_zero hba_unit hord)
-  -- Cycle index function α : ZMod m → ZMod d₁
-  obtain ⟨u_ba, hu_ba⟩ := hba_unit
-  let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom hd₁_dvd (ZMod d₁) x * u_ba⁻¹
-  have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 := cycle_index_shift_ba hd₁_dvd u_ba hu_ba
-  have hα_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (φ (i, j)) = i :=
-    orbitMap_cycle_index hd₁_dvd hb_zero u_ba hu_ba
-  have hΦ_add_b := equiv_symm_shift_b Φ hφ_add_b
-  have hΦ_cycle := equiv_symm_fst_eq Φ α hα_φ
+  obtain ⟨Φ, hΦ_add_b, hΦ_cycle_shift⟩ :=
+    orbitEquiv hm_eq hd₁_dvd hb_zero hba_unit hord
   have hd₁_ge2 : d₁ ≥ 2 := by grind
-  have hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2 := parity_flip_even e₁ he1_even he₁_ge2
-  exact orbit_coloring_polychrom Φ hΦ_add_b
-    (fun x => by rw [hΦ_cycle, hα_ba, ← hΦ_cycle])
-    (cycle_coloring d₁ e₁)
-    (fun n k => color_covers_even d₁ e₁ hd₁_ge2 hparity _ _ _ k)
+  have he₁_ge2 : e₁ ≥ 2 := by
+    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) (by grind)
+    grind
+  exact orbit_coloring_polychrom Φ hΦ_add_b hΦ_cycle_shift (cycle_coloring d₁ e₁)
+    (fun n k => color_covers_even d₁ e₁ hd₁_ge2 (parity_flip_even e₁ he1_even he₁_ge2) _ _ _ k)
 
 /-! ### Subcase (2b) construction: d₁ even, e₁ odd -/
 
