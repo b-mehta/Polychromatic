@@ -177,13 +177,13 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
     have hr_lt : r < s := Nat.mod_lt m hs
     have hep_j3 : Finpartition.equiEndpoint m s (j₀ + 3) = q * (j₀ + 3) + r := by
       unfold Finpartition.equiEndpoint
-      rw [min_eq_left (by omega)]
+      grind
     have hm_eq : m = q * s + r := by grind [Nat.div_add_mod m s]
     have hm_le_ep : m ≤ Finpartition.equiEndpoint m s (j₀ + 3) := by grind
     have hep_diff : Finpartition.equiEndpoint m s (j₀ + 3) - m =
         q * (j₀ + 3 - s) := by rw [hep_j3, hm_eq]; grind [Nat.mul_add]
     have hvgm_ub : v + g - m < Finpartition.equiEndpoint m s (j₀ + 3 - s) := by
-      calc v + g - m < q * (j₀ + 3 - s) := by rw [← hep_diff]; omega
+      calc v + g - m < q * (j₀ + 3 - s) := by grind
         _ ≤ Finpartition.equiEndpoint m s (j₀ + 3 - s) := by
           change q * _ ≤ q * _ + min r _
           omega
@@ -208,7 +208,7 @@ private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) : eqp_idx q r (s
   have hge : ¬(s * q + r < r * (q + 1)) := by nlinarith
   simp only [eqp_idx, if_neg hge]
   have hle : r * (q + 1) ≤ s * q + r := by nlinarith
-  have hsub : s * q + r - r * (q + 1) = (s - r) * q := by zify [hle, (by omega : r ≤ s)]; ring
+  have hsub : s * q + r - r * (q + 1) = (s - r) * q := by grind
   rw [hsub, Nat.mul_div_cancel _ hq]; omega
 
 -- General fact: consecutive ℕ quotients differ by 0 or 1
@@ -326,9 +326,7 @@ private lemma straddle1_gap2 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le :
     rw [hj₀_eq, Nat.sub_add_cancel (by omega), hep_s] at hv_eq
     have hv_val : v = m - 1 := by omega
     have hg_pos : 0 < g := by
-      have := gap_exceeds_ilen m s g hs h_lb 0
-      have := equiEndpoint_strictMono (by omega : s ≠ 0) hs_le one_pos
-      omega
+      grind
     have hvg_mod : (v + g) % m = g - 1 := by
       have : m - 1 + g = m + (g - 1) := by omega
       rw [hv_val, this, Nat.add_mod_left, Nat.mod_eq_of_lt (by omega)]
@@ -751,7 +749,7 @@ lemma case_one_div_g_not_three (g : ℕ) (h_div : m = 3 * g ∨ m = 3 * g + 3)
     (hg3 : g % 3 ≠ 0) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
         Finset (ZMod m)) := by
-  have h3_dvd : 3 ∣ m := by rcases h_div with rfl | rfl <;> grind
+  have h3_dvd : 3 ∣ m := by grind
   haveI : NeZero m := ⟨by grind⟩
   apply HasPolychromColouring.of_image (ZMod.castHom h3_dvd (ZMod 3))
   simp only [Finset.image_insert, Finset.image_singleton,
@@ -926,7 +924,7 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g) (hg_le : g 
             · have : g ≥ 1 := by grind
               zify [this] at hm_lb ⊢; nlinarith
             · have : g = 5 ∨ g = 6 ∨ g = 7 ∨ g = 8 ∨ g = 9 := by grind
-              rcases this with rfl | rfl | rfl | rfl | rfl <;> grind)
+              grind)
 
 /-! ### WLOG and aggregation lemmas for Case 1 -/
 
