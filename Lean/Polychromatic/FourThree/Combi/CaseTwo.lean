@@ -398,32 +398,23 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
       π (φ (i, j)) = (j.val : ZMod d₂) * π (↑b) := by
     intro i j; simp only [φ, orbitMap, π, map_add, map_mul, map_natCast, map_intCast]
     rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba]; ring
-  -- π(b) is a unit in ZMod d₂
   have hπ_b_unit : IsUnit (π (↑b)) := by
     change IsUnit ((ZMod.castHom hd₂_dvd (ZMod d₂)) (↑b))
-    rw [map_intCast]
-    apply isUnit_intCast_of_natAbs_coprime
-    -- gcd(b.natAbs, d₂) = 1: since d₂ coprime to d₁, and b = d₁*q with gcd(q,e₁)=1
-    grind
-  -- Degenerate positions can't coincide: use d₂ | (j-j') from projection
-  -- π(n+(b-a)) = π(n) since π(b-a)=0, combined with π(φ(i,j))=j.val*π(b)
-  -- gives d₂ | (j.val - j'.val). Then d₂ | e₁ and d₂ > 1, so e₁-2 and 0
-  -- can't both be divisible by d₂ (since e₁ odd → gcd(e₁-2, e₁) | 2).
+    rw [map_intCast]; exact isUnit_intCast_of_natAbs_coprime (by grind)
+  -- Degenerate positions can't coincide: d₂ | (j-j') from projection,
+  -- d₂ | e₁ and d₂ > 1, so e₁-2 and 0 can't both be 0 mod d₂.
   have h_degenerate_false : ∀ (j₁ j₂ : ZMod e₁),
       (j₁.val : ZMod d₂) * π (↑b) = (j₂.val : ZMod d₂) * π (↑b) →
       j₁.val = 0 → j₂.val = e₁ - 2 → False := by
     intro j₁ j₂ heq hj₁ hj₂
     have hval_eq := hπ_b_unit.mul_right_cancel heq
     rw [hj₁, hj₂, Nat.cast_zero] at hval_eq
-    have hd₂_dvd_diff : d₂ ∣ (e₁ - 2) := (ZMod.natCast_eq_zero_iff _ _).mp hval_eq.symm
+    have hd₂_dvd_diff := (ZMod.natCast_eq_zero_iff _ _).mp hval_eq.symm
     have hd₂_dvd_2 : d₂ ∣ 2 := by
-      have := Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
-      have : e₁ - (e₁ - 2) = 2 := by grind
-      grind
-    obtain ⟨k, hk⟩ := hd₂_dvd_e₁
-    obtain ⟨l, hl⟩ := he1_odd
-    have := Nat.le_of_dvd (by grind) hd₂_dvd_2
-    grind
+      have h := Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
+      rwa [show e₁ - (e₁ - 2) = 2 from by grind] at h
+    obtain ⟨_, hk⟩ := hd₂_dvd_e₁; obtain ⟨_, hl⟩ := he1_odd
+    have := Nat.le_of_dvd (by grind) hd₂_dvd_2; grind
   -- Define coloring and prove polychromaticity via orbit helper
   have hΦ_cycle_shift : ∀ x : ZMod m,
       (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1 := fun x => by
