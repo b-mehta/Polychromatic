@@ -564,54 +564,36 @@ private lemma intervalColors_union_covers {i₁ i₂ : Fin 3} (h : i₁ ≠ i₂
   intro k; fin_cases i₁ <;> fin_cases i₂ <;> fin_cases k <;>
     simp_all [intervalColors, Finset.mem_insert, Finset.mem_singleton]
 
-/-- Consecutive positions (j, j+1) within the same interval produce both colors of that interval. -/
-private lemma basePattern_consec_same_interval {e₁ j : ℕ}
-    (hsame : whichInterval e₁ j = whichInterval e₁ (j + 1)) :
-    {basePattern e₁ j, basePattern e₁ (j + 1)} = intervalColors (whichInterval e₁ j) := by
-  simp only [whichInterval, basePattern, intervalColors] at *
-  grind
-
-/-- At an interval boundary (j at end, j+1 at start of next), the pair of
-    consecutive basePattern values equals the pair of the left interval. -/
-private lemma basePattern_consec_boundary {e₁ j : ℕ}
-    (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁)
-    (hdiff : whichInterval e₁ j ≠ whichInterval e₁ ((j + 1) % e₁)) :
-    {basePattern e₁ j, basePattern e₁ ((j + 1) % e₁)} = intervalColors (whichInterval e₁ j) := by
+/-- For any j, {basePattern(j), basePattern(j+1 mod e₁)} covers the
+    interval pair of whichInterval(j). -/
+private lemma basePattern_consec_pair {e₁ j : ℕ}
+    (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁) :
+    intervalColors (whichInterval e₁ j) ⊆ {basePattern e₁ j, basePattern e₁ ((j + 1) % e₁)} := by
   obtain ⟨ku, hku⟩ : Odd (case2d_u e₁) := by obtain ⟨k, hk⟩ := he; grind [case2d_u]
   obtain ⟨kv, hkv⟩ : Odd (case2d_v e₁) := by obtain ⟨k, hk⟩ := he; grind [case2d_v]
   obtain ⟨kw, hkw⟩ : Odd (e₁ - case2d_u e₁ - case2d_v e₁) := by
     obtain ⟨k, hk⟩ := he; grind [case2d_u, case2d_v]
   have huv := case2d_uv_le hge
-  simp only [whichInterval] at hdiff ⊢
-  by_cases hj1_wrap : j + 1 < e₁
-  · rw [Nat.mod_eq_of_lt hj1_wrap] at hdiff ⊢
-    grind [basePattern, intervalColors]
+  by_cases hj1 : j + 1 < e₁
+  · rw [Nat.mod_eq_of_lt hj1]
+    by_cases hsame : whichInterval e₁ j = whichInterval e₁ (j + 1)
+    · -- Same interval: both colors present
+      exact (show {basePattern e₁ j, basePattern e₁ (j + 1)} =
+        intervalColors (whichInterval e₁ j) by
+          simp only [whichInterval, basePattern, intervalColors] at *; grind).ge
+    · -- Boundary: last element of interval + first of next
+      simp only [whichInterval] at hsame ⊢
+      exact (show {basePattern e₁ j, basePattern e₁ (j + 1)} =
+        intervalColors _ by grind [basePattern, intervalColors]).ge
   · -- Wrap: j = e₁ - 1
-    push_neg at hj1_wrap
+    push_neg at hj1
     have hj_eq : j = e₁ - 1 := by grind
     subst hj_eq
     have : e₁ - 1 + 1 = e₁ := by grind
-    rw [this, Nat.mod_self] at hdiff ⊢
-    grind [basePattern, intervalColors]
-
-/-- Combined: for any j, {basePattern(j), basePattern(j+1 mod e₁)} is the
-    interval pair of whichInterval(j). -/
-private lemma basePattern_consec_pair {e₁ j : ℕ}
-    (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁) :
-    intervalColors (whichInterval e₁ j) ⊆ {basePattern e₁ j, basePattern e₁ ((j + 1) % e₁)} := by
-  by_cases hsame : whichInterval e₁ j = whichInterval e₁ ((j + 1) % e₁)
-  · -- Same interval: j+1 < e₁ (otherwise wrap changes interval)
-    have hj1 : j + 1 < e₁ := by
-      by_contra h
-      push_neg at h
-      have : j = e₁ - 1 := by grind
-      subst this
-      have : e₁ - 1 + 1 = e₁ := by grind
-      rw [this, Nat.mod_self] at hsame
-      grind [whichInterval, case2d_u, case2d_v]
-    rw [Nat.mod_eq_of_lt hj1]
-    exact (basePattern_consec_same_interval (by rwa [Nat.mod_eq_of_lt hj1] at hsame)).ge
-  · exact (basePattern_consec_boundary he hge hj hsame).ge
+    rw [this, Nat.mod_self]
+    simp only [whichInterval] at *
+    exact (show {basePattern e₁ (e₁ - 1), basePattern e₁ 0} =
+      intervalColors _ by grind [basePattern, intervalColors]).ge
 
 /-- A rotation by r ∈ [u, e₁-u] moves to a different interval:
     whichInterval(j) ≠ whichInterval((j + r) % e₁). -/
