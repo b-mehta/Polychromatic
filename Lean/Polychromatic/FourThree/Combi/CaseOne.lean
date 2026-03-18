@@ -459,11 +459,10 @@ private lemma straddle_boundary_color (q r s p : ℕ) (hq_pos : 0 < q) (hr_lt : 
     have hoff := eqp_off_succ_new q r p hq_pos (by omega)
     rw [hstep, ← hj, hoff]
   · have hpm : p + 1 = m := by omega
-    have : eqp_idx q r 0 = 0 := by simp [eqp_idx]
-    have : eqp_off q r 0 = 0 := by simp [eqp_off]
-    rw [hpm, Nat.mod_self, ‹eqp_idx q r 0 = 0›, ‹eqp_off q r 0 = 0›]
+    rw [hpm, Nat.mod_self, (by simp [eqp_idx] : eqp_idx q r 0 = 0),
+      (by simp [eqp_off] : eqp_off q r 0 = 0)]
     rw [hpm] at hstep
-    have hm_idx : eqp_idx q r m = s := by rw [hm_eq]; exact eqp_idx_m q r s hq_pos hr_lt
+    have : eqp_idx q r m = s := by rw [hm_eq]; exact eqp_idx_m q r s hq_pos hr_lt
     grind
 
 private lemma vg_mod_shift (v g d : ℕ) : (v + (g + d)) % m = ((v + g) % m + d) % m := by
