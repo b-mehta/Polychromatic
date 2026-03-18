@@ -222,14 +222,17 @@ private lemma orbitEquiv_cycle_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     {hord : addOrderOf (b : ZMod m) = e₁} (x : ZMod m) :
     ((orbitEquiv hm_eq hd1_dvd hb_zero hba_unit hord).symm (x + ↑(b - a))).1 =
     ((orbitEquiv hm_eq hd1_dvd hb_zero hba_unit hord).symm x).1 + 1 := by
-  let Φ := orbitEquiv hm_eq hd1_dvd hb_zero hba_unit hord
   let u_ba := hba_unit.choose
   have hu_ba : ↑u_ba = ((b - a : ℤ) : ZMod d₁) := hba_unit.choose_spec
   let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom hd1_dvd (ZMod d₁) x * u_ba⁻¹
   have hα_ba := cycle_index_shift_ba hd1_dvd u_ba hu_ba
-  have hΦ_cycle := equiv_symm_fst_eq Φ α (orbitMap_cycle_index hd1_dvd hb_zero u_ba hu_ba)
-  rw [hΦ_cycle (x + ↑(b - a))]; dsimp only [α]; rw [hα_ba]
-  congr 1; exact (hΦ_cycle x).symm
+  have hΦ_cycle := equiv_symm_fst_eq (orbitEquiv hm_eq hd1_dvd hb_zero hba_unit hord) α
+    (orbitMap_cycle_index hd1_dvd hb_zero u_ba hu_ba)
+  rw [hΦ_cycle (x + ↑(b - a))]
+  dsimp only [α]
+  rw [hα_ba]
+  congr 1
+  exact (hΦ_cycle x).symm
 
 /-- **Key infrastructure for Case 2.** Polychromaticity from an orbit coloring:
     given an orbit equivalence Φ with shift properties and a coloring f,
@@ -669,14 +672,16 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
     have hcard_lt : (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)).card = q := by
       have : Finset.image ZMod.val (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)) =
           Finset.range q := by
-        ext j; simp only [mem_image, mem_filter, mem_univ, true_and, mem_range]
+        ext j
+        simp only [mem_image, mem_filter, mem_univ, true_and, mem_range]
         exact ⟨fun ⟨_, hx, he⟩ => he ▸ hx, fun hj => ⟨(j : ZMod d₁),
           by rwa [ZMod.val_natCast_of_lt (lt_trans hj hq_lt)],
           ZMod.val_natCast_of_lt (lt_trans hj hq_lt)⟩⟩
       rw [← Finset.card_image_of_injective _ (ZMod.val_injective _), this, Finset.card_range]
     have hcard_eq : (Finset.univ.filter (fun i : ZMod d₁ => i.val = q)).card = 1 := by
       have : Finset.univ.filter (fun i : ZMod d₁ => i.val = q) = {(q : ZMod d₁)} := by
-        ext i; simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
+        ext i
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
         exact ⟨fun h => ZMod.val_injective _ (by rwa [ZMod.val_natCast_of_lt hq_lt]),
           fun h => by rw [h, ZMod.val_natCast_of_lt hq_lt]⟩
       rw [this, Finset.card_singleton]
