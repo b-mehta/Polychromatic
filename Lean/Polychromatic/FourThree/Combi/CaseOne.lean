@@ -161,12 +161,9 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
           grind [Finpartition.equiEndpoint_hi (show s ≠ 0 by omega) (n := m) (k := s)]
         have := idx_range_from_endpoints' m s (j₀+1) s (v+g) hpast hvg_lt_ep jg hvg_lo hvg_hi
         omega
-    have hd : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
-    have : jg + s - j₀ = s + (jg - j₀) := by omega
-    rw [this, Nat.add_comm, Nat.add_mod_right]
-    rcases hd with h | h <;> rw [h]
-    · left; exact Nat.mod_eq_of_lt (by omega)
-    · right; exact Nat.mod_eq_of_lt (by omega)
+    have : jg + s - j₀ = s + 1 ∨ jg + s - j₀ = s + 2 := by omega
+    rcases this with h | h <;> [left; right] <;>
+      rw [h, Nat.add_mod_left, Nat.mod_eq_of_lt (by omega)]
   · push_neg at hvg_wrap
     have hvg_eq : (v + g) % m = v + g - m := by
       rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
@@ -195,9 +192,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
       (by unfold Finpartition.equiEndpoint; simp)
       hvgm_ub jg hvg_lo hvg_hi
     have : jg + s - j₀ = 1 ∨ jg + s - j₀ = 2 := by omega
-    rcases this with h | h <;> rw [h]
-    · left; exact Nat.mod_eq_of_lt (by omega)
-    · right; exact Nat.mod_eq_of_lt (by omega)
+    rcases this with h | h <;> [left; right] <;> rw [h, Nat.mod_eq_of_lt (by omega)]
 
 -- Equi-partition index: which interval does position p fall in?
 private def eqp_idx (q r : ℕ) (p : ℕ) : ℕ :=
