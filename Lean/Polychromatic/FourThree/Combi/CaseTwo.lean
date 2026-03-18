@@ -152,8 +152,7 @@ private lemma orbitMap_shift_b {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   intro ⟨i, j⟩
   simp only [orbitMap]
   by_cases hj : j.val + 1 < e₁
-  · have hv : (j + 1).val = j.val + 1 := by
-      rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hj
+  · have hv : (j + 1).val = j.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hj
     rw [hv]
     grind
   · have hje : j.val + 1 = e₁ := by grind [ZMod.val_lt]
@@ -226,8 +225,7 @@ private noncomputable def orbitEquiv {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   have he1_b : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
   let φ := orbitMap m a b d₁ e₁
   have hφ_add_b : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
-      φ (i, j + 1) = φ (i, j) + ↑b := by
-    intro i j; exact (orbitMap_shift_b he1_b (i, j)).symm
+      φ (i, j + 1) = φ (i, j) + ↑b := by intro i j; exact (orbitMap_shift_b he1_b (i, j)).symm
   let Φ := Equiv.ofBijective φ (orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord)
   let u_ba := hba_unit.choose
   have hu_ba : ↑u_ba = ((b - a : ℤ) : ZMod d₁) := hba_unit.choose_spec
@@ -361,8 +359,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   let φ := orbitMap m a b d₁ e₁
   let Φ := Equiv.ofBijective φ (orbitMap_bijective hm_eq hd₁_dvd hb_zero hba_unit hord)
   have hφ_add_b : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
-      φ (i, j + 1) = φ (i, j) + ↑b := by
-    intro i j; exact (orbitMap_shift_b he1_b (i, j)).symm
+      φ (i, j + 1) = φ (i, j) + ↑b := by intro i j; exact (orbitMap_shift_b he1_b (i, j)).symm
   -- Cycle index function α : ZMod m → ZMod d₁
   obtain ⟨u_ba, hu_ba⟩ := hba_unit
   let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom hd₁_dvd (ZMod d₁) x * u_ba⁻¹
@@ -720,12 +717,10 @@ private lemma intCast_b_mem_zmod_set (m : ℕ) (a b : ℤ) : ((b : ℤ) : ZMod m
   simp [zmod_set]
 
 private lemma intCast_ba_mem_zmod_set (m : ℕ) (a b : ℤ) :
-    ((b - a : ℤ) : ZMod m) ∈ zmod_set m a b := by
-  simp [zmod_set]
+    ((b - a : ℤ) : ZMod m) ∈ zmod_set m a b := by simp [zmod_set]
 
 private lemma intCast_2ba_mem_zmod_set (m : ℕ) (a b : ℤ) :
-    ((2 * b - a : ℤ) : ZMod m) ∈ zmod_set m a b := by
-  simp [zmod_set]
+    ((2 * b - a : ℤ) : ZMod m) ∈ zmod_set m a b := by simp [zmod_set]
 
 /-- Splitting a ZMod filter sum at a boundary -/
 private lemma zmod_filter_sum_succ {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i : ZMod n) :
@@ -742,8 +737,7 @@ private lemma zmod_filter_sum_succ {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i 
 private lemma zmod_filter_sum_last {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i : ZMod n)
     (hi : i.val = n - 1) :
     (Finset.univ.filter (fun k : ZMod n => k.val < i.val)).sum f + f i =
-    Finset.univ.sum f := by
-  rw [← zmod_filter_sum_succ f i]; congr 1; grind
+    Finset.univ.sum f := by rw [← zmod_filter_sum_succ f i]; congr 1; grind
 
 -- Position arithmetic helpers for case2d_coloring_works (not important individually)
 
@@ -837,8 +831,7 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
         (fun k : ZMod d₁ => k.val < (i + 1).val)).sum vals) % e₁) % e₁ =
         ((j.val + ((Finset.univ.filter
         (fun k : ZMod d₁ => k.val < i.val)).sum vals) % e₁) % e₁ + vals i) % e₁
-      have : (i + 1).val = i.val + 1 := by
-        rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
+      have : (i + 1).val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
       rw [this, zmod_filter_sum_succ vals i]
       exact pos_shift_succ' j.val _ (vals i) e₁
   · have hi_eq : i.val = d₁ - 1 := by grind [ZMod.val_lt]
@@ -885,8 +878,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
   refine ⟨χ, fun n k => ?_⟩
   have hχ_eq : ∀ (i' : ZMod d₁) (j' : ZMod e₁),
       χ (Φ (i', j')) = ⟨(j'.val + (case2c_pattern d₁ k₀.val i'.val).val) % 3,
-        Nat.mod_lt _ (by grind)⟩ := by
-    intro i' j'; simp only [χ, Equiv.symm_apply_apply]
+        Nat.mod_lt _ (by grind)⟩ := by intro i' j'; simp only [χ, Equiv.symm_apply_apply]
   set ij := Φ.symm n with hij_def
   have hn : Φ ij = n := Equiv.apply_symm_apply Φ n
   set i := ij.1 with hi_def
@@ -905,8 +897,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
     have hΦ_2ba : Φ (i', j + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
       rw [intCast_2ba_eq, ← add_assoc, ← hΦ_ba]
       exact (orbitMap_shift_b he1_b_zero (i', j)).symm
-    have hi'_eq : i'.val = i.val + 1 := by
-      rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
+    have hi'_eq : i'.val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
     have hhyp : (j.val + p.val) % 3 ≠ (j.val + p'.val) % 3 := by
       change (j.val + (case2c_pattern d₁ k₀.val i.val).val) % 3 ≠
         (j.val + (case2c_pattern d₁ k₀.val i'.val).val) % 3
