@@ -43,15 +43,7 @@ private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s) (hj₀ : j₀ < 
     (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
     j₀ % 3 ≠ jg % 3 := by
   obtain ⟨t, ht⟩ := hs3; subst ht
-  have hqlt : (jg + 3 * t - j₀) / (3 * t) < 2 := by rw [Nat.div_lt_iff_lt_mul (by omega)]; omega
-  have hdam := Nat.div_add_mod (jg + 3 * t - j₀) (3 * t)
-  rcases hgap with hmod | hmod <;>
-    rcases lt_two' _ hqlt with hq | hq <;>
-    rw [hq, hmod] at hdam
-  · grind [Nat.mul_add_mod]
-  · grind
-  · grind [Nat.mul_add_mod]
-  · grind
+  grind [Nat.div_add_mod, Nat.mul_add_mod, lt_two']
 
 open Finpartition in
 private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : ℕ) (hp : p < m) :
@@ -190,14 +182,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
       Finpartition.equiEndpoint m s (j₀ + 3) := shift_within_two' m s g h_ub j₀ v hv_hi
   have hg_lt_m : g < m := by
     have hqs : q * s ≤ m := Nat.div_mul_le_self m s
-    have : 2 * q ≤ q * s := by nlinarith
-    omega
-  have mod_small : ∀ d : ℕ, d = 1 ∨ d = 2 → d % s = 1 ∨ d % s = 2 := by
-    intro d hd; rcases hd with h | h <;> subst h
-    · left; exact Nat.mod_eq_of_lt (by omega)
-    · right; exact Nat.mod_eq_of_lt (by omega)
-  have mod_shift : ∀ d : ℕ, d = 1 ∨ d = 2 → (s + d) % s = 1 ∨ (s + d) % s = 2 := by
-    intro d hd; rw [Nat.add_comm, Nat.add_mod_right]; exact mod_small d hd
+    nlinarith [Nat.div_mul_le_self m s]
   by_cases hvg_wrap : v + g < m
   · have hvg_eq : (v + g) % m = v + g := Nat.mod_eq_of_lt hvg_wrap
     rw [hvg_eq] at hvg_lo hvg_hi
@@ -208,9 +193,12 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
           grind [Finpartition.equiEndpoint_hi (show s ≠ 0 by omega) (n := m) (k := s)]
         have := idx_range_from_endpoints' m s (j₀+1) s (v+g) hpast hvg_lt_ep jg hvg_lo hvg_hi
         omega
-    have : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
+    have hd : jg - j₀ = 1 ∨ jg - j₀ = 2 := by omega
     have : jg + s - j₀ = s + (jg - j₀) := by omega
-    rw [this]; exact mod_shift _ ‹jg - j₀ = 1 ∨ _›
+    rw [this, Nat.add_comm, Nat.add_mod_right]
+    rcases hd with h | h <;> rw [h]
+    · left; exact Nat.mod_eq_of_lt (by omega)
+    · right; exact Nat.mod_eq_of_lt (by omega)
   · push_neg at hvg_wrap
     have hvg_eq : (v + g) % m = v + g - m := by
       rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
@@ -229,20 +217,19 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
     have hm_le_ep : m ≤ Finpartition.equiEndpoint m s (j₀ + 3) := by grind
     have hep_diff : Finpartition.equiEndpoint m s (j₀ + 3) - m =
         q * (j₀ + 3 - s) := by rw [hep_j3, hm_eq]; grind [Nat.mul_add]
-    have hvgm_ub : v + g - m < Finpartition.equiEndpoint m s
-          (j₀ + 3 - s) := by
-      have : v + g - m < q * (j₀ + 3 - s) := by rw [← hep_diff]; omega
-      have : q * (j₀ + 3 - s) ≤ Finpartition.equiEndpoint m s
-            (j₀ + 3 - s) := by
-        change q * (j₀ + 3 - s) ≤ q * (j₀ + 3 - s) + min r (j₀ + 3 - s)
-        omega
-      omega
+    have hvgm_ub : v + g - m < Finpartition.equiEndpoint m s (j₀ + 3 - s) := by
+      calc v + g - m < q * (j₀ + 3 - s) := by rw [← hep_diff]; omega
+        _ ≤ Finpartition.equiEndpoint m s (j₀ + 3 - s) := by
+          change q * _ ≤ q * _ + min r _
+          omega
     have hrange := idx_range_from_endpoints' m s
       0 (j₀ + 3 - s) (v + g - m)
       (by unfold Finpartition.equiEndpoint; simp)
       hvgm_ub jg hvg_lo hvg_hi
     have : jg + s - j₀ = 1 ∨ jg + s - j₀ = 2 := by omega
-    exact mod_small _ this
+    rcases this with h | h <;> rw [h]
+    · left; exact Nat.mod_eq_of_lt (by omega)
+    · right; exact Nat.mod_eq_of_lt (by omega)
 
 -- Equi-partition index: which interval does position p fall in?
 private def eqp_idx (q r : ℕ) (p : ℕ) : ℕ :=
@@ -267,9 +254,7 @@ private lemma div_step (a b : ℕ) (hb : 0 < b) : (a + 1) / b = a / b ∨ (a + 1
   suffices h : (a + 1) / b ≤ a / b + 1 by omega
   have h1 := Nat.div_add_mod a b
   have hmod := Nat.mod_lt a hb
-  have hub : a + 1 ≤ b * (a / b + 1) := by grind
-  calc (a + 1) / b ≤ b * (a / b + 1) / b := Nat.div_le_div_right hub
-    _ = a / b + 1 := Nat.mul_div_cancel_left _ hb
+  exact le_trans (Nat.div_le_div_right (by grind)) (Nat.mul_div_cancel_left _ hb).le
 
 private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) : eqp_idx q r (p + 1) = eqp_idx q r p ∨
     eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
@@ -557,10 +542,6 @@ private lemma vg_mod_shift (v g d : ℕ) : (v + (g + d)) % m = ((v + g) % m + d)
   grind [Nat.add_mod (v + g) d m, Nat.add_mod ((v + g) % m) d m,
     Nat.mod_mod_of_dvd _ (dvd_refl m)]
 
-private lemma mod3_witness {s k : ℕ} (hs : s < 3) (hk : k < 3) : ((k + 3 - s) % 3 = 0 → s = k) ∧
-    ((k + 3 - s) % 3 = 1 → (s + 1) % 3 = k) ∧
-    ((k + 3 - s) % 3 = 2 → (s + 2) % 3 = k) := by grind
-
 private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ} {v s : ℕ} {k : Fin 3} (hs : s < 3)
     (a₀ a₁ a₂ : ℕ)
     (ha₀ : a₀ ∈ ({0, 1, g, g + 1} : Finset ℕ))
@@ -570,7 +551,10 @@ private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ} {v s : ℕ} {k : Fin 3
     (hc₁ : c (v + a₁) = (s + 1) % 3)
     (hc₂ : c (v + a₂) = (s + 2) % 3) :
     ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by
-  obtain ⟨h1, h2, h3⟩ := mod3_witness hs k.isLt
+  have mod3w : ((k.val + 3 - s) % 3 = 0 → s = k.val) ∧
+      ((k.val + 3 - s) % 3 = 1 → (s + 1) % 3 = k.val) ∧
+      ((k.val + 3 - s) % 3 = 2 → (s + 2) % 3 = k.val) := by grind
+  obtain ⟨h1, h2, h3⟩ := mod3w
   set d := (k.val + 3 - s) % 3
   have : d = 0 ∨ d = 1 ∨ d = 2 := by grind
   rcases this with h | h | h
@@ -670,54 +654,70 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
       exact hiv_p.2.1
     · have hpm : p + 1 = m := by omega
       rw [hpm]; exact (equiEndpoint_monotone (by omega)).trans (equiEndpoint_hi (by omega)).le
+  -- Helper: non-straddle witness from pair 1
+  have pair1_ns : ∀ kv : ℕ,
+      (kv = j₀ % 3 ∨ kv = (j₀ + 1) % 3) →
+      eqp_idx q r (v + 1) = eqp_idx q r v →
+      ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = kv := by
+    intro kv hkv h1_same
+    have hv1_lt : v + 1 < m := by
+      rcases eqp_idx_succ_lt_m m q r s v hq_pos hr_lt hm_eq hv_lt with h | h
+      · exact h
+      · rw [h1_same] at h; have : j₀ = s := h; omega
+    obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r v
+      hq_pos hv_lt hv1_lt h1_same j₀ rfl kv hkv
+    exact ⟨d, by simp only [Finset.mem_insert,
+      Finset.mem_singleton] at hd_mem ⊢; omega, hd_eq⟩
+  -- Helper: non-straddle witness from pair 2
+  have pair2_ns : ∀ kv : ℕ,
+      (kv = jg % 3 ∨ kv = (jg + 1) % 3) →
+      eqp_idx q r (((v + g) % m) + 1) = eqp_idx q r ((v + g) % m) →
+      ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = kv := by
+    intro kv hkv h2_same
+    have hvg_lt : (v + g) % m < m := Nat.mod_lt _ (by omega)
+    have hvg1_lt : (v + g) % m + 1 < m := by
+      rcases eqp_idx_succ_lt_m m q r s ((v + g) % m) hq_pos hr_lt hm_eq hvg_lt with h | h
+      · exact h
+      · rw [h2_same] at h; have : jg = s := h; omega
+    obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
+      ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg rfl kv hkv
+    refine ⟨g + d, ?_, ?_⟩
+    · simp only [Finset.mem_insert, Finset.mem_singleton] at hd_mem ⊢; omega
+    · change (idx ((v + (g + d)) % m) + off ((v + (g + d)) % m) % 2) % 3 = kv
+      rw [vg_mod_shift m v g d]; exact hd_eq
+  -- Helper: both-straddle contradiction
+  open Finpartition in
+  have both_straddle_absurd :
+      eqp_idx q r (v + 1) = eqp_idx q r v + 1 →
+      eqp_idx q r (((v + g) % m) + 1) = eqp_idx q r ((v + g) % m) + 1 → False := by
+    intro h1_step h2_step
+    have hstrad1 : equiEndpoint m s (j₀ + 1) ≤ v + 1 := endpoint_bridge v hv_lt hj₀_lt h1_step
+    have hstrad2 : equiEndpoint m s (jg + 1) ≤ (v + g) % m + 1 :=
+      endpoint_bridge ((v + g) % m) (Nat.mod_lt _ (by omega)) hjg_lt h2_step
+    have hgap2 := straddle1_gap2 s g m hs hs3_le hs_le h_lb
+      h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_hi hvg_lo hvg_hi hstrad1 hgap
+    have hgap1 := straddle2_gap1 s g m hs hs3_le hs_le
+      h_lb h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi hvg_hi hstrad2 hgap
+    omega
   -- Step 1: which pair covers k?
   have : (k.val = j₀ % 3 ∨ k.val = (j₀ + 1) % 3) ∨
       (k.val = jg % 3 ∨ k.val = (jg + 1) % 3) := by omega
   rcases this with hk1 | hk2
   · -- Pair 1 covers k: k ∈ {j₀%3, (j₀+1)%3}
     rcases eqp_idx_step q r v hq_pos with h1_same | h1_step
-    · -- Pair 1 non-straddle
-      have hv1_lt : v + 1 < m := by
-        rcases eqp_idx_succ_lt_m m q r s v hq_pos hr_lt hm_eq hv_lt with h | h
-        · exact h
-        · rw [h1_same] at h
-          have : j₀ = s := h; omega
-      obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r v
-        hq_pos hv_lt hv1_lt h1_same j₀ rfl k.val hk1
-      exact ⟨d, by simp only [Finset.mem_insert,
-        Finset.mem_singleton] at hd_mem ⊢; omega, hd_eq⟩
+    · exact pair1_ns k.val hk1 h1_same
     · -- Pair 1 straddles → gap = 2
       open Finpartition in
-      have hstrad1 : equiEndpoint m s (j₀ + 1) ≤ v + 1 := endpoint_bridge v hv_lt hj₀_lt h1_step
-      have hgap2 := straddle1_gap2 s g m hs hs3_le hs_le h_lb
-        h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_hi hvg_lo
-        hvg_hi hstrad1 hgap
+      have hgap2 : (jg + s - j₀) % s = 2 := by
+        have hstrad1 : equiEndpoint m s (j₀ + 1) ≤ v + 1 := endpoint_bridge v hv_lt hj₀_lt h1_step
+        exact straddle1_gap2 s g m hs hs3_le hs_le h_lb
+          h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_hi hvg_lo hvg_hi hstrad1 hgap
       have hjg1_eq : (jg + 1) % 3 = j₀ % 3 := by grind [gap_mod_cases_gen]
       rcases hk1 with hk_eq | hk_eq
       · -- k = j₀%3 = (jg+1)%3: pair 2 must be non-straddle
         rcases eqp_idx_step q r ((v + g) % m) hq_pos with h2_same | h2_step
-        · -- Pair 2 non-straddle → witness a = g+d
-          have hvg_lt : (v + g) % m < m := Nat.mod_lt _ (by omega)
-          have hvg1_lt : (v + g) % m + 1 < m := by
-            rcases eqp_idx_succ_lt_m m q r s ((v + g) % m) hq_pos hr_lt hm_eq hvg_lt with h | h
-            · exact h
-            · rw [h2_same] at h
-              have : jg = s := h; omega
-          obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
-            ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg rfl
-            k.val (Or.inr (hk_eq ▸ hjg1_eq.symm))
-          refine ⟨g + d, ?_, ?_⟩
-          · simp only [Finset.mem_insert, Finset.mem_singleton] at hd_mem ⊢; omega
-          · change (idx ((v + (g + d)) % m) + off ((v + (g + d)) % m) % 2) % 3 = k.val
-            rw [vg_mod_shift m v g d]; exact hd_eq
-        · -- Pair 2 straddles → contradiction: gap = 1
-          open Finpartition in
-          have hstrad2 : equiEndpoint m s (jg + 1) ≤ (v + g) % m + 1 :=
-            endpoint_bridge ((v + g) % m) (Nat.mod_lt _ (by omega)) hjg_lt h2_step
-          have hgap1 := straddle2_gap1 s g m hs hs3_le hs_le
-            h_lb h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi
-            hvg_hi hstrad2 hgap
-          omega
+        · exact pair2_ns k.val (Or.inr (hk_eq ▸ hjg1_eq.symm)) h2_same
+        · exact absurd h1_step (both_straddle_absurd h1_step h2_step).elim
       · -- k = (j₀+1)%3: witness a = 1
         refine ⟨1, by simp, ?_⟩
         change (eqp_idx q r ((v + 1) % m) + eqp_off q r ((v + 1) % m) % 2) % 3 = k.val
@@ -725,56 +725,28 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         exact hk_eq.symm
   · -- Pair 2 covers k: k ∈ {jg%3, (jg+1)%3}
     rcases eqp_idx_step q r ((v + g) % m) hq_pos with h2_same | h2_step
-    · -- Pair 2 non-straddle
-      have hvg_lt : (v + g) % m < m := Nat.mod_lt _ (by omega)
-      have hvg1_lt : (v + g) % m + 1 < m := by
-        rcases eqp_idx_succ_lt_m m q r s ((v + g) % m) hq_pos hr_lt hm_eq hvg_lt with h | h
-        · exact h
-        · rw [h2_same] at h
-          have : jg = s := h; omega
-      obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
-        ((v + g) % m) hq_pos hvg_lt hvg1_lt h2_same jg rfl
-        k.val hk2
-      refine ⟨g + d, ?_, ?_⟩
-      · simp only [Finset.mem_insert, Finset.mem_singleton] at hd_mem ⊢; omega
-      · change (idx ((v + (g + d)) % m) + off ((v + (g + d)) % m) % 2) % 3 = k.val
-        rw [vg_mod_shift m v g d]; exact hd_eq
+    · exact pair2_ns k.val hk2 h2_same
     · -- Pair 2 straddles → gap = 1
-      have hvg_lt : (v + g) % m < m := Nat.mod_lt _ (by omega)
       open Finpartition in
-      have hstrad2 : equiEndpoint m s (jg + 1) ≤
-          (v + g) % m + 1 := endpoint_bridge ((v + g) % m) hvg_lt hjg_lt h2_step
-      have hgap1 := straddle2_gap1 s g m hs hs3_le hs_le h_lb
-        h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi
-        hvg_hi hstrad2 hgap
+      have hgap1 : (jg + s - j₀) % s = 1 := by
+        have hvg_lt : (v + g) % m < m := Nat.mod_lt _ (by omega)
+        have hstrad2 : equiEndpoint m s (jg + 1) ≤ (v + g) % m + 1 :=
+          endpoint_bridge ((v + g) % m) hvg_lt hjg_lt h2_step
+        exact straddle2_gap1 s g m hs hs3_le hs_le h_lb
+          h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi hvg_hi hstrad2 hgap
       have hj01_eq : (j₀ + 1) % 3 = jg % 3 := by grind [gap_mod_cases_gen]
       rcases hk2 with hk_eq | hk_eq
-      · -- k = jg%3 = (j₀+1)%3: pair 1 non-straddle
+      · -- k = jg%3 = (j₀+1)%3: pair 1 must be non-straddle
         rcases eqp_idx_step q r v hq_pos with h1_same | h1_step
-        · -- Pair 1 non-straddle → witness a = d
-          have hv1_lt : v + 1 < m := by
-            rcases eqp_idx_succ_lt_m m q r s v hq_pos hr_lt hm_eq hv_lt with h | h
-            · exact h
-            · rw [h1_same] at h
-              have : j₀ = s := h; omega
-          obtain ⟨d, hd_mem, hd_eq⟩ := non_straddle_witness m q r
-            v hq_pos hv_lt hv1_lt h1_same j₀ rfl k.val
-            (Or.inr (hk_eq ▸ hj01_eq.symm))
-          exact ⟨d, by simp only [Finset.mem_insert,
-            Finset.mem_singleton] at hd_mem ⊢; omega, hd_eq⟩
-        · -- Pair 1 straddles → contradiction: gap = 2
-          open Finpartition in
-          have hstrad1 : equiEndpoint m s (j₀ + 1) ≤ v + 1 := endpoint_bridge v hv_lt hj₀_lt h1_step
-          have hgap2 := straddle1_gap2 s g m hs hs3_le hs_le
-            h_lb h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_hi
-            hvg_lo hvg_hi hstrad1 hgap
-          omega
+        · exact pair1_ns k.val (Or.inr (hk_eq ▸ hj01_eq.symm)) h1_same
+        · exact absurd h1_step (both_straddle_absurd h1_step h2_step).elim
       · -- k = (jg+1)%3: witness a = g+1
+        have hvg_lt : (v + g) % m < m := Nat.mod_lt _ (by omega)
         refine ⟨g + 1, by simp, ?_⟩
         change (idx ((v + (g + 1)) % m) + off ((v + (g + 1)) % m) % 2) % 3 = k.val
         rw [vg_mod_shift m v g 1]
-        change (eqp_idx q r (((v + g) % m + 1) % m) + eqp_off q r (((v + g) % m + 1) % m) % 2) % 3 =
-          k.val
+        change (eqp_idx q r (((v + g) % m + 1) % m) +
+          eqp_off q r (((v + g) % m + 1) % m) % 2) % 3 = k.val
         rw [straddle_boundary_color m q r s ((v + g) % m)
           hq_pos hr_lt hs3 hm_eq hvg_lt h2_step jg rfl]
         exact hk_eq.symm
@@ -1157,22 +1129,16 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     have hcases : g'.val = 0 ∨ g'.val = 1 := by grind
     rcases hcases with h | h
     · have hg'0 : g' = 0 := by rw [← hval, h, Nat.cast_zero]
-      have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1} := by
-        rw [hg'0, zero_add]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]
-      grind [Finset.card_le_card hsub, Finset.card_le_two (a := (0 : ZMod m)) (b := 1)]
+      grind [Finset.card_pair]
     · have hg'1 : g' = 1 := by rw [← hval, h, Nat.cast_one]
-      have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1, (1 : ZMod m) + 1} := by
-        rw [hg'1]; intro x; simp [Finset.mem_insert, Finset.mem_singleton]
-      grind [Finset.card_le_card hsub,
-        Finset.card_le_three (a := (0 : ZMod m)) (b := 1) (c := (1 : ZMod m) + 1)]
+      grind [Finset.card_le_three]
   · by_contra! hgt
     have hval_lt := ZMod.val_lt g'
     have hgm1 : g'.val = m - 1 := by grind
     have hg'p1 : g' + 1 = 0 := by
       rw [← hval, hgm1, Nat.cast_sub (by grind), Nat.cast_one, ZMod.natCast_self, zero_sub,
         neg_add_cancel]
-    have hsub : ({0, 1, g', g' + 1} : Finset (ZMod m)) ⊆ {0, 1, g'} := by grind
-    grind [Finset.card_le_card hsub, Finset.card_le_three (a := (0 : ZMod m)) (b := 1) (c := g')]
+    grind [Finset.card_le_three]
   · conv at hset => rhs; rw [← hval]
     exact hset
 
