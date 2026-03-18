@@ -43,15 +43,7 @@ private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s) (hj₀ : j₀ < 
     (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
     j₀ % 3 ≠ jg % 3 := by
   obtain ⟨t, ht⟩ := hs3; subst ht
-  have hqlt : (jg + 3 * t - j₀) / (3 * t) < 2 := by rw [Nat.div_lt_iff_lt_mul (by omega)]; omega
-  have hdam := Nat.div_add_mod (jg + 3 * t - j₀) (3 * t)
-  rcases hgap with hmod | hmod <;>
-    rcases lt_two' _ hqlt with hq | hq <;>
-    rw [hq, hmod] at hdam
-  · grind [Nat.mul_add_mod]
-  · grind
-  · grind [Nat.mul_add_mod]
-  · grind
+  grind [Nat.div_add_mod, Nat.mul_add_mod, lt_two']
 
 open Finpartition in
 private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : ℕ) (hp : p < m) :
@@ -228,12 +220,14 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
     have hvgm_ub : v + g - m < Finpartition.equiEndpoint m s (j₀ + 3 - s) := by
       calc v + g - m < q * (j₀ + 3 - s) := by rw [← hep_diff]; omega
         _ ≤ Finpartition.equiEndpoint m s (j₀ + 3 - s) := by
-          change q * _ ≤ q * _ + min r _; omega
+          change q * _ ≤ q * _ + min r _
+          omega
     have hrange := idx_range_from_endpoints' m s
       0 (j₀ + 3 - s) (v + g - m)
       (by unfold Finpartition.equiEndpoint; simp)
       hvgm_ub jg hvg_lo hvg_hi
-    rcases (by omega : jg + s - j₀ = 1 ∨ jg + s - j₀ = 2) with h | h <;> rw [h]
+    have : jg + s - j₀ = 1 ∨ jg + s - j₀ = 2 := by omega
+    rcases this with h | h <;> rw [h]
     · left; exact Nat.mod_eq_of_lt (by omega)
     · right; exact Nat.mod_eq_of_lt (by omega)
 
@@ -1135,16 +1129,16 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
     have hcases : g'.val = 0 ∨ g'.val = 1 := by grind
     rcases hcases with h | h
     · have hg'0 : g' = 0 := by rw [← hval, h, Nat.cast_zero]
-      simp only [hg'0, zero_add] at hcard4; grind [Finset.card_pair]
+      grind [Finset.card_pair]
     · have hg'1 : g' = 1 := by rw [← hval, h, Nat.cast_one]
-      simp only [hg'1] at hcard4; grind [Finset.card_le_three]
+      grind [Finset.card_le_three]
   · by_contra! hgt
     have hval_lt := ZMod.val_lt g'
     have hgm1 : g'.val = m - 1 := by grind
     have hg'p1 : g' + 1 = 0 := by
       rw [← hval, hgm1, Nat.cast_sub (by grind), Nat.cast_one, ZMod.natCast_self, zero_sub,
         neg_add_cancel]
-    simp only [hg'p1] at hcard4; grind [Finset.card_le_three]
+    grind [Finset.card_le_three]
   · conv at hset => rhs; rw [← hval]
     exact hset
 
