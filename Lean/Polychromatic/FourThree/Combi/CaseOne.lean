@@ -767,10 +767,8 @@ lemma case_one_div_g_not_three (g : ℕ) (h_div : m = 3 * g ∨ m = 3 * g + 3)
   have hg12 : g % 3 = 1 ∨ g % 3 = 2 := by grind
   suffices ({0, 1, (g : ZMod 3), (g : ZMod 3) + 1} : Finset (ZMod 3)) = Finset.univ by
     rw [this]; exact hasPolychromColouring_univ
-  rcases hg12 with h | h <;> {
-    have : (g : ZMod 3) = ↑(g % 3 : ℕ) := by rw [ZMod.natCast_mod]
-    simp only [this, h]; decide
-  }
+  have : (g : ZMod 3) = ↑(g % 3 : ℕ) := by rw [ZMod.natCast_mod]
+  rcases hg12 with h | h <;> (simp only [this, h]; decide)
 
 /-- (1d), m = 3g, g ≡ 0 (mod 3): diagonal coloring `n ↦ (n%3 + n/g) % 3`. -/
 lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g) (hg3 : 3 ∣ g) (hg : 0 < g) :
