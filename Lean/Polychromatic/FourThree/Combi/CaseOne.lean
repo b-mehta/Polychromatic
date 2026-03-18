@@ -225,14 +225,10 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
     have hm_le_ep : m ≤ Finpartition.equiEndpoint m s (j₀ + 3) := by grind
     have hep_diff : Finpartition.equiEndpoint m s (j₀ + 3) - m =
         q * (j₀ + 3 - s) := by rw [hep_j3, hm_eq]; grind [Nat.mul_add]
-    have hvgm_ub : v + g - m < Finpartition.equiEndpoint m s
-          (j₀ + 3 - s) := by
-      have : v + g - m < q * (j₀ + 3 - s) := by rw [← hep_diff]; omega
-      have : q * (j₀ + 3 - s) ≤ Finpartition.equiEndpoint m s
-            (j₀ + 3 - s) := by
-        change q * (j₀ + 3 - s) ≤ q * (j₀ + 3 - s) + min r (j₀ + 3 - s)
-        omega
-      omega
+    have hvgm_ub : v + g - m < Finpartition.equiEndpoint m s (j₀ + 3 - s) := by
+      calc v + g - m < q * (j₀ + 3 - s) := by rw [← hep_diff]; omega
+        _ ≤ Finpartition.equiEndpoint m s (j₀ + 3 - s) := by
+          change q * _ ≤ q * _ + min r _; omega
     have hrange := idx_range_from_endpoints' m s
       0 (j₀ + 3 - s) (v + g - m)
       (by unfold Finpartition.equiEndpoint; simp)
