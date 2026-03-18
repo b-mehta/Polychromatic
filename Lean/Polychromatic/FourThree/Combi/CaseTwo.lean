@@ -258,8 +258,8 @@ private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   set j' := (Φ.symm (n + ↑(b - a))).2
   have hχ_n : χ n = f (i, j) := rfl
   have hχ_nb : χ (n + ↑b) = f (i, j + 1) := congr_arg f (hΦ_add_b n)
-  have hi_shift : (Φ.symm (n + ↑(b - a))).1 = i + 1 := hΦ_cycle_shift n
-  have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') := congr_arg f (Prod.ext hi_shift rfl)
+  have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') :=
+    congr_arg f (Prod.ext (hΦ_cycle_shift n) rfl)
   have hχ_n2ba : χ (n + ↑(2 * b - a)) = f (i + 1, j' + 1) := by
     have : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by rw [intCast_2ba_eq, add_assoc]
     grind
@@ -694,10 +694,8 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
     rw [hsum_f, hsum_g, Nat.mul_comm q w, hqr]
     simp only [deficit]
     rw [Nat.add_mod_mod]
-    have hle : d₁ * u ≤ target + e₁ * d₁ :=
-      le_add_left (le_trans (Nat.mul_le_mul_left d₁ (le_of_lt hu_lt)) (by rw [Nat.mul_comm]))
-    have hadd : d₁ * u + (target + e₁ * d₁ - d₁ * u) = target + e₁ * d₁ := Nat.add_sub_cancel' hle
-    rw [hadd, Nat.add_mul_mod_self_left]
+    rw [Nat.add_sub_cancel' (le_add_left (le_trans (Nat.mul_le_mul_left d₁ (le_of_lt hu_lt))
+      (by rw [Nat.mul_comm]))), Nat.add_mul_mod_self_left]
 
 private lemma zero_mem_zmod_set (m : ℕ) (a b : ℤ) : (0 : ZMod m) ∈ zmod_set m a b := by
   simp [zmod_set]
