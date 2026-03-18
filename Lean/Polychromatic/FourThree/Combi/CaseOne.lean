@@ -265,9 +265,7 @@ private lemma div_step (a b : ℕ) (hb : 0 < b) : (a + 1) / b = a / b ∨ (a + 1
   suffices h : (a + 1) / b ≤ a / b + 1 by omega
   have h1 := Nat.div_add_mod a b
   have hmod := Nat.mod_lt a hb
-  have hub : a + 1 ≤ b * (a / b + 1) := by grind
-  calc (a + 1) / b ≤ b * (a / b + 1) / b := Nat.div_le_div_right hub
-    _ = a / b + 1 := Nat.mul_div_cancel_left _ hb
+  exact le_trans (Nat.div_le_div_right (by grind)) (Nat.mul_div_cancel_left _ hb).le
 
 private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) : eqp_idx q r (p + 1) = eqp_idx q r p ∨
     eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
