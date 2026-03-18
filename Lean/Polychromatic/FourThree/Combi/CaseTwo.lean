@@ -87,22 +87,18 @@ private lemma addOrderOf_b_eq {m : ℕ} {b : ℤ} {d₁ : ℕ} (hm : 0 < m)
     rw [this, addOrderOf_neg]; exact key
 
 private lemma b_zero_mod_d1 {m : ℕ} {b : ℤ} {d₁ : ℕ}
-    (hd1_def : Nat.gcd b.natAbs m = d₁) [NeZero d₁] :
-    (b : ZMod d₁) = 0 := by
+    (hd1_def : Nat.gcd b.natAbs m = d₁) [NeZero d₁] : (b : ZMod d₁) = 0 := by
   rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
   exact Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m)
 
 private lemma ba_coprime_d1 {m : ℕ} {a b : ℤ} {d₁ : ℕ} (hd1_dvd : d₁ ∣ m)
-    (h_gcd_coprime : d₁.gcd (Nat.gcd (b - a).natAbs m) = 1) :
-    Nat.Coprime (b - a).natAbs d₁ :=
+    (h_gcd_coprime : d₁.gcd (Nat.gcd (b - a).natAbs m) = 1) : Nat.Coprime (b - a).natAbs d₁ :=
   Nat.dvd_one.mp (h_gcd_coprime ▸ Nat.dvd_gcd (Nat.gcd_dvd_right _ _)
       (Nat.dvd_gcd (Nat.gcd_dvd_left _ _) (dvd_trans (Nat.gcd_dvd_right _ _) hd1_dvd)))
 
 private lemma orbitMap_i_eq {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero m] [NeZero d₁]
-    (hd1_dvd : d₁ ∣ m)
-    (hb_zero : (b : ZMod d₁) = 0)
-    (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
-    {i₁ i₂ : ZMod d₁} {j₁ j₂ : ZMod e₁}
+    (hd1_dvd : d₁ ∣ m) (hb_zero : (b : ZMod d₁) = 0)
+    (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)) {i₁ i₂ : ZMod d₁} {j₁ j₂ : ZMod e₁}
     (heq : orbitMap m a b d₁ e₁ (i₁, j₁) = orbitMap m a b d₁ e₁ (i₂, j₂)) :
     i₁ = i₂ := by
   simp only [orbitMap] at heq
@@ -126,11 +122,8 @@ private lemma orbitMap_j_eq {m : ℕ} {b : ℤ} {e₁ : ℕ} [NeZero e₁]
     exact ZMod.val_injective _ (by grind)
 
 private lemma orbitMap_injective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero m] [NeZero d₁] [NeZero e₁]
-    (hd1_dvd : d₁ ∣ m)
-    (hb_zero : (b : ZMod d₁) = 0)
-    (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
-    (hord : addOrderOf (b : ZMod m) = e₁) :
-    Function.Injective (orbitMap m a b d₁ e₁) := by
+    (hd1_dvd : d₁ ∣ m) (hb_zero : (b : ZMod d₁) = 0) (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
+    (hord : addOrderOf (b : ZMod m) = e₁) : Function.Injective (orbitMap m a b d₁ e₁) := by
   intro ⟨i₁, j₁⟩ ⟨i₂, j₂⟩ heq
   have hi := orbitMap_i_eq hd1_dvd hb_zero hba_unit heq
   subst hi
@@ -139,12 +132,9 @@ private lemma orbitMap_injective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero
   exact Prod.ext rfl (orbitMap_j_eq hord hj_smul)
 
 private lemma orbitMap_bijective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero m] [NeZero d₁] [NeZero e₁]
-    (hm_eq : m = d₁ * e₁)
-    (hd1_dvd : d₁ ∣ m)
-    (hb_zero : (b : ZMod d₁) = 0)
+    (hm_eq : m = d₁ * e₁) (hd1_dvd : d₁ ∣ m) (hb_zero : (b : ZMod d₁) = 0)
     (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
-    (hord : addOrderOf (b : ZMod m) = e₁) :
-    Function.Bijective (orbitMap m a b d₁ e₁) :=
+    (hord : addOrderOf (b : ZMod m) = e₁) : Function.Bijective (orbitMap m a b d₁ e₁) :=
   (Fintype.bijective_iff_injective_and_card _).mpr
     ⟨orbitMap_injective hd1_dvd hb_zero hba_unit hord,
      by simp [Fintype.card_prod, ZMod.card, hm_eq]⟩
@@ -168,8 +158,7 @@ private lemma orbitMap_shift_b {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero e
     rw [hv, Nat.cast_zero, zero_mul, add_zero, add_assoc, h1, add_zero]
 
 private lemma orbitMap_shift_ba {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero d₁]
-    (i : ZMod d₁) (j : ZMod e₁)
-    (hi : i.val + 1 < d₁) :
+    (i : ZMod d₁) (j : ZMod e₁) (hi : i.val + 1 < d₁) :
     orbitMap m a b d₁ e₁ (i, j) + ((b - a : ℤ) : ZMod m) = orbitMap m a b d₁ e₁ (i + 1, j) := by
   simp only [orbitMap]
   have : (i + 1).val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
@@ -178,10 +167,8 @@ private lemma orbitMap_shift_ba {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero 
 
 /-- The cycle index α(x) = castHom(x) * u⁻¹ satisfies α(φ(i,j)) = i. -/
 private lemma orbitMap_cycle_index {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero m] [NeZero d₁]
-    (hd1_dvd : d₁ ∣ m)
-    (hb_zero : (b : ZMod d₁) = 0)
-    (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁))
-    (i : ZMod d₁) (j : ZMod e₁) :
+    (hd1_dvd : d₁ ∣ m) (hb_zero : (b : ZMod d₁) = 0)
+    (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁)) (i : ZMod d₁) (j : ZMod e₁) :
     ZMod.castHom hd1_dvd (ZMod d₁) (orbitMap m a b d₁ e₁ (i, j)) * u⁻¹ = i := by
   simp only [orbitMap]; rw [map_add, map_mul, map_mul, map_natCast, map_intCast,
     map_natCast, map_intCast, hb_zero, mul_zero, add_zero, mul_assoc, ← hu, u.mul_inv, mul_one]
@@ -189,8 +176,7 @@ private lemma orbitMap_cycle_index {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZe
 
 /-- The cycle index α shifts by 1 when (b-a) is added. -/
 private lemma cycle_index_shift_ba {m : ℕ} {a b : ℤ} {d₁ : ℕ} [NeZero m] [NeZero d₁]
-    (hd1_dvd : d₁ ∣ m)
-    (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁))
+    (hd1_dvd : d₁ ∣ m) (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁))
     (x : ZMod m) :
     ZMod.castHom hd1_dvd (ZMod d₁) (x + ↑(b - a)) * u⁻¹ =
     ZMod.castHom hd1_dvd (ZMod d₁) x * u⁻¹ + 1 := by
@@ -200,15 +186,13 @@ private lemma cycle_index_shift_ba {m : ℕ} {a b : ℤ} {d₁ : ℕ} [NeZero m]
 /-- If Φ(i, j+1) = Φ(i, j) + b, then Φ⁻¹(x+b) = (same_i, j+1). -/
 private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid γ]
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) {b : γ}
-    (hΦ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, Φ (i, j + 1) = Φ (i, j) + b)
-    (x : γ) :
+    (hΦ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, Φ (i, j + 1) = Φ (i, j) + b) (x : γ) :
     Φ.symm (x + b) = ((Φ.symm x).1, (Φ.symm x).2 + 1) := by grind
 
 /-- If α(Φ(i,j)) = i for all i,j, then (Φ⁻¹(x)).1 = α(x). -/
 private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) (α : γ → ZMod d₁)
-    (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i)
-    (x : γ) :
+    (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i) (x : γ) :
     (Φ.symm x).1 = α x := by grind
 
 /-! ### Orbit coloring framework -/
@@ -246,8 +230,7 @@ private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     (Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m)
     (hΦ_add_b : ∀ x : ZMod m, Φ.symm (x + ↑b) = ((Φ.symm x).1, (Φ.symm x).2 + 1))
     (hΦ_cycle_shift : ∀ x : ZMod m, (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1)
-    (f : ZMod d₁ × ZMod e₁ → Fin 3)
-    (hcovers : ∀ (n : ZMod m) (k : Fin 3),
+    (f : ZMod d₁ × ZMod e₁ → Fin 3) (hcovers : ∀ (n : ZMod m) (k : Fin 3),
       k = f ((Φ.symm n).1, (Φ.symm n).2) ∨
       k = f ((Φ.symm n).1, (Φ.symm n).2 + 1) ∨
       k = f ((Φ.symm n).1 + 1, (Φ.symm (n + ↑(b - a))).2) ∨
@@ -261,8 +244,7 @@ private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   set j' := (Φ.symm (n + ↑(b - a))).2
   have hχ_n : χ n = f (i, j) := rfl
   have hχ_nb : χ (n + ↑b) = f (i, j + 1) := congr_arg f (hΦ_add_b n)
-  have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') :=
-    congr_arg f (Prod.ext (hΦ_cycle_shift n) rfl)
+  have hχ_nba : χ (n + ↑(b - a)) = f (i + 1, j') := congr_arg f (Prod.ext (hΦ_cycle_shift n) rfl)
   have hχ_n2ba : χ (n + ↑(2 * b - a)) = f (i + 1, j' + 1) := by
     have : (n : ZMod m) + ↑(2 * b - a) = (n + ↑(b - a)) + ↑b := by rw [intCast_2ba_eq, add_assoc]
     grind
@@ -312,19 +294,16 @@ are distinct, guaranteeing every 2×2 block contains all three colors.
 
 -- Case 2b coloring: even cycles `01010…011`, odd cycles `22020…020`.
 private def case2b_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
-  if i.val % 2 = 0 then  -- even cycle
+  if i.val % 2 = 0 then -- even cycle
     if j.val = e₁ - 1 then 1 else if j.val % 2 = 0 then 0 else 1
-  else -- odd cycle
-    if j.val = 0 then 2 else if j.val % 2 = 0 then 0 else 2
+  else if j.val = 0 then 2 else if j.val % 2 = 0 then 0 else 2 -- odd cycle
 
 -- Coverage — any 2×2 block covers all 3 colors.
 -- The compatibility says degenerate positions can't coincide:
 -- odd-degenerate at j=0 and even-degenerate at j=e₁-2 are incompatible.
 private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
-    (hd₁_even : Even d₁) (he₁_odd : Odd e₁) (he₁ : e₁ ≥ 3)
-    (i : ZMod d₁) (j₁ j₂ : ZMod e₁)
-    (h_compat : j₁.val = 0 → j₂.val ≠ e₁ - 2)
-    (h_compat' : j₂.val = 0 → j₁.val ≠ e₁ - 2)
+    (hd₁_even : Even d₁) (he₁_odd : Odd e₁) (he₁ : e₁ ≥ 3) (i : ZMod d₁) (j₁ j₂ : ZMod e₁)
+    (h_compat : j₁.val = 0 → j₂.val ≠ e₁ - 2) (h_compat' : j₂.val = 0 → j₁.val ≠ e₁ - 2)
     (k : Fin 3) :
     k = case2b_coloring d₁ e₁ (i, j₁) ∨
     k = case2b_coloring d₁ e₁ (i, j₁ + 1) ∨
@@ -340,8 +319,7 @@ private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
 lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (hd1_even : Even (Nat.gcd b.natAbs m))
-    (he1_odd : Odd (m / Nat.gcd b.natAbs m)) :
+    (hd1_even : Even (Nat.gcd b.natAbs m)) (he1_odd : Odd (m / Nat.gcd b.natAbs m)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   set d₁ := Nat.gcd b.natAbs m with hd₁_def
   set e₁ := m / d₁ with he₁_def
@@ -353,8 +331,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     · have : Nat.gcd (b - a).natAbs m ∣ d₁ := by
         rw [hm_eq, he, mul_one]; exact Nat.gcd_dvd_right _ _
       exact absurd (Nat.eq_one_of_dvd_one
-        (h_gcd_coprime ▸ Nat.dvd_gcd this (dvd_refl _)))
-        (by grind)
+        (h_gcd_coprime ▸ Nat.dvd_gcd this (dvd_refl _))) (by grind)
     · grind
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
@@ -442,8 +419,7 @@ private def case2c_pattern (d₁ k₀ i : ℕ) : Fin 3 :=
 
 -- General coverage: if (j₁ + p₁) % 3 ≠ (j₂ + p₂) % 3, all 3 colors appear.
 private lemma cover_mod3_general (p₁ p₂ : Fin 3) (j₁ j₂ : ℕ)
-    (hne : (j₁ + p₁.val) % 3 ≠ (j₂ + p₂.val) % 3)
-    (k : Fin 3) :
+    (hne : (j₁ + p₁.val) % 3 ≠ (j₂ + p₂.val) % 3) (k : Fin 3) :
     k = ⟨(j₁ + p₁.val) % 3, Nat.mod_lt _ (by grind)⟩ ∨
     k = ⟨(j₁ + 1 + p₁.val) % 3, Nat.mod_lt _ (by grind)⟩ ∨
     k = ⟨(j₂ + p₂.val) % 3, Nat.mod_lt _ (by grind)⟩ ∨
@@ -454,8 +430,7 @@ private lemma cover_mod3_general (p₁ p₂ : Fin 3) (j₁ j₂ : ℕ)
 
 -- Non-wrap coverage hypothesis: j₁ = j₂, patterns differ → hypothesis holds.
 private lemma case2c_nonwrap_hyp (d₁ k₀ i j : ℕ) (hd₁ : d₁ ≥ 3)
-    (hd₁_odd : Odd d₁) (hi : i + 1 < d₁) :
-    (j + (case2c_pattern d₁ k₀ i).val) % 3 ≠
+    (hd₁_odd : Odd d₁) (hi : i + 1 < d₁) : (j + (case2c_pattern d₁ k₀ i).val) % 3 ≠
     (j + (case2c_pattern d₁ k₀ (i + 1)).val) % 3 := by
   obtain ⟨k, hk⟩ := hd₁_odd; subst hk
   grind [case2c_pattern]
@@ -570,8 +545,7 @@ private lemma rotation_changes_interval {e₁ j : ℕ} (hge : e₁ ≥ 19) (hj :
 /-- Key polychromaticity lemma: if the base pattern is rotated by r ∈ [u, e₁-u],
     then at every position j, the 2×2 block covers all 3 colors. -/
 private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19)
-    {r : ℕ} (hr_lo : case2d_u e₁ ≤ r) (hr_hi : r ≤ e₁ - case2d_u e₁)
-    (hj : j < e₁) :
+    {r : ℕ} (hr_lo : case2d_u e₁ ≤ r) (hr_hi : r ≤ e₁ - case2d_u e₁) (hj : j < e₁) :
     ∀ k : Fin 3, k ∈ ({basePattern e₁ j, basePattern e₁ ((j + 1) % e₁),
         basePattern e₁ ((j + r) % e₁),
         basePattern e₁ ((j + r + 1) % e₁)} : Finset (Fin 3)) := by
@@ -590,10 +564,8 @@ private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : 
   grind
 
 private lemma case2d_wrap_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero m] [NeZero d₁] [NeZero e₁]
-    (hd1_dvd : d₁ ∣ m)
-    (hb_zero : (b : ZMod d₁) = 0)
-    (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
-    (hord : addOrderOf (b : ZMod m) = e₁)
+    (hd1_dvd : d₁ ∣ m) (hb_zero : (b : ZMod d₁) = 0)
+    (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)) (hord : addOrderOf (b : ZMod m) = e₁)
     (hm_eq : m = d₁ * e₁) :
     ∃ k₀ : ZMod e₁, (d₁ : ℕ) • ((b - a : ℤ) : ZMod m) = (k₀.val : ℕ) • (b : ZMod m) := by
   have hbij := orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord
@@ -619,8 +591,7 @@ private lemma case2d_wrap_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero 
   grind
 
 private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZero e₁] [NeZero d₁]
-    (he1_b_zero : e₁ • (b : ZMod m) = 0)
-    (k₀ : ZMod e₁)
+    (he1_b_zero : e₁ • (b : ZMod m) = 0) (k₀ : ZMod e₁)
     (hk₀ : (d₁ : ℕ) • ((b - a : ℤ) : ZMod m) = (k₀.val : ℕ) • (b : ZMod m))
     (i : ZMod d₁) (hi : i.val = d₁ - 1) :
     ∀ (j : ZMod e₁),
@@ -646,8 +617,7 @@ private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZe
 /-- Given d₁ ≥ 3 values each in [u, e₁-u] can sum to any target mod e₁,
     since the range has width ≥ e₁/3 and d₁ ≥ 3. -/
 private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
-    (hd1_ge : d₁ ≥ 5) (he1_ge : e₁ ≥ 19) (he1_odd : Odd e₁)
-    (target : ℕ) :
+    (hd1_ge : d₁ ≥ 5) (he1_ge : e₁ ≥ 19) (he1_odd : Odd e₁) (target : ℕ) :
     ∃ vals : ZMod d₁ → ℕ,
       (∀ i, case2d_u e₁ ≤ vals i ∧ vals i ≤ e₁ - case2d_u e₁) ∧
       (Finset.univ.sum vals) % e₁ = target % e₁ := by
@@ -735,8 +705,7 @@ private lemma zmod_filter_sum_succ {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i 
 
 /-- When i is the max element, {k | k < i} ∪ {i} = univ. -/
 private lemma zmod_filter_sum_last {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i : ZMod n)
-    (hi : i.val = n - 1) :
-    (Finset.univ.filter (fun k : ZMod n => k.val < i.val)).sum f + f i =
+    (hi : i.val = n - 1) : (Finset.univ.filter (fun k : ZMod n => k.val < i.val)).sum f + f i =
     Finset.univ.sum f := by rw [← zmod_filter_sum_succ f i]; congr 1; grind
 
 -- Position arithmetic helpers for case2d_coloring_works (not important individually)
@@ -763,10 +732,8 @@ private lemma pos_shift_wrap' (j S V k₀ n : ℕ) (hsum : (S + V) % n = k₀ % 
 private lemma case2d_coloring_works {m : ℕ} {a b : ℤ} (hm : m ≥ 289)
     (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (hd1_odd : Odd (Nat.gcd b.natAbs m))
-    (he1_odd : Odd (m / Nat.gcd b.natAbs m))
-    (he1_ge : m / Nat.gcd b.natAbs m ≥ 19)
-    (h3 : ¬ (3 ∣ Nat.gcd b.natAbs m)) :
+    (hd1_odd : Odd (Nat.gcd b.natAbs m)) (he1_odd : Odd (m / Nat.gcd b.natAbs m))
+    (he1_ge : m / Nat.gcd b.natAbs m ≥ 19) (h3 : ¬ (3 ∣ Nat.gcd b.natAbs m)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   set d₁ := Nat.gcd b.natAbs m with hd1_def
   set e₁ := m / d₁ with he1_def
@@ -850,10 +817,8 @@ private lemma case2c_mod3 {e₁ : ℕ} (h3e : 3 ∣ e₁) (x y : ℕ) : (x % e�
 lemma case_two_odd_small (hm : m ≥ 289)
     (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (hd1_odd : Odd (Nat.gcd b.natAbs m))
-    (_he1_odd : Odd (m / Nat.gcd b.natAbs m))
-    (_he1_le : m / Nat.gcd b.natAbs m ≤ 17)
-    (he1_div3 : 3 ∣ m / Nat.gcd b.natAbs m) :
+    (hd1_odd : Odd (Nat.gcd b.natAbs m)) (_he1_odd : Odd (m / Nat.gcd b.natAbs m))
+    (_he1_le : m / Nat.gcd b.natAbs m ≤ 17) (he1_div3 : 3 ∣ m / Nat.gcd b.natAbs m) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   set d₁ := Nat.gcd b.natAbs m with hd1_def
   set e₁ := m / d₁ with he1_def
@@ -904,8 +869,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
     · exact ⟨0, zero_mem_zmod_set m a b, by rw [add_zero, ← hn, hij, hχ_eq, h]⟩
     · refine ⟨((b : ℤ) : ZMod m), intCast_b_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_b, hχ_eq, h]; congr 1; rw [hzmod_succ, case2c_mod3 he1_div3]
-    · exact ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b,
-        by rw [← hΦ_ba, hχ_eq, h]⟩
+    · exact ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b, by rw [← hΦ_ba, hχ_eq, h]⟩
     · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_2ba, hχ_eq, h]; congr 1; rw [hzmod_succ, case2c_mod3 he1_div3]
   · have hi_eq : i.val = d₁ - 1 := by grind [ZMod.val_lt]
@@ -939,8 +903,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
 
 /-- Auxiliary: rules out both cycle lengths being ≤ 17 when m ≥ 289. -/
 private lemma no_both_e_small {m d₁ d₂ : ℕ} (hm : m ≥ 289) (hcop : Nat.gcd d₁ d₂ = 1)
-    (hd₁_gt1 : d₁ > 1) (hd₂_gt1 : d₂ > 1)
-    (hd₁_dvd : d₁ ∣ m) (hd₂_dvd : d₂ ∣ m)
+    (hd₁_gt1 : d₁ > 1) (hd₂_gt1 : d₂ > 1) (hd₁_dvd : d₁ ∣ m) (hd₂_dvd : d₂ ∣ m)
     (he₁_le : m / d₁ ≤ 17) (he₂_le : m / d₂ ≤ 17) : False := by
   have hprod := Nat.le_of_dvd (by grind)
     (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by rwa [Nat.Coprime]) hd₁_dvd hd₂_dvd)
