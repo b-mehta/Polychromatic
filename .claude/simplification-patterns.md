@@ -95,6 +95,16 @@ via `fun k => by simpa using h k 0`.
 - **Use the full 100-character line limit** — don't break lines at 80 characters when the project allows 100. Join continuation lines (`:=` assignments, `with` clauses, function arguments) onto the previous line whenever the result fits under 100 chars.
 - **`grind [lemma.symm]` → `grind [lemma]`** — grind handles commutativity/symmetry internally, so `.symm` is usually unnecessary.
 
+## Golfing workflow
+
+- **Understand the math first.** For each declaration, write down what it proves and why in plain language. Then attempt to formalise from scratch using `lean_multi_attempt` to test different approaches, without reference to the existing proof. This often finds dramatically shorter proofs.
+- **Try `grind` with lemma hints.** Many multi-line proofs that manually case-split and chain `have` statements can be closed by a single `grind [relevant_lemma₁, relevant_lemma₂]`. Key hints to try: `Nat.div_add_mod`, `Nat.mul_add_mod`, `Nat.sub_add_cancel`, `equiEndpoint_monotone`, `Finset.card_pair`, `Finset.card_le_three`.
+- **`rw [...] at ...; omega` compression.** In contradiction proofs with wrap/no-wrap subcases, replace 3-4 line blocks (`have : (v+g)%m = v+g := ...; rw [...] at ...; omega`) with a single line: `rw [Nat.mod_eq_of_lt h] at hvg_hi; omega`.
+- **`simp + grind` for Finset cardinality contradictions.** Instead of explicit `have hsub : S ⊆ T; grind [card_le_card hsub, card_le_three]`, try `simp only [h] at hcard; grind [Finset.card_pair]`.
+- **`calc` one-liners for bound chains.** Replace `have h1 := ...; have h2 := ...; omega` with `calc x < y := ...; _ ≤ z := ...` or `le_trans ... ...`.
+- **Make atomic changes.** Edit one proof at a time, verify with `lean_diagnostic_messages` after each. Large batch changes consistently fail on complex arithmetic files.
+- **Use `grind` not `omega` for equiEndpoint.** `grind` handles `j+1+1` vs `j+2` normalisation that `omega` can't, especially with `grind [equiEndpoint_monotone]`.
+
 ## Proof development process
 
 - **Write a detailed informal proof before formalizing.** For any non-trivial goal (more than a single tactic), write out why the goal is true, what the key steps are, and what lemmas you expect to use. This prevents wasted cycles trying tactics blindly.
