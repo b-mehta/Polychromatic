@@ -663,7 +663,6 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
   set u := case2d_u e₁
   set w := e₁ - 2 * u
   have hw_pos : 0 < w := by grind
-  have hdw : d₁ * w ≥ e₁ := hdw'
   set deficit := (target + e₁ * d₁ - d₁ * u) % e₁
   have hdef_lt : deficit < e₁ := Nat.mod_lt _ (by grind)
   set q := deficit / w
@@ -871,8 +870,6 @@ lemma case_two_odd_small (hm : m ≥ 289)
   set d₁ := Nat.gcd b.natAbs m with hd1_def
   set e₁ := m / d₁ with he1_def
   have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
-  have hd1_gt1 : d₁ > 1 := by grind
-  have he1_ge3 : e₁ ≥ 3 := by grind
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd1_dvd).symm
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
