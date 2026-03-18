@@ -273,25 +273,16 @@ private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p +
   by_cases h1 : p + 1 < r * (q + 1) <;>
       by_cases h2 : p < r * (q + 1)
   · rw [if_pos h1, if_pos h2]
-    apply mod_step p (q + 1)
-    have h3 : eqp_idx q r (p + 1) = (p + 1) / (q + 1) := by unfold eqp_idx; rw [if_pos h1]
-    have h4 : eqp_idx q r p = p / (q + 1) := by unfold eqp_idx; rw [if_pos h2]
-    grind
+    exact mod_step p (q + 1) (by simp only [eqp_idx, if_pos h1, if_pos h2] at h; exact h)
   · omega
   · exfalso
-    have h3 : eqp_idx q r (p + 1) = r + (p + 1 - r * (q + 1)) / q := by
-      unfold eqp_idx; rw [if_neg h1]
-    have h4 : eqp_idx q r p = p / (q + 1) := by unfold eqp_idx; rw [if_pos h2]
-    have h5 : p / (q + 1) < r := by rw [Nat.div_lt_iff_lt_mul (by omega)]; exact h2
-    grind
+    simp only [eqp_idx, if_neg h1, if_pos h2] at h
+    exact absurd (h ▸ Nat.le_add_right r _) (by rwa [Nat.not_le, Nat.div_lt_iff_lt_mul (by omega)])
   · rw [if_neg h1, if_neg h2]
     have hsub : p + 1 - r * (q + 1) = (p - r * (q + 1)) + 1 := by omega
     rw [hsub]
-    apply mod_step (p - r * (q + 1)) q
-    have h3 : eqp_idx q r (p + 1) = r + (p + 1 - r * (q + 1)) / q := by
-      unfold eqp_idx; rw [if_neg h1]
-    have h4 : eqp_idx q r p = r + (p - r * (q + 1)) / q := by unfold eqp_idx; rw [if_neg h2]
-    grind
+    exact mod_step (p - r * (q + 1)) q
+      (by simp only [eqp_idx, if_neg h1, if_neg h2] at h; rw [hsub] at h; omega)
 
 private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
     eqp_off q r (p + 1) = 0 := by
@@ -299,12 +290,8 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 
   by_cases h1 : p + 1 < r * (q + 1) <;>
       by_cases h2 : p < r * (q + 1)
   · rw [if_pos h1]
-    apply mod_zero_step p (q + 1) (by omega)
-    have h3 : eqp_idx q r (p + 1) = (p + 1) / (q + 1) := by unfold eqp_idx; rw [if_pos h1]
-    have h4 : eqp_idx q r p = p / (q + 1) := by unfold eqp_idx; rw [if_pos h2]
-    rw [h3, h4] at h
-    have := div_step p (q + 1)
-    omega
+    exact mod_zero_step p (q + 1) (by omega)
+      (by simp only [eqp_idx, if_pos h1, if_pos h2] at h; have := div_step p (q + 1); omega)
   · omega
   · rw [if_neg h1]
     have : p + 1 = r * (q + 1) := by omega
@@ -312,13 +299,9 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 
   · rw [if_neg h1]
     have hsub : p + 1 - r * (q + 1) = (p - r * (q + 1)) + 1 := by omega
     rw [hsub]
-    apply mod_zero_step (p - r * (q + 1)) q hq
-    have h3 : eqp_idx q r (p + 1) = r + (p + 1 - r * (q + 1)) / q := by
-      unfold eqp_idx; rw [if_neg h1]
-    have h4 : eqp_idx q r p = r + (p - r * (q + 1)) / q := by unfold eqp_idx; rw [if_neg h2]
-    rw [h3, h4, hsub] at h
-    have := div_step (p - r * (q + 1)) q
-    omega
+    exact mod_zero_step (p - r * (q + 1)) q hq (by
+      simp only [eqp_idx, if_neg h1, if_neg h2] at h
+      rw [hsub] at h; have := div_step (p - r * (q + 1)) q; omega)
 
 private lemma gap_mod_cases_gen (s j₀ jg d : ℕ) (hj₀ : j₀ < s) (hjg : jg < s)
     (hmod : (jg + s - j₀) % s = d) :
