@@ -304,13 +304,9 @@ lemma case_two_e1_even (hm : m ≥ 289)
 -- Case 2b coloring: even cycles `01010…011`, odd cycles `22020…020`.
 private def case2b_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
   if i.val % 2 = 0 then  -- even cycle
-    if j.val = e₁ - 1 then 1
-    else if j.val % 2 = 0 then 0
-    else 1
-  else  -- odd cycle
-    if j.val = 0 then 2
-    else if j.val % 2 = 0 then 0
-    else 2
+    if j.val = e₁ - 1 then 1 else if j.val % 2 = 0 then 0 else 1
+  else -- odd cycle
+    if j.val = 0 then 2 else if j.val % 2 = 0 then 0 else 2
 
 -- Coverage — any 2×2 block covers all 3 colors.
 -- The compatibility says degenerate positions can't coincide:
@@ -429,8 +425,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
 -- Variant A (k₀ % 3 ≠ 2): even→0, odd→1, last→2.
 -- Variant B (k₀ % 3 = 2): even→0, odd→2, last→1.
 private def case2c_pattern (d₁ k₀ i : ℕ) : Fin 3 :=
-  if i = d₁ - 1 ∧ d₁ % 2 = 1 then
-    if k₀ % 3 = 2 then 1 else 2
+  if i = d₁ - 1 ∧ d₁ % 2 = 1 then if k₀ % 3 = 2 then 1 else 2
   else if i % 2 = 0 then 0
   else if k₀ % 3 = 2 then 2 else 1
 
@@ -478,20 +473,15 @@ private lemma case2d_uv_le {e₁ : ℕ} (hge : e₁ ≥ 19) : case2d_u e₁ + ca
 private def basePattern (e₁ : ℕ) (j : ℕ) : Fin 3 :=
   let u := case2d_u e₁
   let v := case2d_v e₁
-  if j < u then
-    if j % 2 = 0 then 0 else 1
-  else if j < u + v then
-    if (j - u) % 2 = 0 then 1 else 2
-  else
-    if (j - u - v) % 2 = 0 then 2 else 0
+  if j < u then if j % 2 = 0 then 0 else 1
+  else if j < u + v then if (j - u) % 2 = 0 then 1 else 2
+  else if (j - u - v) % 2 = 0 then 2 else 0
 
 /-- Which interval (0, 1, or 2) a position j falls in. -/
 private def whichInterval (e₁ j : ℕ) : Fin 3 :=
   let u := case2d_u e₁
   let v := case2d_v e₁
-  if j < u then 0
-  else if j < u + v then 1
-  else 2
+  if j < u then 0 else if j < u + v then 1 else 2
 
 /-- The color pair for each interval. -/
 private def intervalColors : Fin 3 → Finset (Fin 3)
@@ -671,8 +661,7 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
         _ ≥ d₁ * w := by gcongr
     grind
   have hqr : w * q + r = deficit := Nat.div_add_mod deficit w
-  let f : ZMod d₁ → ℕ := fun i =>
-    if i.val < q then e₁ - u else if i.val = q then u + r else u
+  let f : ZMod d₁ → ℕ := fun i => if i.val < q then e₁ - u else if i.val = q then u + r else u
   refine ⟨f, fun i => ?_, ?_⟩
   · grind
   · let g : ZMod d₁ → ℕ := fun i =>
@@ -885,8 +874,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
   set j := ij.2 with hj_def
   have hij : ij = (i, j) := (Prod.eta ij).symm
   set p := case2c_pattern d₁ k₀.val i.val
-  have hzmod_succ : ∀ (jj : ZMod e₁),
-      (jj + 1 : ZMod e₁).val = (jj.val + 1) % e₁ := ZMod.val_add_one
+  have hzmod_succ : ∀ (jj : ZMod e₁), (jj + 1 : ZMod e₁).val = (jj.val + 1) % e₁ := ZMod.val_add_one
   have hΦ_b : Φ (i, j + 1) = n + ((b : ℤ) : ZMod m) := by
     rw [← hn, hij]; exact (orbitMap_shift_b he1_b_zero (i, j)).symm
   by_cases hi : i.val + 1 < d₁
