@@ -364,9 +364,9 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   have hd₁_dvd_b : (d₁ : ℤ) ∣ b := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hb_zero
   obtain ⟨q, hq⟩ := hd₁_dvd_b
   have hq_cop : Nat.Coprime q.natAbs e₁ := by
-    have : q.natAbs = b.natAbs / d₁ := by
-      rw [hq, Int.natAbs_mul, Int.natAbs_natCast, Nat.mul_div_cancel_left _ hd₁_pos]
-    rw [this]; exact Nat.coprime_div_gcd_div_gcd hd₁_pos
+    rw [show q.natAbs = b.natAbs / d₁ from by
+      rw [hq, Int.natAbs_mul, Int.natAbs_natCast, Nat.mul_div_cancel_left _ hd₁_pos]]
+    exact Nat.coprime_div_gcd_div_gcd hd₁_pos
   -- Define the cycle map φ = orbitMap and derive bijectivity from shared infrastructure
   let φ := orbitMap m a b d₁ e₁
   let Φ := Equiv.ofBijective φ (orbitMap_bijective hm_eq hd₁_dvd hb_zero hba_unit hord)
