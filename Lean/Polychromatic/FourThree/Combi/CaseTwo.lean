@@ -114,9 +114,8 @@ private lemma orbitMap_j_eq {m : ℕ} {b : ℤ} {e₁ : ℕ} [NeZero e₁]
   · have h3 : (j₂.val - j₁.val) • (b : ZMod m) = 0 :=
       add_left_cancel (a := j₁.val • (b : ZMod m))
         (by rw [add_zero, ← add_nsmul, Nat.add_sub_cancel' h]; exact hj_smul.symm)
-    have hdvd : e₁ ∣ (j₂.val - j₁.val) := by
-      have := addOrderOf_dvd_of_nsmul_eq_zero h3; rwa [hord] at this
-    have := Nat.eq_zero_of_dvd_of_lt hdvd (by grind [j₁.val_lt (n := e₁), j₂.val_lt (n := e₁)])
+    have := Nat.eq_zero_of_dvd_of_lt (hord ▸ addOrderOf_dvd_of_nsmul_eq_zero h3)
+      (by grind [j₁.val_lt (n := e₁), j₂.val_lt (n := e₁)])
     exact ZMod.val_injective _ (by grind)
 
 private lemma orbitMap_injective {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
@@ -343,17 +342,13 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   set d₁ := Nat.gcd b.natAbs m with hd₁_def
   set e₁ := m / d₁ with he₁_def
   have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
-  have hd₁_pos : 0 < d₁ := Nat.pos_of_ne_zero (by grind)
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   -- e₁ ≥ 3: e₁ is odd and e₁ = 1 would give d₁ = m, contradicting gcd(d₁,d₂) = 1
   have he₁_ge3 : e₁ ≥ 3 := by
-    by_contra! h
-    rcases (by grind : e₁ = 1 ∨ e₁ = 2) with he | he
-    · have hba_dvd_d₁ : Nat.gcd (b - a).natAbs m ∣ d₁ := by
-        rw [hm_eq, he, mul_one]; exact Nat.gcd_dvd_right _ _
-      have : Nat.gcd (b - a).natAbs m = 1 :=
-        Nat.eq_one_of_dvd_one (h_gcd_coprime ▸ Nat.dvd_gcd hba_dvd_d₁ (dvd_refl _))
-      grind
+    by_contra! h; rcases (by grind : e₁ = 1 ∨ e₁ = 2) with he | he
+    · have : Nat.gcd (b - a).natAbs m ∣ d₁ := by rw [hm_eq, he, mul_one]; exact Nat.gcd_dvd_right _ _
+      exact absurd (Nat.eq_one_of_dvd_one (h_gcd_coprime ▸ Nat.dvd_gcd this (dvd_refl _)))
+        (by grind)
     · grind
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
@@ -884,8 +879,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
   haveI : NeZero e₁ := ⟨by grind⟩
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) hd1_def
   have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 hd1_def
-  have hba_coprime := ba_coprime_d1 hd1_dvd (by rwa [hd1_def])
-  have hba_unit := isUnit_intCast_of_natAbs_coprime hba_coprime
+  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd1_dvd (by rwa [hd1_def]))
   have he1_b_zero : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
   have hbij := orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord
   set Φ := Equiv.ofBijective _ hbij
