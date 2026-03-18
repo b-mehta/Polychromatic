@@ -204,10 +204,11 @@ private def eqp_off (q r : ℕ) (p : ℕ) : ℕ :=
   else (p - r * (q + 1)) % q
 
 private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) : eqp_idx q r (s * q + r) = s := by
-  simp only [eqp_idx, if_neg (by nlinarith : ¬(s * q + r < r * (q + 1)))]
-  have : s * q + r - r * (q + 1) = (s - r) * q :=
-    by zify [(by nlinarith : r * (q + 1) ≤ s * q + r), (by omega : r ≤ s)]; ring
-  rw [this, Nat.mul_div_cancel _ hq]; omega
+  have hge : ¬(s * q + r < r * (q + 1)) := by nlinarith
+  simp only [eqp_idx, if_neg hge]
+  have hle : r * (q + 1) ≤ s * q + r := by nlinarith
+  have hsub : s * q + r - r * (q + 1) = (s - r) * q := by zify [hle, hr.le]; ring
+  rw [hsub, Nat.mul_div_cancel _ hq]; omega
 
 -- General fact: consecutive ℕ quotients differ by 0 or 1
 private lemma div_step (a b : ℕ) :
