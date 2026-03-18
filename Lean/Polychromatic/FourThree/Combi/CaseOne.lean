@@ -440,12 +440,8 @@ private lemma non_straddle_witness (q r p : ℕ) (hq_pos : 0 < q)
   have hoff := eqp_off_succ_same q r p hq_pos hsame
   have : (j + (eqp_off q r p) % 2) % 3 = t ∨ (j + ((eqp_off q r p) + 1) % 2) % 3 = t := by omega
   rcases this with h | h
-  · exact ⟨0, by simp, by
-      simp only [Nat.add_zero, Nat.mod_eq_of_lt hp, ← hj]
-      exact h⟩
-  · exact ⟨1, by simp, by
-      rw [Nat.mod_eq_of_lt hp1, hsame, ← hj, hoff]
-      exact h⟩
+  · exact ⟨0, by simp, by simp only [Nat.add_zero, Nat.mod_eq_of_lt hp, ← hj]; exact h⟩
+  · exact ⟨1, by simp, by rw [Nat.mod_eq_of_lt hp1, hsame, ← hj, hoff]; exact h⟩
 
 private lemma straddle_boundary_color (q r s p : ℕ) (hq_pos : 0 < q) (hr_lt : r < s)
     (hs3 : 3 ∣ s)
