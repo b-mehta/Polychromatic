@@ -75,10 +75,7 @@ lemma zmod_set_card_eq_four {a b : ℤ} {m : ℕ}
   have ne13 := hne (b - a) (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
   have ne23 := hne b (2 * b - a) (by grind) (by grind) (by grind) (by grind) (by grind)
   simp only [image_insert, image_singleton]
-  rw [card_insert_of_notMem, card_insert_of_notMem, card_insert_of_notMem, card_singleton]
-  · rw [mem_singleton]; exact ne23
-  · simp only [mem_insert, mem_singleton]; push_neg; exact ⟨ne12, ne13⟩
-  · simp only [mem_insert, mem_singleton]; push_neg; exact ⟨ne01, ne02, ne03⟩
+  grind
 
 /-- Auxiliary: the coprimality gcd(d₁, d₂) = 1 follows from gcd(a, b, c) = 1. -/
 lemma gcd_coprime_of_gcd_abc {a b c : ℤ} {m : ℕ}
@@ -103,11 +100,7 @@ lemma gcd_coprime_of_gcd_abc {a b c : ℤ} {m : ℕ}
     exact dvd_add (dvd_sub hd_m hd_b) hd_a
   have hd_dvd_gcd : (d : ℤ) ∣ Finset.gcd {a, b, c} id :=
     Finset.dvd_gcd (fun x hx => by
-      simp only [Finset.mem_insert, Finset.mem_singleton] at hx
-      rcases hx with rfl | rfl | rfl
-      · exact hd_a
-      · exact hd_b
-      · exact hd_c)
+      grind)
   rw [hgcd] at hd_dvd_gcd
   exact Nat.eq_one_of_dvd_one (Int.natCast_dvd_natCast.mp hd_dvd_gcd)
 
@@ -145,9 +138,7 @@ theorem normal_bit :
   set d₂ := Nat.gcd (b - a).natAbs m
   by_cases hmin : min d₁ d₂ = 1
   · apply main_case_one m a b (by grind) hcard
-    have hd₁_pos : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
-    have hd₂_pos : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
-    rcases min_choice d₁ d₂ with h | h <;> rw [h] at hmin <;> [left; right] <;> grind
+    grind
   · have : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
     have : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
     exact main_case_two m a b (by grind) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by grind)
