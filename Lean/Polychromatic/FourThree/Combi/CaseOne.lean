@@ -233,31 +233,26 @@ private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) : eqp_idx q r (s
   rw [hsub, Nat.mul_div_cancel _ hq]; omega
 
 -- General fact: consecutive ℕ quotients differ by 0 or 1
-private lemma div_step (a b : ℕ) (hb : 0 < b) : (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by
-  have hle : a / b ≤ (a + 1) / b := Nat.div_le_div_right (Nat.le_succ a)
-  suffices h : (a + 1) / b ≤ a / b + 1 by omega
-  have h1 := Nat.div_add_mod a b
-  have hmod := Nat.mod_lt a hb
-  exact le_trans (Nat.div_le_div_right (by grind)) (Nat.mul_div_cancel_left _ hb).le
+private lemma div_step (a b : ℕ) :
+    (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by
+  grind [Nat.succ_div]
 
 private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) : eqp_idx q r (p + 1) = eqp_idx q r p ∨
     eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
   unfold eqp_idx
   split_ifs with h1 h2
-  · exact div_step p (q + 1) (by omega)
+  · exact div_step p (q + 1)
   · omega
   · right
     have hpeq : p + 1 = r * (q + 1) := by omega
-    have hr_pos : 0 < r := by grind
     have h_succ : (p + 1) / (q + 1) = r := by rw [hpeq]; exact Nat.mul_div_cancel r (by omega)
-    have hne : p / (q + 1) ≠ r := by
-      intro heq
-      grind [Nat.div_mul_le_self p (q + 1)]
-    have hidx_p : p / (q + 1) = r - 1 := by have := div_step p (q + 1) (by omega); omega
-    rw [hpeq, Nat.sub_self, Nat.zero_div, hidx_p]; omega
+    have hne : p / (q + 1) ≠ r := fun heq =>
+      absurd (heq ▸ Nat.div_mul_le_self p (q + 1)) (by omega)
+    have := div_step p (q + 1)
+    rw [hpeq, Nat.sub_self, Nat.zero_div]; omega
   · have hsub : p + 1 - r * (q + 1) = (p - r * (q + 1)) + 1 := by omega
     rw [hsub]
-    have := div_step (p - r * (q + 1)) q hq; omega
+    have := div_step (p - r * (q + 1)) q; omega
 
 -- Helper: if quotient stays same, remainder increases by 1
 private lemma mod_step (a b : ℕ) (h : (a + 1) / b = a / b) :
@@ -308,7 +303,7 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 
     have h3 : eqp_idx q r (p + 1) = (p + 1) / (q + 1) := by unfold eqp_idx; rw [if_pos h1]
     have h4 : eqp_idx q r p = p / (q + 1) := by unfold eqp_idx; rw [if_pos h2]
     rw [h3, h4] at h
-    have := div_step p (q + 1) (by omega)
+    have := div_step p (q + 1)
     omega
   · omega
   · rw [if_neg h1]
@@ -322,7 +317,7 @@ private lemma eqp_off_succ_new (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 
       unfold eqp_idx; rw [if_neg h1]
     have h4 : eqp_idx q r p = r + (p - r * (q + 1)) / q := by unfold eqp_idx; rw [if_neg h2]
     rw [h3, h4, hsub] at h
-    have := div_step (p - r * (q + 1)) q hq
+    have := div_step (p - r * (q + 1)) q
     omega
 
 private lemma gap_mod_cases_gen (s j₀ jg d : ℕ) (hj₀ : j₀ < s) (hjg : jg < s)
@@ -577,9 +572,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
   -- idx ranges
   have hidx_lt : ∀ p, p < m → idx p < s := by
     intro p hp; simp only [idx]; split
-    · have : p / (q + 1) < r := by
-        rw [Nat.div_lt_iff_lt_mul (by omega)]
-        exact ‹_›
+    · have : p / (q + 1) < r := by rwa [Nat.div_lt_iff_lt_mul (by omega)]
       omega
     · rename_i hge; push_neg at hge
       have : (p - bd) / q < s - r := by
@@ -719,118 +712,68 @@ lemma hasPolychromColouring_mul_unit (u : (ZMod m)ˣ) (S : Finset (ZMod m)) :
   exact ⟨fun h => hasPolychromColouring_fin_of_le (by grind) (key ▸ le_polychromNumber h),
     fun h => hasPolychromColouring_fin_of_le (by grind) (key.symm ▸ le_polychromNumber h)⟩
 
-/-! ### Subcase (1c): per-residue lemmas (paper §4.1, case 3 ∤ m)
+/-! ### Subcase (1c): per-residue dispatch (paper §4.1, case 3 ∤ m)
 
-Each lemma below reduces `{0, 1, g, g+1}` to a translate of a Table 1 set via
-multiplication by 3 (which is an automorphism of `ZMod m` when `3 ∤ m`).
-The six individual `case_one_res_*` lemmas are routine; the important interface
-is `case_one_residues` which dispatches to them.
--/
+Multiplication by 3 (an automorphism of `ZMod m` when `3 ∤ m`) maps `{0,1,g,g+1}`
+to a translate of a Table 1 set. Six residue classes are handled. -/
 
 section Case1c
 
-/-- m = 3g - 2: ×3 maps {0,1,g,g+1} to {0,3,3g,3g+3} ≡ {0,2,3,5}. -/
-lemma case_one_res_3g_sub_2 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g - 2) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} :
-        Finset (ZMod m)) := by
-  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
-  rw [← hasPolychromColouring_mul_unit m u]
-  have h3g_mod : (3 : ZMod m) * (g : ZMod m) = 2 := by
-    have : ((3 * g : ℕ) : ZMod m) = (m + 2 : ℕ) := by congr 1; grind
-    push_cast [ZMod.natCast_self] at this
-    grind
-  have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 5 := by grind
-  simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g_mod, image_singleton,
-    h3g1_mod, insert_comm] using table1_0235 m (by grind)
-
-/-- m = 3g - 1: ×3 maps {0,1,g,g+1} to {0,3,3g,3g+3} ≡ {0,1,3,4}. -/
-lemma case_one_res_3g_sub_1 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g - 1) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
-  rw [← hasPolychromColouring_mul_unit m u]
-  have h3g_mod : (3 : ZMod m) * g = 1 := by
-    have : ((3 * g : ℕ) : ZMod m) = (m + 1 : ℕ) := by congr 1; grind
-    push_cast [ZMod.natCast_self] at this
-    grind
-  have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 4 := by grind
-  simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g_mod,
-    image_singleton, h3g1_mod, insert_comm] using table1_0134 m (by grind)
-
-/-- m = 3g + 1: ×3 maps {0,1,g,g+1} to {0,3,-1,2}, a translate of {0,1,3,4}. -/
-lemma case_one_res_3g_add_1 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 1) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
-  rw [← hasPolychromColouring_mul_unit m u]
-  have h3g_mod : (3 : ZMod m) * g = -1 := by
-    have : ((3 * g + 1 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    push_cast [ZMod.natCast_self] at this
-    grind
-  have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 2 := by grind
-  have : {0, (3 : ZMod m), -1, 2} = (-1 : ZMod m) +ᵥ ({0, 1, 3, 4} : Finset (ZMod m)) := by
-    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
-    grind
-  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0134 m (by grind)
-
-/-- m = 3g + 2: ×3 maps {0,1,g,g+1} to {0,3,-2,1}, a translate of {0,2,3,5}. -/
-lemma case_one_res_3g_add_2 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 2) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
-  rw [← hasPolychromColouring_mul_unit m u]
-  have h3g_mod : (3 : ZMod m) * g = -2 := by
-    have : ((3 * g + 2 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    push_cast [ZMod.natCast_self] at this
-    grind
-  have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = 1 := by grind
-  have : {0, (3 : ZMod m), -2, 1} = (-2 : ZMod m) +ᵥ ({0, 2, 3, 5} : Finset (ZMod m)) := by
-    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
-    grind
-  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0235 m (by grind)
-
-/-- m = 3g + 4: ×3 maps {0,1,g,g+1} to {0,3,-4,-1}, a translate of {0,3,4,7}. -/
-lemma case_one_res_3g_add_4 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 4) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
-  rw [← hasPolychromColouring_mul_unit m u]
-  have h3g_mod : (3 : ZMod m) * g = -4 := by
-    have : ((3 * g + 4 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    push_cast [ZMod.natCast_self] at this
-    grind
-  have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = -1 := by grind
-  have : {0, (3 : ZMod m), -4, -1} = (-4 : ZMod m) +ᵥ ({0, 3, 4, 7} : Finset (ZMod m)) := by
-    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
-    grind
-  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0347 m (by grind)
-
-/-- m = 3g + 5: ×3 maps {0,1,g,g+1} to {0,3,-5,-2}, a translate of {0,3,5,8}. -/
-lemma case_one_res_3g_add_5 (g : ℕ) (hm : m ≥ 289) (hg : m = 3 * g + 5) :
-    HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
-  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
-  rw [← hasPolychromColouring_mul_unit m u]
-  have h3g_mod : (3 : ZMod m) * g = -5 := by
-    have : ((3 * g + 5 : ℕ) : ZMod m) = (m : ℕ) := by rw [hg]
-    push_cast [ZMod.natCast_self] at this
-    grind
-  have h3g1_mod : (3 : ZMod m) * ((g : ZMod m) + 1) = -2 := by grind
-  have : {0, (3 : ZMod m), -5, -2} = (-5 : ZMod m) +ᵥ ({0, 3, 5, 8} : Finset (ZMod m)) := by
-    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]
-    grind
-  simpa [hu, h3g_mod, h3g1_mod, this] using table1_0358 m (by grind)
-
-/-- **Subcase (1c) assembled:** dispatches to the six per-residue lemmas above.
+/-- **Subcase (1c):** dispatches on `m mod (3g)` to reduce to Table 1 sets via ×3.
     Covers the case `3 ∤ m` with `2⌊m/6⌋ ≤ g ≤ ⌈m/3⌉` (paper §4.1). -/
 lemma case_one_residues (g : ℕ) (hm : m ≥ 289) (h_res : m % 3 ≠ 0)
     (h_range : 2 * (m / 6) ≤ g ∧ g ≤ (m + 2) / 3) :
     HasPolychromColouring (Fin 3) ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)) := by
   obtain ⟨hl, hr⟩ := h_range
+  obtain ⟨u, hu⟩ := ZMod.isUnit_prime_of_not_dvd Nat.prime_three (by grind : ¬3 ∣ m)
+  rw [← hasPolychromColouring_mul_unit m u]
+  -- Each branch computes 3g and 3(g+1) mod m, then matches to a table1 set.
   have h1 : m = 3 * g - 2 ∨ m = 3 * g - 1 ∨ m = 3 * g + 1 ∨
       m = 3 * g + 2 ∨ m = 3 * g + 4 ∨ m = 3 * g + 5 := by grind
-  rcases h1 with rfl | rfl | rfl | rfl | rfl | rfl
-  · exact case_one_res_3g_sub_2 _ g hm rfl
-  · exact case_one_res_3g_sub_1 _ g hm rfl
-  · exact case_one_res_3g_add_1 _ g hm rfl
-  · exact case_one_res_3g_add_2 _ g hm rfl
-  · exact case_one_res_3g_add_4 _ g hm rfl
-  · exact case_one_res_3g_add_5 _ g hm rfl
+  -- Helper for computing (3 * g : ZMod m) when m = 3g + k
+  have cast_sub (k : ℕ) (hk : m = 3 * g - k) : ((3 * g : ℕ) : ZMod m) = (m + k : ℕ) := by
+    congr 1; omega
+  have cast_add (k : ℕ) (hk : m = 3 * g + k) : (3 : ZMod m) * (g : ZMod m) = -↑k := by
+    have : ((3 * g + k : ℕ) : ZMod m) = (m : ℕ) := by rw [hk]
+    push_cast [ZMod.natCast_self] at this
+    grind
+  rcases h1 with hg | hg | hg | hg | hg | hg
+  · -- m = 3g - 2: {0,3,2,5} = {0,2,3,5}
+    have h3g : (3 : ZMod m) * (g : ZMod m) = 2 := by
+      have := cast_sub 2 hg; push_cast [ZMod.natCast_self] at this; grind
+    simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g, image_singleton,
+      (by grind : (3 : ZMod m) * ((g : ZMod m) + 1) = 5), insert_comm] using
+      table1_0235 m (by grind)
+  · -- m = 3g - 1: {0,3,1,4} = {0,1,3,4}
+    have h3g : (3 : ZMod m) * g = 1 := by
+      have := cast_sub 1 hg; push_cast [ZMod.natCast_self] at this; grind
+    simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g,
+      image_singleton, (by grind : (3 : ZMod m) * ((g : ZMod m) + 1) = 4),
+      insert_comm] using table1_0134 m (by grind)
+  · -- m = 3g + 1: {0,3,-1,2} = -1 +ᵥ {0,1,3,4}
+    have h3g := cast_add 1 hg
+    have h3g1 : (3 : ZMod m) * ((g : ZMod m) + 1) = 2 := by grind
+    have : {0, (3 : ZMod m), -1, 2} = (-1 : ZMod m) +ᵥ ({0, 1, 3, 4} : Finset (ZMod m)) := by
+      simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]; grind
+    simpa [hu, h3g, h3g1, this] using table1_0134 m (by grind)
+  · -- m = 3g + 2: {0,3,-2,1} = -2 +ᵥ {0,2,3,5}
+    have h3g := cast_add 2 hg
+    have h3g1 : (3 : ZMod m) * ((g : ZMod m) + 1) = 1 := by grind
+    have : {0, (3 : ZMod m), -2, 1} = (-2 : ZMod m) +ᵥ ({0, 2, 3, 5} : Finset (ZMod m)) := by
+      simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]; grind
+    simpa [hu, h3g, h3g1, this] using table1_0235 m (by grind)
+  · -- m = 3g + 4: {0,3,-4,-1} = -4 +ᵥ {0,3,4,7}
+    have h3g := cast_add 4 hg
+    have h3g1 : (3 : ZMod m) * ((g : ZMod m) + 1) = -1 := by grind
+    have : {0, (3 : ZMod m), -4, -1} = (-4 : ZMod m) +ᵥ ({0, 3, 4, 7} : Finset (ZMod m)) := by
+      simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]; grind
+    simpa [hu, h3g, h3g1, this] using table1_0347 m (by grind)
+  · -- m = 3g + 5: {0,3,-5,-2} = -5 +ᵥ {0,3,5,8}
+    have h3g := cast_add 5 hg
+    have h3g1 : (3 : ZMod m) * ((g : ZMod m) + 1) = -2 := by grind
+    have : {0, (3 : ZMod m), -5, -2} = (-5 : ZMod m) +ᵥ ({0, 3, 5, 8} : Finset (ZMod m)) := by
+      simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add]; grind
+    simpa [hu, h3g, h3g1, this] using table1_0358 m (by grind)
 
 end Case1c
 
@@ -1053,18 +996,15 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
         ({0, 1, (g : ZMod m), (g : ZMod m) + 1} : Finset (ZMod m)).image ((b : ZMod m) * ·) := by
   have hm4 : 4 ≤ m := by
     haveI : NeZero m := ⟨by grind⟩
-    calc 4 = (zmod_set m a b).card := hcard.symm
-      _ ≤ Fintype.card (ZMod m) := Finset.card_le_univ _
-      _ = m := ZMod.card m
+    linarith [Finset.card_le_univ (zmod_set m a b), ZMod.card m]
   haveI : NeZero m := ⟨by grind⟩
   have hub : IsUnit ((b : ℤ) : ZMod m) := isUnit_intCast_of_natAbs_coprime hd
   set bz : ZMod m := (b : ZMod m)
   set az : ZMod m := (a : ZMod m)
   set g' : ZMod m := bz⁻¹ * (bz - az)
   have hbg' : bz * g' = bz - az := by
-    change bz * (bz⁻¹ * (bz - az)) = bz - az
-    rw [← mul_assoc, ZMod.mul_inv_of_unit _ hub, one_mul]
-  have hbg'1 : bz * (g' + 1) = 2 * bz - az := by grind
+    simp only [g', ← mul_assoc, ZMod.mul_inv_of_unit _ hub, one_mul]
+  have hbg'1 : bz * (g' + 1) = 2 * bz - az := by rw [mul_add, mul_one, hbg']; ring
   have hset : zmod_set m a b = ({0, 1, g', g' + 1} : Finset (ZMod m)).image (bz * ·) := by
     simp only [zmod_set, Finset.image_insert, Finset.image_singleton]
     grind
