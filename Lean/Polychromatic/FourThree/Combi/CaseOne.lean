@@ -942,8 +942,7 @@ lemma case_one_complement (g : ℕ) (hg : g < m) : HasPolychromColouring (Fin 3)
     rw [Nat.cast_sub hg.le, ZMod.natCast_self, zero_sub]
   have hset : ({0, 1, -(↑g : ZMod m), -(↑g : ZMod m) + 1} : Finset (ZMod m)) =
       (-(↑g : ZMod m)) +ᵥ ({0, 1, (↑g : ZMod m), (↑g : ZMod m) + 1} : Finset (ZMod m)) := by
-    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add, neg_add_cancel]
-    grind
+    simp only [vadd_finset_insert, vadd_finset_singleton, vadd_eq_add, neg_add_cancel]; grind
   rw [key, hset]
   exact hasPolychromColouring_vadd
 
