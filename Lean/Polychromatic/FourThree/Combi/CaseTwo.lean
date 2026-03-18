@@ -177,8 +177,7 @@ private lemma orbitMap_cycle_index {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ} [NeZe
 
 /-- The cycle index α shifts by 1 when (b-a) is added. -/
 private lemma cycle_index_shift_ba {m : ℕ} {a b : ℤ} {d₁ : ℕ} [NeZero m] [NeZero d₁]
-    (hd1_dvd : d₁ ∣ m) (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁))
-    (x : ZMod m) :
+    (hd1_dvd : d₁ ∣ m) (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁)) (x : ZMod m) :
     ZMod.castHom hd1_dvd (ZMod d₁) (x + ↑(b - a)) * u⁻¹ =
     ZMod.castHom hd1_dvd (ZMod d₁) x * u⁻¹ + 1 := by
   simp only [map_add, map_intCast, add_mul]
@@ -193,8 +192,7 @@ private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid �
 /-- If α(Φ(i,j)) = i for all i,j, then (Φ⁻¹(x)).1 = α(x). -/
 private lemma equiv_symm_fst_eq {d₁ e₁ : ℕ} {γ : Type*}
     (Φ : ZMod d₁ × ZMod e₁ ≃ γ) (α : γ → ZMod d₁)
-    (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i) (x : γ) :
-    (Φ.symm x).1 = α x := by grind
+    (hα : ∀ i : ZMod d₁, ∀ j : ZMod e₁, α (Φ (i, j)) = i) (x : γ) : (Φ.symm x).1 = α x := by grind
 
 /-! ### Orbit coloring framework -/
 
@@ -204,8 +202,7 @@ private noncomputable def orbitEquiv {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     (hm_eq : m = d₁ * e₁) (hd1_dvd : d₁ ∣ m)
     (hb_zero : (b : ZMod d₁) = 0) (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
     (hord : addOrderOf (b : ZMod m) = e₁) : ZMod d₁ × ZMod e₁ ≃ ZMod m :=
-  Equiv.ofBijective (orbitMap m a b d₁ e₁)
-    (orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord)
+  Equiv.ofBijective (orbitMap m a b d₁ e₁) (orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord)
 
 private lemma orbitEquiv_shift_b {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     [NeZero m] [NeZero d₁] [NeZero e₁]
@@ -310,8 +307,8 @@ are distinct, guaranteeing every 2×2 block contains all three colors.
 -- Even cycles: 01010...011 (alternating 0,1, last position overridden to 1)
 -- Odd cycles: 22020...020 (first position 2, then: even→0, odd→2)
 private def case2b_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
-  if i.val % 2 = 0 then -- even cycle
-    if j.val = e₁ - 1 then 1 else if j.val % 2 = 0 then 0 else 1
+  if i.val % 2 = 0 -- even cycle
+  then if j.val = e₁ - 1 then 1 else if j.val % 2 = 0 then 0 else 1
   else if j.val = 0 then 2 else if j.val % 2 = 0 then 0 else 2 -- odd cycle
 
 -- Coverage — any 2×2 block covers all 3 colors.
@@ -638,7 +635,6 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
       (∀ i, case2d_u e₁ ≤ vals i ∧ vals i ≤ e₁ - case2d_u e₁) ∧
       (Finset.univ.sum vals) % e₁ = target % e₁ := by
   have hu_lt : case2d_u e₁ < e₁ := by grind [case2d_u]
-  have h2u : 2 * case2d_u e₁ < e₁ := by grind [case2d_u]
   have hdw' : d₁ * (e₁ - 2 * case2d_u e₁) ≥ e₁ := by
     change d₁ * (e₁ - 2 * (e₁ / 3 + e₁ % 3)) ≥ e₁
     obtain ⟨k, hk⟩ := he1_odd; subst hk
