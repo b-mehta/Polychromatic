@@ -69,22 +69,14 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : �
     have hj_lt_r : j < r := by rw [Nat.div_lt_iff_lt_mul (by omega)]; exact hlt
     have hdam : (q + 1) * j + p % (q + 1) = p := Nat.div_add_mod p (q + 1)
     have hmod : p % (q + 1) < q + 1 := Nat.mod_lt p (by omega)
-    refine ⟨by omega, ?_, ?_⟩
-    · unfold equiEndpoint; rw [min_eq_right (by omega)]; change q * j + j ≤ p; grind
-    · unfold equiEndpoint; rw [min_eq_right (by omega)]; change p < q * (j + 1) + (j + 1); grind
+    refine ⟨by omega, ?_, ?_⟩ <;> grind [equiEndpoint, Nat.div_add_mod p (q + 1)]
   · rename_i hge; push_neg at hge
     set d := (p - bd) / q
     have hdam : q * d + (p - bd) % q = p - bd := Nat.div_add_mod (p - bd) q
     have hmod : (p - bd) % q < q := Nat.mod_lt _ hq_pos
     have hd_lt : d < s - r := by rw [Nat.div_lt_iff_lt_mul hq_pos]; omega
     set j := r + d
-    have hring_j : q * j + r = bd + q * d := by grind
-    have hring_j1 : q * (j + 1) + r = bd + q * d + q := by grind
-    refine ⟨by omega, ?_, ?_⟩
-    · unfold equiEndpoint; rw [min_eq_left (Nat.le_add_right r d)]
-      change q * j + r ≤ p; omega
-    · unfold equiEndpoint; rw [min_eq_left (Nat.le_succ_of_le (Nat.le_add_right r d))]
-      change p < q * (j + 1) + r; omega
+    refine ⟨by omega, ?_, ?_⟩ <;> grind [equiEndpoint, Nat.div_add_mod (p - bd) q]
 
 private lemma equiEndpoint_diff_ge (m s j : ℕ) : m / s ≤ Finpartition.equiEndpoint m s (j + 1) -
         Finpartition.equiEndpoint m s j := by grind [Finpartition.equiEndpoint]
@@ -97,10 +89,12 @@ private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s) (h_lb : (m + s - 1) / 
   by_cases hr : j < r
   · rw [if_pos hr]
     have : (q + 1) * s ≤ m + s - 1 := by grind [Nat.div_add_mod m s]
-    have := Nat.le_div_iff_mul_le hs |>.mpr this; omega
+    have := (Nat.le_div_iff_mul_le hs).mpr this
+    omega
   · rw [if_neg hr]
     have : q * s ≤ m + s - 1 := le_trans (Nat.div_mul_le_self m s) (by omega)
-    have := Nat.le_div_iff_mul_le hs |>.mpr this; omega
+    have := (Nat.le_div_iff_mul_le hs).mpr this
+    omega
 
 open Finpartition in
 open Finpartition in
