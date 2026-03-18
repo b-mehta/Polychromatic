@@ -384,9 +384,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   have hd₂_dvd_ba : (d₂ : ℤ) ∣ (b - a) := by
     simpa [Int.gcd, d₂] using Int.gcd_dvd_left (b - a) (m : ℤ)
   have hd₂_dvd_e₁ : d₂ ∣ e₁ := by
-    have h1 : d₂ ∣ d₁ * e₁ := hm_eq ▸ hd₂_dvd
-    have h2 : Nat.Coprime d₂ d₁ := by rwa [Nat.Coprime, Nat.gcd_comm]
-    exact h2.dvd_of_dvd_mul_right (mul_comm d₁ e₁ ▸ h1)
+    exact (by rwa [Nat.Coprime, Nat.gcd_comm] : Nat.Coprime d₂ d₁).dvd_of_dvd_mul_right
+      (mul_comm d₁ e₁ ▸ hm_eq ▸ hd₂_dvd)
   -- Projection: π(φ(i,j)) = j.val * π(b) since π(b-a) = 0
   haveI : NeZero d₂ := ⟨by grind⟩
   let π : ZMod m → ZMod d₂ := ZMod.castHom hd₂_dvd (ZMod d₂)
@@ -1022,17 +1021,15 @@ lemma main_case_two (hm : m ≥ 289)
       set e₁ := m / d₁
       have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
       have hd₂_dvd : d₂ ∣ m := Nat.gcd_dvd_right _ _
-      have hd₂_pos : 0 < d₂ := Nat.pos_of_ne_zero (by grind)
       by_cases he_le : e₁ ≤ 17
       · -- Case 2c: prove 3 ∣ e₁
         -- Since gcd(d₁,d₂)=1 and 3 ∤ d₁, if 3 ∣ d₂ then 3 ∣ m hence 3 ∣ e₁.
         -- If 3 ∤ d₂: swap and show e₂ ≥ 19 (contradiction with both ≤ 17).
         by_cases h3d₂ : 3 ∣ d₂
         · have h3m : 3 ∣ m := dvd_trans h3d₂ hd₂_dvd
-          have h3e₁ : 3 ∣ e₁ := by
-            have h3de : 3 ∣ d₁ * e₁ := Nat.mul_div_cancel' hd₁_dvd ▸ h3m
-            have hcop3 : Nat.Coprime 3 d₁ := (Nat.Prime.coprime_iff_not_dvd (by decide)).mpr h3_nd₁
-            exact hcop3.dvd_of_dvd_mul_left h3de
+          have h3e₁ : 3 ∣ e₁ :=
+            ((Nat.Prime.coprime_iff_not_dvd (by decide)).mpr h3_nd₁).dvd_of_dvd_mul_left
+              (Nat.mul_div_cancel' hd₁_dvd ▸ h3m)
           exact case_two_odd_small m a' b' hm hcop hmin hd₁_odd he₁_odd he_le h3e₁
         · -- 3 ∤ d₁ and 3 ∤ d₂ and e₁ ≤ 17: swap and show new e₁ ≥ 19.
           -- After swap, new e₁' = m/d₂. If e₁' ≤ 17 too, contradiction.
