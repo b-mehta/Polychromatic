@@ -26,7 +26,11 @@ section Case2_MultipleCycles
 
 variable (m : ℕ) (a b : ℤ)
 
-/-! ### Arithmetic helpers for cycle decomposition -/
+/-! ### Arithmetic helpers for cycle decomposition
+
+These lemmas set up the orbit map infrastructure. They are not important individually
+but are used throughout Case 2.
+-/
 
 private lemma intCast_2ba_eq :
     ((2 * b - a : ℤ) : ZMod m) = ((b - a : ℤ) : ZMod m) + ((b : ℤ) : ZMod m) := by grind
@@ -43,8 +47,11 @@ private lemma zmod_val_add_one (d : ℕ) [NeZero d] (_hd : d ≥ 2) (i : ZMod d)
 private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2)
     (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by grind [zmod_val_add_one e he2 j]
 
-/-- Coloring for Case 2a ($e_1$ even): alternating bicolors per cycle,
-    missing colors chosen so adjacent cycles skip different colors. -/
+/--
+A coloring for Case 2a ($e_1$ even).
+Each cycle $i$ uses two colors that alternate based on position parity.
+Cycles are assigned "missing colors" such that no two adjacent cycles miss the same color.
+-/
 private def cycle_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
   if i.val = d₁ - 1 ∧ ¬Even d₁ then ⟨1 + j.val % 2, by grind⟩
   else if i.val % 2 = 0 then ⟨j.val % 2, by grind⟩
@@ -60,8 +67,11 @@ private lemma color_covers_even (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁] (h
     k = cycle_coloring d₁ e₁ (i + 1, j₂ + 1) := by
   grind [cycle_coloring, Fin.ext_iff, zmod_val_add_one]
 
-/-- Orbit map $\phi(i, j) = i(b-a) + jb \pmod m$, a bijection
-    $\mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \to \mathbb{Z}_m$. -/
+/--
+The orbit map $\phi : \mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \to \mathbb{Z}_m$ defined by
+$\phi(i, j) = i(b-a) + jb \pmod m$. This map is a bijection when $\gcd(b-a, b, m) = 1$.
+It provides the coordinate system used to analyze the "Multiple Cycles" case.
+-/
 private def orbitMap (m : ℕ) (a b : ℤ) (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → ZMod m :=
   fun p => (p.1.val : ZMod m) * ↑(b - a) + (p.2.val : ZMod m) * ↑b
 
@@ -229,7 +239,10 @@ private noncomputable def orbitEquiv {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   have hΦ_cycle := equiv_symm_fst_eq Φ α hα_φ
   exact ⟨Φ, hΦ_add_b, fun x => by rw [hΦ_cycle, hα_ba, ← hΦ_cycle]⟩
 
-/-- **Key infrastructure for Case 2.** Polychromaticity from an orbit coloring. -/
+/-- **Key infrastructure for Case 2.** Polychromaticity from an orbit coloring:
+    given an orbit equivalence Φ with shift properties and a coloring f,
+    if f covers all colors at any translate, then f ∘ Φ.symm is polychromatic.
+    All four Case 2 subcases use this as their final step. -/
 private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
     [NeZero m] [NeZero d₁] [NeZero e₁]
     (Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m)
@@ -291,7 +304,13 @@ lemma case_two_e1_even (hm : m ≥ 289)
   exact orbit_coloring_polychrom Φ hΦ_add_b hΦ_cycle_shift (cycle_coloring d₁ e₁)
     (fun n k => color_covers_even d₁ e₁ hd₁_ge2 (parity_flip_even e₁ he1_even he₁_ge2) _ _ _ k)
 
-/-! ### Subcase (2b) construction: d₁ even, e₁ odd -/
+/-! ### Subcase (2b) construction: d₁ even, e₁ odd
+
+The coloring assigns each even cycle the pattern `01010…011` and each odd cycle
+the pattern `22020…020`. The degenerate pairs `{1,1}` and `{2,2}` occur at
+positions `j = e₁ − 2` and `j = 0` respectively; since `e₁ ≥ 3` these positions
+are distinct, guaranteeing every 2×2 block contains all three colors.
+-/
 
 -- Case 2b coloring: even cycles `01010…011`, odd cycles `22020…020`.
 private def case2b_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
@@ -317,7 +336,9 @@ private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
 
 /-! ### Subcase (2b) main lemma -/
 
-/-- **Subcase (2b).** $d_1$ even, $e_1$ odd: alternating with degenerate fixup. -/
+/-- **Subcase (2b).** $d_1$ is even and $e_1$ is odd.
+    Alternating patterns with a "degenerate" position fixup at different positions
+    for even and odd cycles, ensuring they do not overlap across adjacent cycles. -/
 lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
@@ -448,18 +469,31 @@ private lemma case2c_wrap_hyp (d₁ k₀ j : ℕ) (hd₁ : d₁ ≥ 3) (hd₁_od
   obtain ⟨k, hk⟩ := hd₁_odd; subst hk
   grind [case2c_pattern]
 
-/-! ### Subcase (2d): d₁, e₁ both odd, e₁ ≥ 19 -/
+/-! ### Subcase (2d): d₁, e₁ both odd, e₁ ≥ 19
 
-/-- First interval size: u = e₁/3 + e₁%3. -/
+The most technically involved subcase. The base pattern on C₀ uses three
+alternating bicolor intervals of sizes u, v, w. Each subsequent cycle is a
+rotation of C₀. The many private lemmas below are technical helpers for
+verifying the rotation property; the important result is `case2d_coloring_works`.
+-/
+
+/-- Partition parameter: first interval size for case 2d.
+    u = e₁/3 + e₁%3 (i.e. k+r where e₁ = 3k+r).
+    For e₁ odd: r=0 → u=k (odd), r=1 → u=k+1 (odd), r=2 → u=k+2 (odd). -/
 private def case2d_u (e₁ : ℕ) : ℕ := e₁ / 3 + e₁ % 3
 
-/-- Second interval size: v = e₁/3 + (1 if e₁%3=1 else 0). -/
+/-- Second interval size for case 2d.
+    v = e₁/3 + (1 if e₁%3 = 1 else 0).
+    r=0: v = k   r=1: v = k+1   r=2: v = k -/
 private def case2d_v (e₁ : ℕ) : ℕ := if e₁ % 3 = 1 then e₁ / 3 + 1 else e₁ / 3
 
 private lemma case2d_uv_le {e₁ : ℕ} (hge : e₁ ≥ 19) : case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
   grind [case2d_u, case2d_v]
 
-/-- Base pattern: three alternating bicolor intervals {01…0, 12…1, 20…2}. -/
+/-- The base pattern: three alternating bicolor intervals on {0,...,e₁-1}.
+    Positions 0..u-1: alternating 0,1 (starts and ends with 0 since u is odd)
+    Positions u..u+v-1: alternating 1,2 (starts and ends with 1)
+    Positions u+v..e₁-1: alternating 2,0 (starts and ends with 2) -/
 private def basePattern (e₁ : ℕ) (j : ℕ) : Fin 3 := let u := case2d_u e₁
   let v := case2d_v e₁
   if j < u then if j % 2 = 0 then 0 else 1
@@ -478,7 +512,7 @@ private def intervalColors : Fin 3 → Finset (Fin 3)
   | 2 => {0, 2}
 
 
-/-- For any j, {basePattern(j), basePattern(j+1 mod e₁)} covers the
+/-- Combined: for any j, {basePattern(j), basePattern(j+1 mod e₁)} is the
     interval pair of whichInterval(j). -/
 private lemma basePattern_consec_pair {e₁ j : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁) :
     intervalColors (whichInterval e₁ j) ⊆ {basePattern e₁ j, basePattern e₁ ((j + 1) % e₁)} := by
