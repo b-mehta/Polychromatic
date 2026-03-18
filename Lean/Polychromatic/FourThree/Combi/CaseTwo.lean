@@ -293,8 +293,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hb_zero : (Int.cast b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
   have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
-  obtain ⟨Φ, hΦ_add_b, hΦ_cycle_shift⟩ :=
-    orbitEquiv hm_eq hd₁_dvd hb_zero hba_unit hord
+  obtain ⟨Φ, hΦ_add_b, hΦ_cycle_shift⟩ := orbitEquiv hm_eq hd₁_dvd hb_zero hba_unit hord
   have hd₁_ge2 : d₁ ≥ 2 := by grind
   have he₁_ge2 : e₁ ≥ 2 := by
     have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) (by grind)
@@ -473,8 +472,7 @@ private lemma case2c_wrap_hyp (d₁ k₀ j : ℕ) (hd₁ : d₁ ≥ 3)
 private def case2d_u (e₁ : ℕ) : ℕ := e₁ / 3 + e₁ % 3
 
 /-- Second interval size: v = e₁/3 + (1 if e₁%3=1 else 0). -/
-private def case2d_v (e₁ : ℕ) : ℕ :=
-  if e₁ % 3 = 1 then e₁ / 3 + 1 else e₁ / 3
+private def case2d_v (e₁ : ℕ) : ℕ := if e₁ % 3 = 1 then e₁ / 3 + 1 else e₁ / 3
 
 private lemma case2d_uv_le {e₁ : ℕ} (hge : e₁ ≥ 19) : case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
   grind [case2d_u, case2d_v]
@@ -792,8 +790,7 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ}
   set Φ := Equiv.ofBijective _ (orbitMap_bijective hm_eq hd1_dvd hb_zero hba_unit hord)
   obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq
   have hd1_ge5 : d₁ ≥ 5 := by grind
-  obtain ⟨vals, hvals_bound, hvals_sum⟩ :=
-    case2d_rotation_sum_exists hd1_ge5 he1_ge he1_odd k₀.val
+  obtain ⟨vals, hvals_bound, hvals_sum⟩ := case2d_rotation_sum_exists hd1_ge5 he1_ge he1_odd k₀.val
   let rot : ZMod d₁ → ℕ := fun i =>
     ((Finset.univ.filter (fun j : ZMod d₁ => j.val < i.val)).sum vals) % e₁
   let χ : ZMod m → Fin 3 := fun x =>
