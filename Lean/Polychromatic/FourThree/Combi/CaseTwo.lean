@@ -381,8 +381,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     intro i j; simp only [φ, orbitMap, π, map_add, map_mul, map_natCast, map_intCast]
     rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba]; ring
   have hπ_b_unit : IsUnit (π (↑b)) := by
-    change IsUnit ((ZMod.castHom hd₂_dvd (ZMod d₂)) (↑b))
-    rw [map_intCast]; exact isUnit_intCast_of_natAbs_coprime (by grind)
+    simp only [π, map_intCast]; exact isUnit_intCast_of_natAbs_coprime (by grind)
   -- Degenerate positions can't coincide: d₂ | (j-j') from projection,
   -- d₂ | e₁ and d₂ > 1, so e₁-2 and 0 can't both be 0 mod d₂.
   have h_degenerate_false : ∀ (j₁ j₂ : ZMod e₁),
