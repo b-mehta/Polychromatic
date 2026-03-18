@@ -376,8 +376,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   -- Projection: π(φ(i,j)) = j.val * π(b) since π(b-a) = 0
   haveI : NeZero d₂ := ⟨by grind⟩
   let π : ZMod m → ZMod d₂ := ZMod.castHom hd₂_dvd (ZMod d₂)
-  have hπ_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
-      π (φ (i, j)) = (j.val : ZMod d₂) * π (↑b) := by
+  have hπ_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, π (φ (i, j)) = (j.val : ZMod d₂) * π (↑b) := by
     intro i j; simp only [φ, orbitMap, π, map_add, map_mul, map_natCast, map_intCast]
     rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba]; ring
   have hπ_b_unit : IsUnit (π (↑b)) := by
@@ -398,8 +397,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     obtain ⟨_, hk⟩ := hd₂_dvd_e₁; obtain ⟨_, hl⟩ := he1_odd
     have := Nat.le_of_dvd (by grind) hd₂_dvd_2; grind
   -- Define coloring and prove polychromaticity via orbit helper
-  have hΦ_cycle_shift : ∀ x : ZMod m,
-      (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1 := fun x => by
+  have hΦ_cycle_shift : ∀ x, (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1 := fun x => by
     rw [hΦ_cycle, hα_ba, ← hΦ_cycle]
   -- π(n) and π(n+(b-a)) give the same ZMod d₂ value
   have hπ_eq : ∀ n : ZMod m, π (n + ↑(b - a)) = π n := fun n => by
@@ -503,13 +501,11 @@ private lemma basePattern_consec_pair {e₁ j : ℕ}
   · rw [Nat.mod_eq_of_lt hj1]
     by_cases hsame : whichInterval e₁ j = whichInterval e₁ (j + 1)
     · -- Same interval: both colors present
-      have : {basePattern e₁ j, basePattern e₁ (j + 1)} =
-          intervalColors (whichInterval e₁ j) := by
+      have : {basePattern e₁ j, basePattern e₁ (j + 1)} = intervalColors (whichInterval e₁ j) := by
         simp only [whichInterval, basePattern, intervalColors] at *; grind
       exact this.ge
     · -- Boundary: last element of interval + first of next
-      have : intervalColors (whichInterval e₁ j) ⊆
-          {basePattern e₁ j, basePattern e₁ (j + 1)} := by
+      have : intervalColors (whichInterval e₁ j) ⊆ {basePattern e₁ j, basePattern e₁ (j + 1)} := by
         simp only [whichInterval] at hsame ⊢
         grind [basePattern, intervalColors]
       exact this
@@ -567,8 +563,7 @@ private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : 
   -- Rewrite ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁
   have hmod : ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁ := Nat.mod_add_mod (j + r) e₁ 1
   rw [hmod] at h2
-  have : ∀ (i₁ i₂ : Fin 3), i₁ ≠ i₂ →
-      k ∈ intervalColors i₁ ∨ k ∈ intervalColors i₂ := by
+  have : ∀ (i₁ i₂ : Fin 3), i₁ ≠ i₂ → k ∈ intervalColors i₁ ∨ k ∈ intervalColors i₂ := by
     intro i₁ i₂; fin_cases i₁ <;> fin_cases i₂ <;> fin_cases k <;>
       simp_all [intervalColors, Finset.mem_insert, Finset.mem_singleton]
   grind
