@@ -651,17 +651,13 @@ private lemma case2d_shift_ba_wrap {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
       ↑↑j.val * ((b : ℤ) : ZMod m) + ((b - a : ℤ) : ZMod m) =
       (↑d₁ : ZMod m) * ((b - a : ℤ) : ZMod m) + ↑↑j.val * ((b : ℤ) : ZMod m) := by
     grind
-  rw [step1]
-  -- Step 2: d₁*(b-a) = k₀*b via hk₀
-  rw [← nsmul_eq_mul (d₁), hk₀, nsmul_eq_mul]
-  -- Step 3: k₀*b + j*b = (k₀+j)*b, reorder, convert to nsmul
-  rw [← add_mul, ← Nat.cast_add (k₀.val) (j.val), ← nsmul_eq_mul, Nat.add_comm]
-  -- Step 4: reduce (j+k₀) • b mod e₁ using he1_b_zero
+  rw [step1, ← nsmul_eq_mul (d₁), hk₀, nsmul_eq_mul, ← add_mul,
+    ← Nat.cast_add (k₀.val) (j.val), ← nsmul_eq_mul, Nat.add_comm]
+  -- Reduce (j+k₀) • b mod e₁ using he1_b_zero
   set n := j.val + k₀.val
-  have : (j + k₀).val = n % e₁ := by rw [ZMod.val_add]
-  rw [this]
-  have : n = e₁ * (n / e₁) + n % e₁ := (Nat.div_add_mod n e₁).symm
-  conv_lhs => rw [this]
+  have h1 : (j + k₀).val = n % e₁ := ZMod.val_add j k₀
+  rw [h1]
+  conv_lhs => rw [(Nat.div_add_mod n e₁).symm]
   rw [add_nsmul, mul_nsmul, he1_b_zero, smul_zero, zero_add, nsmul_eq_mul]
 
 /-- Given d₁ ≥ 3 values each in [u, e₁-u] can sum to any target mod e₁,
