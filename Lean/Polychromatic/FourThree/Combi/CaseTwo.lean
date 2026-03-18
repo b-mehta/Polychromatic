@@ -274,17 +274,13 @@ lemma case_two_e1_even (hm : m ≥ 289)
   have hb_zero : (Int.cast b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
   have hba_unit : IsUnit (Int.cast (b - a) : ZMod d₁) :=
     isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
-  -- addOrderOf b in ZMod m is e₁
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
   have he1_b : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
-  -- Define the cycle map φ = orbitMap and derive bijectivity from shared infrastructure
   let φ := orbitMap m a b d₁ e₁
   have hφ_add_b : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
       φ (i, j + 1) = φ (i, j) + ↑b := by
     intro i j; exact (orbitMap_shift_b he1_b (i, j)).symm
-  -- φ is bijective (from shared orbitMap infrastructure)
   let Φ := Equiv.ofBijective φ (orbitMap_bijective hm_eq hd₁_dvd hb_zero hba_unit hord)
-  -- Cycle index function α : ZMod m → ZMod d₁
   obtain ⟨u_ba, hu_ba⟩ := hba_unit
   let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom hd₁_dvd (ZMod d₁) x * u_ba⁻¹
   have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 := cycle_index_shift_ba hd₁_dvd u_ba hu_ba
@@ -360,20 +356,17 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
   have he1_b : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
-  -- b/d₁ is coprime to e₁ (needed for compatibility argument)
   have hd₁_dvd_b : (d₁ : ℤ) ∣ b := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hb_zero
   obtain ⟨q, hq⟩ := hd₁_dvd_b
   have hq_cop : Nat.Coprime q.natAbs e₁ := by
-    have : q.natAbs = b.natAbs / d₁ := by
-      rw [hq, Int.natAbs_mul, Int.natAbs_natCast, Nat.mul_div_cancel_left _ hd₁_pos]
-    rw [this]; exact Nat.coprime_div_gcd_div_gcd hd₁_pos
-  -- Define the cycle map φ = orbitMap and derive bijectivity from shared infrastructure
+    rw [show q.natAbs = b.natAbs / d₁ from by
+      rw [hq, Int.natAbs_mul, Int.natAbs_natCast, Nat.mul_div_cancel_left _ hd₁_pos]]
+    exact Nat.coprime_div_gcd_div_gcd hd₁_pos
   let φ := orbitMap m a b d₁ e₁
   let Φ := Equiv.ofBijective φ (orbitMap_bijective hm_eq hd₁_dvd hb_zero hba_unit hord)
   have hφ_add_b : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
       φ (i, j + 1) = φ (i, j) + ↑b := by
     intro i j; exact (orbitMap_shift_b he1_b (i, j)).symm
-  -- Cycle index function α : ZMod m → ZMod d₁
   obtain ⟨u_ba, hu_ba⟩ := hba_unit
   let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom hd₁_dvd (ZMod d₁) x * u_ba⁻¹
   have hα_ba : ∀ x, α (x + ↑(b - a)) = α x + 1 := cycle_index_shift_ba hd₁_dvd u_ba hu_ba
@@ -381,7 +374,6 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     orbitMap_cycle_index hd₁_dvd hb_zero u_ba hu_ba
   have hΦ_add_b := equiv_symm_shift_b Φ hφ_add_b
   have hΦ_cycle := equiv_symm_fst_eq Φ α hα_φ
-  -- d₂ properties for the compatibility argument
   set d₂ := Nat.gcd (b - a).natAbs m
   have hd₂_dvd : d₂ ∣ m := Nat.gcd_dvd_right _ _
   have hd₂_gt1 : d₂ > 1 := by grind
@@ -391,7 +383,6 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     have h1 : d₂ ∣ d₁ * e₁ := hm_eq ▸ hd₂_dvd
     have h2 : Nat.Coprime d₂ d₁ := by rwa [Nat.Coprime, Nat.gcd_comm]
     exact h2.dvd_of_dvd_mul_right (mul_comm d₁ e₁ ▸ h1)
-  -- Projection: π(φ(i,j)) = j.val * π(b) since π(b-a) = 0
   haveI : NeZero d₂ := ⟨by grind⟩
   let π : ZMod m → ZMod d₂ := ZMod.castHom hd₂_dvd (ZMod d₂)
   have hπ_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
@@ -415,11 +406,9 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
       rwa [show e₁ - (e₁ - 2) = 2 from by grind] at h
     obtain ⟨_, hk⟩ := hd₂_dvd_e₁; obtain ⟨_, hl⟩ := he1_odd
     have := Nat.le_of_dvd (by grind) hd₂_dvd_2; grind
-  -- Define coloring and prove polychromaticity via orbit helper
   have hΦ_cycle_shift : ∀ x : ZMod m,
       (Φ.symm (x + ↑(b - a))).1 = (Φ.symm x).1 + 1 := fun x => by
     rw [hΦ_cycle, hα_ba, ← hΦ_cycle]
-  -- π(n) and π(n+(b-a)) give the same ZMod d₂ value
   have hπ_eq : ∀ n : ZMod m, π (n + ↑(b - a)) = π n := fun n => by
     simp only [π, map_add, map_intCast]
     rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba, add_zero]
