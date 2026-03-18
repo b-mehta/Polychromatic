@@ -364,9 +364,9 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   have hd₁_dvd_b : (d₁ : ℤ) ∣ b := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hb_zero
   obtain ⟨q, hq⟩ := hd₁_dvd_b
   have hq_cop : Nat.Coprime q.natAbs e₁ := by
-    rw [show q.natAbs = b.natAbs / d₁ from by
-      rw [hq, Int.natAbs_mul, Int.natAbs_natCast, Nat.mul_div_cancel_left _ hd₁_pos]]
-    exact Nat.coprime_div_gcd_div_gcd hd₁_pos
+    have : q.natAbs = b.natAbs / d₁ := by
+      rw [hq, Int.natAbs_mul, Int.natAbs_natCast, Nat.mul_div_cancel_left _ hd₁_pos]
+    rw [this]; exact Nat.coprime_div_gcd_div_gcd hd₁_pos
   -- Define the cycle map φ = orbitMap and derive bijectivity from shared infrastructure
   let φ := orbitMap m a b d₁ e₁
   let Φ := Equiv.ofBijective φ (orbitMap_bijective hm_eq hd₁_dvd hb_zero hba_unit hord)
@@ -412,7 +412,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     have hd₂_dvd_diff := (ZMod.natCast_eq_zero_iff _ _).mp hval_eq.symm
     have hd₂_dvd_2 : d₂ ∣ 2 := by
       have h := Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
-      rwa [show e₁ - (e₁ - 2) = 2 from by grind] at h
+      have : e₁ - (e₁ - 2) = 2 := by grind
+      rwa [this] at h
     obtain ⟨_, hk⟩ := hd₂_dvd_e₁; obtain ⟨_, hl⟩ := he1_odd
     have := Nat.le_of_dvd (by grind) hd₂_dvd_2; grind
   -- Define coloring and prove polychromaticity via orbit helper
@@ -533,22 +534,27 @@ private lemma basePattern_consec_pair {e₁ j : ℕ}
   · rw [Nat.mod_eq_of_lt hj1]
     by_cases hsame : whichInterval e₁ j = whichInterval e₁ (j + 1)
     · -- Same interval: both colors present
-      exact (show {basePattern e₁ j, basePattern e₁ (j + 1)} =
-        intervalColors (whichInterval e₁ j) by
-          simp only [whichInterval, basePattern, intervalColors] at *; grind).ge
+      have : {basePattern e₁ j, basePattern e₁ (j + 1)} =
+          intervalColors (whichInterval e₁ j) := by
+        simp only [whichInterval, basePattern, intervalColors] at *; grind
+      exact this.ge
     · -- Boundary: last element of interval + first of next
-      simp only [whichInterval] at hsame ⊢
-      exact (show {basePattern e₁ j, basePattern e₁ (j + 1)} =
-        intervalColors _ by grind [basePattern, intervalColors]).ge
+      have : intervalColors (whichInterval e₁ j) ⊆
+          {basePattern e₁ j, basePattern e₁ (j + 1)} := by
+        simp only [whichInterval] at hsame ⊢
+        grind [basePattern, intervalColors]
+      exact this
   · -- Wrap: j = e₁ - 1
     push_neg at hj1
     have hj_eq : j = e₁ - 1 := by grind
     subst hj_eq
     have : e₁ - 1 + 1 = e₁ := by grind
     rw [this, Nat.mod_self]
-    simp only [whichInterval] at *
-    exact (show {basePattern e₁ (e₁ - 1), basePattern e₁ 0} =
-      intervalColors _ by grind [basePattern, intervalColors]).ge
+    have : intervalColors (whichInterval e₁ (e₁ - 1)) ⊆
+        {basePattern e₁ (e₁ - 1), basePattern e₁ 0} := by
+      simp only [whichInterval]
+      grind [basePattern, intervalColors]
+    exact this
 
 /-- A rotation by r ∈ [u, e₁-u] moves to a different interval:
     whichInterval(j) ≠ whichInterval((j + r) % e₁). -/
@@ -702,20 +708,19 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
       simp [Finset.sum_add_distrib, Finset.card_univ, ZMod.card]
     -- Helper: #{i : ZMod d₁ | p(i)} for decidable predicates on ZMod.val
     have hcard_lt : (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)).card = q := by
-      rw [← Finset.card_image_of_injective _ (ZMod.val_injective _),
-        show Finset.image ZMod.val (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)) =
-          Finset.range q from by
-            ext j; simp only [mem_image, mem_filter, mem_univ, true_and, mem_range]
-            exact ⟨fun ⟨_, hx, he⟩ => he ▸ hx, fun hj => ⟨(j : ZMod d₁),
-              by rwa [ZMod.val_natCast_of_lt (lt_trans hj hq_lt)],
-              ZMod.val_natCast_of_lt (lt_trans hj hq_lt)⟩⟩,
-        Finset.card_range]
+      have : Finset.image ZMod.val (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)) =
+          Finset.range q := by
+        ext j; simp only [mem_image, mem_filter, mem_univ, true_and, mem_range]
+        exact ⟨fun ⟨_, hx, he⟩ => he ▸ hx, fun hj => ⟨(j : ZMod d₁),
+          by rwa [ZMod.val_natCast_of_lt (lt_trans hj hq_lt)],
+          ZMod.val_natCast_of_lt (lt_trans hj hq_lt)⟩⟩
+      rw [← Finset.card_image_of_injective _ (ZMod.val_injective _), this, Finset.card_range]
     have hcard_eq : (Finset.univ.filter (fun i : ZMod d₁ => i.val = q)).card = 1 := by
-      rw [show Finset.univ.filter (fun i : ZMod d₁ => i.val = q) = {(q : ZMod d₁)} from by
-          ext i; simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
-          exact ⟨fun h => ZMod.val_injective _ (by rwa [ZMod.val_natCast_of_lt hq_lt]),
-            fun h => by rw [h, ZMod.val_natCast_of_lt hq_lt]⟩,
-        Finset.card_singleton]
+      have : Finset.univ.filter (fun i : ZMod d₁ => i.val = q) = {(q : ZMod d₁)} := by
+        ext i; simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
+        exact ⟨fun h => ZMod.val_injective _ (by rwa [ZMod.val_natCast_of_lt hq_lt]),
+          fun h => by rw [h, ZMod.val_natCast_of_lt hq_lt]⟩
+      rw [this, Finset.card_singleton]
     have hsum_g : Finset.univ.sum g = q * w + r := by
       have : ∀ i : ZMod d₁,
           g i = (if i.val < q then w else 0) + (if i.val = q then r else 0) := by grind
