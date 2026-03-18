@@ -359,13 +359,6 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
   have he1_b : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
-  -- b/d₁ is coprime to e₁ (needed for compatibility argument)
-  have hd₁_dvd_b : (d₁ : ℤ) ∣ b := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hb_zero
-  obtain ⟨q, hq⟩ := hd₁_dvd_b
-  have hq_cop : Nat.Coprime q.natAbs e₁ := by
-    have : q.natAbs = b.natAbs / d₁ := by
-      rw [hq, Int.natAbs_mul, Int.natAbs_natCast, Nat.mul_div_cancel_left _ hd₁_pos]
-    rw [this]; exact Nat.coprime_div_gcd_div_gcd hd₁_pos
   -- Define the cycle map φ = orbitMap and derive bijectivity from shared infrastructure
   let φ := orbitMap m a b d₁ e₁
   let Φ := Equiv.ofBijective φ (orbitMap_bijective hm_eq hd₁_dvd hb_zero hba_unit hord)
@@ -513,11 +506,6 @@ private def intervalColors : Fin 3 → Finset (Fin 3)
   | 1 => {1, 2}
   | 2 => {0, 2}
 
-/-- Any two distinct interval color pairs union to {0, 1, 2}. -/
-private lemma intervalColors_union_covers {i₁ i₂ : Fin 3} (h : i₁ ≠ i₂) :
-    ∀ k : Fin 3, k ∈ intervalColors i₁ ∨ k ∈ intervalColors i₂ := by
-  intro k; fin_cases i₁ <;> fin_cases i₂ <;> fin_cases k <;>
-    simp_all [intervalColors, Finset.mem_insert, Finset.mem_singleton]
 
 /-- For any j, {basePattern(j), basePattern(j+1 mod e₁)} covers the
     interval pair of whichInterval(j). -/
@@ -597,7 +585,10 @@ private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : 
   -- Rewrite ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁
   have hmod : ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁ := Nat.mod_add_mod (j + r) e₁ 1
   rw [hmod] at h2
-  have hcov := intervalColors_union_covers hI k
+  have : ∀ (i₁ i₂ : Fin 3), i₁ ≠ i₂ →
+      k ∈ intervalColors i₁ ∨ k ∈ intervalColors i₂ := by
+    intro i₁ i₂; fin_cases i₁ <;> fin_cases i₂ <;> fin_cases k <;>
+      simp_all [intervalColors, Finset.mem_insert, Finset.mem_singleton]
   grind
 
 private lemma case2d_wrap_shift {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
