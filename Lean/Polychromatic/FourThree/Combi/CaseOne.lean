@@ -86,18 +86,13 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : �
     · unfold equiEndpoint; rw [min_eq_left (Nat.le_succ_of_le (Nat.le_add_right r d))]
       change p < q * (j + 1) + r; omega
 
-private lemma equiEndpoint_diff' (m s j : ℕ) : Finpartition.equiEndpoint m s (j + 1) -
-      Finpartition.equiEndpoint m s j =
-      if j < m % s then m / s + 1 else m / s :=
-  Finpartition.card_of_mem_equipartitionToIco_parts_aux
-
 private lemma equiEndpoint_diff_ge (m s j : ℕ) : m / s ≤ Finpartition.equiEndpoint m s (j + 1) -
         Finpartition.equiEndpoint m s j := by grind [Finpartition.equiEndpoint]
 
 open Finpartition in
 private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s) (h_lb : (m + s - 1) / s < g) (j : ℕ) :
     equiEndpoint m s (j + 1) - equiEndpoint m s j < g := by
-  rw [equiEndpoint_diff']
+  rw [Finpartition.card_of_mem_equipartitionToIco_parts_aux]
   set q := m / s; set r := m % s
   by_cases hr : j < r
   · rw [if_pos hr]
@@ -108,13 +103,6 @@ private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s) (h_lb : (m + s - 1) / 
     have := Nat.le_div_iff_mul_le hs |>.mpr this; omega
 
 open Finpartition in
-private lemma shift_within_two' (m s g : ℕ) (h_ub : g < 2 * (m / s))
-    (j p : ℕ) (hhi : p < equiEndpoint m s (j + 1)) :
-    p + g < equiEndpoint m s (j + 3) := by
-  have h1 := equiEndpoint_diff_ge m s (j + 1)
-  have h2 := equiEndpoint_diff_ge m s (j + 2)
-  grind [equiEndpoint_monotone]
-
 open Finpartition in
 private lemma idx_range_from_endpoints' (m s : ℕ) (a b p : ℕ)
     (ha_le : equiEndpoint m s a ≤ p)
@@ -162,8 +150,10 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
   have hvg_hi : (v + g) % m < Finpartition.equiEndpoint m s (jg + 1) := hvg_hi'
   have hpast : Finpartition.equiEndpoint m s (j₀ + 1) ≤ v + g := by
     have := gap_exceeds_ilen m s g hs h_lb j₀; omega
-  have hwithin : v + g <
-      Finpartition.equiEndpoint m s (j₀ + 3) := shift_within_two' m s g h_ub j₀ v hv_hi
+  have hwithin : v + g < Finpartition.equiEndpoint m s (j₀ + 3) := by
+    have := equiEndpoint_diff_ge m s (j₀ + 1)
+    have := equiEndpoint_diff_ge m s (j₀ + 2)
+    grind [Finpartition.equiEndpoint_monotone]
   have hg_lt_m : g < m := by
     have hqs : q * s ≤ m := Nat.div_mul_le_self m s
     nlinarith [Nat.div_mul_le_self m s]
