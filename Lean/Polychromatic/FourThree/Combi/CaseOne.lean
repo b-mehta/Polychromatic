@@ -335,8 +335,7 @@ private lemma straddle1_gap2 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le :
       omega
     have hvg_mod : (v + g) % m = g - 1 := by
       have : m - 1 + g = m + (g - 1) := by omega
-      rw [hv_val, this, Nat.add_mod_left]
-      exact Nat.mod_eq_of_lt (by omega)
+      rw [hv_val, this, Nat.add_mod_left, Nat.mod_eq_of_lt (by omega)]
     rw [hjg_val, hvg_mod] at hvg_hi
     simp only [Nat.zero_add] at hvg_hi
     have hep1 : equiEndpoint m s 1 ≤ (m + s - 1) / s := by
@@ -946,7 +945,6 @@ lemma case_one_complement (g : ℕ) (hg : g < m) : HasPolychromColouring (Fin 3)
   rw [key, hset]
   exact hasPolychromColouring_vadd
 
-
 /-- **Key reduction for Case 1.** When gcd(b, m) = 1, finds the gap parameter g
     such that zmod_set m a b = (image of {0,1,g,g+1} under ×b). -/
 lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
@@ -983,10 +981,9 @@ lemma exists_g_of_coprime (a b : ℤ) (hd : Nat.gcd b.natAbs m = 1)
   · by_contra! hgt
     have hval_lt := ZMod.val_lt g'
     have hgm1 : g'.val = m - 1 := by grind
-    have hg'p1 : g' + 1 = 0 := by
-      rw [← hval, hgm1, Nat.cast_sub (by grind), Nat.cast_one, ZMod.natCast_self, zero_sub,
-        neg_add_cancel]
-    grind
+    have hg'p1 : g' + 1 = 0 := by rw [← hval, hgm1, Nat.cast_sub (by grind),
+        Nat.cast_one, ZMod.natCast_self, zero_sub, neg_add_cancel]
+    grind [Finset.card_le_three]
   · grind
 
 /-- **Main Case 1 (Single Cycle).** Aggregates all subcases (1a)–(1d).
