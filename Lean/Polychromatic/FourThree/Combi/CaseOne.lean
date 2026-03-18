@@ -934,11 +934,9 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g) (hg3 : 3 ∣ g) (hg : 0 < g)
   by_cases hr_lt_gm1 : r + 1 < g
   · have hcv : c v = (r % 3 + q) % 3 := hv_eq ▸ color_at q r hr_lt
     have hcvg : c (v + g) = (r % 3 + (q + 1)) % 3 := by
-      have : v + g = g * (q + 1) + r := by grind
-      rw [this, color_at (q + 1) r hr_lt]
+      rw [show v + g = g * (q + 1) + r from by grind, color_at (q + 1) r hr_lt]
     have hcvg1 : c (v + g + 1) = ((r + 1) % 3 + (q + 1)) % 3 := by
-      have : v + g + 1 = g * (q + 1) + (r + 1) := by grind
-      rw [this, color_at (q + 1) (r + 1) (by grind)]
+      rw [show v + g + 1 = g * (q + 1) + (r + 1) from by grind, color_at (q + 1) (r + 1) (by grind)]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g (g + 1)
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
@@ -946,13 +944,9 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g) (hg3 : 3 ∣ g) (hg : 0 < g)
     have hr_eq : r = g - 1 := by grind
     have hcv : c v = (2 + q) % 3 := by grind
     have hcv1 : c (v + 1) = (q + 1) % 3 := by
-      have : v + 1 = g * (q + 1) + 0 := by grind
-      rw [this, color_at (q + 1) 0 hg]
-      grind
+      rw [show v + 1 = g * (q + 1) + 0 from by grind, color_at (q + 1) 0 hg]; grind
     have hcvg : c (v + g) = (2 + (q + 1)) % 3 := by
-      have : v + g = g * (q + 1) + (g - 1) := by grind
-      rw [this]
-      grind
+      rw [show v + g = g * (q + 1) + (g - 1) from by grind]; grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
@@ -986,22 +980,17 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   by_cases hrg : r = g
   · have hcv : c v = (3 - q % 3) % 3 := by grind
     have hcvg : c (v + g) = (2 + (3 - (q + 1) % 3)) % 3 := by
-      have : v + g = h * (q + 1) + (g - 1) := by grind
-      rw [this, color_at (q + 1) (g - 1) (by grind)]
+      rw [show v + g = h * (q + 1) + (g - 1) from by grind, color_at (q + 1) (g - 1) (by grind)]
       grind
     have hcv1 : c (v + 1) = (3 - (q + 1) % 3) % 3 := by
-      have : v + 1 = h * (q + 1) + 0 := by grind
-      rw [this, color_at (q + 1) 0 (by grind)]
-      grind
+      rw [show v + 1 = h * (q + 1) + 0 from by grind, color_at (q + 1) 0 (by grind)]; grind
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g 1
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
   · have hcv1 : c (v + 1) = ((r + 1) % 3 + (3 - q % 3)) % 3 := by
-      have : v + 1 = h * q + (r + 1) := by grind
-      rw [this, color_at q (r + 1) (by grind)]
+      rw [show v + 1 = h * q + (r + 1) from by grind, color_at q (r + 1) (by grind)]
     have hcvg1 : c (v + g + 1) = (r % 3 + (3 - (q + 1) % 3)) % 3 := by
-      have : v + g + 1 = h * (q + 1) + r := by grind
-      rw [this, color_at (q + 1) r hr_lt]
+      rw [show v + g + 1 = h * (q + 1) + r from by grind, color_at (q + 1) r hr_lt]
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 1 (g + 1)
       (by simp) (by simp) (by simp) rfl
       (by rw [hcv1]
