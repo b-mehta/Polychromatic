@@ -296,10 +296,8 @@ private def case2b_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3
 -- The compatibility says degenerate positions can't coincide:
 -- odd-degenerate at j=0 and even-degenerate at j=e₁-2 are incompatible.
 private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
-    (hd₁_even : Even d₁) (he₁_odd : Odd e₁) (he₁ : e₁ ≥ 3)
-    (i : ZMod d₁) (j₁ j₂ : ZMod e₁)
-    (h_compat : j₁.val = 0 → j₂.val ≠ e₁ - 2)
-    (h_compat' : j₂.val = 0 → j₁.val ≠ e₁ - 2)
+    (hd₁_even : Even d₁) (he₁_odd : Odd e₁) (he₁ : e₁ ≥ 3) (i : ZMod d₁) (j₁ j₂ : ZMod e₁)
+    (h_compat : j₁.val = 0 → j₂.val ≠ e₁ - 2) (h_compat' : j₂.val = 0 → j₁.val ≠ e₁ - 2)
     (k : Fin 3) :
     k = case2b_coloring d₁ e₁ (i, j₁) ∨
     k = case2b_coloring d₁ e₁ (i, j₁ + 1) ∨
@@ -315,8 +313,7 @@ private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
 lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (hd1_even : Even (Nat.gcd b.natAbs m))
-    (he1_odd : Odd (m / Nat.gcd b.natAbs m)) :
+    (hd1_even : Even (Nat.gcd b.natAbs m)) (he1_odd : Odd (m / Nat.gcd b.natAbs m)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   set d₁ := Nat.gcd b.natAbs m with hd₁_def
   set e₁ := m / d₁ with he₁_def
@@ -420,10 +417,8 @@ private def case2c_pattern (d₁ k₀ i : ℕ) : Fin 3 :=
   else if k₀ % 3 = 2 then 2 else 1
 
 -- General coverage: if (j₁ + p₁) % 3 ≠ (j₂ + p₂) % 3, all 3 colors appear.
-private lemma cover_mod3_general (p₁ p₂ : Fin 3)
-    (j₁ j₂ : ℕ)
-    (hne : (j₁ + p₁.val) % 3 ≠ (j₂ + p₂.val) % 3)
-    (k : Fin 3) :
+private lemma cover_mod3_general (p₁ p₂ : Fin 3) (j₁ j₂ : ℕ)
+    (hne : (j₁ + p₁.val) % 3 ≠ (j₂ + p₂.val) % 3) (k : Fin 3) :
     k = ⟨(j₁ + p₁.val) % 3, Nat.mod_lt _ (by grind)⟩ ∨
     k = ⟨(j₁ + 1 + p₁.val) % 3, Nat.mod_lt _ (by grind)⟩ ∨
     k = ⟨(j₂ + p₂.val) % 3, Nat.mod_lt _ (by grind)⟩ ∨
@@ -440,8 +435,7 @@ private lemma case2c_nonwrap_hyp (d₁ k₀ i j : ℕ) (hd₁ : d₁ ≥ 3)
   grind [case2c_pattern]
 
 -- Wrap coverage hypothesis: j₂ = j₁ + k₀, pattern chosen to avoid conflict.
-private lemma case2c_wrap_hyp (d₁ k₀ j : ℕ) (hd₁ : d₁ ≥ 3)
-    (hd₁_odd : Odd d₁) :
+private lemma case2c_wrap_hyp (d₁ k₀ j : ℕ) (hd₁ : d₁ ≥ 3) (hd₁_odd : Odd d₁) :
     (j + (case2c_pattern d₁ k₀ (d₁ - 1)).val) % 3 ≠
     (j + k₀ + (case2c_pattern d₁ k₀ 0).val) % 3 := by
   obtain ⟨k, hk⟩ := hd₁_odd; subst hk
