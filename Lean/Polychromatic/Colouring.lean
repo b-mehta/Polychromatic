@@ -51,17 +51,13 @@ def IsPolychrom (S : Finset G) (χ : G → K) : Prop :=
 
 /-- If `χ` is `S`-polychromatic then `S` must be nonempty. -/
 -- ANCHOR IsPolychrom.nonempty
-lemma IsPolychrom.nonempty (h : IsPolychrom S χ) :
-    S.Nonempty := by
-  obtain ⟨i, hi, hi'⟩ := h 0 (χ 0)
-  use i
+lemma IsPolychrom.nonempty (h : IsPolychrom S χ) : S.Nonempty :=
+  (h 0 (χ 0)).imp fun _ ↦ And.left
 -- ANCHOR_END IsPolychrom.nonempty
 
 lemma isPolychrom_subsingleton [Subsingleton K] (hS : S.Nonempty) :
-    IsPolychrom S χ := by
-  intro n k
-  obtain ⟨i, hi⟩ := hS
-  exact ⟨_, hi, Subsingleton.elim _ _⟩
+    IsPolychrom S χ := fun _ _ ↦
+  hS.imp fun _ hi ↦ ⟨hi, Subsingleton.elim _ _⟩
 
 section decEq
 
@@ -86,13 +82,12 @@ alias ⟨IsPolychrom.mem_image, _⟩ := isPolychrom_iff_mem_image
 
 end decEq
 
-def IsPolychrom.fintype [DecidableEq K] (hχ : IsPolychrom S χ) :
-    Fintype K where
+/-- Constructs a `Fintype K` instance from a polychromatic colouring. -/
+def IsPolychrom.fintype [DecidableEq K] (hχ : IsPolychrom S χ) : Fintype K where
   elems := S.image χ
   complete := by classical simpa using hχ.mem_image 0
 
-lemma IsPolychrom.finite (hχ : IsPolychrom S χ) :
-    Finite K := by
+lemma IsPolychrom.finite (hχ : IsPolychrom S χ) : Finite K := by
   classical exact hχ.fintype.finite
 
 /-- The number of colours in any `S`-polychromatic colouring is at most `|S|`. -/
@@ -106,27 +101,26 @@ lemma IsPolychrom.subset {S' : Finset G} (hχ : IsPolychrom S' χ) (hS : S' ⊆ 
     IsPolychrom S χ := by
   classical exact isPolychrom_iff_surjOn.2 fun n ↦ (hχ.surjOn n).trans (by gcongr)
 
-lemma IsPolychrom.vadd [DecidableEq G] (n : G) (h : IsPolychrom S χ) : IsPolychrom (n +ᵥ S) χ := by
-  rw [isPolychrom_iff] at h ⊢
-  simp_rw [vadd_vadd]
-  intro n
-  exact h _
+lemma IsPolychrom.vadd [DecidableEq G] (n : G) (h : IsPolychrom S χ) :
+    IsPolychrom (n +ᵥ S) χ := by
+  rw [isPolychrom_iff] at h ⊢; simp_rw [vadd_vadd]; exact fun n ↦ h _
 
-@[simp] lemma isPolychrom_vadd [DecidableEq G] {n : G} : IsPolychrom (n +ᵥ S) χ ↔ IsPolychrom S χ :=
+@[simp] lemma isPolychrom_vadd [DecidableEq G] {n : G} :
+    IsPolychrom (n +ᵥ S) χ ↔ IsPolychrom S χ :=
   ⟨fun h ↦ by simpa using h.vadd (-n), fun h ↦ h.vadd n⟩
 
 lemma IsPolychrom.neg [DecidableEq G] (h : IsPolychrom S χ) :
     IsPolychrom (-S) (fun g ↦ χ (-g)) := by
   intro n g
   obtain ⟨a, ha, hg⟩ := h (-n) g
-  refine ⟨-a, by simpa, ?_⟩
-  simpa only [neg_add, neg_neg]
+  exact ⟨-a, by simpa, by simpa only [neg_add, neg_neg]⟩
 
 lemma isPolychrom_univ_id [Fintype G] :
     IsPolychrom univ (id : G → G) := by
   classical simp [isPolychrom_iff]
 
-instance [Fintype G] [Fintype K] [DecidableEq G] [DecidableEq K] : Decidable (IsPolychrom S χ) :=
+instance [Fintype G] [Fintype K] [DecidableEq G] [DecidableEq K] :
+    Decidable (IsPolychrom S χ) :=
   inferInstanceAs (Decidable (∀ _, _))
 
 /-- There exists a `K`-valued `S`-polychromatic colouring of `G`. -/
@@ -135,43 +129,38 @@ def HasPolychromColouring (K : Type*) (S : Finset G) : Prop :=
   ∃ χ : G → K, IsPolychrom S χ
 -- ANCHOR_END: HasPolychromColouring
 
-lemma HasPolychromColouring.nonempty_set (h : HasPolychromColouring K S) : S.Nonempty := by
-  obtain ⟨χ, hχ⟩ := h
-  exact hχ.nonempty
+lemma HasPolychromColouring.nonempty_set (h : HasPolychromColouring K S) : S.Nonempty :=
+  h.elim fun _ hχ ↦ hχ.nonempty
 
-lemma HasPolychromColouring.nonempty_colours (h : HasPolychromColouring K S) : Nonempty K := by
-  obtain ⟨χ, hχ⟩ := h
-  exact ⟨χ 0⟩
+lemma HasPolychromColouring.nonempty_colours (h : HasPolychromColouring K S) : Nonempty K :=
+  h.elim fun χ _ ↦ ⟨χ 0⟩
 
-@[simp] lemma not_hasPolychromColouring_empty : ¬ HasPolychromColouring K (∅ : Finset G) := by
-  intro h
-  simpa using h.nonempty_set
+@[simp] lemma not_hasPolychromColouring_empty : ¬ HasPolychromColouring K (∅ : Finset G) :=
+  fun h ↦ by simpa using h.nonempty_set
 
 lemma hasPolychromColouring_subsingleton [Nonempty K] [Subsingleton K] (hS : S.Nonempty) :
     HasPolychromColouring K S := by
-  inhabit K
-  exact ⟨fun _ ↦ default, isPolychrom_subsingleton hS⟩
+  inhabit K; exact ⟨fun _ ↦ default, isPolychrom_subsingleton hS⟩
 
 lemma HasPolychromColouring.card_le [Fintype K] (h : HasPolychromColouring K S) :
     Fintype.card K ≤ #S :=
-  have ⟨_, hχ⟩ := h; hχ.card_le
+  h.elim fun _ hχ ↦ hχ.card_le
 
-lemma HasPolychromColouring.finite (h : HasPolychromColouring K S) :
-    Finite K :=
-  have ⟨_, hχ⟩ := h; hχ.finite
+lemma HasPolychromColouring.finite (h : HasPolychromColouring K S) : Finite K :=
+  h.elim fun _ hχ ↦ hχ.finite
 
 /-- If `S'` has a `K`-polychromatic colouring and `S' ⊆ S`, then `S` also has one. -/
 lemma HasPolychromColouring.subset {S' : Finset G} (h : HasPolychromColouring K S') (hS : S' ⊆ S) :
     HasPolychromColouring K S :=
-  have ⟨χ, hχ⟩ := h; ⟨χ, hχ.subset hS⟩
+  h.elim fun χ hχ ↦ ⟨χ, hχ.subset hS⟩
 
 /-- If `S` has a `K₁`-polychromatic colouring and `f : K₁ → K₂` is surjective,
 then `S` has a `K₂`-polychromatic colouring. -/
 lemma HasPolychromColouring.of_surjective {K₁ K₂ : Type*}
     (h₁ : HasPolychromColouring K₁ S) {f : K₁ → K₂} (hf : f.Surjective) :
     HasPolychromColouring K₂ S :=
-  have ⟨χ₁, hχ₁⟩ := h₁
-  ⟨f ∘ χ₁, by classical exact isPolychrom_iff_surjOn.2 fun n ↦ hf.surjOn.comp (hχ₁.surjOn n)⟩
+  h₁.elim fun χ₁ hχ₁ ↦
+    ⟨f ∘ χ₁, by classical exact isPolychrom_iff_surjOn.2 fun n ↦ hf.surjOn.comp (hχ₁.surjOn n)⟩
 
 lemma HasPolychromColouring.of_injective {K₁ K₂ : Type*} [Nonempty K₁]
     (h₁ : HasPolychromColouring K₂ S) {f : K₁ → K₂} (hf : f.Injective) :
@@ -187,9 +176,8 @@ lemma HasPolychromColouring.of_injective {K₁ K₂ : Type*} [Nonempty K₁]
 alias ⟨_, HasPolychromColouring.vadd⟩ := hasPolychromColouring_vadd
 
 lemma HasPolychromColouring.neg [DecidableEq G] (h : HasPolychromColouring K S) :
-    HasPolychromColouring K (-S) := by
-  obtain ⟨χ, hχ⟩ := h
-  exact ⟨fun g ↦ χ (-g), hχ.neg⟩
+    HasPolychromColouring K (-S) :=
+  h.elim fun χ hχ ↦ ⟨fun g ↦ χ (-g), hχ.neg⟩
 
 @[simp] lemma hasPolychromColouring_neg [DecidableEq G] :
     HasPolychromColouring K (-S) ↔ HasPolychromColouring K S :=
@@ -204,8 +192,7 @@ lemma HasPolychromColouring.of_image {H : Type*} [DecidableEq H] [AddCommGroup H
     (h : HasPolychromColouring K (S.image φ)) :
     HasPolychromColouring K S := by
   obtain ⟨χ', hχ'⟩ := h
-  let χ (g : G) : K := χ' (φ g)
-  suffices IsPolychrom S χ from ⟨_, this⟩
+  suffices IsPolychrom S (χ' ∘ φ) from ⟨_, this⟩
   intro g k
   obtain ⟨i, hi, hi'⟩ := hχ' (φ g) k
   aesop
