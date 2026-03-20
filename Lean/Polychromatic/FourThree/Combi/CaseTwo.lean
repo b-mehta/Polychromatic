@@ -70,6 +70,9 @@ private lemma color_covers_even (d e : ℕ) [NeZero d] [NeZero e] (hd_ge2 : d �
     k = cycle_coloring d e (i + 1, j₂ + 1) := by
   grind [cycle_coloring, Fin.ext_iff, zmod_val_add_one]
 
+private lemma d₁_dvd_m : d₁ ∣ m := Nat.gcd_dvd_right _ _
+private lemma m_eq_d₁_mul_e₁ : m = d₁ * e₁ := (Nat.mul_div_cancel' (d₁_dvd_m (b := b))).symm
+
 /-! ### Orbit coloring framework -/
 
 section OrbitFramework
@@ -98,19 +101,19 @@ private lemma b_zero_mod_d1
   rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
   exact Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m)
 
-private lemma ba_coprime_d1 (hd1_dvd : d₁ ∣ m)
+private lemma ba_coprime_d1
     (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1) :
     Nat.Coprime (b - a).natAbs d₁ :=
   Nat.dvd_one.mp (h_gcd_coprime ▸ Nat.dvd_gcd (Nat.gcd_dvd_right _ _)
-      (Nat.dvd_gcd (Nat.gcd_dvd_left _ _) (dvd_trans (Nat.gcd_dvd_right _ _) hd1_dvd)))
+      (Nat.dvd_gcd (Nat.gcd_dvd_left _ _) (dvd_trans (Nat.gcd_dvd_right _ _) d₁_dvd_m)))
 
 private lemma orbitMap_i_eq [NeZero d₁]
-    (hd1_dvd : d₁ ∣ m) (hb_zero : (b : ZMod d₁) = 0)
+    (hb_zero : (b : ZMod d₁) = 0)
     (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)) {i₁ i₂ : ZMod d₁} {j₁ j₂ : ZMod e₁}
     (heq : orbitMap m a b (i₁, j₁) = orbitMap m a b (i₂, j₂)) :
     i₁ = i₂ := by
   simp only [orbitMap] at heq
-  have := congr_arg (ZMod.castHom hd1_dvd (ZMod d₁)) heq
+  have := congr_arg (ZMod.castHom d₁_dvd_m (ZMod d₁)) heq
   simp only [map_add, map_mul, map_natCast, map_intCast] at this
   simp only [hb_zero, mul_zero, add_zero, ZMod.natCast_val, ZMod.cast_id] at this
   exact hba_unit.mul_right_cancel this
@@ -134,11 +137,10 @@ private lemma orbitMap_injective [NeZero m]
     (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
     (hord : addOrderOf (b : ZMod m) = e₁) :
     Function.Injective (orbitMap m a b : ZMod d₁ × ZMod e₁ → ZMod m) := by
-  have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
   haveI : NeZero d₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, zero_mul]) (NeZero.ne m)⟩
   haveI : NeZero e₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, mul_zero]) (NeZero.ne m)⟩
   intro ⟨i₁, j₁⟩ ⟨i₂, j₂⟩ heq
-  have hi := orbitMap_i_eq hd1_dvd hb_zero hba_unit heq
+  have hi := orbitMap_i_eq hb_zero hba_unit heq
   subst hi
   simp only [orbitMap] at heq
   have hj_smul : (j₁.val : ℕ) • (b : ZMod m) = (j₂.val : ℕ) • (b : ZMod m) := by grind
@@ -183,9 +185,9 @@ private lemma orbitMap_shift_ba [NeZero d₁]
 
 /-- The cycle index α(x) = castHom(x) * u⁻¹ satisfies α(φ(i,j)) = i. -/
 private lemma orbitMap_cycle_index [NeZero d₁]
-    (hd1_dvd : d₁ ∣ m) (hb_zero : (b : ZMod d₁) = 0)
+    (hb_zero : (b : ZMod d₁) = 0)
     (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁)) (i : ZMod d₁) (j : ZMod e₁) :
-    ZMod.castHom hd1_dvd (ZMod d₁) (orbitMap m a b (i, j)) * u⁻¹ = i := by
+    ZMod.castHom d₁_dvd_m (ZMod d₁) (orbitMap m a b (i, j)) * u⁻¹ = i := by
   simp only [orbitMap]
   rw [map_add, map_mul, map_mul, map_natCast, map_intCast,
     map_natCast, map_intCast, hb_zero, mul_zero, add_zero, mul_assoc, ← hu, u.mul_inv, mul_one]
@@ -193,9 +195,9 @@ private lemma orbitMap_cycle_index [NeZero d₁]
 
 /-- The cycle index α shifts by 1 when (b-a) is added. -/
 private lemma cycle_index_shift_ba [NeZero d₁]
-    (hd1_dvd : d₁ ∣ m) (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁)) (x : ZMod m) :
-    ZMod.castHom hd1_dvd (ZMod d₁) (x + ↑(b - a)) * u⁻¹ =
-    ZMod.castHom hd1_dvd (ZMod d₁) x * u⁻¹ + 1 := by
+    (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁)) (x : ZMod m) :
+    ZMod.castHom d₁_dvd_m (ZMod d₁) (x + ↑(b - a)) * u⁻¹ =
+    ZMod.castHom d₁_dvd_m (ZMod d₁) x * u⁻¹ + 1 := by
   simp only [map_add, map_intCast, add_mul]
   rw [← hu]; ring_nf; rw [u.inv_mul]; ring
 
@@ -231,16 +233,15 @@ private lemma orbitEquiv_cycle_shift [NeZero m] {hm_eq : m = d₁ * e₁}
     {hord : addOrderOf (b : ZMod m) = e₁} (x : ZMod m) :
     ((orbitEquiv hm_eq hb_zero hba_unit hord).symm (x + ↑(b - a))).1 =
     ((orbitEquiv hm_eq hb_zero hba_unit hord).symm x).1 + 1 := by
-  have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
   haveI : NeZero d₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, zero_mul]) (NeZero.ne m)⟩
   let u_ba := hba_unit.choose
   have hu_ba : ↑u_ba = ((b - a : ℤ) : ZMod d₁) := hba_unit.choose_spec
-  let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom hd1_dvd (ZMod d₁) x * u_ba⁻¹
+  let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom d₁_dvd_m (ZMod d₁) x * u_ba⁻¹
   have hΦ_cycle := equiv_symm_fst_eq (orbitEquiv hm_eq hb_zero hba_unit hord) α
-    (orbitMap_cycle_index hd1_dvd hb_zero u_ba hu_ba)
+    (orbitMap_cycle_index hb_zero u_ba hu_ba)
   rw [hΦ_cycle (x + ↑(b - a))]
   dsimp only [α]
-  rw [cycle_index_shift_ba hd1_dvd u_ba hu_ba]
+  rw [cycle_index_shift_ba u_ba hu_ba]
   congr 1
   exact (hΦ_cycle x).symm
 
@@ -304,21 +305,20 @@ lemma case_two_e1_even (hm : m ≥ 289)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
     (he1_even : Even (m / Nat.gcd b.natAbs m)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
-  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
+  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   have he₁_ge2 : e₁ ≥ 2 := by
-    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) (by grind)
+    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) d₁_dvd_m) (by grind)
     grind
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
   have hb_zero : (Int.cast b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
-  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
+  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
   have hd₁_ge2 : d₁ ≥ 2 := by grind
   have he₁_ge2 : e₁ ≥ 2 := by
-    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) hd₁_dvd) (by grind)
+    have : 0 < e₁ := Nat.div_pos (Nat.le_of_dvd (by grind) d₁_dvd_m) (by grind)
     grind
   exact orbit_coloring_polychrom Φ orbitEquiv_shift_b orbitEquiv_cycle_shift
     (cycle_coloring d₁ e₁)
@@ -363,8 +363,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
     (hd1_even : Even (Nat.gcd b.natAbs m)) (he1_odd : Odd (m / Nat.gcd b.natAbs m)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
-  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
+  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   -- e₁ ≥ 3: e₁ is odd and e₁ = 1 would give d₁ = m, contradicting gcd(d₁,d₂) = 1
   have he₁_ge3 : e₁ ≥ 3 := by
     by_contra! h
@@ -380,7 +379,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   haveI : NeZero e₁ := ⟨by grind⟩
   have hb_zero : (Int.cast b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
   have hba_unit : IsUnit (Int.cast (b - a) : ZMod d₁) :=
-    isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
+    isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
   -- d₂ properties for the compatibility argument
@@ -595,14 +594,14 @@ private lemma basePattern_rotation_covers {e j : ℕ} (he : Odd e) (hge : e ≥ 
   grind
 
 private lemma case2d_wrap_shift [NeZero m] [NeZero d₁] [NeZero e₁]
-    (hd1_dvd : d₁ ∣ m) (hb_zero : (b : ZMod d₁) = 0)
+    (hb_zero : (b : ZMod d₁) = 0)
     (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)) (hord : addOrderOf (b : ZMod m) = e₁)
     (hm_eq : m = d₁ * e₁) :
     ∃ k₀ : ZMod e₁, (d₁ : ℕ) • ((b - a : ℤ) : ZMod m) = (k₀.val : ℕ) • (b : ZMod m) := by
   set Φ := orbitEquiv hm_eq hb_zero hba_unit hord
   set q := Φ.symm ((d₁ : ℕ) • ((b - a : ℤ) : ZMod m))
   have hq_i : q.1 = 0 := by
-    set f := ZMod.castHom hd1_dvd (ZMod d₁)
+    set f := ZMod.castHom d₁_dvd_m (ZMod d₁)
     have hfφ : f (Φ q) = q.1 * ((b - a : ℤ) : ZMod d₁) := by
       change f (orbitMap m a b q) = _
       simp only [orbitMap, map_add, map_mul, map_natCast, map_intCast, hb_zero, mul_zero, add_zero]
@@ -787,17 +786,16 @@ private lemma case2d_coloring_works (hm : m ≥ 289)
     (hd1_odd : Odd (Nat.gcd b.natAbs m)) (he1_odd : Odd (m / Nat.gcd b.natAbs m))
     (he1_ge : m / Nat.gcd b.natAbs m ≥ 19) (h3 : ¬ (3 ∣ Nat.gcd b.natAbs m)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
-  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
+  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
   have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
-  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
+  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
-  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd₁_dvd hb_zero hba_unit hord hm_eq
+  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hb_zero hba_unit hord hm_eq
   have hd1_ge5 : d₁ ≥ 5 := by grind
   obtain ⟨vals, hvals_bound, hvals_sum⟩ := case2d_rotation_sum_exists hd1_ge5 he1_ge he1_odd k₀.val
   let rot : ZMod d₁ → ℕ := fun i =>
@@ -857,17 +855,16 @@ lemma case_two_odd_small (hm : m ≥ 289)
     (hd1_odd : Odd (Nat.gcd b.natAbs m)) (_he1_odd : Odd (m / Nat.gcd b.natAbs m))
     (_he1_le : m / Nat.gcd b.natAbs m ≤ 17) (he1_div3 : 3 ∣ m / Nat.gcd b.natAbs m) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
-  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
+  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
   have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
-  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
+  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
-  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd₁_dvd hb_zero hba_unit hord hm_eq
+  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hb_zero hba_unit hord hm_eq
   have hd1_ge3 : d₁ ≥ 3 := by grind
   let f : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
     ⟨(j.val + (case2c_pattern d₁ k₀.val i.val).val) % 3, Nat.mod_lt _ (by grind)⟩
