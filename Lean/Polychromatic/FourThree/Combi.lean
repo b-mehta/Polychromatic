@@ -141,6 +141,6 @@ theorem normal_bit :
     grind
   · have : 0 < d₁ := Nat.gcd_pos_of_pos_right _ hm_pos
     have : 0 < d₂ := Nat.gcd_pos_of_pos_right _ hm_pos
-    exact main_case_two m a b (by grind) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by grind)
+    exact main_case_two (by grind) (gcd_coprime_of_gcd_abc hm_eq hgcd) (by grind)
 
 end Assembly
