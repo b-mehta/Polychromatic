@@ -41,14 +41,14 @@ private lemma intCast_2ba_eq :
 private lemma ZMod.val_add_one {n : ℕ} [NeZero n] (x : ZMod n) : (x + 1).val = (x.val + 1) % n := by
   rw [ZMod.val_add, ZMod.val_one_eq_one_mod, Nat.add_mod_mod]
 
-private lemma zmod_val_add_one (d : ℕ) [NeZero d] (_hd : d ≥ 2) (i : ZMod d) :
+private lemma zmod_val_add_one (d : ℕ) [NeZero d] (i : ZMod d) :
     (i + 1).val = if i.val + 1 < d then i.val + 1 else 0 := by
   rw [ZMod.val_add_one]; split_ifs with h
   · exact Nat.mod_eq_of_lt h
   · grind [Nat.mod_self]
 
-private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e) (he2 : e ≥ 2)
-    (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by grind [zmod_val_add_one e he2 j]
+private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e)
+    (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by grind [zmod_val_add_one e j]
 
 /--
 A coloring for Case 2a ($e_1$ even).
@@ -322,7 +322,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
     grind
   exact orbit_coloring_polychrom Φ orbitEquiv_shift_b orbitEquiv_cycle_shift
     (cycle_coloring d₁ e₁)
-    (fun n k => color_covers_even d₁ e₁ hd₁_ge2 (parity_flip_even e₁ he1_even he₁_ge2) _ _ _ k)
+    (fun n k => color_covers_even d₁ e₁ hd₁_ge2 (parity_flip_even e₁ he1_even) _ _ _ k)
 
 /-! ### Subcase (2b) construction: d₁ even, e₁ odd
 
@@ -351,7 +351,8 @@ private lemma case2b_coverage_gen (d e : ℕ) [NeZero d] [NeZero e]
     k = case2b_coloring d e (i, j₁ + 1) ∨
     k = case2b_coloring d e (i + 1, j₂) ∨
     k = case2b_coloring d e (i + 1, j₂ + 1) := by
-  grind [case2b_coloring, Fin.ext_iff, zmod_val_add_one, parity_flip_even]
+  grind [case2b_coloring, zmod_val_add_one e j₁, zmod_val_add_one e j₂,
+    parity_flip_even d hd_even i]
 
 /-! ### Subcase (2b) main lemma -/
 
