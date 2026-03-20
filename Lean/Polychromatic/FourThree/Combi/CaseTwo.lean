@@ -645,6 +645,27 @@ private lemma case2d_shift_ba_wrap [NeZero e₁] [NeZero d₁]
   conv_lhs => rw [(Nat.div_add_mod n e₁).symm]
   rw [add_nsmul, mul_nsmul, he1_b_zero, smul_zero, zero_add, nsmul_eq_mul]
 
+/-- In the wrap case, the second coordinate shifts by k₀. -/
+private lemma orbitEquiv_snd_shift_ba_wrap [NeZero m] [NeZero d₁] [NeZero e₁]
+    {hm_eq : m = d₁ * e₁} {hb_zero : (b : ZMod d₁) = 0}
+    {hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)}
+    {hord : addOrderOf (b : ZMod m) = e₁}
+    (he1_b_zero : e₁ • (b : ZMod m) = 0) (k₀ : ZMod e₁)
+    (hk₀ : (d₁ : ℕ) • ((b - a : ℤ) : ZMod m) = (k₀.val : ℕ) • (b : ZMod m))
+    (n : ZMod m) (hi : (orbitEquiv hm_eq hb_zero hba_unit hord).symm n |>.1.val = d₁ - 1) :
+    ((orbitEquiv hm_eq hb_zero hba_unit hord).symm (n + ↑(b - a))).2 =
+    ((orbitEquiv hm_eq hb_zero hba_unit hord).symm n).2 + k₀ := by
+  set Φ := orbitEquiv hm_eq hb_zero hba_unit hord
+  set i := (Φ.symm n).1; set j := (Φ.symm n).2
+  have hshift := case2d_shift_ba_wrap he1_b_zero k₀ hk₀ i hi
+  have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
+  have hΦ : Φ ((0 : ZMod d₁), j + k₀) = n + ↑(b - a) := by
+    simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
+    rw [← hn]; exact (hshift j).symm
+  have h := congrArg Prod.snd (show Φ.symm (n + ↑(b - a)) = (0, j + k₀) by
+    rw [← hΦ, Φ.symm_apply_apply])
+  exact h
+
 /-- Given d₁ ≥ 3 values each in [u, e₁-u] can sum to any target mod e₁,
     since the range has width ≥ e₁/3 and d₁ ≥ 3. -/
 private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
@@ -816,14 +837,8 @@ private lemma case2d_coloring_works (hm : m ≥ 289)
           zmod_filter_sum_succ vals i]
       exact pos_shift_succ' j.val _ (vals i) e₁
     · have hi_eq : i.val = d₁ - 1 := by grind [ZMod.val_lt]
-      have hj'_eq : j' = j + k₀ := by
-        have hshift := case2d_shift_ba_wrap he1_b_zero k₀ hk₀ i hi_eq
-        have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
-        have hΦ : Φ ((0 : ZMod d₁), j + k₀) = n + ↑(b - a) := by
-          simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
-          rw [← hn]; exact (hshift j).symm
-        change (Φ.symm (n + ↑(b - a))).2 = j + k₀
-        rw [← hΦ, Φ.symm_apply_apply]
+      have hj'_eq : j' = j + k₀ :=
+        orbitEquiv_snd_shift_ba_wrap he1_b_zero k₀ hk₀ n hi_eq
       rw [hj'_eq]
       have hi1_zero : (i + 1 : ZMod d₁) = 0 := by
         apply ZMod.val_injective; rw [ZMod.val_add_one, hi_eq, ZMod.val_zero]
@@ -885,14 +900,8 @@ lemma case_two_odd_small (hm : m ≥ 289)
         exact Fin.ext (by
           simp [f, ZMod.val_add_one, case2c_mod3 he1_div3, Nat.mod_eq_of_lt hi])
     · have hi_eq : i.val = d₁ - 1 := by grind [ZMod.val_lt]
-      have hj'_eq : j' = j + k₀ := by
-        have hshift := case2d_shift_ba_wrap he1_b_zero k₀ hk₀ i hi_eq j
-        have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
-        have : Φ ((0 : ZMod d₁), j + k₀) = n + ↑(b - a) := by
-          simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
-          rw [← hn]; exact hshift.symm
-        change (Φ.symm (n + ↑(b - a))).2 = j + k₀
-        rw [← this, Φ.symm_apply_apply]
+      have hj'_eq : j' = j + k₀ :=
+        orbitEquiv_snd_shift_ba_wrap he1_b_zero k₀ hk₀ n hi_eq
       rw [hj'_eq]
       set p₀ := case2c_pattern d₁ k₀.val 0
       have hp_eq : p = case2c_pattern d₁ k₀.val (d₁ - 1) := by grind
