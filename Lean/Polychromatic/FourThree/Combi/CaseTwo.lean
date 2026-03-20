@@ -852,8 +852,8 @@ private lemma case2c_mod3 (h3e : 3 ∣ e₁) (x y : ℕ) : (x % e₁ + y) % 3 = 
 lemma case_two_odd_small (hm : m ≥ 289)
     (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (hd1_odd : Odd (Nat.gcd b.natAbs m)) (_he1_odd : Odd (m / Nat.gcd b.natAbs m))
-    (_he1_le : m / Nat.gcd b.natAbs m ≤ 17) (he1_div3 : 3 ∣ m / Nat.gcd b.natAbs m) :
+    (hd1_odd : Odd (Nat.gcd b.natAbs m))
+    (he1_div3 : 3 ∣ m / Nat.gcd b.natAbs m) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   haveI : NeZero m := ⟨by grind⟩
@@ -984,7 +984,7 @@ lemma main_case_two (hm : m ≥ 289)
           have h3e : 3 ∣ e :=
             ((Nat.Prime.coprime_iff_not_dvd (by decide)).mpr h3_nd₁).dvd_of_dvd_mul_left
               (Nat.mul_div_cancel' hd_dvd ▸ h3m)
-          exact case_two_odd_small hm hcop hmin hd₁_odd he₁_odd he_le h3e
+          exact case_two_odd_small hm hcop hmin hd₁_odd h3e
         · -- 3 ∤ d and 3 ∤ d₂ and e ≤ 17: swap and show new e ≥ 19.
           -- After swap, new e₁' = m/d₂. If e₁' ≤ 17 too, contradiction.
           rw [← zmod_set_swap m a' b']
