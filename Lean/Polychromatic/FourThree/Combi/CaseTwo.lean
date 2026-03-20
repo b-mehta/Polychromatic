@@ -241,6 +241,25 @@ private lemma orbitEquiv_cycle_shift [NeZero m] {hm_eq : m = d₁ * e₁}
   congr 1
   exact (hΦ_cycle x).symm
 
+/-- In the non-wrap case, the second coordinate is preserved by the (b-a) shift. -/
+private lemma orbitEquiv_snd_shift_ba [NeZero m] [NeZero d₁]
+    {hm_eq : m = d₁ * e₁} {hb_zero : (b : ZMod d₁) = 0}
+    {hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)}
+    {hord : addOrderOf (b : ZMod m) = e₁}
+    (n : ZMod m) (hi : (orbitEquiv hm_eq hb_zero hba_unit hord).symm n |>.1.val + 1 < d₁) :
+    ((orbitEquiv hm_eq hb_zero hba_unit hord).symm (n + ↑(b - a))).2 =
+    ((orbitEquiv hm_eq hb_zero hba_unit hord).symm n).2 := by
+  set Φ := orbitEquiv hm_eq hb_zero hba_unit hord
+  set i := (Φ.symm n).1; set j := (Φ.symm n).2
+  have hshift := @orbitMap_shift_ba m a b d₁ e₁ ‹NeZero d₁› i j hi
+  have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
+  have hΦ : Φ (i + 1, j) = n + ↑(b - a) := by
+    simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
+    rw [← hn]; exact hshift.symm
+  have h := congrArg Prod.snd (show Φ.symm (n + ↑(b - a)) = (i + 1, j) by
+    rw [← hΦ, Φ.symm_apply_apply])
+  exact h
+
 /-- **Key infrastructure for Case 2.** Polychromaticity from an orbit coloring:
     given an orbit equivalence Φ with shift properties and a coloring f,
     if f covers all colors at any translate, then f ∘ Φ.symm is polychromatic.
@@ -787,15 +806,7 @@ private lemma case2d_coloring_works (hm : m ≥ 289)
           _ = ((j' + 1 : ZMod e₁).val + rot (i + 1)) % e₁ :=
               (pos_shift_one j' (rot (i + 1))).symm
     by_cases hi : i.val + 1 < d₁
-    · have hj'_eq : j' = j := by
-        have hshift := @orbitMap_shift_ba m a b d₁ e₁ ‹NeZero d₁› i j hi
-        have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
-        have hΦ : Φ (i + 1, j) = n + ↑(b - a) := by
-          simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
-          rw [← hn]; exact hshift.symm
-        have h := congrArg Prod.snd (show Φ.symm (n + ↑(b - a)) = (i + 1, j) by
-          rw [← hΦ, Φ.symm_apply_apply])
-        exact h
+    · have hj'_eq : j' = j := orbitEquiv_snd_shift_ba n hi
       rw [hj'_eq]
       change (j.val + ((Finset.univ.filter
         (fun k : ZMod d₁ => k.val < (i + 1).val)).sum vals) % e₁) % e₁ =
@@ -855,14 +866,7 @@ lemma case_two_odd_small (hm : m ≥ 289)
     set j' := (Φ.symm (n + ↑(b - a))).2
     set p := case2c_pattern d₁ k₀.val i.val
     by_cases hi : i.val + 1 < d₁
-    · have hj'_eq : j' = j := by
-        have hshift := @orbitMap_shift_ba m a b d₁ e₁ ‹NeZero d₁› i j hi
-        have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
-        have : Φ (i + 1, j) = n + ↑(b - a) := by
-          simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢; rw [← hn]; exact hshift.symm
-        have h := congrArg Prod.snd (show Φ.symm (n + ↑(b - a)) = (i + 1, j) by
-          rw [← this, Φ.symm_apply_apply])
-        exact h
+    · have hj'_eq : j' = j := orbitEquiv_snd_shift_ba n hi
       rw [hj'_eq]
       set p' := case2c_pattern d₁ k₀.val (i + 1).val
       have hi'_eq : (i + 1).val = i.val + 1 := by
