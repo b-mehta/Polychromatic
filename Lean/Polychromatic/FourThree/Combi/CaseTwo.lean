@@ -761,76 +761,66 @@ private lemma case2d_coloring_works (hm : m ≥ 289)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
   obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq
-  -- d₁ is odd, > 1, and ¬(3∣d₁), so d₁ ≥ 5
   have hd1_ge5 : d₁ ≥ 5 := by grind
   obtain ⟨vals, hvals_bound, hvals_sum⟩ := case2d_rotation_sum_exists hd1_ge5 he1_ge he1_odd k₀.val
-  -- Cumulative rotation: rot(i) = (Σ_{j<i} vals(j)) % e₁
   let rot : ZMod d₁ → ℕ := fun i =>
     ((Finset.univ.filter (fun j : ZMod d₁ => j.val < i.val)).sum vals) % e₁
-  -- Coloring: χ(x) = basePattern(e₁, (j-coord + rot(i-coord)) % e₁)
-  let χ : ZMod m → Fin 3 := fun x =>
-    let coord := Φ.symm x
-    basePattern e₁ ((coord.2.val + rot coord.1) % e₁)
-  refine ⟨χ, fun n k => ?_⟩
-  -- χ at orbit coordinates simplifies via Equiv.symm_apply_apply
-  have hχ_eq : ∀ (i' : ZMod d₁) (j' : ZMod e₁),
-      χ (Φ (i', j')) = basePattern e₁ ((j'.val + rot i') % e₁) := by
-    intro i' j'; simp only [χ, Equiv.symm_apply_apply]
-  -- Coordinates of n
-  set ij := Φ.symm n
-  have hn : Φ ij = n := Equiv.apply_symm_apply Φ n
-  set i := ij.1; set j := ij.2
-  have hij : ij = (i, j) := (Prod.eta ij).symm
-  -- Base position p
-  set p := (j.val + rot i) % e₁ with hp_def
-  have hp_lt : p < e₁ := Nat.mod_lt _ (NeZero.pos e₁)
-  -- Shift lemmas
-  have hΦ_b : Φ (i, j + 1) = n + ((b : ℤ) : ZMod m) := by
-    rw [← hn, hij]; exact (orbitMap_shift_b he1_b_zero (i, j)).symm
-  -- Apply rotation covers
-  have covers := basePattern_rotation_covers he1_odd he1_ge
-    (hvals_bound i).1 (hvals_bound i).2 hp_lt k
-  simp only [Finset.mem_insert, Finset.mem_singleton] at covers
-  -- (b-a) shift: obtain shifted coordinates and position equality
-  suffices ∃ (i_new : ZMod d₁) (j_new : ZMod e₁),
-      Φ (i_new, j_new) = n + ((b - a : ℤ) : ZMod m) ∧
-      (j_new.val + rot i_new) % e₁ = (p + vals i) % e₁ by
-    obtain ⟨i_new, j_new, hΦ_ba, hpos⟩ := this
-    have hΦ_2ba : Φ (i_new, j_new + 1) = n + ((2 * b - a : ℤ) : ZMod m) := by
-      rw [intCast_2ba_eq, ← add_assoc, ← hΦ_ba]
-      exact (orbitMap_shift_b he1_b_zero (i_new, j_new)).symm
-    rcases covers with h | h | h | h
-    · exact ⟨0, zero_mem_zmod_set m a b, by rw [add_zero, ← hn, hij, hχ_eq, h]⟩
-    · exact ⟨((b : ℤ) : ZMod m), intCast_b_mem_zmod_set m a b,
-        by rw [← hΦ_b, hχ_eq, h]; congr 1; exact pos_shift_one j (rot i)⟩
-    · exact ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b,
-        by rw [← hΦ_ba, hχ_eq, h]; congr 1⟩
-    · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
-      rw [← hΦ_2ba, hχ_eq, h]; congr 1
-      calc ((j_new + 1 : ZMod e₁).val + rot i_new) % e₁
-          = ((j_new.val + rot i_new) % e₁ + 1) % e₁ := pos_shift_one j_new (rot i_new)
-        _ = ((p + vals i) % e₁ + 1) % e₁ := by rw [hpos]
-        _ = (p + vals i + 1) % e₁ := Nat.mod_add_mod (p + vals i) e₁ 1
-  by_cases hi : i.val + 1 < d₁
-  · -- No-wrap case
-    refine ⟨i + 1, j, ?_, ?_⟩
-    · rw [← hn, hij]; exact (orbitMap_shift_ba i j hi).symm
-    · change (j.val + ((Finset.univ.filter
+  let f : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
+    basePattern e₁ ((j.val + rot i) % e₁)
+  exact orbit_coloring_polychrom Φ orbitEquiv_shift_b orbitEquiv_cycle_shift f (fun n k => by
+    set i := (Φ.symm n).1; set j := (Φ.symm n).2
+    set j' := (Φ.symm (n + ↑(b - a))).2
+    set p := (j.val + rot i) % e₁ with hp_def
+    have hp_lt : p < e₁ := Nat.mod_lt _ (NeZero.pos e₁)
+    have covers := basePattern_rotation_covers he1_odd he1_ge
+      (hvals_bound i).1 (hvals_bound i).2 hp_lt k
+    simp only [Finset.mem_insert, Finset.mem_singleton] at covers
+    suffices hpos : (j'.val + rot (i + 1)) % e₁ = (p + vals i) % e₁ by
+      rcases covers with h | h | h | h
+      · left; exact h
+      · right; left; rw [h]; simp only [f]; congr 1; exact (pos_shift_one j (rot i)).symm
+      · right; right; left; rw [h]; simp only [f]; congr 1; exact hpos.symm
+      · right; right; right; rw [h]; simp only [f]; congr 1
+        calc (p + vals i + 1) % e₁
+            = ((p + vals i) % e₁ + 1) % e₁ := (Nat.mod_add_mod (p + vals i) e₁ 1).symm
+          _ = ((j'.val + rot (i + 1)) % e₁ + 1) % e₁ := by rw [hpos]
+          _ = ((j' + 1 : ZMod e₁).val + rot (i + 1)) % e₁ :=
+              (pos_shift_one j' (rot (i + 1))).symm
+    by_cases hi : i.val + 1 < d₁
+    · have hj'_eq : j' = j := by
+        have hshift := @orbitMap_shift_ba m a b d₁ e₁ ‹NeZero d₁› i j hi
+        have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
+        have hΦ : Φ (i + 1, j) = n + ↑(b - a) := by
+          simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
+          rw [← hn]; exact hshift.symm
+        have h := congrArg Prod.snd (show Φ.symm (n + ↑(b - a)) = (i + 1, j) by
+          rw [← hΦ, Φ.symm_apply_apply])
+        exact h
+      rw [hj'_eq]
+      change (j.val + ((Finset.univ.filter
         (fun k : ZMod d₁ => k.val < (i + 1).val)).sum vals) % e₁) % e₁ =
         ((j.val + ((Finset.univ.filter
         (fun k : ZMod d₁ => k.val < i.val)).sum vals) % e₁) % e₁ + vals i) % e₁
-      have : (i + 1).val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
-      rw [this, zmod_filter_sum_succ vals i]
+      rw [show (i + 1).val = i.val + 1 from by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi,
+          zmod_filter_sum_succ vals i]
       exact pos_shift_succ' j.val _ (vals i) e₁
-  · -- Wrap case: i = d₁ - 1
-    have hi_eq : i.val = d₁ - 1 := by grind [ZMod.val_lt]
-    refine ⟨0, j + k₀, ?_, ?_⟩
-    · rw [← hn, hij]
-      exact (case2d_shift_ba_wrap he1_b_zero k₀ hk₀ i hi_eq j).symm
-    · have hrot0 : rot (0 : ZMod d₁) = 0 := by simp [rot, ZMod.val_zero]
-      rw [hrot0, Nat.add_zero, ZMod.val_add, Nat.mod_mod_of_dvd _ (dvd_refl e₁)]
+    · have hi_eq : i.val = d₁ - 1 := by grind [ZMod.val_lt]
+      have hj'_eq : j' = j + k₀ := by
+        have hshift := case2d_shift_ba_wrap he1_b_zero k₀ hk₀ i hi_eq
+        have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
+        have hΦ : Φ ((0 : ZMod d₁), j + k₀) = n + ↑(b - a) := by
+          simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
+          rw [← hn]; exact (hshift j).symm
+        change (Φ.symm (n + ↑(b - a))).2 = j + k₀
+        rw [← hΦ, Φ.symm_apply_apply]
+      rw [hj'_eq]
+      have hi1_zero : (i + 1 : ZMod d₁) = 0 := by
+        apply ZMod.val_injective; rw [ZMod.val_add_one, hi_eq, ZMod.val_zero]
+        grind [Nat.mod_self]
+      have hrot0 : rot (0 : ZMod d₁) = 0 := by simp [rot, ZMod.val_zero]
+      rw [hi1_zero, hrot0, Nat.add_zero, ZMod.val_add, Nat.mod_mod_of_dvd _ (dvd_refl e₁)]
       exact pos_shift_wrap' j.val _ (vals i) k₀.val e₁
-        (by rw [zmod_filter_sum_last vals i hi_eq, hvals_sum])
+        (by rw [zmod_filter_sum_last vals i hi_eq, hvals_sum]))
 
 -- Mod 3 arithmetic: (a % e₁ + b) % 3 = (a + b) % 3 when 3 ∣ e₁
 private lemma case2c_mod3 (h3e : 3 ∣ e₁) (x y : ℕ) : (x % e₁ + y) % 3 = (x + y) % 3 := by
