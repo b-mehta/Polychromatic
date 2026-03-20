@@ -26,6 +26,9 @@ section Case2_MultipleCycles
 
 variable {m : ℕ} {a b : ℤ}
 
+local notation "d₁" => Nat.gcd b.natAbs m
+local notation "e₁" => m / d₁
+
 /-! ### Arithmetic helpers for cycle decomposition
 
 These lemmas set up the orbit map infrastructure. They are not important individually
@@ -52,25 +55,24 @@ A coloring for Case 2a ($e_1$ even).
 Each cycle $i$ uses two colors that alternate based on position parity.
 Cycles are assigned "missing colors" such that no two adjacent cycles miss the same color.
 -/
-private def cycle_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
-  if i.val = d₁ - 1 ∧ ¬Even d₁ then ⟨1 + j.val % 2, by grind⟩
+private def cycle_coloring (d e : ℕ) : ZMod d × ZMod e → Fin 3 := fun ⟨i, j⟩ =>
+  if i.val = d - 1 ∧ ¬Even d then ⟨1 + j.val % 2, by grind⟩
   else if i.val % 2 = 0 then ⟨j.val % 2, by grind⟩
   else ⟨2 * (j.val % 2), by grind⟩
 
 -- Coverage: adjacent cycles cover all 3 colors.
-private lemma color_covers_even (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁] (hd₁_ge2 : d₁ ≥ 2)
-    (hparity : ∀ j : ZMod e₁, j.val % 2 ≠ (j + 1).val % 2)
-    (i : ZMod d₁) (j₁ j₂ : ZMod e₁) (k : Fin 3) :
-    k = cycle_coloring d₁ e₁ (i, j₁) ∨
-    k = cycle_coloring d₁ e₁ (i, j₁ + 1) ∨
-    k = cycle_coloring d₁ e₁ (i + 1, j₂) ∨
-    k = cycle_coloring d₁ e₁ (i + 1, j₂ + 1) := by
+private lemma color_covers_even (d e : ℕ) [NeZero d] [NeZero e] (hd_ge2 : d ≥ 2)
+    (hparity : ∀ j : ZMod e, j.val % 2 ≠ (j + 1).val % 2)
+    (i : ZMod d) (j₁ j₂ : ZMod e) (k : Fin 3) :
+    k = cycle_coloring d e (i, j₁) ∨
+    k = cycle_coloring d e (i, j₁ + 1) ∨
+    k = cycle_coloring d e (i + 1, j₂) ∨
+    k = cycle_coloring d e (i + 1, j₂ + 1) := by
   grind [cycle_coloring, Fin.ext_iff, zmod_val_add_one]
 
 /-! ### Orbit coloring framework -/
 
 section OrbitFramework
-variable {d₁ e₁ : ℕ}
 
 /--
 The orbit map $\phi : \mathbb{Z}_{d_1} \times \mathbb{Z}_{e_1} \to \mathbb{Z}_m$ defined by
@@ -97,7 +99,8 @@ private lemma b_zero_mod_d1
   exact Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m)
 
 private lemma ba_coprime_d1 (hd1_dvd : d₁ ∣ m)
-    (h_gcd_coprime : d₁.gcd (Nat.gcd (b - a).natAbs m) = 1) : Nat.Coprime (b - a).natAbs d₁ :=
+    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1) :
+    Nat.Coprime (b - a).natAbs d₁ :=
   Nat.dvd_one.mp (h_gcd_coprime ▸ Nat.dvd_gcd (Nat.gcd_dvd_right _ _)
       (Nat.dvd_gcd (Nat.gcd_dvd_left _ _) (dvd_trans (Nat.gcd_dvd_right _ _) hd1_dvd)))
 
@@ -123,7 +126,7 @@ private lemma orbitMap_j_eq [NeZero e₁]
       add_left_cancel (a := j₁.val • (b : ZMod m))
         (by rw [add_zero, ← add_nsmul, Nat.add_sub_cancel' h]; exact hj_smul.symm)
     have := Nat.eq_zero_of_dvd_of_lt (hord ▸ addOrderOf_dvd_of_nsmul_eq_zero h3)
-      (by grind [j₁.val_lt (n := e₁), j₂.val_lt (n := e₁)])
+      (by grind [ZMod.val_lt j₁, ZMod.val_lt j₂])
     exact ZMod.val_injective _ (by grind)
 
 private lemma orbitMap_injective [NeZero m]
@@ -131,9 +134,9 @@ private lemma orbitMap_injective [NeZero m]
     (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
     (hord : addOrderOf (b : ZMod m) = e₁) :
     Function.Injective (orbitMap m a b : ZMod d₁ × ZMod e₁ → ZMod m) := by
-  have hd1_dvd : d₁ ∣ m := hm_eq ▸ dvd_mul_right d₁ e₁
-  haveI : NeZero d₁ := ⟨by rintro rfl; exact absurd (by simp [hm_eq]) (NeZero.ne m)⟩
-  haveI : NeZero e₁ := ⟨by rintro rfl; exact absurd (by simp [hm_eq]) (NeZero.ne m)⟩
+  have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
+  haveI : NeZero d₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, zero_mul]) (NeZero.ne m)⟩
+  haveI : NeZero e₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, mul_zero]) (NeZero.ne m)⟩
   intro ⟨i₁, j₁⟩ ⟨i₂, j₂⟩ heq
   have hi := orbitMap_i_eq hd1_dvd hb_zero hba_unit heq
   subst hi
@@ -146,11 +149,11 @@ private lemma orbitMap_bijective [NeZero m]
     (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
     (hord : addOrderOf (b : ZMod m) = e₁) :
     Function.Bijective (orbitMap m a b : ZMod d₁ × ZMod e₁ → ZMod m) := by
-  haveI : NeZero d₁ := ⟨by rintro rfl; exact absurd (by simp [hm_eq]) (NeZero.ne m)⟩
-  haveI : NeZero e₁ := ⟨by rintro rfl; exact absurd (by simp [hm_eq]) (NeZero.ne m)⟩
+  haveI : NeZero d₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, zero_mul]) (NeZero.ne m)⟩
+  haveI : NeZero e₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, mul_zero]) (NeZero.ne m)⟩
   exact (Fintype.bijective_iff_injective_and_card _).mpr
     ⟨orbitMap_injective hm_eq hb_zero hba_unit hord,
-     by simp [Fintype.card_prod, ZMod.card, hm_eq]⟩
+     by simp only [Fintype.card_prod, ZMod.card]; linarith [hm_eq]⟩
 
 private lemma orbitMap_shift_b [NeZero e₁]
     (he1_b_zero : e₁ • (b : ZMod m) = 0) :
@@ -219,7 +222,7 @@ private lemma orbitEquiv_shift_b [NeZero m] {hm_eq : m = d₁ * e₁}
     (orbitEquiv hm_eq hb_zero hba_unit hord).symm (x + ↑b) =
     (((orbitEquiv hm_eq hb_zero hba_unit hord).symm x).1,
      ((orbitEquiv hm_eq hb_zero hba_unit hord).symm x).2 + 1) := by
-  haveI : NeZero e₁ := ⟨by rintro rfl; exact absurd (by simp [hm_eq]) (NeZero.ne m)⟩
+  haveI : NeZero e₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, mul_zero]) (NeZero.ne m)⟩
   exact equiv_symm_shift_b _ (fun i j =>
     (orbitMap_shift_b (hord ▸ addOrderOf_nsmul_eq_zero _) (i, j)).symm) x
 
@@ -228,8 +231,8 @@ private lemma orbitEquiv_cycle_shift [NeZero m] {hm_eq : m = d₁ * e₁}
     {hord : addOrderOf (b : ZMod m) = e₁} (x : ZMod m) :
     ((orbitEquiv hm_eq hb_zero hba_unit hord).symm (x + ↑(b - a))).1 =
     ((orbitEquiv hm_eq hb_zero hba_unit hord).symm x).1 + 1 := by
-  have hd1_dvd : d₁ ∣ m := hm_eq ▸ dvd_mul_right d₁ e₁
-  haveI : NeZero d₁ := ⟨by rintro rfl; exact absurd (by simp [hm_eq]) (NeZero.ne m)⟩
+  have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
+  haveI : NeZero d₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, zero_mul]) (NeZero.ne m)⟩
   let u_ba := hba_unit.choose
   have hu_ba : ↑u_ba = ((b - a : ℤ) : ZMod d₁) := hba_unit.choose_spec
   let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom hd1_dvd (ZMod d₁) x * u_ba⁻¹
@@ -251,7 +254,7 @@ private lemma orbitEquiv_snd_shift_ba [NeZero m] [NeZero d₁]
     ((orbitEquiv hm_eq hb_zero hba_unit hord).symm n).2 := by
   set Φ := orbitEquiv hm_eq hb_zero hba_unit hord
   set i := (Φ.symm n).1; set j := (Φ.symm n).2
-  have hshift := @orbitMap_shift_ba m a b d₁ e₁ ‹NeZero d₁› i j hi
+  have hshift := orbitMap_shift_ba (a := a) i j hi
   have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
   have hΦ : Φ (i + 1, j) = n + ↑(b - a) := by
     simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
@@ -301,8 +304,6 @@ lemma case_two_e1_even (hm : m ≥ 289)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
     (he1_even : Even (m / Nat.gcd b.natAbs m)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  set d₁ := Nat.gcd b.natAbs m with hd₁_def
-  set e₁ := m / d₁ with he₁_def
   have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   have he₁_ge2 : e₁ ≥ 2 := by
@@ -334,22 +335,22 @@ are distinct, guaranteeing every 2×2 block contains all three colors.
 -- The coloring function for Case 2b.
 -- Even cycles: 01010...011 (alternating 0,1, last position overridden to 1)
 -- Odd cycles: 22020...020 (first position 2, then: even→0, odd→2)
-private def case2b_coloring (d₁ e₁ : ℕ) : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
+private def case2b_coloring (d e : ℕ) : ZMod d × ZMod e → Fin 3 := fun ⟨i, j⟩ =>
   if i.val % 2 = 0 -- even cycle
-  then if j.val = e₁ - 1 then 1 else if j.val % 2 = 0 then 0 else 1
+  then if j.val = e - 1 then 1 else if j.val % 2 = 0 then 0 else 1
   else if j.val = 0 then 2 else if j.val % 2 = 0 then 0 else 2 -- odd cycle
 
 -- Coverage — any 2×2 block covers all 3 colors.
 -- The compatibility says degenerate positions can't coincide:
 -- odd-degenerate at j=0 and even-degenerate at j=e₁-2 are incompatible.
-private lemma case2b_coverage_gen (d₁ e₁ : ℕ) [NeZero d₁] [NeZero e₁]
-    (hd₁_even : Even d₁) (he₁_odd : Odd e₁) (he₁ : e₁ ≥ 3) (i : ZMod d₁) (j₁ j₂ : ZMod e₁)
-    (h_compat : j₁.val = 0 → j₂.val ≠ e₁ - 2) (h_compat' : j₂.val = 0 → j₁.val ≠ e₁ - 2)
+private lemma case2b_coverage_gen (d e : ℕ) [NeZero d] [NeZero e]
+    (hd_even : Even d) (he_odd : Odd e) (he_ge3 : e ≥ 3) (i : ZMod d) (j₁ j₂ : ZMod e)
+    (h_compat : j₁.val = 0 → j₂.val ≠ e - 2) (h_compat' : j₂.val = 0 → j₁.val ≠ e - 2)
     (k : Fin 3) :
-    k = case2b_coloring d₁ e₁ (i, j₁) ∨
-    k = case2b_coloring d₁ e₁ (i, j₁ + 1) ∨
-    k = case2b_coloring d₁ e₁ (i + 1, j₂) ∨
-    k = case2b_coloring d₁ e₁ (i + 1, j₂ + 1) := by
+    k = case2b_coloring d e (i, j₁) ∨
+    k = case2b_coloring d e (i, j₁ + 1) ∨
+    k = case2b_coloring d e (i + 1, j₂) ∨
+    k = case2b_coloring d e (i + 1, j₂ + 1) := by
   grind [case2b_coloring, Fin.ext_iff, zmod_val_add_one, parity_flip_even]
 
 /-! ### Subcase (2b) main lemma -/
@@ -362,8 +363,6 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
     (hd1_even : Even (Nat.gcd b.natAbs m)) (he1_odd : Odd (m / Nat.gcd b.natAbs m)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  set d₁ := Nat.gcd b.natAbs m with hd₁_def
-  set e₁ := m / d₁ with he₁_def
   have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
   have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   -- e₁ ≥ 3: e₁ is odd and e₁ = 1 would give d₁ = m, contradicting gcd(d₁,d₂) = 1
@@ -371,7 +370,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     by_contra! h
     rcases (by grind : e₁ = 1 ∨ e₁ = 2) with he | he
     · have : Nat.gcd (b - a).natAbs m ∣ d₁ := by
-        rw [hm_eq, he, mul_one]; exact Nat.gcd_dvd_right _ _
+        have : m = d₁ := by have := hm_eq; rw [he, mul_one] at this; exact this
+        rw [← this]; exact Nat.gcd_dvd_right _ _
       exact absurd (Nat.eq_one_of_dvd_one
         (h_gcd_coprime ▸ Nat.dvd_gcd this (dvd_refl _))) (by grind)
     · grind
@@ -443,8 +443,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
 -- Pattern assignment for Case 2c, parametrized by k₀ (the wrap shift).
 -- Variant A (k₀ % 3 ≠ 2): even→0, odd→1, last→2.
 -- Variant B (k₀ % 3 = 2): even→0, odd→2, last→1.
-private def case2c_pattern (d₁ k₀ i : ℕ) : Fin 3 :=
-  if i = d₁ - 1 ∧ d₁ % 2 = 1 then if k₀ % 3 = 2 then 1 else 2
+private def case2c_pattern (d k₀ i : ℕ) : Fin 3 :=
+  if i = d - 1 ∧ d % 2 = 1 then if k₀ % 3 = 2 then 1 else 2
   else if i % 2 = 0 then 0
   else if k₀ % 3 = 2 then 2 else 1
 
@@ -460,17 +460,17 @@ private lemma cover_mod3_general (p₁ p₂ : Fin 3) (j₁ j₂ : ℕ)
   grind [Fin.ext_iff]
 
 -- Non-wrap coverage hypothesis: j₁ = j₂, patterns differ → hypothesis holds.
-private lemma case2c_nonwrap_hyp (d₁ k₀ i j : ℕ) (hd₁ : d₁ ≥ 3)
-    (hd₁_odd : Odd d₁) (hi : i + 1 < d₁) : (j + (case2c_pattern d₁ k₀ i).val) % 3 ≠
-    (j + (case2c_pattern d₁ k₀ (i + 1)).val) % 3 := by
-  obtain ⟨k, hk⟩ := hd₁_odd; subst hk
+private lemma case2c_nonwrap_hyp (d k₀ i j : ℕ) (hd : d ≥ 3)
+    (hd_odd : Odd d) (hi : i + 1 < d) : (j + (case2c_pattern d k₀ i).val) % 3 ≠
+    (j + (case2c_pattern d k₀ (i + 1)).val) % 3 := by
+  obtain ⟨k, hk⟩ := hd_odd; subst hk
   grind [case2c_pattern]
 
 -- Wrap coverage hypothesis: j₂ = j₁ + k₀, pattern chosen to avoid conflict.
-private lemma case2c_wrap_hyp (d₁ k₀ j : ℕ) (hd₁ : d₁ ≥ 3) (hd₁_odd : Odd d₁) :
-    (j + (case2c_pattern d₁ k₀ (d₁ - 1)).val) % 3 ≠
-    (j + k₀ + (case2c_pattern d₁ k₀ 0).val) % 3 := by
-  obtain ⟨k, hk⟩ := hd₁_odd; subst hk
+private lemma case2c_wrap_hyp (d k₀ j : ℕ) (hd : d ≥ 3) (hd_odd : Odd d) :
+    (j + (case2c_pattern d k₀ (d - 1)).val) % 3 ≠
+    (j + k₀ + (case2c_pattern d k₀ 0).val) % 3 := by
+  obtain ⟨k, hk⟩ := hd_odd; subst hk
   grind [case2c_pattern]
 
 /-! ### Subcase (2d): d₁, e₁ both odd, e₁ ≥ 19
@@ -484,29 +484,29 @@ verifying the rotation property; the important result is `case2d_coloring_works`
 /-- Partition parameter: first interval size for case 2d.
     u = e₁/3 + e₁%3 (i.e. k+r where e₁ = 3k+r).
     For e₁ odd: r=0 → u=k (odd), r=1 → u=k+1 (odd), r=2 → u=k+2 (odd). -/
-private def case2d_u (e₁ : ℕ) : ℕ := e₁ / 3 + e₁ % 3
+private def case2d_u (e : ℕ) : ℕ := e / 3 + e % 3
 
 /-- Second interval size for case 2d.
     v = e₁/3 + (1 if e₁%3 = 1 else 0).
     r=0: v = k   r=1: v = k+1   r=2: v = k -/
-private def case2d_v (e₁ : ℕ) : ℕ := if e₁ % 3 = 1 then e₁ / 3 + 1 else e₁ / 3
+private def case2d_v (e : ℕ) : ℕ := if e % 3 = 1 then e / 3 + 1 else e / 3
 
-private lemma case2d_uv_le (hge : e₁ ≥ 19) : case2d_u e₁ + case2d_v e₁ ≤ e₁ := by
+private lemma case2d_uv_le {e : ℕ} (hge : e ≥ 19) : case2d_u e + case2d_v e ≤ e := by
   grind [case2d_u, case2d_v]
 
 /-- The base pattern: three alternating bicolor intervals on {0,...,e₁-1}.
     Positions 0..u-1: alternating 0,1 (starts and ends with 0 since u is odd)
     Positions u..u+v-1: alternating 1,2 (starts and ends with 1)
     Positions u+v..e₁-1: alternating 2,0 (starts and ends with 2) -/
-private def basePattern (e₁ : ℕ) (j : ℕ) : Fin 3 := let u := case2d_u e₁
-  let v := case2d_v e₁
+private def basePattern (e : ℕ) (j : ℕ) : Fin 3 := let u := case2d_u e
+  let v := case2d_v e
   if j < u then if j % 2 = 0 then 0 else 1
   else if j < u + v then if (j - u) % 2 = 0 then 1 else 2
   else if (j - u - v) % 2 = 0 then 2 else 0
 
 /-- Which interval (0, 1, or 2) a position j falls in. -/
-private def whichInterval (e₁ j : ℕ) : Fin 3 := let u := case2d_u e₁
-  let v := case2d_v e₁
+private def whichInterval (e j : ℕ) : Fin 3 := let u := case2d_u e
+  let v := case2d_v e
   if j < u then 0 else if j < u + v then 1 else 2
 
 /-- The color pair for each interval. -/
@@ -518,76 +518,76 @@ private def intervalColors : Fin 3 → Finset (Fin 3)
 
 /-- Combined: for any j, {basePattern(j), basePattern(j+1 mod e₁)} is the
     interval pair of whichInterval(j). -/
-private lemma basePattern_consec_pair {e₁ j : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19) (hj : j < e₁) :
-    intervalColors (whichInterval e₁ j) ⊆ {basePattern e₁ j, basePattern e₁ ((j + 1) % e₁)} := by
-  obtain ⟨ku, hku⟩ : Odd (case2d_u e₁) := by obtain ⟨k, hk⟩ := he; grind [case2d_u]
-  obtain ⟨kv, hkv⟩ : Odd (case2d_v e₁) := by obtain ⟨k, hk⟩ := he; grind [case2d_v]
-  obtain ⟨kw, hkw⟩ : Odd (e₁ - case2d_u e₁ - case2d_v e₁) := by
+private lemma basePattern_consec_pair {e j : ℕ} (he : Odd e) (hge : e ≥ 19) (hj : j < e) :
+    intervalColors (whichInterval e j) ⊆ {basePattern e j, basePattern e ((j + 1) % e)} := by
+  obtain ⟨ku, hku⟩ : Odd (case2d_u e) := by obtain ⟨k, hk⟩ := he; grind [case2d_u]
+  obtain ⟨kv, hkv⟩ : Odd (case2d_v e) := by obtain ⟨k, hk⟩ := he; grind [case2d_v]
+  obtain ⟨kw, hkw⟩ : Odd (e - case2d_u e - case2d_v e) := by
     obtain ⟨k, hk⟩ := he; grind [case2d_u, case2d_v]
   have huv := case2d_uv_le hge
-  by_cases hj1 : j + 1 < e₁
+  by_cases hj1 : j + 1 < e
   · rw [Nat.mod_eq_of_lt hj1]
-    by_cases hsame : whichInterval e₁ j = whichInterval e₁ (j + 1)
+    by_cases hsame : whichInterval e j = whichInterval e (j + 1)
     · -- Same interval: both colors present
-      have : {basePattern e₁ j, basePattern e₁ (j + 1)} = intervalColors (whichInterval e₁ j) := by
+      have : {basePattern e j, basePattern e (j + 1)} = intervalColors (whichInterval e j) := by
         simp only [whichInterval, basePattern, intervalColors] at *; grind
       exact this.ge
     · -- Boundary: last element of interval + first of next
-      have : intervalColors (whichInterval e₁ j) ⊆ {basePattern e₁ j, basePattern e₁ (j + 1)} := by
+      have : intervalColors (whichInterval e j) ⊆ {basePattern e j, basePattern e (j + 1)} := by
         simp only [whichInterval] at hsame ⊢
         grind [basePattern, intervalColors]
       exact this
-  · -- Wrap: j = e₁ - 1
+  · -- Wrap: j = e - 1
     push_neg at hj1
-    have hj_eq : j = e₁ - 1 := by grind
+    have hj_eq : j = e - 1 := by grind
     subst hj_eq
-    have : e₁ - 1 + 1 = e₁ := by grind
+    have : e - 1 + 1 = e := by grind
     rw [this, Nat.mod_self]
-    have : intervalColors (whichInterval e₁ (e₁ - 1)) ⊆
-        {basePattern e₁ (e₁ - 1), basePattern e₁ 0} := by
+    have : intervalColors (whichInterval e (e - 1)) ⊆
+        {basePattern e (e - 1), basePattern e 0} := by
       simp only [whichInterval]
       grind [basePattern, intervalColors]
     exact this
 
 /-- A rotation by r ∈ [u, e₁-u] moves to a different interval:
     whichInterval(j) ≠ whichInterval((j + r) % e₁). -/
-private lemma rotation_changes_interval {e₁ j : ℕ} (hge : e₁ ≥ 19) (hj : j < e₁)
-    {r : ℕ} (hr_lo : case2d_u e₁ ≤ r) (hr_hi : r ≤ e₁ - case2d_u e₁) :
-    whichInterval e₁ j ≠ whichInterval e₁ ((j + r) % e₁) := by
-  have he₁_pos : 0 < e₁ := by grind
+private lemma rotation_changes_interval {e j : ℕ} (hge : e ≥ 19) (hj : j < e)
+    {r : ℕ} (hr_lo : case2d_u e ≤ r) (hr_hi : r ≤ e - case2d_u e) :
+    whichInterval e j ≠ whichInterval e ((j + r) % e) := by
+  have he_pos : 0 < e := by grind
   have huv_bound := case2d_uv_le hge
-  have hv_le_u : case2d_v e₁ ≤ case2d_u e₁ := by grind [case2d_u, case2d_v]
-  have hw_le_u : e₁ - (case2d_u e₁ + case2d_v e₁) ≤ case2d_u e₁ := by grind [case2d_u, case2d_v]
+  have hv_le_u : case2d_v e ≤ case2d_u e := by grind [case2d_u, case2d_v]
+  have hw_le_u : e - (case2d_u e + case2d_v e) ≤ case2d_u e := by grind [case2d_u, case2d_v]
   simp only [whichInterval]
-  have hj'_lt : (j + r) % e₁ < e₁ := Nat.mod_lt _ he₁_pos
+  have hj'_lt : (j + r) % e < e := Nat.mod_lt _ he_pos
   intro heq
-  by_cases hjr_wrap : j + r < e₁
+  by_cases hjr_wrap : j + r < e
   · -- No wrap
     rw [Nat.mod_eq_of_lt hjr_wrap] at heq hj'_lt
     grind
-  · -- Wrap: (j + r) % e₁ = j + r - e₁
+  · -- Wrap: (j + r) % e = j + r - e
     push_neg at hjr_wrap
-    have hmod : (j + r) % e₁ = j + r - e₁ := by
-      have : r < e₁ := by grind
-      have h1 : j + r - e₁ < e₁ := by grind
+    have hmod : (j + r) % e = j + r - e := by
+      have : r < e := by grind
+      have h1 : j + r - e < e := by grind
       rw [Nat.add_mod_eq_sub, Nat.mod_eq_of_lt hj, Nat.mod_eq_of_lt this, if_neg (by grind)]
     grind
 
 /-- Key polychromaticity lemma: if the base pattern is rotated by r ∈ [u, e₁-u],
     then at every position j, the 2×2 block covers all 3 colors. -/
-private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : e₁ ≥ 19)
-    {r : ℕ} (hr_lo : case2d_u e₁ ≤ r) (hr_hi : r ≤ e₁ - case2d_u e₁) (hj : j < e₁) :
-    ∀ k : Fin 3, k ∈ ({basePattern e₁ j, basePattern e₁ ((j + 1) % e₁),
-        basePattern e₁ ((j + r) % e₁),
-        basePattern e₁ ((j + r + 1) % e₁)} : Finset (Fin 3)) := by
+private lemma basePattern_rotation_covers {e j : ℕ} (he : Odd e) (hge : e ≥ 19)
+    {r : ℕ} (hr_lo : case2d_u e ≤ r) (hr_hi : r ≤ e - case2d_u e) (hj : j < e) :
+    ∀ k : Fin 3, k ∈ ({basePattern e j, basePattern e ((j + 1) % e),
+        basePattern e ((j + r) % e),
+        basePattern e ((j + r + 1) % e)} : Finset (Fin 3)) := by
   intro k
-  have he₁_pos : 0 < e₁ := by grind
+  have he_pos : 0 < e := by grind
   have hI := rotation_changes_interval hge hj hr_lo hr_hi
   have h1 := basePattern_consec_pair he hge hj
-  have hjr : (j + r) % e₁ < e₁ := Nat.mod_lt _ he₁_pos
+  have hjr : (j + r) % e < e := Nat.mod_lt _ he_pos
   have h2 := basePattern_consec_pair he hge hjr
-  -- Rewrite ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁
-  have hmod : ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁ := Nat.mod_add_mod (j + r) e₁ 1
+  -- Rewrite ((j + r) % e + 1) % e = (j + r + 1) % e
+  have hmod : ((j + r) % e + 1) % e = (j + r + 1) % e := Nat.mod_add_mod (j + r) e 1
   rw [hmod] at h2
   have : ∀ (i₁ i₂ : Fin 3), i₁ ≠ i₂ → k ∈ intervalColors i₁ ∨ k ∈ intervalColors i₂ := by
     intro i₁ i₂; fin_cases i₁ <;> fin_cases i₂ <;> fin_cases k <;>
@@ -668,61 +668,60 @@ private lemma orbitEquiv_snd_shift_ba_wrap [NeZero m] [NeZero d₁] [NeZero e₁
 
 /-- Given d₁ ≥ 3 values each in [u, e₁-u] can sum to any target mod e₁,
     since the range has width ≥ e₁/3 and d₁ ≥ 3. -/
-private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
-    (hd1_ge : d₁ ≥ 5) (he1_ge : e₁ ≥ 19) (he1_odd : Odd e₁) (target : ℕ) :
-    ∃ vals : ZMod d₁ → ℕ,
-      (∀ i, case2d_u e₁ ≤ vals i ∧ vals i ≤ e₁ - case2d_u e₁) ∧
-      (Finset.univ.sum vals) % e₁ = target % e₁ := by
-  have hu_lt : case2d_u e₁ < e₁ := by grind [case2d_u]
-  have hdw' : d₁ * (e₁ - 2 * case2d_u e₁) ≥ e₁ := by
-    change d₁ * (e₁ - 2 * (e₁ / 3 + e₁ % 3)) ≥ e₁
-    obtain ⟨k, hk⟩ := he1_odd; subst hk
+private lemma case2d_rotation_sum_exists {e d : ℕ} [NeZero d]
+    (hd_ge : d ≥ 5) (he_ge : e ≥ 19) (he_odd : Odd e) (target : ℕ) :
+    ∃ vals : ZMod d → ℕ,
+      (∀ i, case2d_u e ≤ vals i ∧ vals i ≤ e - case2d_u e) ∧
+      (Finset.univ.sum vals) % e = target % e := by
+  have hu_lt : case2d_u e < e := by grind [case2d_u]
+  have hdw' : d * (e - 2 * case2d_u e) ≥ e := by
+    change d * (e - 2 * (e / 3 + e % 3)) ≥ e
+    obtain ⟨k, hk⟩ := he_odd; subst hk
     have h5w : 5 * ((2 * k + 1) - 2 * ((2 * k + 1) / 3 + (2 * k + 1) % 3)) ≥ 2 * k + 1 := by grind
     exact le_trans h5w (by gcongr)
-  set u := case2d_u e₁
-  set w := e₁ - 2 * u
+  set u := case2d_u e
+  set w := e - 2 * u
   have hw_pos : 0 < w := by grind
-  set deficit := (target + e₁ * d₁ - d₁ * u) % e₁
-  have hdef_lt : deficit < e₁ := Nat.mod_lt _ (by grind)
+  set deficit := (target + e * d - d * u) % e
+  have hdef_lt : deficit < e := Nat.mod_lt _ (by grind)
   set q := deficit / w
   set r := deficit % w
   have hr_lt : r < w := Nat.mod_lt _ hw_pos
-  have hq_lt : q < d₁ := by
+  have hq_lt : q < d := by
     by_contra! hge
-    have h1 : deficit ≥ d₁ * w :=
+    have h1 : deficit ≥ d * w :=
       calc deficit ≥ deficit / w * w := Nat.div_mul_le_self deficit w
         _ = q * w := rfl
-        _ ≥ d₁ * w := by gcongr
+        _ ≥ d * w := by gcongr
     grind
   have hqr : w * q + r = deficit := Nat.div_add_mod deficit w
-  let f : ZMod d₁ → ℕ := fun i => if i.val < q then e₁ - u else if i.val = q then u + r else u
+  let f : ZMod d → ℕ := fun i => if i.val < q then e - u else if i.val = q then u + r else u
   refine ⟨f, fun i => ?_, ?_⟩
   · grind
-  · let g : ZMod d₁ → ℕ := fun i =>
+  · let g : ZMod d → ℕ := fun i =>
       if i.val < q then w else if i.val = q then r else 0
-    have hfg : ∀ i : ZMod d₁, f i = u + g i := by grind
-    have hsum_f : Finset.univ.sum f = d₁ * u + Finset.univ.sum g := by
+    have hfg : ∀ i : ZMod d, f i = u + g i := by grind
+    have hsum_f : Finset.univ.sum f = d * u + Finset.univ.sum g := by
       conv_lhs => arg 2; ext i; rw [hfg i]
       simp [Finset.sum_add_distrib, Finset.card_univ, ZMod.card]
-    -- Helper: #{i : ZMod d₁ | p(i)} for decidable predicates on ZMod.val
-    have hcard_lt : (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)).card = q := by
-      have : Finset.image ZMod.val (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)) =
+    have hcard_lt : (Finset.univ.filter (fun i : ZMod d => i.val < q)).card = q := by
+      have : Finset.image ZMod.val (Finset.univ.filter (fun i : ZMod d => i.val < q)) =
           Finset.range q := by
         ext j
         simp only [mem_image, mem_filter, mem_univ, true_and, mem_range]
-        exact ⟨fun ⟨_, hx, he⟩ => he ▸ hx, fun hj => ⟨(j : ZMod d₁),
+        exact ⟨fun ⟨_, hx, he⟩ => he ▸ hx, fun hj => ⟨(j : ZMod d),
           by rwa [ZMod.val_natCast_of_lt (lt_trans hj hq_lt)],
           ZMod.val_natCast_of_lt (lt_trans hj hq_lt)⟩⟩
       rw [← Finset.card_image_of_injective _ (ZMod.val_injective _), this, Finset.card_range]
-    have hcard_eq : (Finset.univ.filter (fun i : ZMod d₁ => i.val = q)).card = 1 := by
-      have : Finset.univ.filter (fun i : ZMod d₁ => i.val = q) = {(q : ZMod d₁)} := by
+    have hcard_eq : (Finset.univ.filter (fun i : ZMod d => i.val = q)).card = 1 := by
+      have : Finset.univ.filter (fun i : ZMod d => i.val = q) = {(q : ZMod d)} := by
         ext i
         simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
         exact ⟨fun h => ZMod.val_injective _ (by rwa [ZMod.val_natCast_of_lt hq_lt]),
           fun h => by rw [h, ZMod.val_natCast_of_lt hq_lt]⟩
       rw [this, Finset.card_singleton]
     have hsum_g : Finset.univ.sum g = q * w + r := by
-      have : ∀ i : ZMod d₁,
+      have : ∀ i : ZMod d,
           g i = (if i.val < q then w else 0) + (if i.val = q then r else 0) := by grind
       rw [Finset.sum_congr rfl (fun i _ => this i), Finset.sum_add_distrib]
       simp only [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const,
@@ -730,7 +729,7 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
     rw [hsum_f, hsum_g, Nat.mul_comm q w, hqr]
     simp only [deficit]
     rw [Nat.add_mod_mod]
-    rw [Nat.add_sub_cancel' (le_add_left (le_trans (Nat.mul_le_mul_left d₁ (le_of_lt hu_lt))
+    rw [Nat.add_sub_cancel' (le_add_left (le_trans (Nat.mul_le_mul_left d (le_of_lt hu_lt))
       (by rw [Nat.mul_comm]))), Nat.add_mul_mod_self_left]
 
 private lemma zero_mem_zmod_set (m : ℕ) (a b : ℤ) : (0 : ZMod m) ∈ zmod_set m a b := by
@@ -788,19 +787,17 @@ private lemma case2d_coloring_works (hm : m ≥ 289)
     (hd1_odd : Odd (Nat.gcd b.natAbs m)) (he1_odd : Odd (m / Nat.gcd b.natAbs m))
     (he1_ge : m / Nat.gcd b.natAbs m ≥ 19) (h3 : ¬ (3 ∣ Nat.gcd b.natAbs m)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  set d₁ := Nat.gcd b.natAbs m with hd1_def
-  set e₁ := m / d₁ with he1_def
-  have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
-  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd1_dvd).symm
+  have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
+  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
-  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) hd1_def
-  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 hd1_def
-  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd1_dvd (by rwa [hd1_def]))
+  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
+  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
+  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
-  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq
+  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd₁_dvd hb_zero hba_unit hord hm_eq
   have hd1_ge5 : d₁ ≥ 5 := by grind
   obtain ⟨vals, hvals_bound, hvals_sum⟩ := case2d_rotation_sum_exists hd1_ge5 he1_ge he1_odd k₀.val
   let rot : ZMod d₁ → ℕ := fun i =>
@@ -860,19 +857,17 @@ lemma case_two_odd_small (hm : m ≥ 289)
     (hd1_odd : Odd (Nat.gcd b.natAbs m)) (_he1_odd : Odd (m / Nat.gcd b.natAbs m))
     (_he1_le : m / Nat.gcd b.natAbs m ≤ 17) (he1_div3 : 3 ∣ m / Nat.gcd b.natAbs m) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  set d₁ := Nat.gcd b.natAbs m with hd1_def
-  set e₁ := m / d₁ with he1_def
-  have hd1_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
-  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd1_dvd).symm
+  have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
+  have hm_eq : m = d₁ * e₁ := (Nat.mul_div_cancel' hd₁_dvd).symm
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
-  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) hd1_def
-  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 hd1_def
-  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd1_dvd (by rwa [hd1_def]))
+  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
+  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
+  have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 hd₁_dvd h_gcd_coprime)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
-  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd1_dvd hb_zero hba_unit hord hm_eq
+  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hd₁_dvd hb_zero hba_unit hord hm_eq
   have hd1_ge3 : d₁ ≥ 3 := by grind
   let f : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
     ⟨(j.val + (case2c_pattern d₁ k₀.val i.val).val) % 3, Nat.mod_lt _ (by grind)⟩
@@ -925,16 +920,15 @@ lemma case_two_odd_small (hm : m ≥ 289)
         simp only [case2c_mod3 he1_div3, Nat.add_assoc])
 
 /-- Auxiliary: rules out both cycle lengths being ≤ 17 when m ≥ 289. -/
-private lemma no_both_e_small {m d₁ d₂ : ℕ} (hm : m ≥ 289) (hcop : Nat.gcd d₁ d₂ = 1)
-    (hd₁_gt1 : d₁ > 1) (hd₂_gt1 : d₂ > 1) (hd₁_dvd : d₁ ∣ m) (hd₂_dvd : d₂ ∣ m)
-    (he₁_le : m / d₁ ≤ 17) (he₂_le : m / d₂ ≤ 17) : False := by
+private lemma no_both_e_small {m' d d' : ℕ} (hm : m' ≥ 289) (hcop : Nat.gcd d d' = 1)
+    (hd_gt1 : d > 1) (hd'_gt1 : d' > 1) (hd_dvd : d ∣ m') (hd'_dvd : d' ∣ m')
+    (he_le : m' / d ≤ 17) (he'_le : m' / d' ≤ 17) : False := by
   have hprod := Nat.le_of_dvd (by grind)
-    (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by rwa [Nat.Coprime]) hd₁_dvd hd₂_dvd)
-  have h₁ : m ≤ d₁ * 17 := by rw [← Nat.mul_div_cancel' hd₁_dvd]; gcongr
-  have h₂ : m ≤ d₂ * 17 := by rw [← Nat.mul_div_cancel' hd₂_dvd]; gcongr
-  -- d₁*d₂ ≤ m ≤ d₁*17 → d₂ ≤ 17; similarly d₁ ≤ 17
+    (Nat.Coprime.mul_dvd_of_dvd_of_dvd (by rwa [Nat.Coprime]) hd_dvd hd'_dvd)
+  have h₁ : m' ≤ d * 17 := by rw [← Nat.mul_div_cancel' hd_dvd]; gcongr
+  have h₂ : m' ≤ d' * 17 := by rw [← Nat.mul_div_cancel' hd'_dvd]; gcongr
   have := Nat.le_of_mul_le_mul_left (hprod.trans h₁) (by grind)
-  have := Nat.le_of_mul_le_mul_left (mul_comm d₁ d₂ ▸ hprod.trans h₂) (by grind)
+  have := Nat.le_of_mul_le_mul_left (mul_comm d d' ▸ hprod.trans h₂) (by grind)
   -- 289 ≤ m ≤ d₁*17 → d₁ ≥ 17; similarly d₂ ≥ 17
   -- So d₁ = d₂ = 17, gcd(17,17) = 17 ≠ 1.
   grind
@@ -979,22 +973,22 @@ lemma main_case_two (hm : m ≥ 289)
         · exact dispatch a b h_gcd_coprime h_min hd ho h3
       -- Prove dispatch: given ¬(3 ∣ d₁), split on e₁ size
       intro a' b' hcop hmin hd₁_odd he₁_odd h3_nd₁
-      set d₁ := Nat.gcd b'.natAbs m
+      set d := Nat.gcd b'.natAbs m
       set d₂ := Nat.gcd (b' - a').natAbs m
-      set e₁ := m / d₁
-      have hd₁_dvd : d₁ ∣ m := Nat.gcd_dvd_right _ _
+      set e := m / d
+      have hd_dvd : d ∣ m := Nat.gcd_dvd_right _ _
       have hd₂_dvd : d₂ ∣ m := Nat.gcd_dvd_right _ _
-      by_cases he_le : e₁ ≤ 17
-      · -- Case 2c: prove 3 ∣ e₁
-        -- Since gcd(d₁,d₂)=1 and 3 ∤ d₁, if 3 ∣ d₂ then 3 ∣ m hence 3 ∣ e₁.
+      by_cases he_le : e ≤ 17
+      · -- Case 2c: prove 3 ∣ e
+        -- Since gcd(d,d₂)=1 and 3 ∤ d, if 3 ∣ d₂ then 3 ∣ m hence 3 ∣ e.
         -- If 3 ∤ d₂: swap and show e₂ ≥ 19 (contradiction with both ≤ 17).
         by_cases h3d₂ : 3 ∣ d₂
         · have h3m : 3 ∣ m := dvd_trans h3d₂ hd₂_dvd
-          have h3e₁ : 3 ∣ e₁ :=
+          have h3e : 3 ∣ e :=
             ((Nat.Prime.coprime_iff_not_dvd (by decide)).mpr h3_nd₁).dvd_of_dvd_mul_left
-              (Nat.mul_div_cancel' hd₁_dvd ▸ h3m)
-          exact case_two_odd_small hm hcop hmin hd₁_odd he₁_odd he_le h3e₁
-        · -- 3 ∤ d₁ and 3 ∤ d₂ and e₁ ≤ 17: swap and show new e₁ ≥ 19.
+              (Nat.mul_div_cancel' hd_dvd ▸ h3m)
+          exact case_two_odd_small hm hcop hmin hd₁_odd he₁_odd he_le h3e
+        · -- 3 ∤ d and 3 ∤ d₂ and e ≤ 17: swap and show new e ≥ 19.
           -- After swap, new e₁' = m/d₂. If e₁' ≤ 17 too, contradiction.
           rw [← zmod_set_swap m a' b']
           set a'' := (-a' : ℤ); set b'' := (b' - a' : ℤ)
@@ -1010,10 +1004,10 @@ lemma main_case_two (hm : m ≥ 289)
               have he₁'_ge : m / Nat.gcd b''.natAbs m ≥ 19 := by
                 by_contra hlt; push_neg at hlt
                 rw [Nat.gcd_comm] at hcop
-                exact no_both_e_small hm hcop (by grind) (by grind) hd₂_dvd hd₁_dvd (by grind) he_le
+                exact no_both_e_small hm hcop (by grind) (by grind) hd₂_dvd hd_dvd (by grind) he_le
               exact case2d_coloring_works hm hcop' hmin' hd' ho' he₁'_ge h3d₂
-      · have he₁_ge : e₁ ≥ 19 := by grind
-        exact case2d_coloring_works hm hcop hmin hd₁_odd he₁_odd he₁_ge h3_nd₁
+      · have he_ge : e ≥ 19 := by grind
+        exact case2d_coloring_works hm hcop hmin hd₁_odd he₁_odd he_ge h3_nd₁
 
 end OrbitFramework
 
