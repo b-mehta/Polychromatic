@@ -96,9 +96,11 @@ private lemma addOrderOf_b_eq (hm : 0 < m) :
   · have : (b : ZMod m) = -(b.natAbs : ZMod m) := by rw [h]; simp
     rw [this, addOrderOf_neg]; exact key
 
-private lemma b_zero_mod_d1 [NeZero d₁] : (b : ZMod d₁) = 0 := by
-  rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-  exact Int.natCast_dvd.mpr (Nat.gcd_dvd_left b.natAbs m)
+private lemma d₁_dvd_b : (d₁ : ℤ) ∣ b :=
+  Int.natCast_dvd.mpr (Nat.gcd_dvd_left b.natAbs m)
+
+private lemma b_zero_mod_d1 [NeZero d₁] : (b : ZMod d₁) = 0 :=
+  (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr (d₁_dvd_b (b := b))
 
 private lemma ba_coprime_d1
     (h_gcd_coprime : Nat.gcd d₁ d₂ = 1) :
@@ -132,14 +134,14 @@ private lemma orbitMap_j_eq [NeZero e₁]
     exact ZMod.val_injective _ (by grind)
 
 private lemma orbitMap_injective [NeZero m]
-    (hm_eq : m = d₁ * e₁) (hb_zero : (b : ZMod d₁) = 0)
+    (hm_eq : m = d₁ * e₁)
     (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁))
     (hord : addOrderOf (b : ZMod m) = e₁) :
     Function.Injective (orbitMap m a b : ZMod d₁ × ZMod e₁ → ZMod m) := by
   haveI : NeZero d₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, zero_mul]) (NeZero.ne m)⟩
   haveI : NeZero e₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, mul_zero]) (NeZero.ne m)⟩
   intro ⟨i₁, j₁⟩ ⟨i₂, j₂⟩ heq
-  have hi := orbitMap_i_eq hb_zero hba_unit heq
+  have hi := orbitMap_i_eq b_zero_mod_d1 hba_unit heq
   subst hi
   simp only [orbitMap] at heq
   have hj_smul : (j₁.val : ℕ) • (b : ZMod m) = (j₂.val : ℕ) • (b : ZMod m) := by grind
@@ -153,7 +155,7 @@ private lemma orbitMap_bijective [NeZero m]
   haveI : NeZero d₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, zero_mul]) (NeZero.ne m)⟩
   haveI : NeZero e₁ := ⟨by intro h; exact absurd (by rw [hm_eq, h, mul_zero]) (NeZero.ne m)⟩
   exact (Fintype.bijective_iff_injective_and_card _).mpr
-    ⟨orbitMap_injective hm_eq hb_zero hba_unit hord,
+    ⟨orbitMap_injective hm_eq hba_unit hord,
      by simp only [Fintype.card_prod, ZMod.card]; linarith [hm_eq]⟩
 
 private lemma orbitMap_shift_b [NeZero e₁]
