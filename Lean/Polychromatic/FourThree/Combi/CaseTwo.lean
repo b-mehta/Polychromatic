@@ -336,8 +336,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d�
     rcases (by grind : e₁ = 1 ∨ e₁ = 2) with he | he
     · have : d₂ ∣ d₁ := by
         have : m = d₁ := by grind
-        rw [← this]
-        exact Nat.gcd_dvd_right _ _
+        grind
       exact absurd (Nat.eq_one_of_dvd_one
         (h_gcd_coprime ▸ Nat.dvd_gcd this (dvd_refl _))) (by grind)
     · grind
@@ -746,7 +745,7 @@ private lemma case2d_coloring_works (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d�
       rcases covers with h | h | h | h
       · left; exact h
       · right; left; rw [h]; simp only [f]; congr 1; exact (pos_shift_one j (rot i)).symm
-      · right; right; left; rw [h]; simp only [f]; congr 1; exact hpos.symm
+      · right; right; left; rw [h]; simp only [f]; grind
       · right
         right
         right
@@ -815,12 +814,12 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
       have hp : p = case2c_pattern d₁ k₀.val i.val := rfl
       have hp' : p' = case2c_pattern d₁ k₀.val (i.val + 1) := by simp [p', hi'_eq]
       rcases cover_mod3_general p p' j.val j.val hhyp k with h | h | h | h
-      · left; exact h
+      · grind
       · right
         left
         rw [h, hp]
         exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3])
-      · right; right; left; exact h
+      · grind
       · right
         right
         right
@@ -841,7 +840,7 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
       have hp : p = case2c_pattern d₁ k₀.val i.val := rfl
       have hp₀_val : (↑p₀ : ℕ) = ↑(case2c_pattern d₁ k₀.val 0) := rfl
       rcases cover_mod3_general p p₀ j.val (j.val + k₀.val) hhyp k with h | h | h | h
-      · left; exact h
+      · grind
       · right
         left
         rw [h, hp]
