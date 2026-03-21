@@ -85,21 +85,19 @@ It provides the coordinate system used to analyze the "Multiple Cycles" case.
 private def orbitMap (m : ℕ) (a b : ℤ) : ZMod d₁ × ZMod e₁ → ZMod m :=
   fun p => (p.1.val : ZMod m) * ↑(b - a) + (p.2.val : ZMod m) * ↑b
 
-private lemma addOrderOf_b_eq (hm : 0 < m)
-    (hd1_def : Nat.gcd b.natAbs m = d₁) :
-    addOrderOf (b : ZMod m) = m / d₁ := by
-  have key : addOrderOf (b.natAbs : ZMod m) = m / d₁ := by
-    rw [ZMod.addOrderOf_coe b.natAbs (by grind), Nat.gcd_comm, hd1_def]
+private lemma addOrderOf_b_eq (hm : 0 < m) :
+    addOrderOf (b : ZMod m) = e₁ := by
+  have key : addOrderOf (b.natAbs : ZMod m) = e₁ := by
+    rw [ZMod.addOrderOf_coe b.natAbs (by grind), Nat.gcd_comm]
   rcases Int.natAbs_eq b with h | h
   · have : (b : ZMod m) = (b.natAbs : ZMod m) := by rw [h]; simp
     grind
   · have : (b : ZMod m) = -(b.natAbs : ZMod m) := by rw [h]; simp
     rw [this, addOrderOf_neg]; exact key
 
-private lemma b_zero_mod_d1
-    (hd1_def : Nat.gcd b.natAbs m = d₁) [NeZero d₁] : (b : ZMod d₁) = 0 := by
+private lemma b_zero_mod_d1 [NeZero d₁] : (b : ZMod d₁) = 0 := by
   rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-  exact Int.natCast_dvd.mpr (hd1_def ▸ Nat.gcd_dvd_left b.natAbs m)
+  exact Int.natCast_dvd.mpr (Nat.gcd_dvd_left b.natAbs m)
 
 private lemma ba_coprime_d1
     (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1) :
@@ -301,9 +299,9 @@ private lemma orbit_coloring_polychrom
 /-- **Subcase (2a).** $e_1$ is even. Each cycle uses two alternating colors;
     adjacent cycles skip different colors. The simplest of the four subcases. -/
 lemma case_two_e1_even (hm : m ≥ 289)
-    (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (he1_even : Even (m / Nat.gcd b.natAbs m)) :
+    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1)
+    (h_min : min d₁ (Nat.gcd (b - a).natAbs m) > 1)
+    (he1_even : Even e₁) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   have he₁_ge2 : e₁ ≥ 2 := by
@@ -312,9 +310,9 @@ lemma case_two_e1_even (hm : m ≥ 289)
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
-  have hb_zero : (Int.cast b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
+  have hb_zero : (Int.cast b : ZMod d₁) = 0 := b_zero_mod_d1
   have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
-  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
+  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind)
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
   have hd₁_ge2 : d₁ ≥ 2 := by grind
   have he₁_ge2 : e₁ ≥ 2 := by
@@ -360,9 +358,9 @@ private lemma case2b_coverage_gen (d e : ℕ) [NeZero d] [NeZero e]
     Alternating patterns with a "degenerate" position fixup at different positions
     for even and odd cycles, ensuring they do not overlap across adjacent cycles. -/
 lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
-    (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (hd1_even : Even (Nat.gcd b.natAbs m)) (he1_odd : Odd (m / Nat.gcd b.natAbs m)) :
+    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1)
+    (h_min : min d₁ (Nat.gcd (b - a).natAbs m) > 1)
+    (hd1_even : Even d₁) (he1_odd : Odd e₁) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   -- e₁ ≥ 3: e₁ is odd and e₁ = 1 would give d₁ = m, contradicting gcd(d₁,d₂) = 1
@@ -378,10 +376,10 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
-  have hb_zero : (Int.cast b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
+  have hb_zero : (Int.cast b : ZMod d₁) = 0 := b_zero_mod_d1
   have hba_unit : IsUnit (Int.cast (b - a) : ZMod d₁) :=
     isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
-  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
+  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind)
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
   -- d₂ properties for the compatibility argument
   set d₂ := Nat.gcd (b - a).natAbs m
@@ -782,17 +780,17 @@ private lemma pos_shift_wrap' (j S V k₀ n : ℕ) (hsum : (S + V) % n = k₀ % 
 /-- **Subcase (2d) assembled.** Constructs the coloring for the case when both d₁
     and e₁ are odd with e₁ ≥ 19, using rotated interval patterns. -/
 private lemma case2d_coloring_works (hm : m ≥ 289)
-    (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (hd1_odd : Odd (Nat.gcd b.natAbs m)) (he1_odd : Odd (m / Nat.gcd b.natAbs m))
-    (he1_ge : m / Nat.gcd b.natAbs m ≥ 19) (h3 : ¬ (3 ∣ Nat.gcd b.natAbs m)) :
+    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1)
+    (h_min : min d₁ (Nat.gcd (b - a).natAbs m) > 1)
+    (hd1_odd : Odd d₁) (he1_odd : Odd e₁)
+    (he1_ge : e₁ ≥ 19) (h3 : ¬ (3 ∣ d₁)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
-  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
-  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
+  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind)
+  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1
   have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
@@ -851,17 +849,17 @@ private lemma case2c_mod3 (h3e : 3 ∣ e₁) (x y : ℕ) : (x % e₁ + y) % 3 = 
 /-- **Subcase (2c):** d₁ and e₁ are both odd, with e₁ ≤ 17 and 3 ∣ e₁.
     Uses shifted periodic 012-patterns with different shifts for adjacent cycles. -/
 lemma case_two_odd_small (hm : m ≥ 289)
-    (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1)
-    (hd1_odd : Odd (Nat.gcd b.natAbs m))
-    (he1_div3 : 3 ∣ m / Nat.gcd b.natAbs m) :
+    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1)
+    (h_min : min d₁ (Nat.gcd (b - a).natAbs m) > 1)
+    (hd1_odd : Odd d₁)
+    (he1_div3 : 3 ∣ e₁) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   haveI : NeZero m := ⟨by grind⟩
   haveI : NeZero d₁ := ⟨by grind⟩
   haveI : NeZero e₁ := ⟨by grind⟩
-  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind) rfl
-  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1 rfl
+  have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind)
+  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1
   have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 := hord ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
@@ -936,12 +934,12 @@ private lemma no_both_e_small {m' d d' : ℕ} (hm : m' ≥ 289) (hcop : Nat.gcd 
 /-- **Main Case 2 (Multiple Cycles).** Aggregates all subcases (2a)–(2d).
     First applies WLOG to ensure 3 ∤ d₁, then dispatches on parity of d₁ and e₁. -/
 lemma main_case_two (hm : m ≥ 289)
-    (h_gcd_coprime : (Nat.gcd b.natAbs m).gcd (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min (Nat.gcd b.natAbs m) (Nat.gcd (b - a).natAbs m) > 1) :
+    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1)
+    (h_min : min d₁ (Nat.gcd (b - a).natAbs m) > 1) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  rcases Nat.even_or_odd (m / Nat.gcd b.natAbs m) with he | ho
+  rcases Nat.even_or_odd e₁ with he | ho
   · exact case_two_e1_even hm h_gcd_coprime h_min he
-  · rcases Nat.even_or_odd (Nat.gcd b.natAbs m) with hd | hd
+  · rcases Nat.even_or_odd d₁ with hd | hd
     · exact case_two_d1_even_e1_odd hm h_gcd_coprime h_min hd ho
     · -- Both d₁ and e₁ odd.
       -- Paper: "Choose the smallest of d₁,d₂ not a multiple of 3, WLOG d₁."
@@ -953,7 +951,7 @@ lemma main_case_two (hm : m ≥ 289)
           Odd (m / Nat.gcd b'.natAbs m) →
           ¬ (3 ∣ Nat.gcd b'.natAbs m) →
           HasPolychromColouring (Fin 3) (zmod_set m a' b') by
-        by_cases h3 : 3 ∣ Nat.gcd b.natAbs m
+        by_cases h3 : 3 ∣ d₁
         · -- Swap roles of b and b-a
           rw [← zmod_set_swap m a b]
           set a' := (-a : ℤ); set b' := (b - a : ℤ)
