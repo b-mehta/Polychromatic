@@ -137,7 +137,6 @@ private lemma orbitMap_j_eq [NeZero m] {j₁ j₂ : ZMod e₁}
 
 private lemma orbitMap_injective [NeZero m] (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)) :
     Function.Injective (orbitMap m a b : ZMod d₁ × ZMod e₁ → ZMod m) := by
-  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   intro ⟨i₁, j₁⟩ ⟨i₂, j₂⟩ heq
   have hi := orbitMap_i_eq hba_unit heq
   subst hi
@@ -146,11 +145,11 @@ private lemma orbitMap_injective [NeZero m] (hba_unit : IsUnit ((b - a : ℤ) : 
   exact Prod.ext rfl (orbitMap_j_eq hj_smul)
 
 private lemma orbitMap_bijective [NeZero m] (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)) :
-    Function.Bijective (orbitMap m a b : ZMod d₁ × ZMod e₁ → ZMod m) := by
-  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
-  exact (Fintype.bijective_iff_injective_and_card _).mpr
-    ⟨orbitMap_injective hba_unit,
-     by simp only [Fintype.card_prod, ZMod.card]; linarith [hm_eq]⟩
+    Function.Bijective (orbitMap m a b : ZMod d₁ × ZMod e₁ → ZMod m) :=
+  (Fintype.bijective_iff_injective_and_card _).mpr
+    ⟨orbitMap_injective hba_unit, by
+      simp only [Fintype.card_prod, ZMod.card]
+      linarith [m_eq_d₁_mul_e₁ (m := m) (b := b)]⟩
 
 private lemma orbitMap_shift_b [NeZero m] (he1_b_zero : e₁ • (b : ZMod m) = 0) :
     ∀ p : ZMod d₁ × ZMod e₁, orbitMap m a b p + (b : ZMod m) = orbitMap m a b (p.1, p.2 + 1) := by
@@ -214,16 +213,14 @@ private noncomputable def orbitEquiv [NeZero m]
 private lemma orbitEquiv_shift_b [NeZero m] {hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)}
     (x : ZMod m) :
     (orbitEquiv hba_unit).symm (x + ↑b) =
-    (((orbitEquiv hba_unit).symm x).1, ((orbitEquiv hba_unit).symm x).2 + 1) := by
-  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
-  exact equiv_symm_shift_b _ (fun i j =>
+    (((orbitEquiv hba_unit).symm x).1, ((orbitEquiv hba_unit).symm x).2 + 1) :=
+  equiv_symm_shift_b _ (fun i j =>
     (orbitMap_shift_b (addOrderOf_b_eq (b := b) (m := m) ▸
       addOrderOf_nsmul_eq_zero _) (i, j)).symm) x
 
 private lemma orbitEquiv_cycle_shift [NeZero m] {hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)}
     (x : ZMod m) :
     ((orbitEquiv hba_unit).symm (x + ↑(b - a))).1 = ((orbitEquiv hba_unit).symm x).1 + 1 := by
-  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   let u_ba := hba_unit.choose
   have hu_ba : ↑u_ba = ((b - a : ℤ) : ZMod d₁) := hba_unit.choose_spec
   let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom d₁_dvd_m (ZMod d₁) x * u_ba⁻¹
@@ -290,8 +287,7 @@ private lemma orbit_coloring_polychrom (Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m)
 lemma case_two_e1_even (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
     (h_min : min d₁ d₂ > 1) (he1_even : Even e₁) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
-  haveI : NeZero m := ⟨by grind⟩
+  haveI : NeZero m := ⟨by grind [m_eq_d₁_mul_e₁ (m := m) (b := b)]⟩
   have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   exact orbit_coloring_polychrom (orbitEquiv hba_unit) orbitEquiv_shift_b
     orbitEquiv_cycle_shift (cycle_coloring d₁ e₁)
@@ -734,8 +730,7 @@ private lemma case2d_coloring_works (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d�
     (h_min : min d₁ d₂ > 1) (hd1_odd : Odd d₁) (he1_odd : Odd e₁)
     (he1_ge : e₁ ≥ 19) (h3 : ¬ (3 ∣ d₁)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
-  haveI : NeZero m := ⟨by grind⟩
+  haveI : NeZero m := ⟨by grind [m_eq_d₁_mul_e₁ (m := m) (b := b)]⟩
   have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 :=
     addOrderOf_b_eq (b := b) (m := m) ▸ addOrderOf_nsmul_eq_zero _
@@ -802,8 +797,7 @@ private lemma case2c_mod3 (h3e : 3 ∣ e₁) (x y : ℕ) : (x % e₁ + y) % 3 = 
 lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
     (h_min : min d₁ d₂ > 1) (hd1_odd : Odd d₁) (he1_div3 : 3 ∣ e₁) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
-  haveI : NeZero m := ⟨by grind⟩
+  haveI : NeZero m := ⟨by grind [m_eq_d₁_mul_e₁ (m := m) (b := b)]⟩
   have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 :=
     addOrderOf_b_eq (b := b) (m := m) ▸ addOrderOf_nsmul_eq_zero _
