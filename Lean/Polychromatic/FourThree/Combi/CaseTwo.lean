@@ -229,8 +229,7 @@ private lemma orbitEquiv_cycle_shift [NeZero m] {hba_unit : IsUnit ((b - a : ℤ
   rw [hΦ_cycle (x + ↑(b - a))]
   dsimp only [α]
   rw [cycle_index_shift_ba u_ba hu_ba]
-  congr 1
-  exact (hΦ_cycle x).symm
+  grind
 
 /-- In the non-wrap case, the second coordinate is preserved by the (b-a) shift. -/
 private lemma orbitEquiv_snd_shift_ba [NeZero m] {hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)}
@@ -243,8 +242,7 @@ private lemma orbitEquiv_snd_shift_ba [NeZero m] {hba_unit : IsUnit ((b - a : �
   have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
   have hΦ : Φ (i + 1, j) = n + ↑(b - a) := by
     simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
-    rw [← hn]
-    exact hshift.symm
+    grind
   have h : Φ.symm (n + ↑(b - a)) = (i + 1, j) := by rw [← hΦ, Φ.symm_apply_apply]
   rw [h]
 
@@ -337,7 +335,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d�
     by_contra! h
     rcases (by grind : e₁ = 1 ∨ e₁ = 2) with he | he
     · have : d₂ ∣ d₁ := by
-        have : m = d₁ := by have := hm_eq; rw [he, mul_one] at this; exact this
+        have : m = d₁ := by grind
         rw [← this]
         exact Nat.gcd_dvd_right _ _
       exact absurd (Nat.eq_one_of_dvd_one
@@ -395,13 +393,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d�
       set p := Φ.symm n
       set j := p.2
       set j' := (Φ.symm (n + ↑(b - a))).2
-      have hπn : π n = (j.val : ZMod d₂) * π (↑b) := by
-        have : n = Φ p := (Equiv.apply_symm_apply Φ n).symm
-        grind
-      have hπn' : π n = (j'.val : ZMod d₂) * π (↑b) := by
-        rw [← hπ_eq]
-        have : n + ↑(b - a) = Φ (Φ.symm (n + ↑(b - a))) := (Equiv.apply_symm_apply Φ _).symm
-        grind
+      have hπn : π n = (j.val : ZMod d₂) * π (↑b) := by grind
+      have hπn' : π n = (j'.val : ZMod d₂) * π (↑b) := by grind
       have hπ_jj' := hπn.symm.trans hπn'
       exact case2b_coverage_gen d₁ e₁ hd1_even he1_odd he₁_ge3 _ j j'
         (fun hj hj' => h_degenerate_false j j' hπ_jj' hj hj')
@@ -616,10 +609,8 @@ private lemma orbitEquiv_snd_shift_ba_wrap [NeZero m]
   have hn : Φ (i, j) = n := Prod.eta (Φ.symm n) ▸ Equiv.apply_symm_apply Φ n
   have hΦ : Φ ((0 : ZMod d₁), j + k₀) = n + ↑(b - a) := by
     simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
-    rw [← hn]
-    exact (hshift j).symm
-  have h : Φ.symm (n + ↑(b - a)) = (0, j + k₀) := by rw [← hΦ, Φ.symm_apply_apply]
-  rw [h]
+    grind
+  grind
 
 /-- Given d₁ ≥ 3 values each in [u, e₁-u] can sum to any target mod e₁,
     since the range has width ≥ e₁/3 and d₁ ≥ 3. -/
