@@ -767,7 +767,9 @@ private lemma case2d_coloring_works (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d�
       · left; exact h
       · right; left; rw [h]; simp only [f]; congr 1; exact (pos_shift_one j (rot i)).symm
       · right; right; left; rw [h]; simp only [f]; congr 1; exact hpos.symm
-      · right; right; right
+      · right
+        right
+        right
         rw [h]
         simp only [f]
         congr 1
@@ -829,7 +831,8 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
       have hhyp : (j.val + p.val) % 3 ≠ (j.val + p'.val) % 3 := by
         change (j.val + (case2c_pattern d₁ k₀.val i.val).val) % 3 ≠
           (j.val + (case2c_pattern d₁ k₀.val (i + 1).val).val) % 3
-        rw [hi'_eq]; exact case2c_nonwrap_hyp d₁ k₀.val i.val j.val hd1_ge3 hd1_odd hi
+        rw [hi'_eq]
+        exact case2c_nonwrap_hyp d₁ k₀.val i.val j.val hd1_ge3 hd1_odd hi
       have hp : p = case2c_pattern d₁ k₀.val i.val := rfl
       have hp' : p' = case2c_pattern d₁ k₀.val (i.val + 1) := by simp [p', hi'_eq]
       rcases cover_mod3_general p p' j.val j.val hhyp k with h | h | h | h
@@ -838,7 +841,9 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
         rw [h, hp]
         exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3])
       · right; right; left; exact h
-      · right; right; right
+      · right
+        right
+        right
         rw [h, hp']
         exact Fin.ext (by
           simp [f, ZMod.val_add_one, case2c_mod3 he1_div3, Nat.mod_eq_of_lt hi])
@@ -849,7 +854,8 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
       set p₀ := case2c_pattern d₁ k₀.val 0
       have hp_eq : p = case2c_pattern d₁ k₀.val (d₁ - 1) := by grind
       have hhyp : (j.val + p.val) % 3 ≠ (j.val + k₀.val + p₀.val) % 3 := by
-        rw [hp_eq]; exact case2c_wrap_hyp d₁ k₀.val j.val hd1_ge3 hd1_odd
+        rw [hp_eq]
+        exact case2c_wrap_hyp d₁ k₀.val j.val hd1_ge3 hd1_odd
       have hj'_val : (j + k₀).val = (j.val + k₀.val) % e₁ := ZMod.val_add j k₀
       have hi1_val : (i + 1).val = 0 := by rw [ZMod.val_add_one, hi_eq]; grind [Nat.mod_self]
       have hp : p = case2c_pattern d₁ k₀.val i.val := rfl
@@ -859,13 +865,17 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
       · right; left
         rw [h, hp]
         exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3])
-      · right; right; left
+      · right
+        right
+        left
         rw [h]
         refine Fin.ext ?_
         simp only [f, hi1_val]
         rw [hj'_val]
         exact (case2c_mod3 he1_div3 (j.val + k₀.val) p₀.val).symm
-      · right; right; right
+      · right
+        right
+        right
         rw [h]
         refine Fin.ext ?_
         simp only [f, hi1_val, ZMod.val_add_one]
