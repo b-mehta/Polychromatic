@@ -878,8 +878,7 @@ private lemma no_both_e_small {m' d d' : ℕ} (hm : m' ≥ 289) (hcop : Nat.gcd 
 
 /-- **Main Case 2 (Multiple Cycles).** Aggregates all subcases (2a)–(2d).
     First applies WLOG to ensure 3 ∤ d₁, then dispatches on parity of d₁ and e₁. -/
-lemma main_case_two (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
-    (h_min : min d₁ d₂ > 1) :
+lemma main_case_two (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1) (h_min : min d₁ d₂ > 1) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   rcases Nat.even_or_odd e₁ with he | ho
   · exact case_two_e1_even hm h_gcd_coprime h_min he
