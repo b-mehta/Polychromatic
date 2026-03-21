@@ -506,21 +506,16 @@ private lemma basePattern_consec_pair {e j : ℕ} (he : Odd e) (hge : e ≥ 19) 
         grind
       exact this.ge
     · -- Boundary: last element of interval + first of next
-      have : intervalColors (whichInterval e j) ⊆ {basePattern e j, basePattern e (j + 1)} := by
-        simp only [whichInterval] at hsame ⊢
-        grind [basePattern, intervalColors]
-      exact this
+      simp only [whichInterval] at hsame ⊢
+      grind [basePattern, intervalColors]
   · -- Wrap: j = e - 1
     push_neg at hj1
     have hj_eq : j = e - 1 := by grind
     subst hj_eq
     have : e - 1 + 1 = e := by grind
     rw [this, Nat.mod_self]
-    have : intervalColors (whichInterval e (e - 1)) ⊆
-        {basePattern e (e - 1), basePattern e 0} := by
-      simp only [whichInterval]
-      grind [basePattern, intervalColors]
-    exact this
+    simp only [whichInterval]
+    grind [basePattern, intervalColors]
 
 /-- A rotation by r ∈ [u, e₁-u] moves to a different interval:
     whichInterval(j) ≠ whichInterval((j + r) % e₁). -/
@@ -693,9 +688,9 @@ private lemma case2d_rotation_sum_exists {e d : ℕ} [NeZero d]
         smul_eq_mul, hcard_lt, hcard_eq, one_mul]
     rw [hsum_f, hsum_g, Nat.mul_comm q w, hqr]
     simp only [deficit]
-    rw [Nat.add_mod_mod]
-    rw [Nat.add_sub_cancel' (le_add_left (le_trans (Nat.mul_le_mul_left d (le_of_lt hu_lt))
-      (by rw [Nat.mul_comm]))), Nat.add_mul_mod_self_left]
+    rw [Nat.add_mod_mod, Nat.add_sub_cancel' (le_add_left (le_trans
+      (Nat.mul_le_mul_left d (le_of_lt hu_lt)) (by rw [Nat.mul_comm]))),
+      Nat.add_mul_mod_self_left]
 
 /-- Splitting a ZMod filter sum at a boundary -/
 private lemma zmod_filter_sum_succ {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i : ZMod n) :
@@ -725,9 +720,8 @@ private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
     (j + (S + V) % n) % n = ((j + S % n) % n + V) % n := by
-  have h1 : j + (S + V) = j + S + V := by grind
-  have h2 : (j + S) % n = (j + S % n) % n := (Nat.add_mod_mod j S n).symm
-  rw [Nat.add_mod_mod, h1, ← Nat.mod_add_mod (j + S) n V, h2]
+  have h1 : j + (S + V) = j + S + V := (Nat.add_assoc j S V).symm
+  rw [Nat.add_mod_mod, h1, ← Nat.mod_add_mod (j + S) n V, (Nat.add_mod_mod j S n).symm]
 
 /-- Wrap case: if (S + V) % n = k₀ % n, then (j + k₀) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_wrap' (j S V k₀ n : ℕ) (hsum : (S + V) % n = k₀ % n) :
