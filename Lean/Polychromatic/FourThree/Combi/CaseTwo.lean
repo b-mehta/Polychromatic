@@ -100,8 +100,7 @@ private lemma addOrderOf_b_eq [NeZero m] : addOrderOf (b : ZMod m) = e₁ := by
   · have : (b : ZMod m) = (b.natAbs : ZMod m) := by rw [h]; simp
     grind
   · have : (b : ZMod m) = -(b.natAbs : ZMod m) := by rw [h]; simp
-    rw [this, addOrderOf_neg]
-    exact key
+    rwa [this, addOrderOf_neg]
 
 private lemma d₁_dvd_b : (d₁ : ℤ) ∣ b :=
   Int.natCast_dvd.mpr (Nat.gcd_dvd_left b.natAbs m)
@@ -224,8 +223,7 @@ private lemma orbitEquiv_cycle_shift [NeZero m] {hba_unit : IsUnit ((b - a : ℤ
   let u_ba := hba_unit.choose
   have hu_ba : ↑u_ba = ((b - a : ℤ) : ZMod d₁) := hba_unit.choose_spec
   let α : ZMod m → ZMod d₁ := fun x => ZMod.castHom d₁_dvd_m (ZMod d₁) x * u_ba⁻¹
-  have hΦ_cycle := equiv_symm_fst_eq (orbitEquiv hba_unit) α
-    (orbitMap_cycle_index u_ba hu_ba)
+  have hΦ_cycle := equiv_symm_fst_eq (orbitEquiv hba_unit) α (orbitMap_cycle_index u_ba hu_ba)
   rw [hΦ_cycle (x + ↑(b - a))]
   dsimp only [α]
   rw [cycle_index_shift_ba u_ba hu_ba]
@@ -946,7 +944,7 @@ lemma main_case_two (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
             · exact case_two_d1_even_e1_odd hm hcop' hmin' hd' ho'
             · -- Both odd after swap. Show e₁' ≥ 19 by contradiction.
               have he₁'_ge : m / Nat.gcd b''.natAbs m ≥ 19 := by
-                by_contra hlt; push_neg at hlt
+                by_contra! hlt
                 rw [Nat.gcd_comm] at hcop
                 exact no_both_e_small hm hcop (by grind) (by grind) hd₂_dvd hd_dvd (by grind) he_le
               exact case2d_coloring_works hm hcop' hmin' hd' ho' he₁'_ge h3d₂
