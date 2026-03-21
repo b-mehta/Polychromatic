@@ -356,8 +356,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d�
   -- d₂ properties for the compatibility argument
   have hd₂_dvd : d₂ ∣ m := Nat.gcd_dvd_right _ _
   have hd₂_gt1 : d₂ > 1 := by grind
-  have hd₂_dvd_ba : (d₂ : ℤ) ∣ (b - a) := by
-    simpa [Int.gcd] using Int.gcd_dvd_left (b - a) (m : ℤ)
+  have hd₂_dvd_ba : (d₂ : ℤ) ∣ (b - a) := by simpa [Int.gcd] using Int.gcd_dvd_left (b - a) (m : ℤ)
   have hd₂_dvd_e₁ : d₂ ∣ e₁ := by
     exact (by rwa [Nat.Coprime, Nat.gcd_comm] : Nat.Coprime d₂ d₁).dvd_of_dvd_mul_right
       (mul_comm d₁ e₁ ▸ hm_eq ▸ hd₂_dvd)
@@ -697,18 +696,6 @@ private lemma case2d_rotation_sum_exists {e d : ℕ} [NeZero d]
     rw [Nat.add_sub_cancel' (le_add_left (le_trans (Nat.mul_le_mul_left d (le_of_lt hu_lt))
       (by rw [Nat.mul_comm]))), Nat.add_mul_mod_self_left]
 
-private lemma zero_mem_zmod_set (m : ℕ) (a b : ℤ) : (0 : ZMod m) ∈ zmod_set m a b := by
-  simp [zmod_set]
-
-private lemma intCast_b_mem_zmod_set (m : ℕ) (a b : ℤ) : ((b : ℤ) : ZMod m) ∈ zmod_set m a b := by
-  simp [zmod_set]
-
-private lemma intCast_ba_mem_zmod_set (m : ℕ) (a b : ℤ) :
-    ((b - a : ℤ) : ZMod m) ∈ zmod_set m a b := by simp [zmod_set]
-
-private lemma intCast_2ba_mem_zmod_set (m : ℕ) (a b : ℤ) :
-    ((2 * b - a : ℤ) : ZMod m) ∈ zmod_set m a b := by simp [zmod_set]
-
 /-- Splitting a ZMod filter sum at a boundary -/
 private lemma zmod_filter_sum_succ {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i : ZMod n) :
     (Finset.univ.filter (fun k : ZMod n => k.val < i.val + 1)).sum f =
@@ -797,10 +784,8 @@ private lemma case2d_coloring_works (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d�
       have hj'_eq : j' = j + k₀ :=
         orbitEquiv_snd_shift_ba_wrap he1_b_zero k₀ hk₀ n hi_eq
       rw [hj'_eq]
-      have hi1_zero : (i + 1 : ZMod d₁) = 0 := by
-        apply ZMod.val_injective
-        rw [ZMod.val_add_one, hi_eq, ZMod.val_zero]
-        grind [Nat.mod_self]
+      have hi1_zero : (i + 1 : ZMod d₁) = 0 :=
+        ZMod.val_injective _ (by rw [ZMod.val_add_one, hi_eq, ZMod.val_zero]; grind [Nat.mod_self])
       have hrot0 : rot (0 : ZMod d₁) = 0 := by simp [rot, ZMod.val_zero]
       rw [hi1_zero, hrot0, Nat.add_zero, ZMod.val_add, Nat.mod_mod_of_dvd _ (dvd_refl e₁)]
       exact pos_shift_wrap' j.val _ (vals i) k₀.val e₁
@@ -833,8 +818,7 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
     · have hj'_eq : j' = j := orbitEquiv_snd_shift_ba n hi
       rw [hj'_eq]
       set p' := case2c_pattern d₁ k₀.val (i + 1).val
-      have hi'_eq : (i + 1).val = i.val + 1 := by
-        rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
+      have hi'_eq : (i + 1).val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
       have hhyp : (j.val + p.val) % 3 ≠ (j.val + p'.val) % 3 := by
         change (j.val + (case2c_pattern d₁ k₀.val i.val).val) % 3 ≠
           (j.val + (case2c_pattern d₁ k₀.val (i + 1).val).val) % 3
