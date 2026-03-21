@@ -823,13 +823,14 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
         change (j.val + (case2c_pattern d₁ k₀.val i.val).val) % 3 ≠
           (j.val + (case2c_pattern d₁ k₀.val (i + 1).val).val) % 3
         rw [hi'_eq]; exact case2c_nonwrap_hyp d₁ k₀.val i.val j.val hd1_ge3 hd1_odd hi
+      have hp : p = case2c_pattern d₁ k₀.val i.val := rfl
+      have hp' : p' = case2c_pattern d₁ k₀.val (i.val + 1) := by simp [p', hi'_eq]
       rcases cover_mod3_general p p' j.val j.val hhyp k with h | h | h | h
       · left; exact h
-      · right; left; rw [h, show p = case2c_pattern d₁ k₀.val i.val from rfl]
+      · right; left; rw [h, hp]
         exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3])
       · right; right; left; exact h
-      · right; right; right
-        rw [h, show p' = case2c_pattern d₁ k₀.val (i.val + 1) from by simp [p', hi'_eq]]
+      · right; right; right; rw [h, hp']
         exact Fin.ext (by
           simp [f, ZMod.val_add_one, case2c_mod3 he1_div3, Nat.mod_eq_of_lt hi])
     · have hi_eq : i.val = d₁ - 1 := by grind [ZMod.val_lt]
@@ -842,9 +843,11 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
         rw [hp_eq]; exact case2c_wrap_hyp d₁ k₀.val j.val hd1_ge3 hd1_odd
       have hj'_val : (j + k₀).val = (j.val + k₀.val) % e₁ := ZMod.val_add j k₀
       have hi1_val : (i + 1).val = 0 := by rw [ZMod.val_add_one, hi_eq]; grind [Nat.mod_self]
+      have hp : p = case2c_pattern d₁ k₀.val i.val := rfl
+      have hp₀_val : (↑p₀ : ℕ) = ↑(case2c_pattern d₁ k₀.val 0) := rfl
       rcases cover_mod3_general p p₀ j.val (j.val + k₀.val) hhyp k with h | h | h | h
       · left; exact h
-      · right; left; rw [h, show p = case2c_pattern d₁ k₀.val i.val from rfl]
+      · right; left; rw [h, hp]
         exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3])
       · right; right; left; rw [h]
         refine Fin.ext ?_
@@ -854,7 +857,7 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
       · right; right; right; rw [h]
         refine Fin.ext ?_
         simp only [f, hi1_val, ZMod.val_add_one]
-        rw [hj'_val, show (↑p₀ : ℕ) = ↑(case2c_pattern d₁ k₀.val 0) from rfl]
+        rw [hj'_val, hp₀_val]
         simp only [case2c_mod3 he1_div3, Nat.add_assoc])
 
 /-- Auxiliary: rules out both cycle lengths being ≤ 17 when m ≥ 289. -/
