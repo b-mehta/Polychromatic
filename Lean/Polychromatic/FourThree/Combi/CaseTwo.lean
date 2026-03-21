@@ -767,7 +767,10 @@ private lemma case2d_coloring_works (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d�
       · left; exact h
       · right; left; rw [h]; simp only [f]; congr 1; exact (pos_shift_one j (rot i)).symm
       · right; right; left; rw [h]; simp only [f]; congr 1; exact hpos.symm
-      · right; right; right; rw [h]; simp only [f]; congr 1
+      · right; right; right
+        rw [h]
+        simp only [f]
+        congr 1
         calc (p + vals i + 1) % e₁
             = ((p + vals i) % e₁ + 1) % e₁ := (Nat.mod_add_mod (p + vals i) e₁ 1).symm
           _ = ((j'.val + rot (i + 1)) % e₁ + 1) % e₁ := by rw [hpos]
@@ -831,10 +834,12 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
       have hp' : p' = case2c_pattern d₁ k₀.val (i.val + 1) := by simp [p', hi'_eq]
       rcases cover_mod3_general p p' j.val j.val hhyp k with h | h | h | h
       · left; exact h
-      · right; left; rw [h, hp]
+      · right; left
+        rw [h, hp]
         exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3])
       · right; right; left; exact h
-      · right; right; right; rw [h, hp']
+      · right; right; right
+        rw [h, hp']
         exact Fin.ext (by
           simp [f, ZMod.val_add_one, case2c_mod3 he1_div3, Nat.mod_eq_of_lt hi])
     · have hi_eq : i.val = d₁ - 1 := by grind [ZMod.val_lt]
@@ -851,14 +856,17 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
       have hp₀_val : (↑p₀ : ℕ) = ↑(case2c_pattern d₁ k₀.val 0) := rfl
       rcases cover_mod3_general p p₀ j.val (j.val + k₀.val) hhyp k with h | h | h | h
       · left; exact h
-      · right; left; rw [h, hp]
+      · right; left
+        rw [h, hp]
         exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3])
-      · right; right; left; rw [h]
+      · right; right; left
+        rw [h]
         refine Fin.ext ?_
         simp only [f, hi1_val]
         rw [hj'_val]
         exact (case2c_mod3 he1_div3 (j.val + k₀.val) p₀.val).symm
-      · right; right; right; rw [h]
+      · right; right; right
+        rw [h]
         refine Fin.ext ?_
         simp only [f, hi1_val, ZMod.val_add_one]
         rw [hj'_val, hp₀_val]
