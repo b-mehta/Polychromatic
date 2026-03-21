@@ -76,10 +76,10 @@ private lemma d₁_dvd_m : d₁ ∣ m := Nat.gcd_dvd_right _ _
 private lemma m_eq_d₁_mul_e₁ : m = d₁ * e₁ := (Nat.mul_div_cancel' (d₁_dvd_m (b := b))).symm
 
 instance neZero_d₁ [NeZero m] : NeZero d₁ :=
-  ⟨fun h => absurd (by rw [m_eq_d₁_mul_e₁ (m := m) (b := b), h, zero_mul]) (NeZero.ne m)⟩
+  ⟨fun h => absurd (by grind) (NeZero.ne m)⟩
 
 instance neZero_e₁ [NeZero m] : NeZero e₁ :=
-  ⟨fun h => absurd (by rw [m_eq_d₁_mul_e₁ (m := m) (b := b), h, mul_zero]) (NeZero.ne m)⟩
+  ⟨fun h => absurd (by grind only [m_eq_d₁_mul_e₁]) (NeZero.ne m)⟩
 
 /-! ### Orbit coloring framework -/
 
