@@ -44,7 +44,8 @@ private lemma ZMod.val_add_one {n : ℕ} [NeZero n] (x : ZMod n) : (x + 1).val =
 
 private lemma zmod_val_add_one (d : ℕ) [NeZero d] (i : ZMod d) :
     (i + 1).val = if i.val + 1 < d then i.val + 1 else 0 := by
-  rw [ZMod.val_add_one]; split_ifs with h
+  rw [ZMod.val_add_one]
+  split_ifs with h
   · exact Nat.mod_eq_of_lt h
   · grind [Nat.mod_self]
 
@@ -100,7 +101,8 @@ private lemma addOrderOf_b_eq [NeZero m] :
   · have : (b : ZMod m) = (b.natAbs : ZMod m) := by rw [h]; simp
     grind
   · have : (b : ZMod m) = -(b.natAbs : ZMod m) := by rw [h]; simp
-    rw [this, addOrderOf_neg]; exact key
+    rw [this, addOrderOf_neg]
+    exact key
 
 private lemma d₁_dvd_b : (d₁ : ℤ) ∣ b :=
   Int.natCast_dvd.mpr (Nat.gcd_dvd_left b.natAbs m)
@@ -198,7 +200,10 @@ private lemma cycle_index_shift_ba [NeZero m]
     ZMod.castHom d₁_dvd_m (ZMod d₁) (x + ↑(b - a)) * u⁻¹ =
     ZMod.castHom d₁_dvd_m (ZMod d₁) x * u⁻¹ + 1 := by
   simp only [map_add, map_intCast, add_mul]
-  rw [← hu]; ring_nf; rw [u.inv_mul]; ring
+  rw [← hu]
+  ring_nf
+  rw [u.inv_mul]
+  ring
 
 /-- If Φ(i, j+1) = Φ(i, j) + b, then Φ⁻¹(x+b) = (same_i, j+1). -/
 private lemma equiv_symm_shift_b {γ : Type*} [AddCommMonoid γ]
@@ -396,8 +401,10 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
       have h := Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
       have : e₁ - (e₁ - 2) = 2 := by grind
       rwa [this] at h
-    obtain ⟨_, hk⟩ := hd₂_dvd_e₁; obtain ⟨_, hl⟩ := he1_odd
-    have := Nat.le_of_dvd (by grind) hd₂_dvd_2; grind
+    obtain ⟨_, hk⟩ := hd₂_dvd_e₁
+    obtain ⟨_, hl⟩ := he1_odd
+    have := Nat.le_of_dvd (by grind) hd₂_dvd_2
+    grind
   -- π(n) and π(n+(b-a)) give the same ZMod d₂ value
   have hπ_eq : ∀ n : ZMod m, π (n + ↑(b - a)) = π n := fun n => by
     simp only [π, map_add, map_intCast]
@@ -441,14 +448,16 @@ private lemma cover_mod3_general (p₁ p₂ : Fin 3) (j₁ j₂ : ℕ)
 private lemma case2c_nonwrap_hyp (d k₀ i j : ℕ) (hd : d ≥ 3)
     (hd_odd : Odd d) (hi : i + 1 < d) : (j + (case2c_pattern d k₀ i).val) % 3 ≠
     (j + (case2c_pattern d k₀ (i + 1)).val) % 3 := by
-  obtain ⟨k, hk⟩ := hd_odd; subst hk
+  obtain ⟨k, hk⟩ := hd_odd
+  subst hk
   grind [case2c_pattern]
 
 -- Wrap coverage hypothesis: j₂ = j₁ + k₀, pattern chosen to avoid conflict.
 private lemma case2c_wrap_hyp (d k₀ j : ℕ) (hd : d ≥ 3) (hd_odd : Odd d) :
     (j + (case2c_pattern d k₀ (d - 1)).val) % 3 ≠
     (j + k₀ + (case2c_pattern d k₀ 0).val) % 3 := by
-  obtain ⟨k, hk⟩ := hd_odd; subst hk
+  obtain ⟨k, hk⟩ := hd_odd
+  subst hk
   grind [case2c_pattern]
 
 /-! ### Subcase (2d): d₁, e₁ both odd, e₁ ≥ 19
@@ -650,7 +659,8 @@ private lemma case2d_rotation_sum_exists {e d : ℕ} [NeZero d]
   have hu_lt : case2d_u e < e := by grind [case2d_u]
   have hdw' : d * (e - 2 * case2d_u e) ≥ e := by
     change d * (e - 2 * (e / 3 + e % 3)) ≥ e
-    obtain ⟨k, hk⟩ := he_odd; subst hk
+    obtain ⟨k, hk⟩ := he_odd
+    subst hk
     have h5w : 5 * ((2 * k + 1) - 2 * ((2 * k + 1) / 3 + (2 * k + 1) % 3)) ≥ 2 * k + 1 := by grind
     exact le_trans h5w (by gcongr)
   set u := case2d_u e
@@ -739,7 +749,8 @@ private lemma zmod_filter_sum_last {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i 
 /-- Position shift by 1: adding 1 to ZMod coordinate shifts position by 1 mod n. -/
 private lemma pos_shift_one {n : ℕ} [NeZero n] (j : ZMod n) (c : ℕ) :
     ((j + 1).val + c) % n = ((j.val + c) % n + 1) % n := by
-  rw [ZMod.val_add_one, Nat.mod_add_mod, Nat.mod_add_mod]; grind
+  rw [ZMod.val_add_one, Nat.mod_add_mod, Nat.mod_add_mod]
+  grind
 
 /-- (j + (S + V) % n) % n = ((j + S % n) % n + V) % n -/
 private lemma pos_shift_succ' (j S V n : ℕ) :
@@ -808,7 +819,8 @@ private lemma case2d_coloring_works (hm : m ≥ 289)
         orbitEquiv_snd_shift_ba_wrap he1_b_zero k₀ hk₀ n hi_eq
       rw [hj'_eq]
       have hi1_zero : (i + 1 : ZMod d₁) = 0 := by
-        apply ZMod.val_injective; rw [ZMod.val_add_one, hi_eq, ZMod.val_zero]
+        apply ZMod.val_injective
+        rw [ZMod.val_add_one, hi_eq, ZMod.val_zero]
         grind [Nat.mod_self]
       have hrot0 : rot (0 : ZMod d₁) = 0 := by simp [rot, ZMod.val_zero]
       rw [hi1_zero, hrot0, Nat.add_zero, ZMod.val_add, Nat.mod_mod_of_dvd _ (dvd_refl e₁)]
@@ -875,13 +887,18 @@ lemma case_two_odd_small (hm : m ≥ 289)
         exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3])
       · right; right; left; rw [h]
         have hi1_val : (i + 1).val = 0 := by
-          rw [ZMod.val_add_one, hi_eq]; grind [Nat.mod_self]
-        refine Fin.ext ?_; simp only [f, hi1_val]
-        rw [hj'_val]; exact (case2c_mod3 he1_div3 (j.val + k₀.val) p₀.val).symm
+          rw [ZMod.val_add_one, hi_eq]
+          grind [Nat.mod_self]
+        refine Fin.ext ?_
+        simp only [f, hi1_val]
+        rw [hj'_val]
+        exact (case2c_mod3 he1_div3 (j.val + k₀.val) p₀.val).symm
       · right; right; right; rw [h]
         have hi1_val : (i + 1).val = 0 := by
-          rw [ZMod.val_add_one, hi_eq]; grind [Nat.mod_self]
-        refine Fin.ext ?_; simp only [f, hi1_val, ZMod.val_add_one]
+          rw [ZMod.val_add_one, hi_eq]
+          grind [Nat.mod_self]
+        refine Fin.ext ?_
+        simp only [f, hi1_val, ZMod.val_add_one]
         rw [hj'_val, show (↑p₀ : ℕ) = ↑(case2c_pattern d₁ k₀.val 0) from rfl]
         simp only [case2c_mod3 he1_div3, Nat.add_assoc])
 
