@@ -27,6 +27,7 @@ section Case2_MultipleCycles
 variable {m : ℕ} {a b : ℤ}
 
 local notation "d₁" => Nat.gcd b.natAbs m
+local notation "d₂" => Nat.gcd (Int.natAbs (b - a)) m
 local notation "e₁" => m / d₁
 
 /-! ### Arithmetic helpers for cycle decomposition
@@ -100,7 +101,7 @@ private lemma b_zero_mod_d1 [NeZero d₁] : (b : ZMod d₁) = 0 := by
   exact Int.natCast_dvd.mpr (Nat.gcd_dvd_left b.natAbs m)
 
 private lemma ba_coprime_d1
-    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1) :
+    (h_gcd_coprime : Nat.gcd d₁ d₂ = 1) :
     Nat.Coprime (b - a).natAbs d₁ :=
   Nat.dvd_one.mp (h_gcd_coprime ▸ Nat.dvd_gcd (Nat.gcd_dvd_right _ _)
       (Nat.dvd_gcd (Nat.gcd_dvd_left _ _) (dvd_trans (Nat.gcd_dvd_right _ _) d₁_dvd_m)))
@@ -299,8 +300,8 @@ private lemma orbit_coloring_polychrom
 /-- **Subcase (2a).** $e_1$ is even. Each cycle uses two alternating colors;
     adjacent cycles skip different colors. The simplest of the four subcases. -/
 lemma case_two_e1_even (hm : m ≥ 289)
-    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min d₁ (Nat.gcd (b - a).natAbs m) > 1)
+    (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
+    (h_min : min d₁ d₂ > 1)
     (he1_even : Even e₁) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
@@ -358,8 +359,8 @@ private lemma case2b_coverage_gen (d e : ℕ) [NeZero d] [NeZero e]
     Alternating patterns with a "degenerate" position fixup at different positions
     for even and odd cycles, ensuring they do not overlap across adjacent cycles. -/
 lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
-    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min d₁ (Nat.gcd (b - a).natAbs m) > 1)
+    (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
+    (h_min : min d₁ d₂ > 1)
     (hd1_even : Even d₁) (he1_odd : Odd e₁) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
@@ -367,7 +368,7 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   have he₁_ge3 : e₁ ≥ 3 := by
     by_contra! h
     rcases (by grind : e₁ = 1 ∨ e₁ = 2) with he | he
-    · have : Nat.gcd (b - a).natAbs m ∣ d₁ := by
+    · have : d₂ ∣ d₁ := by
         have : m = d₁ := by have := hm_eq; rw [he, mul_one] at this; exact this
         rw [← this]; exact Nat.gcd_dvd_right _ _
       exact absurd (Nat.eq_one_of_dvd_one
@@ -382,11 +383,10 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   have hord : addOrderOf (b : ZMod m) = e₁ := addOrderOf_b_eq (by grind)
   let Φ := orbitEquiv hm_eq hb_zero hba_unit hord
   -- d₂ properties for the compatibility argument
-  set d₂ := Nat.gcd (b - a).natAbs m
   have hd₂_dvd : d₂ ∣ m := Nat.gcd_dvd_right _ _
   have hd₂_gt1 : d₂ > 1 := by grind
   have hd₂_dvd_ba : (d₂ : ℤ) ∣ (b - a) := by
-    simpa [Int.gcd, d₂] using Int.gcd_dvd_left (b - a) (m : ℤ)
+    simpa [Int.gcd] using Int.gcd_dvd_left (b - a) (m : ℤ)
   have hd₂_dvd_e₁ : d₂ ∣ e₁ := by
     exact (by rwa [Nat.Coprime, Nat.gcd_comm] : Nat.Coprime d₂ d₁).dvd_of_dvd_mul_right
       (mul_comm d₁ e₁ ▸ hm_eq ▸ hd₂_dvd)
@@ -780,8 +780,8 @@ private lemma pos_shift_wrap' (j S V k₀ n : ℕ) (hsum : (S + V) % n = k₀ % 
 /-- **Subcase (2d) assembled.** Constructs the coloring for the case when both d₁
     and e₁ are odd with e₁ ≥ 19, using rotated interval patterns. -/
 private lemma case2d_coloring_works (hm : m ≥ 289)
-    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min d₁ (Nat.gcd (b - a).natAbs m) > 1)
+    (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
+    (h_min : min d₁ d₂ > 1)
     (hd1_odd : Odd d₁) (he1_odd : Odd e₁)
     (he1_ge : e₁ ≥ 19) (h3 : ¬ (3 ∣ d₁)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
@@ -849,8 +849,8 @@ private lemma case2c_mod3 (h3e : 3 ∣ e₁) (x y : ℕ) : (x % e₁ + y) % 3 = 
 /-- **Subcase (2c):** d₁ and e₁ are both odd, with e₁ ≤ 17 and 3 ∣ e₁.
     Uses shifted periodic 012-patterns with different shifts for adjacent cycles. -/
 lemma case_two_odd_small (hm : m ≥ 289)
-    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min d₁ (Nat.gcd (b - a).natAbs m) > 1)
+    (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
+    (h_min : min d₁ d₂ > 1)
     (hd1_odd : Odd d₁)
     (he1_div3 : 3 ∣ e₁) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
@@ -934,8 +934,8 @@ private lemma no_both_e_small {m' d d' : ℕ} (hm : m' ≥ 289) (hcop : Nat.gcd 
 /-- **Main Case 2 (Multiple Cycles).** Aggregates all subcases (2a)–(2d).
     First applies WLOG to ensure 3 ∤ d₁, then dispatches on parity of d₁ and e₁. -/
 lemma main_case_two (hm : m ≥ 289)
-    (h_gcd_coprime : Nat.gcd d₁ (Nat.gcd (b - a).natAbs m) = 1)
-    (h_min : min d₁ (Nat.gcd (b - a).natAbs m) > 1) :
+    (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
+    (h_min : min d₁ d₂ > 1) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   rcases Nat.even_or_odd e₁ with he | ho
   · exact case_two_e1_even hm h_gcd_coprime h_min he
@@ -970,15 +970,15 @@ lemma main_case_two (hm : m ≥ 289)
       -- Prove dispatch: given ¬(3 ∣ d₁), split on e₁ size
       intro a' b' hcop hmin hd₁_odd he₁_odd h3_nd₁
       set d := Nat.gcd b'.natAbs m
-      set d₂ := Nat.gcd (b' - a').natAbs m
+      set d₂' := Nat.gcd (b' - a').natAbs m
       set e := m / d
       have hd_dvd : d ∣ m := Nat.gcd_dvd_right _ _
-      have hd₂_dvd : d₂ ∣ m := Nat.gcd_dvd_right _ _
+      have hd₂_dvd : d₂' ∣ m := Nat.gcd_dvd_right _ _
       by_cases he_le : e ≤ 17
       · -- Case 2c: prove 3 ∣ e
-        -- Since gcd(d,d₂)=1 and 3 ∤ d, if 3 ∣ d₂ then 3 ∣ m hence 3 ∣ e.
-        -- If 3 ∤ d₂: swap and show e₂ ≥ 19 (contradiction with both ≤ 17).
-        by_cases h3d₂ : 3 ∣ d₂
+        -- Since gcd(d,d₂')=1 and 3 ∤ d, if 3 ∣ d₂' then 3 ∣ m hence 3 ∣ e.
+        -- If 3 ∤ d₂': swap and show e₂ ≥ 19 (contradiction with both ≤ 17).
+        by_cases h3d₂ : 3 ∣ d₂'
         · have h3m : 3 ∣ m := dvd_trans h3d₂ hd₂_dvd
           have h3e : 3 ∣ e :=
             ((Nat.Prime.coprime_iff_not_dvd (by decide)).mpr h3_nd₁).dvd_of_dvd_mul_left
