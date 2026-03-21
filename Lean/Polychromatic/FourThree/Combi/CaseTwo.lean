@@ -359,7 +359,6 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
         (h_gcd_coprime ▸ Nat.dvd_gcd this (dvd_refl _))) (by grind)
     · grind
   haveI : NeZero m := ⟨by grind⟩
-  have hb_zero : (Int.cast b : ZMod d₁) = 0 := b_zero_mod_d1
   have hba_unit : IsUnit (Int.cast (b - a) : ZMod d₁) :=
     isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   let Φ := orbitEquiv hba_unit
@@ -494,7 +493,6 @@ private def intervalColors : Fin 3 → Finset (Fin 3)
   | 1 => {1, 2}
   | 2 => {0, 2}
 
-
 /-- Combined: for any j, {basePattern(j), basePattern(j+1 mod e₁)} is the
     interval pair of whichInterval(j). -/
 private lemma basePattern_consec_pair {e j : ℕ} (he : Odd e) (hge : e ≥ 19) (hj : j < e) :
@@ -574,7 +572,6 @@ private lemma basePattern_rotation_covers {e j : ℕ} (he : Odd e) (hge : e ≥ 
   grind
 
 private lemma case2d_wrap_shift [NeZero m]
-    (hb_zero : (b : ZMod d₁) = 0)
     (hba_unit : IsUnit ((b - a : ℤ) : ZMod d₁)) :
     ∃ k₀ : ZMod e₁, (d₁ : ℕ) • ((b - a : ℤ) : ZMod m) = (k₀.val : ℕ) • (b : ZMod m) := by
   set Φ := orbitEquiv hba_unit
@@ -583,7 +580,8 @@ private lemma case2d_wrap_shift [NeZero m]
     set f := ZMod.castHom d₁_dvd_m (ZMod d₁)
     have hfφ : f (Φ q) = q.1 * ((b - a : ℤ) : ZMod d₁) := by
       change f (orbitMap m a b q) = _
-      simp only [orbitMap, map_add, map_mul, map_natCast, map_intCast, hb_zero, mul_zero, add_zero]
+      simp only [orbitMap, map_add, map_mul, map_natCast, map_intCast,
+        b_zero_mod_d1, mul_zero, add_zero]
       rw [ZMod.natCast_val, ZMod.cast_id]
     rw [Equiv.apply_symm_apply] at hfφ
     have : f (d₁ • ((b - a : ℤ) : ZMod m)) = 0 := by
@@ -765,12 +763,11 @@ private lemma case2d_coloring_works (hm : m ≥ 289)
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   haveI : NeZero m := ⟨by grind⟩
-  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1
   have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 :=
     addOrderOf_b_eq (b := b) (m := m) ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv hba_unit
-  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hb_zero hba_unit
+  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hba_unit
   have hd1_ge5 : d₁ ≥ 5 := by grind
   obtain ⟨vals, hvals_bound, hvals_sum⟩ := case2d_rotation_sum_exists hd1_ge5 he1_ge he1_odd k₀.val
   let rot : ZMod d₁ → ℕ := fun i =>
@@ -832,12 +829,11 @@ lemma case_two_odd_small (hm : m ≥ 289)
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
   have hm_eq := m_eq_d₁_mul_e₁ (m := m) (b := b)
   haveI : NeZero m := ⟨by grind⟩
-  have hb_zero : (b : ZMod d₁) = 0 := b_zero_mod_d1
   have hba_unit := isUnit_intCast_of_natAbs_coprime (ba_coprime_d1 h_gcd_coprime)
   have he1_b_zero : e₁ • (b : ZMod m) = 0 :=
     addOrderOf_b_eq (b := b) (m := m) ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv hba_unit
-  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hb_zero hba_unit
+  obtain ⟨k₀, hk₀⟩ := case2d_wrap_shift hba_unit
   have hd1_ge3 : d₁ ≥ 3 := by grind
   let f : ZMod d₁ × ZMod e₁ → Fin 3 := fun ⟨i, j⟩ =>
     ⟨(j.val + (case2c_pattern d₁ k₀.val i.val).val) % 3, Nat.mod_lt _ (by grind)⟩
