@@ -46,7 +46,7 @@ Use `Nat.mod_eq_of_lt (by omega)` instead.
 - Unit cancellation: `IsUnit.mul_right_cancel` or `IsUnit.mul_left_eq_zero` work without integral domain
 
 ### Fin arithmetic in ZMod proofs
-- `hord ▸` (subst-style rewrite) causes kernel errors with `Fin` types — use `rwa [hord] at this`
+- Prefer `rw`/`rwa` over `▸` (subst-style rewrite) — `rw` is more readable
 - `Fin.val_one'` gives `1 % n`, not `1` — need `Nat.mod_eq_of_lt` to simplify when `n ≥ 2`
 - `Fin.val_add` gives `(a + b) % n` — may need two `Nat.mod_eq_of_lt` calls
 
@@ -55,14 +55,6 @@ Use `Nat.mod_eq_of_lt (by omega)` instead.
 - `ZMod.addOrderOf_coe` for addOrderOf of a cast element
 - `addOrderOf_dvd_of_nsmul_eq_zero` for extracting divisibility from `n • x = 0`
 - `Fintype.bijective_iff_injective_and_card` for finite bijection from injectivity + card match
-- `push_cast; ring` closes most pure ZMod algebra goals
-
-## Equiv.ofBijective patterns
-
-- `(Equiv.ofBijective φ hbij) x` is definitionally `φ x`, so hypotheses about `φ` apply to `Φ` without conversion.
-- `Φ.symm` uses `Classical.indefiniteDescription` and does NOT reduce — proofs about `Φ.symm` require `Equiv.apply_symm_apply` or `Equiv.symm_apply_eq`.
-- When multiple proofs derive properties of `Φ.symm`, extract shared reasoning as private lemmas (e.g. "if `Φ` has a shift property then `Φ⁻¹` has the corresponding inverse-shift property").
-- `set` bindings affect definitional equality — `set j := expr` makes goals see `j` instead of `expr`. If you hoist a proof out of its tactic block, `set` bindings are no longer in scope and terms involving `Equiv.symm` may not unify.
 
 ## Don't extract tactic blocks that create typeclass instances
 `haveI : NeZero m := ⟨by grind⟩` introduces a local instance. Extracting into a helper requires threading instances explicitly, adding more complexity than it removes. Leave these inline.
