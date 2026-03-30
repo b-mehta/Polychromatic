@@ -29,26 +29,22 @@ Patterns for shortening, simplifying, and deduplicating Lean proofs.
 - **`simp [Fin.ext_iff] <;> omega`** → `grind [Fin.ext_iff]` — works for Fin equality/inequality goals with arithmetic.
 - **`grind [mathlib_lemma]`** — passing a mathlib lemma (like `Nat.mod_add_div`) directly to grind works when grind needs the fact but can handle the surrounding commutativity/rearrangement.
 - **`rw [ht]; omega`** → `grind` — when `ht` is a substitution like `g = 3*t`, grind handles the rewrite+arithmetic.
-- Does NOT work when `rw` unfolds a local `have`-bound definition that `grind` can't see through.
+- **`grind [lemma.symm]` → `grind [lemma]`** — grind handles commutativity/symmetry internally, so `.symm` is usually unnecessary.
 - Does NOT work for `simp only [vadd_finset_insert, ...]; grind` — grind can't handle `vadd` on finsets without `simp` normalizing first.
 
 ## grind limitations
 
 - `grind` CANNOT handle ZMod cast arithmetic with variable modulus. The ℕ-level reasoning works but ZMod-level casts are invisible to `grind`. Requires manual `Nat.cast` steps.
-- `split_ifs <;> grind` fails for nested mod — grind can't handle `(v+3)%6` from hypothesis `v%6=0`.
 
 ## omega limitations
 
-- `omega` treats variable multiplication as nonlinear — `g * (q + 1)` won't distribute. Fix: `rw [show g * (q + 1) = g * q + g from by ring]; omega`. Use `ring` to expand to a form where all multiplications have at least one literal operand.
-- `set m := (expr).toNat` leaves an `if` in context that confuses `omega`. Use `by linarith` when an `(m : ℤ) = expr` hypothesis is available. Alternatively, need explicit positivity facts for omega to work.
-- `omega` can fail at a call site due to many division/modular terms in context, even when it proves the same statement standalone. Fix with `change` to narrow the goal before `omega`. In particular, `Nat.div_add_mod` introduces both `/` and `%` terms — place it *after* any `omega` call that would choke on them.
-- `omega` cannot prove `k = 0` from `A.length * h + (A.length + 1) * k = m` and `i < A.length * h` — this is nonlinear. Use `nlinarith` with relevant hypotheses instead.
+Prefer `grind` or `lia` over `omega` — they handle more cases, especially nonlinear arithmetic and division/modular terms.
 
 ## Deduplication strategies
 
 - **`wlog` for symmetric cases** — when two branches of a case split have identical proof structure with swapped variables, `wlog h : P with H` followed by the symmetric case eliminates one branch entirely.
 - **`suffices` to deduplicate symmetric case splits** — when a `by_cases` produces two branches with identical downstream proof structure, use `suffices ∃ ..., P ∧ Q` to extract the common proof, then have each branch only produce the witness.
-- **Deduplicate `by_cases` with weaker intermediate goals** — when two branches prove slightly different intermediate types but share the same conclusion, hoist the conclusion to a `have ... by` block containing the `by_cases`, and use `omega` to bridge.
+- **Deduplicate `by_cases` with weaker intermediate goals** — when two branches prove slightly different intermediate types but share the same conclusion, hoist the conclusion to a `have ... by` block containing the `by_cases`, and use `grind` or `lia` to bridge.
 - **Extract repeated inline definitions** — when the same `let f := ...` appears in multiple helpers, extract it as a `private def`.
 - **Parameterize repeated proof skeletons** — when multiple lemmas share the same skeleton differing only in a function and a coverage lemma, extract the skeleton into a helper parameterized by those differences.
 - **Factor duplicated proof blocks** — look for identical multi-line blocks across branches and hoist shared proofs.
@@ -69,7 +65,7 @@ When a `private lemma` is used exactly once, inline it at the call site:
 3. **Factor duplicated proof blocks** — look for identical multi-line blocks and hoist shared proofs.
 4. **`lean_multi_attempt` for tactic replacement** — test 2–3 alternatives at once. Works well for single-tactic replacements. Does NOT work for replacing multi-line `have`/`calc` blocks.
 5. **Remove unused parameters** — grep for `_h` prefix to find them quickly. After inlining a helper, check whether the inlined proof still needs all the enclosing lemma's parameters.
-6. **Use the LSP, not `lake env lean`** — `lean_diagnostic_messages` is much faster for verifying individual edits than rebuilding the whole file.
+6. **Verify incrementally** — check each edit individually rather than rebuilding the whole file.
 
 ## Nat.mod_mod_of_dvd for composite period proofs
 `Nat.mod_mod_of_dvd p (dvd_mul_right a b)` proves `p % (a * b) % a = p % a`.
@@ -93,16 +89,13 @@ via `fun k => by simpa using h k 0`.
 
 - **Don't join separate tactics with `;` in multi-line proofs** — in a proof that already spans multiple lines, `rw [...]; omega` at the end is an antipattern. Either make the entire proof a one-liner (if it fits under 100 chars), or keep each tactic on its own line. Exception: single-line proofs like `by rw [h]; omega` are fine.
 - **Use the full 100-character line limit** — don't break lines at 80 characters when the project allows 100. Join continuation lines (`:=` assignments, `with` clauses, function arguments) onto the previous line whenever the result fits under 100 chars.
-- **`grind [lemma.symm]` → `grind [lemma]`** — grind handles commutativity/symmetry internally, so `.symm` is usually unnecessary.
 
 ## Golfing workflow
 
-- **Understand the math first.** For each declaration, write down what it proves and why in plain language. Then attempt to formalise from scratch using `lean_multi_attempt` to test different approaches, without reference to the existing proof. This often finds dramatically shorter proofs.
 - **Try `grind` with lemma hints.** Many multi-line proofs that manually case-split and chain `have` statements can be closed by a single `grind [relevant_lemma₁, relevant_lemma₂]`. Key hints to try: `Nat.div_add_mod`, `Nat.mul_add_mod`, `Nat.sub_add_cancel`, `equiEndpoint_monotone`, `Finset.card_pair`, `Finset.card_le_three`.
 - **`rw [...] at ...; omega` compression.** In contradiction proofs with wrap/no-wrap subcases, replace 3-4 line blocks (`have : (v+g)%m = v+g := ...; rw [...] at ...; omega`) with a single line: `rw [Nat.mod_eq_of_lt h] at hvg_hi; omega`.
 - **`simp + grind` for Finset cardinality contradictions.** Instead of explicit `have hsub : S ⊆ T; grind [card_le_card hsub, card_le_three]`, try `simp only [h] at hcard; grind [Finset.card_pair]`.
 - **`calc` one-liners for bound chains.** Replace `have h1 := ...; have h2 := ...; omega` with `calc x < y := ...; _ ≤ z := ...` or `le_trans ... ...`.
-- **Make atomic changes.** Edit one proof at a time, verify with `lean_diagnostic_messages` after each. Large batch changes consistently fail on complex arithmetic files.
 - **Use `grind` not `omega` for equiEndpoint.** `grind` handles `j+1+1` vs `j+2` normalisation that `omega` can't, especially with `grind [equiEndpoint_monotone]`.
 
 ## Finding simplifications systematically
