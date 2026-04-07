@@ -26,8 +26,7 @@ open Finset
 /-- A finset has cardinality at most 1 iff its underlying set is subsingleton. -/
 lemma Finset.card_le_one_iff_subsingleton {α : Type*} {S : Finset α} :
     #S ≤ 1 ↔ (S : Set α).Subsingleton := by
-  rw [Finset.card_le_one_iff_subsingleton_coe, ← Set.subsingleton_coe]
-  rfl
+  rw [Finset.card_le_one_iff_subsingleton_coe, ← Set.subsingleton_coe]; rfl
 
 lemma Filter.Tendsto.exists_le_lt {α : Type*} [LinearOrder α] [NoMaxOrder α] {f : ℕ → α}
     (hf : Tendsto f atTop atTop) (n : α) (hn : f 0 ≤ n) : ∃ m, f m ≤ n ∧ n < f (m + 1) := by
@@ -40,7 +39,7 @@ lemma Filter.Tendsto.exists_le_lt {α : Type*} [LinearOrder α] [NoMaxOrder α] 
 open Pointwise in
 /-- The cardinality of `(S - S) \ {0}` is at most `|S| * (|S| - 1)`. -/
 lemma card_sub_erase_zero_le {G : Type*} [DecidableEq G] [AddGroup G] {S : Finset G} :
-    #((S - S).erase 0) ≤ #S * (#S - 1) := by
+    #((S - S).erase 0) ≤ #S * (#S - 1) :=
   calc
     #((S - S).erase 0) = #((Finset.image₂ (· - ·) S S).erase 0) := rfl
     _ = #((S.biUnion fun x ↦ S.image (x - ·)).erase 0) := by rw [← biUnion_image_left]
@@ -57,7 +56,8 @@ lemma StrictMono.exists_le_lt {f : ℕ → ℕ} (hf : StrictMono f) (hf₀ : f 0
     ∃ m, f m ≤ n ∧ n < f (m + 1) :=
   hf.tendsto_atTop.exists_le_lt _ (by simp [hf₀])
 
-lemma gcd_pos {ι : Type*} {f : ι → ℤ} {s : Finset ι} (hf : ∃ i ∈ s, f i ≠ 0) : 0 < s.gcd f := by
+lemma gcd_pos {ι : Type*} {f : ι → ℤ} {s : Finset ι} (hf : ∃ i ∈ s, f i ≠ 0) :
+    0 < s.gcd f := by
   induction s using Finset.cons_induction_on with
   | empty => simp at hf
   | cons a s has ih =>
@@ -72,9 +72,7 @@ lemma gcd_pos {ι : Type*} {f : ι → ℤ} {s : Finset ι} (hf : ∃ i ∈ s, f
 lemma Fintype.piFinset_inter {ι α : Type*} [DecidableEq ι] [Fintype ι] [DecidableEq α]
     {s t : ι → Finset α} :
     Fintype.piFinset s ∩ Fintype.piFinset t = Fintype.piFinset (fun i ↦ s i ∩ t i) := by
-  ext j
-  simp only [mem_inter, mem_piFinset]
-  grind
+  ext j; simp only [mem_inter, mem_piFinset]; grind
 
 section
 
@@ -85,8 +83,7 @@ lemma uniformOn_apply_finset' {Ω : Type*} [DecidableEq Ω] [MeasurableSpace Ω]
     uniformOn (s : Set Ω) (t : Set Ω) = #(s ∩ t) / #s := by
   rw [uniformOn, cond_apply hs, count_apply_finset' hs, ← coe_inter, count_apply_finset']
   · rw [div_eq_mul_inv, mul_comm]
-  rw [coe_inter]
-  exact hs.inter ht
+  rw [coe_inter]; exact hs.inter ht
 
 lemma uniformOn_apply_finset {Ω : Type*} [DecidableEq Ω] [MeasurableSpace Ω]
     [MeasurableSingletonClass Ω] {s t : Finset Ω} :
@@ -112,8 +109,7 @@ open Classical in
 lemma pi_pi' {f : ι → Set Ω} {s : Finset ι} :
     (Measure.pi P) ((s : Set ι).pi f) = ∏ i ∈ s, P i (f i) := by
   have : (s : Set ι).pi f = Set.univ.pi (fun i ↦ if i ∈ s then f i else Set.univ) := by
-    ext x
-    simp
+    ext x; simp
   simp [this, Measure.pi_pi, apply_ite]
 
 open Classical in
@@ -128,16 +124,15 @@ lemma map_pi_restrict (i₁ : Set ι) :
     Measure.pi P (i₁.restrict ⁻¹' Set.univ.pi t)
       = ∏ i, P i (if h : i ∈ i₁ then t ⟨i, h⟩ else Set.univ) := by rw [this, Measure.pi_pi]
     _ = ∏ i, if h : i ∈ i₁ then P i (t ⟨i, h⟩) else 1 := by simp [apply_dite (P _)]
-    _ = _ := (Finset.prod_bij_ne_one (fun i _ _ ↦ i.1) (by simp) (by simp) (by simp) (by simp)).symm
+    _ = _ := (Finset.prod_bij_ne_one (fun i _ _ ↦ i.1) (by simp) (by simp) (by simp)
+        (by simp)).symm
 
 lemma indepFun_restrict_restrict_pi {s t : Set ι} (hi : Disjoint s t) :
     IndepFun s.restrict t.restrict (Measure.pi P) := by
   lift s to Finset ι using s.toFinite
   lift t to Finset ι using t.toFinite
   simp only [disjoint_coe] at hi
-  have : iIndepFun (fun x y ↦ y x) (Measure.pi P) := iIndepFun_pi (X := fun i x ↦ x) (by fun_prop)
-  have := this.indepFun_finset s t hi (by fun_prop)
-  exact this
+  exact (iIndepFun_pi (X := fun i x ↦ x) (by fun_prop)).indepFun_finset s t hi (by fun_prop)
 
 lemma pi_restrict_inter_restrict_eq {s t : Set ι} (hi : Disjoint s t)
     (A : Set (s → Ω)) (B : Set (t → Ω)) (hA : MeasurableSet A) (hB : MeasurableSet B) :
@@ -152,11 +147,9 @@ lemma MeasurableSet.of_restrict_preimage {ι β : Type*} [MeasurableSpace β]
   obtain ⟨x, -⟩ := hT
   classical
   let g (f : s → β) (y : ι) : β := if hy : y ∈ s then f ⟨y, hy⟩ else x y
-  have hg : Measurable (fun f y ↦ if hy : y ∈ s then f ⟨y, hy⟩ else x y : (s → β) → _) :=
-    measurable_pi_lambda _ (fun i ↦ by split <;> fun_prop)
+  have hg : Measurable g := measurable_pi_lambda _ (fun i ↦ by simp only [g]; split <;> fun_prop)
   convert h.preimage hg
-  ext i
-  simp
+  ext i; simp [g]
 
 lemma pi_inter_eq (s t : Set ι) (hst : Disjoint s t)
     (A B : Set (ι → Ω)) (hs : DependsOn (· ∈ A) s) (ht : DependsOn (· ∈ B) t)
@@ -168,50 +161,39 @@ lemma pi_inter_eq (s t : Set ι) (hst : Disjoint s t)
   · simp
   obtain ⟨A', rfl⟩ : ∃ A', A = s.restrict ⁻¹' A' := dependsOn_iff_exists_comp.1 hs
   obtain ⟨B', rfl⟩ : ∃ B', B = t.restrict ⁻¹' B' := dependsOn_iff_exists_comp.1 ht
-  rw [pi_restrict_inter_restrict_eq hst]
-  · exact hA.of_restrict_preimage hAne
-  · exact hB.of_restrict_preimage hBne
+  exact pi_restrict_inter_restrict_eq hst _ _ (hA.of_restrict_preimage hAne)
+    (hB.of_restrict_preimage hBne)
 
 end
 
-
-
 namespace Finpartition
 
+/-- Computes the endpoint of the `i`-th part in an equipartition of `n` into `k` parts. -/
 def equiEndpoint (n k i : ℕ) : ℕ :=
   n / k * i + min (n % k) i
 
-lemma equiEndpoint_lo {n k : ℕ} : equiEndpoint n k 0 = 0 := by
-  simp [equiEndpoint]
+lemma equiEndpoint_lo {n k : ℕ} : equiEndpoint n k 0 = 0 := by simp [equiEndpoint]
 
 lemma equiEndpoint_hi {n k : ℕ} (hk : k ≠ 0) : equiEndpoint n k k = n := by
   rw [equiEndpoint, min_eq_left (Nat.mod_lt n hk.bot_lt).le, Nat.div_add_mod']
 
 lemma equiEndpoint_monotone {n k : ℕ} : Monotone (equiEndpoint n k) := by
-  rintro i j h
-  rw [equiEndpoint, equiEndpoint]
-  gcongr
+  rintro i j h; rw [equiEndpoint, equiEndpoint]; gcongr
 
 lemma equiEndpoint_strictMono {n k : ℕ} (hk : k ≠ 0) (hkn : k ≤ n) :
     StrictMono (equiEndpoint n k) := by
-  rintro i j h
-  rw [equiEndpoint, equiEndpoint]
-  apply add_lt_add_of_lt_of_le
-  · gcongr
-    exact Nat.div_pos hkn hk.bot_lt
-  · gcongr
+  rintro i j h; rw [equiEndpoint, equiEndpoint]
+  exact add_lt_add_of_lt_of_le (by gcongr; exact Nat.div_pos hkn hk.bot_lt) (by gcongr)
 
 open Function in
 theorem equipartitionToIco.extracted_2 {n k a : ℕ} :
     Pairwise
-      (Disjoint on (fun i ↦ Ico (a + equiEndpoint n k i) (a + equiEndpoint n k (i + 1)))) := by
+      (Disjoint on fun i ↦ Ico (a + equiEndpoint n k i) (a + equiEndpoint n k (i + 1))) := by
   intro i j h
   simp only [Function.onFun, ← Finset.disjoint_coe, coe_Ico]
   wlog hij : i ≤ j generalizing i j
   · exact (this h.symm (by order)).symm
-  have : equiEndpoint n k (i + 1) ≤ equiEndpoint n k j :=
-    equiEndpoint_monotone (by grind)
-  simp [this]
+  simp [equiEndpoint_monotone (by grind : i + 1 ≤ j)]
 
 theorem equipartitionToIco.extracted_3 {a b k : ℕ} (hk₀ : k ≠ 0) (hk : k ≤ b - a) :
     ((range k).biUnion
@@ -221,18 +203,17 @@ theorem equipartitionToIco.extracted_3 {a b k : ℕ} (hk₀ : k ≠ 0) (hk : k �
   · simp only [biUnion_subset_iff_forall_subset, mem_range]
     intro i hi
     apply Ico_subset_Ico (by simp)
-    calc
-      _ ≤ a + equiEndpoint (b - a) k k := add_le_add_right (equiEndpoint_monotone (by grind)) a
+    calc _ ≤ a + equiEndpoint (b - a) k k := add_le_add_right (equiEndpoint_monotone (by grind)) a
       _ ≤ b := by rw [equiEndpoint_hi hk₀]; omega
   · simp only [subset_iff, mem_Ico, mem_biUnion, mem_range, and_imp]
     intro x hax hxb
     obtain ⟨i, hi, hi'⟩ :=
       (equiEndpoint_strictMono hk₀ hk).exists_le_lt (by rw [equiEndpoint_lo]) (x - a)
     have : i < k := by
-      have : equiEndpoint (b - a) k k = b - a := equiEndpoint_hi hk₀
       by_contra!
-      have : equiEndpoint (b - a) k k ≤ equiEndpoint (b - a) k i := equiEndpoint_monotone (by grind)
-      grind
+      have : equiEndpoint (b - a) k k ≤ equiEndpoint (b - a) k i :=
+        equiEndpoint_monotone (by grind)
+      rw [equiEndpoint_hi hk₀] at this; grind
     exact ⟨i, this, by grind⟩
 
 theorem equipartitionToIco_nonempty {a b k i : ℕ} (hk₀ : k ≠ 0) (hk : k ≤ b - a) :
@@ -240,6 +221,7 @@ theorem equipartitionToIco_nonempty {a b k i : ℕ} (hk₀ : k ≠ 0) (hk : k �
   simp only [nonempty_Ico, add_lt_add_iff_left]
   exact equiEndpoint_strictMono hk₀ hk (Nat.lt_succ_self i)
 
+/-- An equipartition of `Finset.Ico a b` into `k` contiguous intervals. -/
 def equipartitionToIco (a b k : ℕ) : Finpartition (Finset.Ico a b) :=
   if h : k ≠ 0 ∧ k ≤ b - a then {
     parts := (range k).image fun i ↦
@@ -247,16 +229,13 @@ def equipartitionToIco (a b k : ℕ) : Finpartition (Finset.Ico a b) :=
     supIndep := by
       rw [supIndep_iff_pairwiseDisjoint]
       simp_rw [coe_image, coe_range]
-      apply Set.Pairwise.image
-      intro i hi j hj h
-      exact equipartitionToIco.extracted_2 h
+      exact Set.Pairwise.image fun i _ j _ h ↦ equipartitionToIco.extracted_2 h
     sup_parts := by
       rw [sup_eq_biUnion, image_biUnion]
       exact equipartitionToIco.extracted_3 h.1 h.2
     bot_notMem := by
       simp only [bot_eq_empty, mem_image, not_exists, not_and, ← nonempty_iff_ne_empty]
-      intro i hi
-      exact equipartitionToIco_nonempty h.1 h.2 }
+      exact fun i _ ↦ equipartitionToIco_nonempty h.1 h.2 }
   else ⊥
 
 lemma card_equipartitionToIco_parts {a b k : ℕ} (hk : k ≠ 0) (hkn : k ≤ b - a) :
@@ -265,11 +244,8 @@ lemma card_equipartitionToIco_parts {a b k : ℕ} (hk : k ≠ 0) (hkn : k ≤ b 
   intro i j h
   by_contra! h'
   have h'' := equipartitionToIco.extracted_2 (a := a) (n := b - a) (k := k) h'
-  dsimp at h
   simp only [Function.onFun, h, disjoint_self, bot_eq_empty] at h''
-  have : (Ico (a + equiEndpoint (b - a) k j) (a + equiEndpoint (b - a) k (j + 1))).Nonempty :=
-    equipartitionToIco_nonempty hk hkn
-  simp [h''] at this
+  exact (equipartitionToIco_nonempty hk hkn).ne_empty h''
 
 lemma card_of_mem_equipartitionToIco_parts_aux {n k i : ℕ} :
     equiEndpoint n k (i + 1) - equiEndpoint n k i = if i < n % k then n / k + 1 else n / k := by
@@ -283,8 +259,7 @@ theorem card_of_mem_equipartitionToIco_parts
     mem_image, mem_range] at hi
   obtain ⟨i, hi, rfl⟩ := hi
   simp only [Nat.card_Ico]
-  have := card_of_mem_equipartitionToIco_parts_aux (n := b - a) (k := k) (i := i)
-  grind
+  grind [card_of_mem_equipartitionToIco_parts_aux]
 
 lemma isEquipartition_equipartitionToIco {a b k : ℕ} (hk : k ≠ 0) (hkn : k ≤ b - a) :
     (equipartitionToIco a b k).IsEquipartition := by
@@ -295,8 +270,7 @@ lemma isEquipartition_equipartitionToIco {a b k : ℕ} (hk : k ≠ 0) (hkn : k �
     mem_image, mem_range] at hi
   obtain ⟨i, hi, rfl⟩ := hi
   simp only [Nat.card_Ico]
-  have := card_of_mem_equipartitionToIco_parts_aux (n := b - a) (k := k) (i := i)
-  grind
+  grind [card_of_mem_equipartitionToIco_parts_aux]
 
 lemma exists_equipartition_Ico {a b k : ℕ} (hk : k ≠ 0) (hkn : k ≤ b - a) :
     ∃ P : Finpartition (Finset.Ico a b),

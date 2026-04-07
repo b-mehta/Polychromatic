@@ -25,13 +25,11 @@ theorem markov [DivisionSemiring α] [IsStrictOrderedRing α]
     (hp : ∀ i ∈ s, 0 ≤ p i) (hf : ∀ i ∈ s, 0 ≤ f i) (hc : 0 < c) :
     ∑ i ∈ s with c ≤ f i, p i ≤ (∑ i ∈ s, p i * f i) / c := by
   rw [le_div_iff₀ hc]
-  calc
-    (∑ i ∈ s with c ≤ f i, p i) * c = ∑ i ∈ s with c ≤ f i, p i * c := by rw [sum_mul]
-    _ ≤ ∑ i ∈ s with c ≤ f i, p i * f i := sum_le_sum fun i hi ↦ by
-      simp only [mem_filter] at hi
-      exact mul_le_mul_of_nonneg_left hi.2 (hp _ hi.1)
+  calc (∑ i ∈ s with c ≤ f i, p i) * c = ∑ i ∈ s with c ≤ f i, p i * c := by rw [sum_mul]
+    _ ≤ ∑ i ∈ s with c ≤ f i, p i * f i := sum_le_sum fun i hi ↦
+        mul_le_mul_of_nonneg_left (mem_filter.mp hi).2 (hp _ (mem_filter.mp hi).1)
     _ ≤ ∑ i ∈ s, p i * f i := sum_le_sum_of_subset_of_nonneg (filter_subset _ _)
-      fun i hi _ ↦ mul_nonneg (hp i hi) (hf i hi)
+        fun i hi _ ↦ mul_nonneg (hp i hi) (hf i hi)
 
 /-- Markov's inequality with absolute values. -/
 theorem markov_abs [DivisionRing α] [IsStrictOrderedRing α]
