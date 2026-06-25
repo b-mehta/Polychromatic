@@ -1,6 +1,10 @@
-import Polychromatic.FourThree.Combi.BlockColour
+/-
+Copyright (c) 2026 Bhavik Mehta. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Bhavik Mehta
+-/
 
-open Finset Pointwise
+import Polychromatic.FourThree.Combi.BlockColour
 
 /-! ## Main Case 1: Single Cycle (paper §4.1)
 
@@ -15,6 +19,8 @@ multiplication by a unit (see `exists_g_of_coprime`). The proof then splits:
   to a translate of a Table 1 set. Six per-residue lemmas handle `m mod 3g`.
 - **(1d)** `3 ∣ m`, `s = 6`: explicit periodic colorings of period `g` or `g+1`.
 -/
+
+open Finset Pointwise
 
 section Case1_SingleCycle
 
@@ -70,7 +76,7 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : �
     have hdam : (q + 1) * j + p % (q + 1) = p := Nat.div_add_mod p (q + 1)
     have hmod : p % (q + 1) < q + 1 := Nat.mod_lt p (by omega)
     refine ⟨by omega, ?_, ?_⟩ <;> grind [equiEndpoint, Nat.div_add_mod p (q + 1)]
-  · rename_i hge; push_neg at hge
+  · rename_i hge; push Not at hge
     set d := (p - bd) / q
     have hdam : q * d + (p - bd) % q = p - bd := Nat.div_add_mod (p - bd) q
     have hmod : (p - bd) % q < q := Nat.mod_lt _ hq_pos
@@ -163,7 +169,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
     have : jg + s - j₀ = s + 1 ∨ jg + s - j₀ = s + 2 := by omega
     rcases this with h | h <;> [left; right] <;>
       rw [h, Nat.add_mod_left, Nat.mod_eq_of_lt (by omega)]
-  · push_neg at hvg_wrap
+  · push Not at hvg_wrap
     have hvg_eq : (v + g) % m = v + g - m := by
       rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
     rw [hvg_eq] at hvg_lo hvg_hi
@@ -314,7 +320,7 @@ private lemma straddle1_gap2 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le :
     have hvg_ge : v + g ≥ equiEndpoint m s (j₀ + 1 + 1) := by omega
     by_cases hwrap : v + g < m
     · rw [hjg_val, Nat.mod_eq_of_lt hwrap] at hvg_hi; omega
-    · push_neg at hwrap
+    · push Not at hwrap
       rw [hjg_val, Nat.mod_eq_sub_mod hwrap, Nat.mod_eq_of_lt (by omega)] at hvg_lo; omega
   · have hj₀_eq : j₀ = s - 1 := by omega
     have hjg_val : jg = 0 := by omega
@@ -372,7 +378,7 @@ private lemma straddle2_gap1 (s g m : ℕ) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
     by_cases hwrap : v + g < m
     · have : (v + g) % m = v + g := Nat.mod_eq_of_lt hwrap
       omega
-    · push_neg at hwrap
+    · push Not at hwrap
       have : (v + g) % m = v + g - m := by
         rw [Nat.mod_eq_sub_mod hwrap, Nat.mod_eq_of_lt (by omega)]
       omega
@@ -524,7 +530,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
     intro p hp; simp only [idx]; split
     · have : p / (q + 1) < r := by rwa [Nat.div_lt_iff_lt_mul (by omega)]
       omega
-    · rename_i hge; push_neg at hge
+    · rename_i hge; push Not at hge
       have : (p - bd) / q < s - r := by
         rw [Nat.div_lt_iff_lt_mul hq_pos]
         have : r * (q + 1) + (s - r) * q = s * q + r := by
@@ -787,7 +793,7 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g) (hg3 : 3 ∣ g) (hg : 0 < g)
     exact endgame_witness (Nat.mod_lt _ (by grind)) 0 g (g + 1)
       (by simp) (by simp) (by simp)
       hcv (by grind) (by grind)
-  · push_neg at hr_lt_gm1
+  · push Not at hr_lt_gm1
     have hr_eq : r = g - 1 := by grind
     have hcv : c v = (2 + q) % 3 := by grind
     have hcv1 : c (v + 1) = (q + 1) % 3 := by grind [color_at (q + 1) 0 hg]
@@ -869,7 +875,7 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g) (hg_le : g 
   -- (1a): small g
   by_cases hg4 : g ≤ 4
   · exact case_one_small_g m g hm (by grind)
-  · push_neg at hg4
+  · push Not at hg4
     -- For g ≥ 5, let s be the smallest multiple of 3 such that g > ⌈m/s⌉.
     -- The paper shows: for m ≥ 289, either g < 2⌊m/s⌋ (subcase 1b) or
     -- s = 6 and 2⌊m/6⌋ ≤ g ≤ ⌈m/3⌉ (subcases 1c/1d).
@@ -881,17 +887,17 @@ lemma case_one_dispatch (g : ℕ) (hm : m ≥ 289) (hg_ge : 2 ≤ g) (hg_le : g 
         · exact case_one_divisible m g hm (by grind)
         · exact case_one_residues m g hm h3 ⟨hg_lb6, hg_ub3⟩
       · -- g > ⌈m/3⌉: (1b) with s = 3
-        push_neg at hg_ub3
+        push Not at hg_ub3
         exact case_one_interval m 3 g (by grind) ⟨1, rfl⟩ (by grind) (by grind : g < 2 * (m / 3))
     · -- g < 2⌊m/6⌋: (1b), find appropriate s
-      push_neg at hg_lb6
+      push Not at hg_lb6
       -- s is the smallest multiple of 3 with g > ⌈m/s⌉.
       -- The condition g < 2⌊m/s⌋ follows from g ≤ ⌈m/(s-3)⌉.
       by_cases h6 : (m + 5) / 6 < g
       · -- s = 6 works: ⌈m/6⌉ < g and g < 2⌊m/6⌋
         exact case_one_interval m 6 g (by grind) ⟨2, rfl⟩ h6 hg_lb6
       · -- s ≥ 9: use s = 3⌈m/(3(g-1))⌉
-        push_neg at h6
+        push Not at h6
         have h3g1 : 0 < 3 * (g - 1) := by grind
         set q := (m - 1) / (3 * (g - 1))
         have hq_lb : q * (3 * (g - 1)) ≤ m - 1 := Nat.div_mul_le_self _ _
@@ -990,7 +996,7 @@ lemma main_case_one (a b : ℤ) (hm : m ≥ 289) (hcard : (zmod_set m a b).card 
   rw [hset, ← hu, hasPolychromColouring_mul_unit]
   by_cases hg_half : g ≤ m / 2
   · exact case_one_dispatch m g hm hg_ge hg_half
-  · push_neg at hg_half
+  · push Not at hg_half
     rw [← case_one_complement m g (by grind)]
     exact case_one_dispatch m (m - g) hm (by grind) (by grind)
 

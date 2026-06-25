@@ -1,3 +1,9 @@
+/-
+Copyright (c) 2025 Bhavik Mehta. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Bhavik Mehta
+-/
+
 import Mathlib.Algebra.Group.Action.Pointwise.Finset
 import Mathlib.Analysis.Normed.Group.AddTorsor
 import Mathlib.Analysis.Normed.Ring.Lemmas

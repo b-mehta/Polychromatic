@@ -1,6 +1,10 @@
-import Polychromatic.FourThree.Combi.BlockColour
+/-
+Copyright (c) 2026 Bhavik Mehta. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Bhavik Mehta
+-/
 
-open Finset Pointwise
+import Polychromatic.FourThree.Combi.BlockColour
 
 /-! ## Main Case 2: Multiple Cycles (paper §4.2)
 
@@ -21,6 +25,8 @@ The proof splits into subcases based on the parity of $d_1$ and $e_1$:
 - **(2c) Both odd, $e_1 \le 17$:** Shifted periodic colorings.
 - **(2d) Both odd, $e_1 \ge 19$:** Rotating patterns based on a 3-interval partition.
 -/
+
+open Finset Pointwise
 
 section Case2_MultipleCycles
 
