@@ -23,12 +23,6 @@ for potential mathlib contributions.
 
 open Finset
 
-/-- A finset has cardinality at most 1 iff its underlying set is subsingleton. -/
-lemma Finset.card_le_one_iff_subsingleton {α : Type*} {S : Finset α} :
-    #S ≤ 1 ↔ (S : Set α).Subsingleton := by
-  rw [Finset.card_le_one_iff_subsingleton_coe, ← Set.subsingleton_coe]
-  rfl
-
 lemma Filter.Tendsto.exists_le_lt {α : Type*} [LinearOrder α] [NoMaxOrder α] {f : ℕ → α}
     (hf : Tendsto f atTop atTop) (n : α) (hn : f 0 ≤ n) : ∃ m, f m ≤ n ∧ n < f (m + 1) := by
   have h : ∃ m, n < f m := (hf.eventually (eventually_gt_atTop n)).exists
@@ -69,42 +63,11 @@ lemma gcd_pos {ι : Type*} {f : ι → ℤ} {s : Finset ι} (hf : ∃ i ∈ s, f
 
 @[simp] lemma Nat.mod_eq' {a b : ℕ} : a.mod b = a % b := rfl
 
-lemma Fintype.piFinset_inter {ι α : Type*} [DecidableEq ι] [Fintype ι] [DecidableEq α]
-    {s t : ι → Finset α} :
-    Fintype.piFinset s ∩ Fintype.piFinset t = Fintype.piFinset (fun i ↦ s i ∩ t i) := by
-  ext j
-  simp only [mem_inter, mem_piFinset]
-  grind
-
 section
 
 open MeasureTheory Measure ProbabilityTheory
 
-lemma uniformOn_apply_finset' {Ω : Type*} [DecidableEq Ω] [MeasurableSpace Ω] {s t : Finset Ω}
-    (hs : MeasurableSet (s : Set Ω)) (ht : MeasurableSet (t : Set Ω)) :
-    uniformOn (s : Set Ω) (t : Set Ω) = #(s ∩ t) / #s := by
-  rw [uniformOn, cond_apply hs, count_apply_finset' hs, ← coe_inter, count_apply_finset']
-  · rw [div_eq_mul_inv, mul_comm]
-  rw [coe_inter]
-  exact hs.inter ht
-
-lemma uniformOn_apply_finset {Ω : Type*} [DecidableEq Ω] [MeasurableSpace Ω]
-    [MeasurableSingletonClass Ω] {s t : Finset Ω} :
-    uniformOn (s : Set Ω) (t : Set Ω) = #(s ∩ t) / #s :=
-  uniformOn_apply_finset' s.measurableSet t.measurableSet
-
 variable {ι Ω : Type*} [Fintype ι] [MeasurableSpace Ω] {P : ι → Measure Ω}
-
-lemma uniformOn_pi [Finite Ω] [MeasurableSingletonClass Ω] {f : ι → Set Ω} :
-    uniformOn (Set.univ.pi f) = Measure.pi fun i ↦ uniformOn (f i) := by
-  refine (MeasureTheory.Measure.pi_eq fun t ht ↦ ?_).symm
-  lift f to ι → Finset Ω
-  · simp [Set.toFinite]
-  lift t to ι → Finset Ω
-  · simp [Set.toFinite]
-  classical
-  simp [← Fintype.coe_piFinset, uniformOn_apply_finset, Fintype.piFinset_inter,
-    ENNReal.prod_div_distrib_of_ne_top]
 
 variable [∀ i, IsProbabilityMeasure (P i)] {s : Set ι}
 

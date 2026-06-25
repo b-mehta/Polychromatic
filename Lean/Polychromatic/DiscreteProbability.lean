@@ -44,5 +44,5 @@ theorem markov_abs [DivisionRing α] [IsStrictOrderedRing α]
 theorem chebyshev [DivisionRing α] [IsStrictOrderedRing α]
     (hp : ∀ i ∈ s, 0 ≤ p i) (hc : 0 < c) :
     ∑ i ∈ s with c ≤ |f i|, p i ≤ (∑ i ∈ s, p i * f i ^ 2) / c ^ 2 := by
-  convert markov (f := (f · ^ 2)) hp (c := c ^ 2) (by simp [sq_nonneg]) (pow_pos hc _) using 4
+  convert markov (f := (f · ^ 2)) hp (c := c ^ 2) (by simp [sq_nonneg]) (pow_pos hc _) using 3
   rw [sq_le_sq, abs_of_pos hc]

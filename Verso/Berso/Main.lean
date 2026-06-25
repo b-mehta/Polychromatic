@@ -14,7 +14,7 @@ open Verso.Genre.Blog.Template.Params renaming forPart → forPart
 
 def writePage (theme : Theme) (params : Template.Params) (template : Template := theme.pageTemplate) : GenerateM Unit := do
   ensureDir <| (← currentDir)
-  let ⟨baseTemplate, modParams⟩ := theme.adHocTemplates (Array.mk (← currentPath)) |>.getD ⟨template, id⟩
+  let ⟨baseTemplate, modParams⟩ := theme.adHocTemplates (← currentPath) |>.getD ⟨template, id⟩
   let output ← rewriteOutput <| ← Template.renderMany [baseTemplate, theme.primaryTemplate] <| modParams <| params
   let header := (← read).header
   IO.FS.withFile ((← currentDir).join "index.html") .write fun h => do
@@ -118,7 +118,8 @@ def blogMain (theme : Theme) (site : Site) (relativizeUrls := true) (linkTargets
     else none
   let initGenCtx : Generate.Context := {
     site := site,
-    ctxt := { path := [], config := cfg, components },
+    theme := theme,
+    ctxt := { path := .root, config := cfg, components },
     xref := xref,
     dir := cfg.destination,
     config := cfg,
@@ -153,7 +154,7 @@ where
     if urlAttr attr.fst && "/".isPrefixOf attr.snd then
       let path := (← read).path
       pure { attr with
-        snd := String.join (List.replicate path.length "../") ++ attr.snd.drop 1
+        snd := String.join (List.replicate path.size "../") ++ attr.snd.drop 1
       }
     else
       pure attr

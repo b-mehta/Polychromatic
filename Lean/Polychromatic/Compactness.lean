@@ -1,4 +1,4 @@
-import Mathlib.Combinatorics.SimpleGraph.Coloring
+import Mathlib.Combinatorics.SimpleGraph.Coloring.VertexColoring
 import Mathlib.Topology.Compactness.Compact
 
 /-!

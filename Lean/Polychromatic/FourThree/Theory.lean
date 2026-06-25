@@ -256,9 +256,6 @@ lemma accept_of_three {a b c : ℕ}
 def toBitVector (a b c : ℕ) : ℕ :=
   1 ||| 1 <<< a ||| 1 <<< b ||| 1 <<< c
 
-@[simp] lemma Nat.lor_eq {x y : ℕ} : x.lor y = x ||| y := rfl
-@[simp] lemma Nat.land_eq {x y : ℕ} : x.land y = x &&& y := rfl
-
 def toBitVectorK (a b c : ℕ) : ℕ :=
   Nat.lor (Nat.lor (Nat.lor (nat_lit 1) (Nat.shiftLeft (nat_lit 1) a))
     (Nat.shiftLeft (nat_lit 1) b)) (Nat.shiftLeft (nat_lit 1) c)

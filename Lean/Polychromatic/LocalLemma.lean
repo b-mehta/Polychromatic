@@ -199,20 +199,6 @@ lemma iteration_all [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
   classical
   simpa using iteration (P := P) hA (t' := ∅) (by simp) hx₁ t (by simp) (by simp) this
 
-lemma prod_le_prod_of_subset_of_le_one {α : Type*} [CommMonoidWithZero α] [PartialOrder α]
-    [PosMulMono α] [ZeroLEOneClass α]
-    {x : ι → α} {s t : Finset ι} (hst : s ⊆ t)
-    (hx₀ : ∀ i, 0 ≤ x i) (hx₁ : ∀ i, x i ≤ 1) :
-    ∏ j ∈ t, x j ≤ ∏ j ∈ s, x j := by classical calc
-  ∏ j ∈ t, x j = (∏ j ∈ t ∩ s, x j) * ∏ j ∈ t \ s, x j := by
-    rw [prod_inter_mul_prod_diff]
-  _ ≤ (∏ j ∈ t ∩ s, x j) * 1 := by
-    gcongr
-    · apply prod_nonneg
-      simp [hx₀]
-    · apply prod_le_one (by simp [hx₀]) (by simp [hx₁])
-  _ = ∏ j ∈ s, x j := by simp [inter_eq_right.2 hst]
-
 lemma individualBound [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
     (hN : lopsidedCondition P A N)
     (hx₀ : ∀ i, 0 ≤ x i) (hx₁ : ∀ i, x i ≤ 1)
@@ -237,9 +223,9 @@ lemma individualBound [IsProbabilityMeasure P] (hA : ∀ i, MeasurableSet (A i))
       _ ≤ x i * (∏ j ∈ N i, (1 - x j)) * P.real (⋂ j ∈ S₂, (A j)ᶜ) := by gcongr; exact hAx i
       _ = x i * ((∏ j ∈ N i, (1 - x j)) * P.real (⋂ j ∈ S₂, (A j)ᶜ)) := by ring
       _ ≤ x i * ((∏ j ∈ S₁, (1 - x j)) * P.real (⋂ j ∈ S₂, (A j)ᶜ)) := by
-        gcongr
-        · exact hx₀ i
-        apply prod_le_prod_of_subset_of_le_one (by simp [S₁]) (by simp [hx₁]) (by simp [hx₀])
+        refine mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right ?_ ?_) (hx₀ i)
+        · exact prod_le_prod_of_subset_of_le_one (by simp [S₁]) (by simp [hx₁]) (by simp [hx₀])
+        · positivity
       _ ≤ x i * P.real (⋂ j ∈ S, (A j)ᶜ) := by
         gcongr
         · exact hx₀ i
