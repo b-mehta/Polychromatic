@@ -119,7 +119,7 @@ private lemma frobenius_consec {rA m : ℕ} (hrA : 1 < rA) (hm : m ≥ rA * (rA 
     (by rw [(Nat.coprime_self_add_right.mpr (Nat.coprime_one_right _)).gcd_eq_one]; exact one_dvd _)
     (by grind [Nat.pred_eq_sub_one, mul_comm rA (rA - 1)])
   refine ⟨a, b, by grind [mul_comm a rA, mul_comm b (rA + 1)], ?_⟩
-  by_contra hle; push_neg at hle
+  by_contra hle; push Not at hle
   have ha0 : a = 0 := by omega
   have hb0 : b = 0 := by omega
   subst ha0; subst hb0; simp only [zero_mul, zero_add] at hab; subst hab
@@ -258,7 +258,7 @@ private lemma case_no_wrap_AA (A B : List (Fin 3)) (offsets : List ℕ)
   by_cases hjs_lt : j + s < A.length
   · exact bcv_eq_A A B h _ _ _ _ his_A
       (add_mod_of_lt hjs_lt) hjs_lt (List.getElem?_append_left hjs_lt)
-  · push_neg at hjs_lt
+  · push Not at hjs_lt
     have hjs_sub : j + s - A.length < A.length := by grind
     have hjs_2r : i % A.length + s < 2 * A.length := by grind
     exact bcv_eq_A A B h _ _ _ _ his_A
@@ -288,7 +288,7 @@ private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
       (add_lt_of_mod_add_lt hA hA_region hjs_lt)
       (add_mod_of_lt hjs_lt) hjs_lt
       (List.getElem?_append_left hjs_lt)
-  · push_neg at hjs_lt
+  · push Not at hjs_lt
     have hjs_B : j + s - A.length < B.length := by grind
     have his_ge : A.length * h ≤ i + s := ge_mul_of_mod_add_ge hA hh_pos hi_lo hjs_lt
     have hnot_A : ¬(i + s < A.length * h) := by grind
@@ -316,7 +316,7 @@ private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
   · exact bcv_eq_B A B h _ _ _ _ (by grind)
       (by rw [Nat.sub_add_comm hB_region]; exact add_mod_of_lt hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
-  · push_neg at hjs_lt
+  · push Not at hjs_lt
     have hjs_sub : j + s - B.length < B.length := by grind
     exact bcv_eq_B A B h _ _ _ _ (by grind)
       (by rw [Nat.sub_add_comm hB_region]; exact add_mod_sub (by grind) hjs_lt (by grind))
@@ -347,7 +347,7 @@ private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ)
     rw [Nat.mod_eq_of_lt his_lt]
     exact bcv_eq_A A B h _ _ _ _ his_lt
       (add_mod_of_lt hjs_lt) hjs_lt (List.getElem?_append_left hjs_lt)
-  · push_neg at hjs_lt
+  · push Not at hjs_lt
     have his_ge : A.length * h ≤ i + s := ge_mul_of_mod_add_ge hA hh_pos hi_lo hjs_lt
     have hmod : (i + s) % (A.length * h) = i + s - A.length * h := mod_eq_sub his_ge (by grind)
     have hsub_eq := sub_region_eq hA hi_lo (by grind) hjs_lt
@@ -386,7 +386,7 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ)
       (by rw [Nat.sub_add_comm hB_region]; exact add_mod_of_lt hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
   · -- Wrapped to A region
-    push_neg at hjs_lt
+    push Not at hjs_lt
     have his_ge : m ≤ i + s := by
       have := ge_mul_of_mod_add_ge (by grind) hk_pos hk_lo hjs_lt
       grind
@@ -424,7 +424,7 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ)
       (by omega)
       (by grind [add_mod_of_lt hjs_lt])
       hjs_lt (List.getElem?_append_left hjs_lt)
-  · push_neg at hjs_lt
+  · push Not at hjs_lt
     have his_ge : m ≤ i + s := by
       have := ge_mul_of_mod_add_ge (by grind) hk_pos hk_lo hjs_lt
       grind
@@ -468,17 +468,17 @@ theorem blockColor_polychrom
   · by_cases hA_region : i < A.length * h
     · by_cases h_cross : i + maxOff < A.length * h
       · exact case_no_wrap_AA A B offsets h k m i hA hmaxOff hAA hm h_wrap h_cross
-      · push_neg at h_cross
+      · push Not at h_cross
         have hk_pos : 0 < k := by grind
         exact case_no_wrap_AB A B offsets h k m i hA hBlen hmaxOff hAB hm h_wrap hA_region h_cross
-    · push_neg at hA_region
+    · push Not at hA_region
       exact case_no_wrap_BB A B offsets h k m i hBlen hmaxOff hBB hm h_wrap hA_region
-  · push_neg at h_wrap
+  · push Not at h_wrap
     by_cases hA_region : i < A.length * h
     · have hk0 : k = 0 := by rw [hBlen] at hm; nlinarith [hmaxOff]
       subst hk0; simp only [mul_zero, add_zero] at hm
       exact case_wrap_A A B offsets h m i hA hmaxOff hAA hm hi h_wrap hA_region
-    · push_neg at hA_region
+    · push Not at hA_region
       have hk_pos : 0 < k := by nlinarith [hm, hA_region, hi]
       by_cases hh_pos : 0 < h
       · exact case_wrap_BA A B offsets h k m i hA hBlen hmaxOff
