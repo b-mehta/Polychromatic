@@ -50,10 +50,7 @@ private lemma ZMod.val_add_one {n : ℕ} [NeZero n] (x : ZMod n) : (x + 1).val =
 
 private lemma zmod_val_add_one (d : ℕ) [NeZero d] (i : ZMod d) :
     (i + 1).val = if i.val + 1 < d then i.val + 1 else 0 := by
-  rw [ZMod.val_add_one]
-  split_ifs with h
-  · exact Nat.mod_eq_of_lt h
-  · grind [Nat.mod_self]
+  grind [ZMod.val_add_one, Nat.mod_eq_of_lt, Nat.mod_self]
 
 private lemma parity_flip_even (e : ℕ) [NeZero e] (he : Even e)
     (j : ZMod e) : j.val % 2 ≠ (j + 1).val % 2 := by grind [zmod_val_add_one e j]
@@ -270,9 +267,7 @@ private lemma orbit_coloring_polychrom (Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m)
     grind
   rcases hcovers n k with h | h | h | h
   · exact ⟨0, by simp, by rw [add_zero, hχ_n, h]⟩
-  · grind
-  · grind
-  · grind
+  all_goals grind
 
 /-! ### Subcase (2a): e₁ even -/
 
@@ -368,10 +363,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d�
     have hval_eq := hπ_b_unit.mul_right_cancel heq
     rw [hj₁, hj₂, Nat.cast_zero] at hval_eq
     have hd₂_dvd_diff := (ZMod.natCast_eq_zero_iff _ _).mp hval_eq.symm
-    have hd₂_dvd_2 : d₂ ∣ 2 := by
-      have h := Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
-      have : e₁ - (e₁ - 2) = 2 := by grind
-      rwa [this] at h
+    have hd₂_dvd_2 : d₂ ∣ 2 :=
+      (by grind : e₁ - (e₁ - 2) = 2) ▸ Nat.dvd_sub hd₂_dvd_e₁ hd₂_dvd_diff
     obtain ⟨_, hk⟩ := hd₂_dvd_e₁
     obtain ⟨_, hl⟩ := he1_odd
     have := Nat.le_of_dvd (by grind) hd₂_dvd_2
@@ -414,14 +407,12 @@ private lemma cover_mod3_general (p₁ p₂ : Fin 3) (j₁ j₂ : ℕ)
 -- Non-wrap coverage hypothesis: j₁ = j₂, patterns differ → hypothesis holds.
 private lemma case2c_nonwrap_hyp (d k₀ i j : ℕ) (hd : d ≥ 3)
     (hd_odd : Odd d) (hi : i + 1 < d) : (j + (case2c_pattern d k₀ i).val) % 3 ≠
-    (j + (case2c_pattern d k₀ (i + 1)).val) % 3 := by
-  grind [case2c_pattern]
+    (j + (case2c_pattern d k₀ (i + 1)).val) % 3 := by grind [case2c_pattern]
 
 -- Wrap coverage hypothesis: j₂ = j₁ + k₀, pattern chosen to avoid conflict.
 private lemma case2c_wrap_hyp (d k₀ j : ℕ) (hd : d ≥ 3) (hd_odd : Odd d) :
     (j + (case2c_pattern d k₀ (d - 1)).val) % 3 ≠
-    (j + k₀ + (case2c_pattern d k₀ 0).val) % 3 := by
-  grind [case2c_pattern]
+    (j + k₀ + (case2c_pattern d k₀ 0).val) % 3 := by grind [case2c_pattern]
 
 /-! ### Subcase (2d): d₁, e₁ both odd, e₁ ≥ 19
 
