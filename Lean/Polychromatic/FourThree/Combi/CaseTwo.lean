@@ -168,25 +168,21 @@ private lemma orbitMap_shift_b [NeZero m] (he1_b_zero : e₁ • (b : ZMod m) = 
   · have hje : j.val + 1 = e₁ := by grind [ZMod.val_lt]
     have hv : (j + 1).val = 0 := by rw [ZMod.val_add_one, hje, Nat.mod_self]
     have h1 : (j.val : ZMod m) * ↑b + ↑b = 0 := by
-      have : (j.val : ZMod m) * ↑b + ↑b = (j.val + 1 : ℕ) • (b : ZMod m) := by
-        rw [add_nsmul, one_nsmul, nsmul_eq_mul]
-      rw [this, hje, he1_b_zero]
+      rw [← add_one_mul, ← Nat.cast_one, ← Nat.cast_add, hje, ← nsmul_eq_mul, he1_b_zero]
     rw [hv, Nat.cast_zero, zero_mul, add_zero, add_assoc, h1, add_zero]
 
 private lemma orbitMap_shift_ba [NeZero m] (i : ZMod d₁) (j : ZMod e₁) (hi : i.val + 1 < d₁) :
     orbitMap m a b (i, j) + ((b - a : ℤ) : ZMod m) = orbitMap m a b (i + 1, j) := by
-  simp only [orbitMap]
-  have : (i + 1).val = i.val + 1 := by rw [ZMod.val_add_one]; exact Nat.mod_eq_of_lt hi
-  rw [this]
-  grind
+  simp only [orbitMap, zmod_val_add_one, if_pos hi]
+  push_cast
+  ring
 
 /-- The cycle index α(x) = castHom(x) * u⁻¹ satisfies α(φ(i,j)) = i. -/
 private lemma orbitMap_cycle_index [NeZero m]
     (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁)) (i : ZMod d₁) (j : ZMod e₁) :
     ZMod.castHom d₁_dvd_m (ZMod d₁) (orbitMap m a b (i, j)) * u⁻¹ = i := by
-  simp only [orbitMap]
-  rw [map_add, map_mul, map_mul, map_natCast, map_intCast, map_natCast, map_intCast,
-    b_zero_mod_d1, mul_zero, add_zero, mul_assoc, ← hu, u.mul_inv, mul_one]
+  simp only [orbitMap, map_add, map_mul, map_natCast, map_intCast, b_zero_mod_d1, mul_zero,
+    add_zero, mul_assoc, ← hu, Units.mul_inv, mul_one]
   simp [ZMod.natCast_val]
 
 /-- The cycle index α shifts by 1 when (b-a) is added. -/
@@ -194,11 +190,7 @@ private lemma cycle_index_shift_ba [NeZero m]
     (u : (ZMod d₁)ˣ) (hu : ↑u = ((b - a : ℤ) : ZMod d₁)) (x : ZMod m) :
     ZMod.castHom d₁_dvd_m (ZMod d₁) (x + ↑(b - a)) * u⁻¹ =
     ZMod.castHom d₁_dvd_m (ZMod d₁) x * u⁻¹ + 1 := by
-  simp only [map_add, map_intCast, add_mul]
-  rw [← hu]
-  ring_nf
-  rw [u.inv_mul]
-  ring
+  simp only [map_add, map_intCast, add_mul, ← hu, Units.mul_inv]
 
 /-- If Φ(i, j+1) = Φ(i, j) + b, then Φ⁻¹(x+b) = (same_i, j+1). -/
 private lemma equiv_symm_shift_b {γ : Type*} [AddCommMonoid γ]
@@ -248,8 +240,7 @@ private lemma orbitEquiv_snd_shift_ba [NeZero m] {h_gcd_coprime : Nat.gcd d₁ d
   have hΦ : Φ (i + 1, j) = n + ↑(b - a) := by
     simp only [Φ, orbitEquiv, Equiv.ofBijective_apply] at hn ⊢
     grind
-  have h : Φ.symm (n + ↑(b - a)) = (i + 1, j) := by rw [← hΦ, Φ.symm_apply_apply]
-  rw [h]
+  rw [← hΦ, Φ.symm_apply_apply]
 
 /-- **Key infrastructure for Case 2.** Polychromaticity from an orbit coloring:
     given an orbit equivalence Φ with shift properties and a coloring f,
@@ -350,8 +341,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d�
   have hd₂_dvd : d₂ ∣ m := Nat.gcd_dvd_right _ _
   have hd₂_gt1 : d₂ > 1 := by grind
   have hd₂_dvd_ba : (d₂ : ℤ) ∣ (b - a) := by simpa [Int.gcd] using Int.gcd_dvd_left (b - a) (m : ℤ)
-  have hd₂_dvd_e₁ : d₂ ∣ e₁ := by
-    exact (by rwa [Nat.Coprime, Nat.gcd_comm] : Nat.Coprime d₂ d₁).dvd_of_dvd_mul_right
+  have hd₂_dvd_e₁ : d₂ ∣ e₁ :=
+    (by rwa [Nat.Coprime, Nat.gcd_comm] : Nat.Coprime d₂ d₁).dvd_of_dvd_mul_right
       (mul_comm d₁ e₁ ▸ hm_eq ▸ hd₂_dvd)
   -- Projection: π(φ(i,j)) = j.val * π(b) since π(b-a) = 0
   haveI : NeZero d₂ := ⟨by grind⟩
@@ -424,16 +415,12 @@ private lemma cover_mod3_general (p₁ p₂ : Fin 3) (j₁ j₂ : ℕ)
 private lemma case2c_nonwrap_hyp (d k₀ i j : ℕ) (hd : d ≥ 3)
     (hd_odd : Odd d) (hi : i + 1 < d) : (j + (case2c_pattern d k₀ i).val) % 3 ≠
     (j + (case2c_pattern d k₀ (i + 1)).val) % 3 := by
-  obtain ⟨k, hk⟩ := hd_odd
-  subst hk
   grind [case2c_pattern]
 
 -- Wrap coverage hypothesis: j₂ = j₁ + k₀, pattern chosen to avoid conflict.
 private lemma case2c_wrap_hyp (d k₀ j : ℕ) (hd : d ≥ 3) (hd_odd : Odd d) :
     (j + (case2c_pattern d k₀ (d - 1)).val) % 3 ≠
     (j + k₀ + (case2c_pattern d k₀ 0).val) % 3 := by
-  obtain ⟨k, hk⟩ := hd_odd
-  subst hk
   grind [case2c_pattern]
 
 /-! ### Subcase (2d): d₁, e₁ both odd, e₁ ≥ 19
@@ -750,9 +737,7 @@ private lemma case2d_coloring_works (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d�
       · left; exact h
       · right; left; rw [h]; simp only [f]; congr 1; exact (pos_shift_one j (rot i)).symm
       · right; right; left; rw [h]; simp only [f]; grind
-      · right
-        right
-        right
+      · refine Or.inr (Or.inr (Or.inr ?_))
         rw [h]
         simp only [f]
         congr 1
@@ -818,17 +803,13 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
       have hp' : p' = case2c_pattern d₁ k₀.val (i.val + 1) := by simp [p', hi'_eq]
       rcases cover_mod3_general p p' j.val j.val hhyp k with h | h | h | h
       · grind
-      · right
-        left
+      · refine Or.inr (Or.inl ?_)
         rw [h, hp]
         exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3])
       · grind
-      · right
-        right
-        right
+      · refine Or.inr (Or.inr (Or.inr ?_))
         rw [h, hp']
-        exact Fin.ext (by
-          simp [f, ZMod.val_add_one, case2c_mod3 he1_div3, Nat.mod_eq_of_lt hi])
+        exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3, Nat.mod_eq_of_lt hi])
     · have hi_eq : i.val = d₁ - 1 := by grind [ZMod.val_lt]
       have hj'_eq : j' = j + k₀ :=
         orbitEquiv_snd_shift_ba_wrap he1_b_zero k₀ hk₀ n hi_eq
@@ -844,21 +825,16 @@ lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1
       have hp₀_val : (↑p₀ : ℕ) = ↑(case2c_pattern d₁ k₀.val 0) := rfl
       rcases cover_mod3_general p p₀ j.val (j.val + k₀.val) hhyp k with h | h | h | h
       · grind
-      · right
-        left
+      · refine Or.inr (Or.inl ?_)
         rw [h, hp]
         exact Fin.ext (by simp [f, ZMod.val_add_one, case2c_mod3 he1_div3])
-      · right
-        right
-        left
+      · refine Or.inr (Or.inr (Or.inl ?_))
         rw [h]
         refine Fin.ext ?_
         simp only [f, hi1_val]
         rw [hj'_val]
         exact (case2c_mod3 he1_div3 (j.val + k₀.val) p₀.val).symm
-      · right
-        right
-        right
+      · refine Or.inr (Or.inr (Or.inr ?_))
         rw [h]
         refine Fin.ext ?_
         simp only [f, hi1_val, ZMod.val_add_one]
