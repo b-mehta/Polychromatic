@@ -85,8 +85,7 @@ lemma isPolychrom_iff_surjOn :
 alias ⟨IsPolychrom.surjOn, _⟩ := isPolychrom_iff_surjOn
 
 lemma isPolychrom_iff_mem_image [DecidableEq K] :
-    IsPolychrom S χ ↔ ∀ n : G, ∀ k, k ∈ (n +ᵥ S).image χ := by
-  simp [isPolychrom_iff]
+    IsPolychrom S χ ↔ ∀ n : G, ∀ k, k ∈ (n +ᵥ S).image χ := by simp [isPolychrom_iff]
 
 alias ⟨IsPolychrom.mem_image, _⟩ := isPolychrom_iff_mem_image
 
@@ -98,8 +97,7 @@ end decEq
   complete := by classical simpa using hχ.mem_image 0
 
 lemma IsPolychrom.finite (hχ : IsPolychrom S χ) :
-    Finite K := by
-  classical exact hχ.fintype.finite
+    Finite K := by classical exact hχ.fintype.finite
 
 /-- The number of colours in any `S`-polychromatic colouring is at most `|S|`. -/
 -- ANCHOR: IsPolychrom.card_le
@@ -129,8 +127,7 @@ lemma IsPolychrom.neg [DecidableEq G] (h : IsPolychrom S χ) :
   simpa only [neg_add, neg_neg]
 
 lemma isPolychrom_univ_id [Fintype G] :
-    IsPolychrom univ (id : G → G) := by
-  classical simp [isPolychrom_iff]
+    IsPolychrom univ (id : G → G) := by classical simp [isPolychrom_iff]
 
 instance [Fintype G] [Fintype K] [DecidableEq G] [DecidableEq K] : Decidable (IsPolychrom S χ) :=
   inferInstanceAs (Decidable (∀ _, _))
@@ -160,16 +157,19 @@ lemma hasPolychromColouring_subsingleton [Nonempty K] [Subsingleton K] (hS : S.N
 
 lemma HasPolychromColouring.card_le [Fintype K] (h : HasPolychromColouring K S) :
     Fintype.card K ≤ #S :=
-  have ⟨_, hχ⟩ := h; hχ.card_le
+  have ⟨_, hχ⟩ := h
+  hχ.card_le
 
 lemma HasPolychromColouring.finite (h : HasPolychromColouring K S) :
     Finite K :=
-  have ⟨_, hχ⟩ := h; hχ.finite
+  have ⟨_, hχ⟩ := h
+  hχ.finite
 
 /-- If `S'` has a `K`-polychromatic colouring and `S' ⊆ S`, then `S` also has one. -/
 lemma HasPolychromColouring.subset {S' : Finset G} (h : HasPolychromColouring K S') (hS : S' ⊆ S) :
     HasPolychromColouring K S :=
-  have ⟨χ, hχ⟩ := h; ⟨χ, hχ.subset hS⟩
+  have ⟨χ, hχ⟩ := h
+  ⟨χ, hχ.subset hS⟩
 
 /-- If `S` has a `K₁`-polychromatic colouring and `f : K₁ → K₂` is surjective,
 then `S` has a `K₂`-polychromatic colouring. -/
@@ -187,8 +187,7 @@ lemma HasPolychromColouring.of_injective {K₁ K₂ : Type*} [Nonempty K₁]
 /-- The existence of a polychromatic colouring is invariant under translation:
 `n +ᵥ S` has a `K`-polychromatic colouring iff `S` does. -/
 @[simp] lemma hasPolychromColouring_vadd [DecidableEq G] {n : G} :
-    HasPolychromColouring K (n +ᵥ S) ↔ HasPolychromColouring K S := by
-  simp [HasPolychromColouring]
+    HasPolychromColouring K (n +ᵥ S) ↔ HasPolychromColouring K S := by simp [HasPolychromColouring]
 
 alias ⟨_, HasPolychromColouring.vadd⟩ := hasPolychromColouring_vadd
 

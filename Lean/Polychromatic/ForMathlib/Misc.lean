@@ -143,15 +143,12 @@ lemma pi_inter_eq (s t : Set ι) (hst : Disjoint s t)
 
 end
 
-
-
 namespace Finpartition
 
 def equiEndpoint (n k i : ℕ) : ℕ :=
   n / k * i + min (n % k) i
 
-lemma equiEndpoint_lo {n k : ℕ} : equiEndpoint n k 0 = 0 := by
-  simp [equiEndpoint]
+lemma equiEndpoint_lo {n k : ℕ} : equiEndpoint n k 0 = 0 := by simp [equiEndpoint]
 
 lemma equiEndpoint_hi {n k : ℕ} (hk : k ≠ 0) : equiEndpoint n k k = n := by
   rw [equiEndpoint, min_eq_left (Nat.mod_lt n hk.bot_lt).le, Nat.div_add_mod']

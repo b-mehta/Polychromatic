@@ -118,7 +118,6 @@ lemma IndepFrom.cond_sInter (h : IndepFrom s t P) (hs : MeasurableSet s)
 
 end
 
-
 variable {A : ι → Set Ω} {N : ι → Finset ι} {x : ι → ℝ} {i j : ι} {S T : Finset ι}
 
 /-- The lopsided condition for the local lemma, stating that each event `A i` is
@@ -281,8 +280,7 @@ theorem symmetricLocalLemma [Finite ι] [IsProbabilityMeasure P] (hA : ∀ i, Me
       rw [← mul_inv, ← one_div, le_div_iff₀]
       · linear_combination hpd
       · positivity
-    _ ≤ (d + 1 : ℝ)⁻¹ * (1 + (↑d)⁻¹)⁻¹ ^ d := by
-      grw [inv_pow, add_one_inv_pow_le_exp]
+    _ ≤ (d + 1 : ℝ)⁻¹ * (1 + (↑d)⁻¹)⁻¹ ^ d := by grw [inv_pow, add_one_inv_pow_le_exp]
     _ = (d + 1 : ℝ)⁻¹ * (1 - (d + 1 : ℝ)⁻¹) ^ d := by
       congr! 2
       simp [field]

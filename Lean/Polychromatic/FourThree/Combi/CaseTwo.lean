@@ -187,7 +187,10 @@ private lemma cycle_index_shift_ba {m : ℕ} {a b : ℤ} {d₁ : ℕ} [NeZero m]
     ZMod.castHom hd1_dvd (ZMod d₁) (x + ↑(b - a)) * u⁻¹ =
     ZMod.castHom hd1_dvd (ZMod d₁) x * u⁻¹ + 1 := by
   simp only [map_add, map_intCast, add_mul]
-  rw [← hu]; ring_nf; rw [u.inv_mul]; ring
+  rw [← hu]
+  ring_nf
+  rw [u.inv_mul]
+  ring
 
 /-- If Φ(i, j+1) = Φ(i, j) + b, then Φ⁻¹(x+b) = (same_i, j+1). -/
 private lemma equiv_symm_shift_b {d₁ e₁ : ℕ} {γ : Type*} [AddCommMonoid γ]
@@ -221,7 +224,8 @@ private lemma orbit_coloring_polychrom {m : ℕ} {a b : ℤ} {d₁ e₁ : ℕ}
   refine ⟨χ, fun n k => ?_⟩
   simp only [zmod_set, Finset.image_insert, Finset.image_singleton,
     Finset.mem_insert, Finset.mem_singleton]
-  set i := (Φ.symm n).1; set j := (Φ.symm n).2
+  set i := (Φ.symm n).1
+  set j := (Φ.symm n).2
   set j' := (Φ.symm (n + ↑(b - a))).2
   have hχ_n : χ n = f (i, j) := rfl
   have hχ_nb : χ (n + ↑b) = f (i, j + 1) := congr_arg f (hΦ_add_b n)
@@ -263,8 +267,7 @@ lemma case_two_e1_even (hm : m ≥ 289)
   -- Define the cycle map φ = orbitMap and derive bijectivity from shared infrastructure
   let φ := orbitMap m a b d₁ e₁
   have hφ_add_b : ∀ i : ZMod d₁, ∀ j : ZMod e₁,
-      φ (i, j + 1) = φ (i, j) + ↑b := by
-    intro i j; exact (orbitMap_shift_b he1_b (i, j)).symm
+      φ (i, j + 1) = φ (i, j) + ↑b := by intro i j; exact (orbitMap_shift_b he1_b (i, j)).symm
   -- φ is bijective (from shared orbitMap infrastructure)
   let Φ := Equiv.ofBijective φ (orbitMap_bijective hm_eq hd₁_dvd hb_zero hba_unit hord)
   -- Cycle index function α : ZMod m → ZMod d₁
@@ -368,8 +371,10 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
   haveI : NeZero d₂ := ⟨by grind⟩
   let π : ZMod m → ZMod d₂ := ZMod.castHom hd₂_dvd (ZMod d₂)
   have hπ_φ : ∀ i : ZMod d₁, ∀ j : ZMod e₁, π (φ (i, j)) = (j.val : ZMod d₂) * π (↑b) := by
-    intro i j; simp only [φ, orbitMap, π, map_add, map_mul, map_natCast, map_intCast]
-    rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba]; ring
+    intro i j
+    simp only [φ, orbitMap, π, map_add, map_mul, map_natCast, map_intCast]
+    rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba]
+    ring
   -- π(b) is a unit in ZMod d₂
   have hπ_b_unit : IsUnit (π (↑b)) := by
     simp only [π, map_intCast]; exact isUnit_intCast_of_natAbs_coprime (by grind)
@@ -400,7 +405,8 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
     simp only [π, map_add, map_intCast]
     rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hd₂_dvd_ba, add_zero]
   exact orbit_coloring_polychrom Φ hΦ_add_b hΦ_cycle_shift (case2b_coloring d₁ e₁) (fun n k => by
-      set p := Φ.symm n; set j := p.2
+      set p := Φ.symm n
+      set j := p.2
       set j' := (Φ.symm (n + ↑(b - a))).2
       have hπn : π n = (j.val : ZMod d₂) * π (↑b) := by
         rw [← Φ.apply_symm_apply n]
@@ -436,14 +442,16 @@ private lemma cover_mod3_general (p₁ p₂ : Fin 3) (j₁ j₂ : ℕ)
 private lemma case2c_nonwrap_hyp (d₁ k₀ i j : ℕ) (hd₁ : d₁ ≥ 3)
     (hd₁_odd : Odd d₁) (hi : i + 1 < d₁) : (j + (case2c_pattern d₁ k₀ i).val) % 3 ≠
     (j + (case2c_pattern d₁ k₀ (i + 1)).val) % 3 := by
-  obtain ⟨k, hk⟩ := hd₁_odd; subst hk
+  obtain ⟨k, hk⟩ := hd₁_odd
+  subst hk
   grind [case2c_pattern]
 
 -- Wrap coverage hypothesis: j₂ = j₁ + k₀, pattern chosen to avoid conflict.
 private lemma case2c_wrap_hyp (d₁ k₀ j : ℕ) (hd₁ : d₁ ≥ 3) (hd₁_odd : Odd d₁) :
     (j + (case2c_pattern d₁ k₀ (d₁ - 1)).val) % 3 ≠
     (j + k₀ + (case2c_pattern d₁ k₀ 0).val) % 3 := by
-  obtain ⟨k, hk⟩ := hd₁_odd; subst hk
+  obtain ⟨k, hk⟩ := hd₁_odd
+  subst hk
   grind [case2c_pattern]
 
 /-! ### Subcase (2d): d₁, e₁ both odd, e₁ ≥ 19
@@ -487,7 +495,6 @@ private def intervalColors : Fin 3 → Finset (Fin 3)
   | 0 => {0, 1}
   | 1 => {1, 2}
   | 2 => {0, 2}
-
 
 /-- Combined: for any j, {basePattern(j), basePattern(j+1 mod e₁)} is the
     interval pair of whichInterval(j). -/
@@ -563,7 +570,8 @@ private lemma basePattern_rotation_covers {e₁ j : ℕ} (he : Odd e₁) (hge : 
   have hmod : ((j + r) % e₁ + 1) % e₁ = (j + r + 1) % e₁ := Nat.mod_add_mod (j + r) e₁ 1
   rw [hmod] at h2
   have : ∀ (i₁ i₂ : Fin 3), i₁ ≠ i₂ → k ∈ intervalColors i₁ ∨ k ∈ intervalColors i₂ := by
-    intro i₁ i₂; fin_cases i₁ <;> fin_cases i₂ <;> fin_cases k <;>
+    intro i₁ i₂
+    fin_cases i₁ <;> fin_cases i₂ <;> fin_cases k <;>
       simp_all [intervalColors, Finset.mem_insert, Finset.mem_singleton]
   grind
 
@@ -628,7 +636,8 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
   have hu_lt : case2d_u e₁ < e₁ := by grind [case2d_u]
   have hdw' : d₁ * (e₁ - 2 * case2d_u e₁) ≥ e₁ := by
     change d₁ * (e₁ - 2 * (e₁ / 3 + e₁ % 3)) ≥ e₁
-    obtain ⟨k, hk⟩ := he1_odd; subst hk
+    obtain ⟨k, hk⟩ := he1_odd
+    subst hk
     have h5w : 5 * ((2 * k + 1) - 2 * ((2 * k + 1) / 3 + (2 * k + 1) % 3)) ≥ 2 * k + 1 := by grind
     exact le_trans h5w (by gcongr)
   set u := case2d_u e₁
@@ -654,7 +663,10 @@ private lemma case2d_rotation_sum_exists {e₁ d₁ : ℕ} [NeZero d₁]
       if i.val < q then w else if i.val = q then r else 0
     have hfg : ∀ i : ZMod d₁, f i = u + g i := by grind
     have hsum_f : Finset.univ.sum f = d₁ * u + Finset.univ.sum g := by
-      conv_lhs => arg 2; ext i; rw [hfg i]
+      conv_lhs =>
+        arg 2
+        ext i
+        rw [hfg i]
       simp [Finset.sum_add_distrib, Finset.card_univ, ZMod.card]
     -- Helper: #{i : ZMod d₁ | p(i)} for decidable predicates on ZMod.val
     have hcard_lt : (Finset.univ.filter (fun i : ZMod d₁ => i.val < q)).card = q := by
@@ -703,7 +715,8 @@ private lemma zmod_filter_sum_succ {n : ℕ} [NeZero n] (f : ZMod n → ℕ) (i 
     (Finset.univ.filter (fun k : ZMod n => k.val < i.val)).sum f + f i := by
   have hsplit : Finset.univ.filter (fun k : ZMod n => k.val < i.val + 1) =
       Finset.univ.filter (fun k : ZMod n => k.val < i.val) ∪ {i} := by
-    ext k; simp only [Finset.mem_filter, Finset.mem_univ, true_and,
+    ext k
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and,
       Finset.mem_union, Finset.mem_singleton]
     grind [ZMod.val_injective]
   grind
@@ -771,7 +784,8 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ} (hm : m ≥ 289)
   -- Coordinates of n
   set ij := Φ.symm n
   have hn : Φ ij = n := Equiv.apply_symm_apply Φ n
-  set i := ij.1; set j := ij.2
+  set i := ij.1
+  set j := ij.2
   have hij : ij = (i, j) := (Prod.eta ij).symm
   -- Base position p
   set p := (j.val + rot i) % e₁ with hp_def
@@ -798,7 +812,8 @@ private lemma case2d_coloring_works {m : ℕ} {a b : ℤ} (hm : m ≥ 289)
     · exact ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b,
         by rw [← hΦ_ba, hχ_eq, h]; congr 1⟩
     · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
-      rw [← hΦ_2ba, hχ_eq, h]; congr 1
+      rw [← hΦ_2ba, hχ_eq, h]
+      congr 1
       calc ((j_new + 1 : ZMod e₁).val + rot i_new) % e₁
           = ((j_new.val + rot i_new) % e₁ + 1) % e₁ := pos_shift_one j_new (rot i_new)
         _ = ((p + vals i) % e₁ + 1) % e₁ := by rw [hpos]
@@ -922,15 +937,16 @@ lemma case_two_odd_small (hm : m ≥ 289)
     · refine ⟨((b : ℤ) : ZMod m), intCast_b_mem_zmod_set m a b, ?_⟩
       rw [← hΦ_b, hχ_eq, h]; congr 1; rw [hzmod_succ, case2c_mod3 he1_div3]
     · refine ⟨((b - a : ℤ) : ZMod m), intCast_ba_mem_zmod_set m a b, ?_⟩
-      rw [← hΦ_ba, hχ_eq, h]; congr 1
+      rw [← hΦ_ba, hχ_eq, h]
+      congr 1
       change (j'.val + (case2c_pattern d₁ k₀.val (ZMod.val 0)).val) % 3 = _
       rw [ZMod.val_zero, hj'_val]
       exact case2c_mod3 he1_div3 (j.val + k₀.val) p₀.val
     · refine ⟨((2 * b - a : ℤ) : ZMod m), intCast_2ba_mem_zmod_set m a b, ?_⟩
-      rw [← hΦ_2ba, hχ_eq, h]; congr 1
+      rw [← hΦ_2ba, hχ_eq, h]
+      congr 1
       change ((j' + 1).val + (case2c_pattern d₁ k₀.val (ZMod.val 0)).val) % 3 = _
-      rw [ZMod.val_zero, hzmod_succ, hj'_val]
-      rw [case2c_mod3 he1_div3, Nat.add_assoc, Nat.add_assoc]
+      rw [ZMod.val_zero, hzmod_succ, hj'_val, case2c_mod3 he1_div3, Nat.add_assoc, Nat.add_assoc]
       exact case2c_mod3 he1_div3 (j.val + k₀.val) (1 + p₀.val)
 
 /-- Auxiliary: rules out both cycle lengths being ≤ 17 when m ≥ 289. -/
@@ -973,12 +989,14 @@ lemma main_case_two (hm : m ≥ 289)
         by_cases h3 : 3 ∣ Nat.gcd b.natAbs m
         · -- Swap roles of b and b-a
           rw [← zmod_set_swap m a b]
-          set a' := (-a : ℤ); set b' := (b - a : ℤ)
+          set a' := (-a : ℤ)
+          set b' := (b - a : ℤ)
           have hba_eq : (b' - a').natAbs = b.natAbs := by grind
           have hcop' : (Nat.gcd b'.natAbs m).gcd (Nat.gcd (b' - a').natAbs m) = 1 := by grind
           have hmin' : min (Nat.gcd b'.natAbs m) (Nat.gcd (b' - a').natAbs m) > 1 := by grind
           have h3' : ¬ (3 ∣ Nat.gcd b'.natAbs m) := by
-            intro h3d'; have := Nat.dvd_gcd h3 h3d'
+            intro h3d'
+            have := Nat.dvd_gcd h3 h3d'
             grind
           rcases Nat.even_or_odd (m / Nat.gcd b'.natAbs m) with he' | ho'
           · exact case_two_e1_even m a' b' hm hcop' hmin' he'
@@ -1006,7 +1024,8 @@ lemma main_case_two (hm : m ≥ 289)
         · -- 3 ∤ d₁ and 3 ∤ d₂ and e₁ ≤ 17: swap and show new e₁ ≥ 19.
           -- After swap, new e₁' = m/d₂. If e₁' ≤ 17 too, contradiction.
           rw [← zmod_set_swap m a' b']
-          set a'' := (-a' : ℤ); set b'' := (b' - a' : ℤ)
+          set a'' := (-a' : ℤ)
+          set b'' := (b' - a' : ℤ)
           have hba_eq : (b'' - a'').natAbs = b'.natAbs := by grind
           have hcop' : (Nat.gcd b''.natAbs m).gcd (Nat.gcd (b'' - a'').natAbs m) = 1 := by grind
           have hmin' : min (Nat.gcd b''.natAbs m) (Nat.gcd (b'' - a'').natAbs m) > 1 := by grind
@@ -1017,7 +1036,8 @@ lemma main_case_two (hm : m ≥ 289)
             · exact case_two_d1_even_e1_odd m a'' b'' hm hcop' hmin' hd' ho'
             · -- Both odd after swap. Show e₁' ≥ 19 by contradiction.
               have he₁'_ge : m / Nat.gcd b''.natAbs m ≥ 19 := by
-                by_contra hlt; push Not at hlt
+                by_contra hlt
+                push Not at hlt
                 rw [Nat.gcd_comm] at hcop
                 exact no_both_e_small hm hcop (by grind) (by grind) hd₂_dvd hd₁_dvd (by grind) he_le
               exact case2d_coloring_works hm hcop' hmin' hd' ho' he₁'_ge h3d₂
