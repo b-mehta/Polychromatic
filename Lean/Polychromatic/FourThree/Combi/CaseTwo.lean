@@ -6,8 +6,6 @@ Authors: Bhavik Mehta
 
 import Polychromatic.FourThree.Combi.BlockColour
 
-open Finset Pointwise
-
 /-! ## Main Case 2: Multiple Cycles (paper §4.2)
 
 When both $d_1 = \gcd(b, m) > 1$ and $d_2 = \gcd(b-a, m) > 1$, the action of $b$ on
@@ -27,6 +25,8 @@ The proof splits into subcases based on the parity of $d_1$ and $e_1$:
 - **(2c) Both odd, $e_1 \le 17$:** Shifted periodic colorings.
 - **(2d) Both odd, $e_1 \ge 19$:** Rotating patterns based on a 3-interval partition.
 -/
+
+open Finset Pointwise
 
 section Case2_MultipleCycles
 
