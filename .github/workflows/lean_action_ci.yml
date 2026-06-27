@@ -145,7 +145,7 @@ jobs:
 
       - name: Setup Ruby
         # https://github.com/ruby/setup-ruby/releases/tag/v1.207.0
-        uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f
+        uses: ruby/setup-ruby@0cb964fd540e0a24c900370abf38a33466142735
         with:
           ruby-version: '3.2' # Not needed with a .ruby-version file
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
