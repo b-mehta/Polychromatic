@@ -69,13 +69,11 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : �
   · rename_i hlt
     set j := p / (q + 1)
     have hj_lt_r : j < r := by rw [Nat.div_lt_iff_lt_mul (by omega)]; exact hlt
-    have hdam : (q + 1) * j + p % (q + 1) = p := Nat.div_add_mod p (q + 1)
     have hmod : p % (q + 1) < q + 1 := Nat.mod_lt p (by omega)
     refine ⟨by omega, ?_, ?_⟩ <;> grind [equiEndpoint, Nat.div_add_mod p (q + 1)]
   · rename_i hge
     push Not at hge
     set d := (p - bd) / q
-    have hdam : q * d + (p - bd) % q = p - bd := Nat.div_add_mod (p - bd) q
     have hmod : (p - bd) % q < q := Nat.mod_lt _ hq_pos
     have hd_lt : d < s - r := by rw [Nat.div_lt_iff_lt_mul hq_pos]; omega
     set j := r + d
@@ -649,22 +647,21 @@ lemma case_one_residues (g : ℕ) (hm : m ≥ 289) (h_res : m % 3 ≠ 0)
   have h1 : m = 3 * g - 2 ∨ m = 3 * g - 1 ∨ m = 3 * g + 1 ∨
       m = 3 * g + 2 ∨ m = 3 * g + 4 ∨ m = 3 * g + 5 := by grind
   -- Helper for computing (3 * g : ZMod m) when m = 3g + k
-  have cast_sub (k : ℕ) (hk : m = 3 * g - k) : ((3 * g : ℕ) : ZMod m) = (m + k : ℕ) := by
-    congr 1; omega
+  have cast_sub (k : ℕ) (hk : m = 3 * g - k) : (3 : ZMod m) * (g : ZMod m) = (k : ZMod m) := by
+    have h : ((3 * g : ℕ) : ZMod m) = (m + k : ℕ) := by congr 1; omega
+    push_cast [ZMod.natCast_self] at h; grind
   have cast_add (k : ℕ) (hk : m = 3 * g + k) : (3 : ZMod m) * (g : ZMod m) = -↑k := by
     have : ((3 * g + k : ℕ) : ZMod m) = (m : ℕ) := by rw [hk]
     push_cast [ZMod.natCast_self] at this
     grind
   rcases h1 with hg | hg | hg | hg | hg | hg
   · -- m = 3g - 2: {0,3,2,5} = {0,2,3,5}
-    have h3g : (3 : ZMod m) * (g : ZMod m) = 2 := by
-      have := cast_sub 2 hg; push_cast [ZMod.natCast_self] at this; grind
+    have h3g := cast_sub 2 hg
     have h3g1 : (3 : ZMod m) * ((g : ZMod m) + 1) = 5 := by grind
     simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g, image_singleton,
       h3g1, insert_comm] using table1_0235 m (by grind)
   · -- m = 3g - 1: {0,3,1,4} = {0,1,3,4}
-    have h3g : (3 : ZMod m) * g = 1 := by
-      have := cast_sub 1 hg; push_cast [ZMod.natCast_self] at this; grind
+    have h3g := cast_sub 1 hg
     have h3g1 : (3 : ZMod m) * ((g : ZMod m) + 1) = 4 := by grind
     simpa [hu, Nat.cast_ofNat, image_insert, mul_zero, mul_one, h3g,
       image_singleton, h3g1, insert_comm] using table1_0134 m (by grind)
