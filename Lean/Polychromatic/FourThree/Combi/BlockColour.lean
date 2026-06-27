@@ -53,7 +53,6 @@ lemma polychromNumber_zmod {a b c : ℤ} {m : ℕ} (hm : m = c - a + b) :
       vadd_finset_singleton, S₁, zmod_set]
     have h0 : ((c - a + b : ℤ) : ZMod m) = 0 := by rw [← hm]; simp
     push_cast at h0
-    have : (b : ZMod m) - a + c = 0 := by rw [← h0]; ring
     grind [sub_add_eq_add_sub, two_mul]
   rw [this, polychromNumber_vadd]
 
@@ -321,10 +320,9 @@ private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ) (h m i : ℕ
     have his_ge : A.length * h ≤ i + s := ge_mul_of_mod_add_ge hA hh_pos hi_lo hjs_lt
     have hmod : (i + s) % (A.length * h) = i + s - A.length * h := mod_eq_sub his_ge (by grind)
     have hjs_idx : j + s - A.length < A.length := by grind
-    refine bcv_eq_A A B h _ _ _ _ (by grind)
+    exact bcv_eq_A A B h _ _ _ _ (by grind)
       (by rw [hmod, Nat.mod_eq_of_lt (by grind), sub_region_eq hA hi_lo (by grind) hjs_lt])
-      hjs_idx ?_
-    grind
+      hjs_idx (by grind)
 
 /-! ### Case 5: Wrap, B region, h > 0 → BA -/
 private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ) (h k m i : ℕ)
@@ -357,13 +355,11 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ) (h k m i : 
     have his_ge : m ≤ i + s := by grind [ge_mul_of_mod_add_ge (by grind) hk_pos hk_lo hjs_lt]
     have hmod : (i + s) % m = i + s - m := mod_eq_sub his_ge (by grind)
     have hsub_eq : i + s - m = j + s - B.length := by
-      have := sub_region_eq (by grind) hk_lo hi_B hjs_lt
-      grind
+      grind [sub_region_eq (by grind) hk_lo hi_B hjs_lt]
     have hjs_idx : j + s - B.length < A.length := by grind
-    refine bcv_eq_A A B h _ _ _ _ (by grind)
+    exact bcv_eq_A A B h _ _ _ _ (by grind)
       (by rw [hmod, Nat.mod_eq_of_lt (by grind), hsub_eq])
-      hjs_idx ?_
-    grind
+      hjs_idx (by grind)
 
 /-! ### Case 6: Wrap, B region, h = 0 → BB -/
 private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ) (k m i : ℕ)
@@ -393,10 +389,9 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ) (k m i : �
       rw [← hm]
       exact sub_region_eq (by grind) hk_lo (by grind) hjs_lt
     have hjs_idx : j + s - B.length < B.length := by grind
-    refine bcv_eq_B A B 0 _ _ _ _ (by omega)
+    exact bcv_eq_B A B 0 _ _ _ _ (by omega)
       (by rw [Nat.mul_zero, Nat.sub_zero, hmod, Nat.mod_eq_of_lt (by grind), hsub_eq])
-      hjs_idx ?_
-    grind
+      hjs_idx (by grind)
 
 /-! ### Main result of the block coloring infrastructure -/
 
@@ -420,8 +415,7 @@ theorem blockColor_polychrom
     obtain ⟨XY, j, hXY_check, hj_bound, hcorr⟩ := hg
     obtain ⟨s, hs_mem, hs_eq⟩ := checkLinearPolychrom_spec hXY_check hj_bound c
     refine ⟨s, hs_mem, ?_⟩
-    have := hcorr s (List.le_max_of_le' 0 hs_mem le_rfl)
-    grind
+    grind [hcorr s (List.le_max_of_le' 0 hs_mem le_rfl)]
   -- Dispatch to case lemmas
   by_cases h_wrap : i + maxOff < m
   · by_cases hA_region : i < A.length * h
@@ -485,11 +479,10 @@ private lemma table1_of_blockColor (A B : List (Fin 3)) (offsets : List ℕ) (S 
   haveI : NeZero m := ⟨by omega⟩
   haveI : Fact (1 < m) := ⟨by omega⟩
   obtain ⟨h, k, hm_eq, hhk⟩ := frobenius_consec (by omega : 1 < A.length) hm
-  have hm_eq' : A.length * h + B.length * k = m := by grind
   apply hasPolychromColouring_of_cyclic (blockColorVal A B h) S
   intro n target
   obtain ⟨s, hs_mem, hs_eq⟩ := blockColor_polychrom A B offsets (by omega) hBlen hmaxOff
-    hpairs hhk hm_eq' (ZMod.val_lt n) target
+    hpairs hhk (by grind) (ZMod.val_lt n) target
   refine ⟨(s : ZMod m), (hS _).mpr ⟨s, hs_mem, rfl⟩, ?_⟩
   have : s < m := lt_of_le_of_lt (le_trans (List.le_max_of_le' 0 hs_mem le_rfl) hmaxOff) hA_lt_m
   rwa [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt this]
