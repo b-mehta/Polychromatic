@@ -92,7 +92,7 @@ alias ⟨IsPolychrom.mem_image, _⟩ := isPolychrom_iff_mem_image
 
 end decEq
 
-def IsPolychrom.fintype [DecidableEq K] (hχ : IsPolychrom S χ) :
+@[reducible] def IsPolychrom.fintype [DecidableEq K] (hχ : IsPolychrom S χ) :
     Fintype K where
   elems := S.image χ
   complete := by classical simpa using hχ.mem_image 0
