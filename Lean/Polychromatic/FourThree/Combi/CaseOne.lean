@@ -42,13 +42,10 @@ These are technical arithmetic lemmas used in the proof of `case_one_interval`.
 They are not important on their own.
 -/
 
-private lemma lt_two' (n : ℕ) (h : n < 2) : n = 0 ∨ n = 1 := by omega
-
 /-- Phase differs when gap is 1 or 2 mod s, and 3 ∣ s. -/
 private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s) (hj₀ : j₀ < s)
     (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
-    j₀ % 3 ≠ jg % 3 := by
-  grind [Nat.div_add_mod, Nat.mul_add_mod, lt_two']
+    j₀ % 3 ≠ jg % 3 := by grind [Nat.div_add_mod, Nat.mul_add_mod]
 
 open Finpartition in
 private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : ℕ) (hp : p < m) :
@@ -67,9 +64,7 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : �
   have hq_pos : 0 < q := Nat.div_pos hs_le hs
   have hr_lt : r < s := Nat.mod_lt m hs
   have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
-  have hbd_le_m : bd + (s - r) * q = m := by
-    have : (s - r) * q + r * q = s * q := by grind [Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
-    grind
+  have hbd_le_m : bd + (s - r) * q = m := by grind [Nat.sub_add_cancel (Nat.le_of_lt hr_lt)]
   split
   · rename_i hlt
     set j := p / (q + 1)
@@ -179,8 +174,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
       omega
     have hr_lt : r < s := Nat.mod_lt m hs
     have hep_j3 : Finpartition.equiEndpoint m s (j₀ + 3) = q * (j₀ + 3) + r := by
-      unfold Finpartition.equiEndpoint
-      grind
+      grind [Finpartition.equiEndpoint]
     have hm_eq : m = q * s + r := by grind [Nat.div_add_mod m s]
     have hm_le_ep : m ≤ Finpartition.equiEndpoint m s (j₀ + 3) := by grind
     have hep_diff : Finpartition.equiEndpoint m s (j₀ + 3) - m =
@@ -405,8 +399,7 @@ private lemma straddle2_gap1 (s g m : ℕ) (hs3 : 3 ≤ s) (hs_le : s ≤ m)
 private lemma eqp_idx_succ_lt_m (q r s p : ℕ) (hq_pos : 0 < q) (hr_lt : r < s)
     (hm_eq : m = s * q + r)
     (hp : p < m) :
-    p + 1 < m ∨ eqp_idx q r (p + 1) = s := by
-  grind [eqp_idx_m]
+    p + 1 < m ∨ eqp_idx q r (p + 1) = s := by grind [eqp_idx_m]
 
 private lemma non_straddle_witness (q r p : ℕ) (hq_pos : 0 < q)
     (hp : p < m) (hp1 : p + 1 < m)
