@@ -403,12 +403,11 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
       set p := Φ.symm n; set j := p.2
       set j' := (Φ.symm (n + ↑(b - a))).2
       have hπn : π n = (j.val : ZMod d₂) * π (↑b) := by
-        have : n = Φ p := (Equiv.apply_symm_apply Φ n).symm
-        grind
+        rw [← Φ.apply_symm_apply n]
+        exact hπ_φ p.1 p.2
       have hπn' : π n = (j'.val : ZMod d₂) * π (↑b) := by
-        rw [← hπ_eq]
-        have : n + ↑(b - a) = Φ (Φ.symm (n + ↑(b - a))) := (Equiv.apply_symm_apply Φ _).symm
-        grind
+        rw [← hπ_eq n, ← Φ.apply_symm_apply (n + ↑(b - a))]
+        exact hπ_φ _ _
       have hπ_jj' := hπn.symm.trans hπn'
       exact case2b_coverage_gen d₁ e₁ hd1_even he1_odd he₁_ge3 _ j j'
         (fun hj hj' => h_degenerate_false j j' hπ_jj' hj hj')
