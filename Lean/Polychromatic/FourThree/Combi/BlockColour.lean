@@ -450,7 +450,7 @@ theorem blockColor_polychrom
       simp only [mul_zero, add_zero] at hm
       exact case_wrap_A A B offsets h m i hA hmaxOff hAA hm hi h_wrap hA_region
     · push Not at hA_region
-      have hk_pos : 0 < k := by nlinarith [hm, hA_region, hi]
+      have hk_pos : 0 < k := by grind
       by_cases hh_pos : 0 < h
       · exact case_wrap_BA A B offsets h k m i hA hBlen hmaxOff
           hBA hm hi h_wrap hA_region hh_pos hk_pos
