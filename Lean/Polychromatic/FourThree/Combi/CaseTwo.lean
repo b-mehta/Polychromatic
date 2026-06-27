@@ -276,7 +276,7 @@ private lemma orbit_coloring_polychrom (Φ : ZMod d₁ × ZMod e₁ ≃ ZMod m)
 lemma case_two_e1_even (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
     (h_min : min d₁ d₂ > 1) (he1_even : Even e₁) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  haveI : NeZero m := ⟨by grind [m_eq_d₁_mul_e₁ (m := m) (b := b)]⟩
+  haveI : NeZero m := ⟨by omega⟩
   exact orbit_coloring_polychrom (orbitEquiv h_gcd_coprime) orbitEquiv_shift_b
     orbitEquiv_cycle_shift (cycle_coloring d₁ e₁)
     (fun n k => color_covers_even d₁ e₁ (by grind) (parity_flip_even e₁ he1_even) _ _ _ k)
@@ -703,7 +703,7 @@ private lemma case2d_coloring_works (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d�
     (h_min : min d₁ d₂ > 1) (hd1_odd : Odd d₁) (he1_odd : Odd e₁)
     (he1_ge : e₁ ≥ 19) (h3 : ¬ (3 ∣ d₁)) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  haveI : NeZero m := ⟨by grind [m_eq_d₁_mul_e₁ (m := m) (b := b)]⟩
+  haveI : NeZero m := ⟨by omega⟩
   have he1_b_zero : e₁ • (b : ZMod m) = 0 :=
     addOrderOf_b_eq (b := b) (m := m) ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv h_gcd_coprime
@@ -767,7 +767,7 @@ private lemma case2c_mod3 (h3e : 3 ∣ e₁) (x y : ℕ) : (x % e₁ + y) % 3 = 
 lemma case_two_odd_small (hm : m ≥ 289) (h_gcd_coprime : Nat.gcd d₁ d₂ = 1)
     (h_min : min d₁ d₂ > 1) (hd1_odd : Odd d₁) (he1_div3 : 3 ∣ e₁) :
     HasPolychromColouring (Fin 3) (zmod_set m a b) := by
-  haveI : NeZero m := ⟨by grind [m_eq_d₁_mul_e₁ (m := m) (b := b)]⟩
+  haveI : NeZero m := ⟨by omega⟩
   have he1_b_zero : e₁ • (b : ZMod m) = 0 :=
     addOrderOf_b_eq (b := b) (m := m) ▸ addOrderOf_nsmul_eq_zero _
   let Φ := orbitEquiv h_gcd_coprime
