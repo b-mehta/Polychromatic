@@ -42,7 +42,9 @@ jobs:
         if: github.ref == 'refs/heads/main'
 
       - name: Build Lean files
-        uses: leanprover/lean-action@v1.5.0
+        # b-mehta/lean-action@d489e2d = v1.5.0 + cache-key fix (leanprover/lean-action#167);
+        # revert to leanprover/lean-action once the fix is released.
+        uses: b-mehta/lean-action@d489e2d808dacf725628cc11e07de9f6a875d7e7
         with:
           mk_all-check: true
           lake-package-directory: Lean
@@ -84,7 +86,9 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build Lean files
-        uses: leanprover/lean-action@v1.5.0
+        # b-mehta/lean-action@d489e2d = v1.5.0 + cache-key fix (leanprover/lean-action#167);
+        # revert to leanprover/lean-action once the fix is released.
+        uses: b-mehta/lean-action@d489e2d808dacf725628cc11e07de9f6a875d7e7
         with:
           mk_all-check: true
           lake-package-directory: Lean
