@@ -45,11 +45,9 @@ They are not important on their own.
 private lemma lt_two' (n : ℕ) (h : n < 2) : n = 0 ∨ n = 1 := by omega
 
 /-- Phase differs when gap is 1 or 2 mod s, and 3 ∣ s. -/
-private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s) (hj₀ : j₀ < s) (hjg : jg < s)
+private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s) (hj₀ : j₀ < s)
     (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
     j₀ % 3 ≠ jg % 3 := by
-  obtain ⟨t, ht⟩ := hs3
-  subst ht
   grind [Nat.div_add_mod, Nat.mul_add_mod, lt_two']
 
 open Finpartition in
@@ -245,7 +243,7 @@ private lemma mod_step (a b : ℕ) (h : (a + 1) / b = a / b) :
 
 -- Helper: if quotient increases by 1, remainder resets to 0
 private lemma mod_zero_step (a b : ℕ) (h : (a + 1) / b = a / b + 1) : (a + 1) % b = 0 := by
-  rw [← Nat.dvd_iff_mod_eq_zero]; by_contra hdvd; simp [Nat.succ_div, hdvd] at h
+  grind [Nat.succ_div, Nat.dvd_iff_mod_eq_zero]
 
 private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
     eqp_off q r (p + 1) = eqp_off q r p + 1 := by
@@ -408,12 +406,7 @@ private lemma eqp_idx_succ_lt_m (q r s p : ℕ) (hq_pos : 0 < q) (hr_lt : r < s)
     (hm_eq : m = s * q + r)
     (hp : p < m) :
     p + 1 < m ∨ eqp_idx q r (p + 1) = s := by
-  by_cases h : p + 1 < m
-  · exact Or.inl h
-  · have hpm : p + 1 = m := by omega
-    right
-    rw [hpm, hm_eq]
-    exact eqp_idx_m q r s hq_pos hr_lt
+  grind [eqp_idx_m]
 
 private lemma non_straddle_witness (q r p : ℕ) (hq_pos : 0 < q)
     (hp : p < m) (hp1 : p + 1 < m)
@@ -518,7 +511,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
   have hj₀_lt : j₀ < s := hidx_lt v hv_lt
   have hjg_lt : jg < s := hidx_lt ((v + g) % m) (Nat.mod_lt _ (by omega))
   -- Phase difference: j₀ % 3 ≠ jg % 3
-  have hphase : j₀ % 3 ≠ jg % 3 := phase_ne_of_gap hs3 hj₀_lt hjg_lt hgap
+  have hphase : j₀ % 3 ≠ jg % 3 := phase_ne_of_gap hs3 hj₀_lt hgap
   -- Interval bounds
   obtain ⟨-, hv_lo, hv_hi⟩ := idx_in_interval' s m hs hs_le v hv_lt
   obtain ⟨-, hvg_lo, hvg_hi⟩ :=
