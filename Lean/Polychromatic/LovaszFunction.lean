@@ -40,7 +40,7 @@ noncomputable def straussFunction (k : ℕ) : ℕ :=
 
 @[simp] lemma straussFunction_zero : straussFunction 0 = 0 := by
   simp only [straussFunction, HasPolychromColouring, IsEmpty.exists_iff, imp_false, not_le,
-    Nat.sInf_eq_zero, Set.mem_setOf_eq, not_lt_zero', forall_const, Set.eq_empty_iff_forall_notMem,
+    Nat.sInf_eq_zero, Set.mem_setOf_eq, not_lt_zero, forall_const, Set.eq_empty_iff_forall_notMem,
     not_forall, not_lt, false_or]
   intro n
   use Finset.Ico 0 n

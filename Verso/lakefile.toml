@@ -4,12 +4,12 @@ defaultTargets = ["docs"]
 [[require]]
 name = "subverso"
 git = "https://github.com/leanprover/subverso"
-rev = "4539e605ff834c35ecc0bcd0b7daec69163fd9f0"
+rev = "ce893b9042128037e2d3c0158b9567fab9fae268"
 
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "main"
+rev = "v4.30.0"
 
 [[lean_lib]]
 name = "Berso"

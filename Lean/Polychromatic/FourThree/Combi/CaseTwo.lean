@@ -6,8 +6,6 @@ Authors: Bhavik Mehta
 
 import Polychromatic.FourThree.Combi.BlockColour
 
-open Finset Pointwise
-
 /-! ## Main Case 2: Multiple Cycles (paper §4.2)
 
 When both $d_1 = \gcd(b, m) > 1$ and $d_2 = \gcd(b-a, m) > 1$, the action of $b$ on
@@ -27,6 +25,8 @@ The proof splits into subcases based on the parity of $d_1$ and $e_1$:
 - **(2c) Both odd, $e_1 \le 17$:** Shifted periodic colorings.
 - **(2d) Both odd, $e_1 \ge 19$:** Rotating patterns based on a 3-interval partition.
 -/
+
+open Finset Pointwise
 
 section Case2_MultipleCycles
 
@@ -403,12 +403,11 @@ lemma case_two_d1_even_e1_odd (hm : m ≥ 289)
       set p := Φ.symm n; set j := p.2
       set j' := (Φ.symm (n + ↑(b - a))).2
       have hπn : π n = (j.val : ZMod d₂) * π (↑b) := by
-        have : n = Φ p := (Equiv.apply_symm_apply Φ n).symm
-        grind
+        rw [← Φ.apply_symm_apply n]
+        exact hπ_φ p.1 p.2
       have hπn' : π n = (j'.val : ZMod d₂) * π (↑b) := by
-        rw [← hπ_eq]
-        have : n + ↑(b - a) = Φ (Φ.symm (n + ↑(b - a))) := (Equiv.apply_symm_apply Φ _).symm
-        grind
+        rw [← hπ_eq n, ← Φ.apply_symm_apply (n + ↑(b - a))]
+        exact hπ_φ _ _
       have hπ_jj' := hπn.symm.trans hπn'
       exact case2b_coverage_gen d₁ e₁ hd1_even he1_odd he₁_ge3 _ j j'
         (fun hj hj' => h_degenerate_false j j' hπ_jj' hj hj')
@@ -512,7 +511,7 @@ private lemma basePattern_consec_pair {e₁ j : ℕ} (he : Odd e₁) (hge : e₁
         grind [basePattern, intervalColors]
       exact this
   · -- Wrap: j = e₁ - 1
-    push_neg at hj1
+    push Not at hj1
     have hj_eq : j = e₁ - 1 := by grind
     subst hj_eq
     have : e₁ - 1 + 1 = e₁ := by grind
@@ -540,7 +539,7 @@ private lemma rotation_changes_interval {e₁ j : ℕ} (hge : e₁ ≥ 19) (hj :
     rw [Nat.mod_eq_of_lt hjr_wrap] at heq hj'_lt
     grind
   · -- Wrap: (j + r) % e₁ = j + r - e₁
-    push_neg at hjr_wrap
+    push Not at hjr_wrap
     have hmod : (j + r) % e₁ = j + r - e₁ := by
       have : r < e₁ := by grind
       have h1 : j + r - e₁ < e₁ := by grind
@@ -1018,7 +1017,7 @@ lemma main_case_two (hm : m ≥ 289)
             · exact case_two_d1_even_e1_odd m a'' b'' hm hcop' hmin' hd' ho'
             · -- Both odd after swap. Show e₁' ≥ 19 by contradiction.
               have he₁'_ge : m / Nat.gcd b''.natAbs m ≥ 19 := by
-                by_contra hlt; push_neg at hlt
+                by_contra hlt; push Not at hlt
                 rw [Nat.gcd_comm] at hcop
                 exact no_both_e_small hm hcop (by grind) (by grind) hd₂_dvd hd₁_dvd (by grind) he_le
               exact case2d_coloring_works hm hcop' hmin' hd' ho' he₁'_ge h3d₂
