@@ -237,8 +237,7 @@ lemma condition_of_mul_exp_le {k m : ℕ} (hk : k ≠ 0) (hm : m ≠ 0)
     _ = m ^ 2 * k * (Real.exp 1 * Real.exp (- m / k)) := by
       rw [← Real.exp_nat_mul]
       ring_nf
-    _ = m ^ 2 * k * Real.exp (- m / k + 1) := by
-      grind [Real.exp_add]
+    _ = m ^ 2 * k * Real.exp (- m / k + 1) := by grind [Real.exp_add]
     _ ≤ 1 := hm
 
 lemma polychromColouringBound_succ {k m : ℕ} (hk : k ≠ 0) (h : 2 * k ≤ m + 1)
@@ -358,8 +357,7 @@ lemma linear_le_mBound {k : ℕ} : 2 * k ≤ mBound k := by
 
 @[simp] lemma mBound_pos {k : ℕ} (hk : k ≠ 0) : 0 < mBound k := by
   grw [← linear_le_mBound]; positivity
-@[simp] lemma mBound_ne_zero {k : ℕ} (hk : k ≠ 0) : mBound k ≠ 0 := by
-  grind [mBound_pos]
+@[simp] lemma mBound_ne_zero {k : ℕ} (hk : k ≠ 0) : mBound k ≠ 0 := by grind [mBound_pos]
 
 lemma ceil_nat_mul_le {k : ℕ} {x : ℝ} : ⌈k * x⌉₊ ≤ k * ⌈x⌉₊ := by
   grw [Nat.ceil_le, Nat.cast_mul, ← Nat.le_ceil x]
@@ -439,8 +437,7 @@ lemma polychromColouringBound_mBound {k : ℕ} (hk : 4 ≤ k) :
       exact mBound_le_weak hk
     _ ≤ (8 * k * log k) ^ 2 * k * exp (- (3 * log k + (2 * log (log k) + 5.2)) + 1) := by
       grw [mBound, ← Nat.le_ceil, neg_div, mul_div_cancel_left₀ _ (by positivity)]
-    _ = 2 ^ 6 * k ^ 3 * log k ^ 2 * exp (log k * (-3) + log (log k) * (-2) + - 4.2) := by
-      ring_nf
+    _ = 2 ^ 6 * k ^ 3 * log k ^ 2 * exp (log k * (-3) + log (log k) * (-2) + - 4.2) := by ring_nf
     _ = 2 ^ 6 * exp (-4.2) := by
       rw [exp_add, exp_add, ← rpow_def_of_pos (by positivity),
         ← rpow_def_of_pos (by positivity)]

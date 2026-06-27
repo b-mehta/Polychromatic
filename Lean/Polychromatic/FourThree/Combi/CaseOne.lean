@@ -48,7 +48,8 @@ private lemma lt_two' (n : ℕ) (h : n < 2) : n = 0 ∨ n = 1 := by omega
 private lemma phase_ne_of_gap {s j₀ jg : ℕ} (hs3 : 3 ∣ s) (hj₀ : j₀ < s) (hjg : jg < s)
     (hgap : (jg + s - j₀) % s = 1 ∨ (jg + s - j₀) % s = 2) :
     j₀ % 3 ≠ jg % 3 := by
-  obtain ⟨t, ht⟩ := hs3; subst ht
+  obtain ⟨t, ht⟩ := hs3
+  subst ht
   grind [Nat.div_add_mod, Nat.mul_add_mod, lt_two']
 
 open Finpartition in
@@ -62,7 +63,9 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : �
     equiEndpoint m s j ≤ p ∧
     p < equiEndpoint m s (j + 1) := by
   simp only
-  set q := m / s; set r := m % s; set bd := r * (q + 1)
+  set q := m / s
+  set r := m % s
+  set bd := r * (q + 1)
   have hq_pos : 0 < q := Nat.div_pos hs_le hs
   have hr_lt : r < s := Nat.mod_lt m hs
   have hm_eq : m = s * q + r := (Nat.div_add_mod m s).symm
@@ -76,7 +79,8 @@ private lemma idx_in_interval' (s m : ℕ) (hs : 0 < s) (hs_le : s ≤ m) (p : �
     have hdam : (q + 1) * j + p % (q + 1) = p := Nat.div_add_mod p (q + 1)
     have hmod : p % (q + 1) < q + 1 := Nat.mod_lt p (by omega)
     refine ⟨by omega, ?_, ?_⟩ <;> grind [equiEndpoint, Nat.div_add_mod p (q + 1)]
-  · rename_i hge; push Not at hge
+  · rename_i hge
+    push Not at hge
     set d := (p - bd) / q
     have hdam : q * d + (p - bd) % q = p - bd := Nat.div_add_mod (p - bd) q
     have hmod : (p - bd) % q < q := Nat.mod_lt _ hq_pos
@@ -91,7 +95,8 @@ open Finpartition in
 private lemma gap_exceeds_ilen (m s g : ℕ) (hs : 0 < s) (h_lb : (m + s - 1) / s < g) (j : ℕ) :
     equiEndpoint m s (j + 1) - equiEndpoint m s j < g := by
   rw [Finpartition.card_of_mem_equipartitionToIco_parts_aux]
-  set q := m / s; set r := m % s
+  set q := m / s
+  set r := m % s
   by_cases hr : j < r
   · rw [if_pos hr]
     have : (q + 1) * s ≤ m + s - 1 := by grind [Nat.div_add_mod m s]
@@ -163,7 +168,7 @@ private lemma gap_bound_interval (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_
       by_cases hj3 : j₀ + 3 ≤ s
       · exact idx_range_from_endpoints' m s (j₀+1) (j₀+3) (v+g) hpast hwithin jg hvg_lo hvg_hi
       · have hvg_lt_ep : v + g < Finpartition.equiEndpoint m s s := by
-          grind [Finpartition.equiEndpoint_hi (show s ≠ 0 by omega) (n := m) (k := s)]
+          grind [Finpartition.equiEndpoint_hi (by omega : s ≠ 0) (n := m) (k := s)]
         have := idx_range_from_endpoints' m s (j₀+1) s (v+g) hpast hvg_lt_ep jg hvg_lo hvg_hi
         omega
     have : jg + s - j₀ = s + 1 ∨ jg + s - j₀ = s + 2 := by omega
@@ -214,12 +219,12 @@ private lemma eqp_idx_m (q r s : ℕ) (hq : 0 < q) (hr : r < s) : eqp_idx q r (s
   simp only [eqp_idx, if_neg hge]
   have hle : r * (q + 1) ≤ s * q + r := by nlinarith
   have hsub : s * q + r - r * (q + 1) = (s - r) * q := by grind
-  rw [hsub, Nat.mul_div_cancel _ hq]; omega
+  rw [hsub, Nat.mul_div_cancel _ hq]
+  omega
 
 -- General fact: consecutive ℕ quotients differ by 0 or 1
 private lemma div_step (a b : ℕ) :
-    (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by
-  grind [Nat.succ_div]
+    (a + 1) / b = a / b ∨ (a + 1) / b = a / b + 1 := by grind [Nat.succ_div]
 
 private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) : eqp_idx q r (p + 1) = eqp_idx q r p ∨
     eqp_idx q r (p + 1) = eqp_idx q r p + 1 := by
@@ -237,7 +242,8 @@ private lemma eqp_idx_step (q r p : ℕ) (hq : 0 < q) : eqp_idx q r (p + 1) = eq
     omega
   · have hsub : p + 1 - r * (q + 1) = (p - r * (q + 1)) + 1 := by omega
     rw [hsub]
-    have := div_step (p - r * (q + 1)) q; omega
+    have := div_step (p - r * (q + 1)) q
+    omega
 
 -- Helper: if quotient stays same, remainder increases by 1
 private lemma mod_step (a b : ℕ) (h : (a + 1) / b = a / b) :
@@ -251,8 +257,7 @@ private lemma mod_zero_step (a b : ℕ) (h : (a + 1) / b = a / b + 1) :
 private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p + 1) = eqp_idx q r p) :
     eqp_off q r (p + 1) = eqp_off q r p + 1 := by
   unfold eqp_off
-  by_cases h1 : p + 1 < r * (q + 1) <;>
-      by_cases h2 : p < r * (q + 1)
+  by_cases h1 : p + 1 < r * (q + 1) <;> by_cases h2 : p < r * (q + 1)
   · rw [if_pos h1, if_pos h2]
     exact mod_step p (q + 1) (by simpa [eqp_idx, h1, h2] using h)
   · omega
@@ -268,8 +273,7 @@ private lemma eqp_off_succ_same (q r p : ℕ) (hq : 0 < q) (h : eqp_idx q r (p +
 private lemma eqp_off_succ_new (q r p : ℕ) (h : eqp_idx q r (p + 1) ≠ eqp_idx q r p) :
     eqp_off q r (p + 1) = 0 := by
   unfold eqp_off
-  by_cases h1 : p + 1 < r * (q + 1) <;>
-      by_cases h2 : p < r * (q + 1)
+  by_cases h1 : p + 1 < r * (q + 1) <;> by_cases h2 : p < r * (q + 1)
   · rw [if_pos h1]
     exact mod_zero_step p (q + 1)
       (by simp only [eqp_idx, if_pos h1, if_pos h2] at h; have := div_step p (q + 1); omega)
@@ -280,9 +284,11 @@ private lemma eqp_off_succ_new (q r p : ℕ) (h : eqp_idx q r (p + 1) ≠ eqp_id
   · rw [if_neg h1]
     have hsub : p + 1 - r * (q + 1) = (p - r * (q + 1)) + 1 := by omega
     rw [hsub]
-    exact mod_zero_step (p - r * (q + 1)) q (by
-      simp only [eqp_idx, if_neg h1, if_neg h2] at h
-      rw [hsub] at h; have := div_step (p - r * (q + 1)) q; omega)
+    refine mod_zero_step (p - r * (q + 1)) q ?_
+    simp only [eqp_idx, if_neg h1, if_neg h2] at h
+    rw [hsub] at h
+    have := div_step (p - r * (q + 1)) q
+    omega
 
 private lemma gap_mod_cases_gen (s j₀ jg d : ℕ) (hj₀ : j₀ < s) (hjg : jg < s)
     (hmod : (jg + s - j₀) % s = d) :
@@ -326,8 +332,7 @@ private lemma straddle1_gap2 (s g m : ℕ) (hs : 0 < s) (hs3 : 3 ≤ s) (hs_le :
     have hjg_val : jg = 0 := by omega
     rw [hj₀_eq, Nat.sub_add_cancel (by omega), hep_s] at hv_eq
     have hv_val : v = m - 1 := by omega
-    have hg_pos : 0 < g := by
-      grind
+    have hg_pos : 0 < g := by grind
     have hvg_mod : (v + g) % m = g - 1 := by
       have : m - 1 + g = m + (g - 1) := by omega
       rw [hv_val, this, Nat.add_mod_left, Nat.mod_eq_of_lt (by omega)]
@@ -468,8 +473,7 @@ private lemma endgame_witness {g : ℕ} {c : ℕ → ℕ} {v s : ℕ} {k : Fin 3
     (hc₀ : c (v + a₀) = s)
     (hc₁ : c (v + a₁) = (s + 1) % 3)
     (hc₂ : c (v + a₂) = (s + 2) % 3) :
-    ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by
-  grind
+    ∃ a ∈ ({0, 1, g, g + 1} : Finset ℕ), c (v + a) = k.val := by grind
 
 /-- Lift a ℕ-level coloring witness for {0,1,g,g+1} to ZMod m. -/
 private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
@@ -484,7 +488,8 @@ private lemma lift_coloring_witness {m g : ℕ} [NeZero m] [Fact (1 < m)]
   exact ⟨(a : ZMod m),
     by simp only [Finset.mem_insert, Finset.mem_singleton] at ha ⊢
        rcases ha with rfl | rfl | rfl | rfl <;> simp,
-    by ext; change c (n + (a : ZMod m)).val = k.val
+    by ext
+       change c (n + (a : ZMod m)).val = k.val
        have : (n + (a : ZMod m)).val = (n.val + a) % m := by
          rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt ha_lt]
        rw [this, hc_period, hca]⟩
@@ -530,7 +535,8 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
     intro p hp; simp only [idx]; split
     · have : p / (q + 1) < r := by rwa [Nat.div_lt_iff_lt_mul (by omega)]
       omega
-    · rename_i hge; push Not at hge
+    · rename_i hge
+      push Not at hge
       have : (p - bd) / q < s - r := by
         rw [Nat.div_lt_iff_lt_mul hq_pos]
         have : r * (q + 1) + (s - r) * q = s * q + r := by
@@ -545,8 +551,10 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
   -- Interval bounds
   have hiv := idx_in_interval' s m hs hs_le v hv_lt
   have hivg := idx_in_interval' s m hs hs_le ((v + g) % m) (Nat.mod_lt _ (by omega))
-  have hv_lo := hiv.2.1; have hv_hi := hiv.2.2
-  have hvg_lo := hivg.2.1; have hvg_hi := hivg.2.2
+  have hv_lo := hiv.2.1
+  have hv_hi := hiv.2.2
+  have hvg_lo := hivg.2.1
+  have hvg_hi := hivg.2.2
   -- Bridge: eqp_idx step → equiEndpoint straddle condition
   open Finpartition in
   have endpoint_bridge : ∀ p : ℕ, p < m → eqp_idx q r p < s →
@@ -770,7 +778,8 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g) (hg3 : 3 ∣ g) (hg : 0 < g)
   let c (p : ℕ) : ℕ := (p % 3 + p / g) % 3
   have hc_lt3 : ∀ p, c p < 3 := fun p => Nat.mod_lt _ (by grind)
   have hc_period : ∀ p, c (p % m) = c p := by
-    intro p; simp only [c, hm_eq]
+    intro p
+    simp only [c, hm_eq]
     rw [Nat.mod_mod_of_dvd p (dvd_mul_right 3 g)]
     have h2 : p = p % (3 * g) + 3 * (p / (3 * g)) * g := by grind [Nat.mod_add_div p (3 * g)]
     have h3 : p / g = p % (3 * g) / g + 3 * (p / (3 * g)) := by
@@ -778,7 +787,9 @@ lemma case_one_div_3g (g : ℕ) (hm_eq : m = 3 * g) (hg3 : 3 ∣ g) (hg : 0 < g)
     grind
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
     lift_coloring_witness (by grind) hc_lt3 hc_period ?_⟩
-  set v := n.val; set r := v % g; set q := v / g
+  set v := n.val
+  set r := v % g
+  set q := v / g
   have hv_eq : v = g * q + r := (Nat.div_add_mod v g).symm
   have hr_lt : r < g := Nat.mod_lt _ hg
   have gk_mod3 : ∀ k a, (g * k + a) % 3 = a % 3 := fun k a => by
@@ -816,13 +827,16 @@ lemma case_one_div_3g3 (g : ℕ) (hm_eq : m = 3 * g + 3) (hg3 : 3 ∣ g) (hg : 0
   have hc_lt3 : ∀ p, c p < 3 := fun p => Nat.mod_lt _ (by grind)
   have hc_period : ∀ p, c (p % m) = c p := by
     have hm3h : m = 3 * h := by grind
-    intro p; simp only [c, hm3h]
+    intro p
+    simp only [c, hm3h]
     have hp_eq : p = h * (3 * (p / (3 * h))) + p % (3 * h) := by grind [Nat.mod_add_div p (3 * h)]
     conv_rhs => rw [hp_eq]
     grind [Nat.mul_add_mod, Nat.add_mul_div_left]
   refine ⟨fun x => ⟨c x.val, hc_lt3 _⟩, fun n k =>
     lift_coloring_witness (by grind) hc_lt3 hc_period ?_⟩
-  set v := n.val; set r := v % h; set q := v / h
+  set v := n.val
+  set r := v % h
+  set q := v / h
   have hv_eq : v = h * q + r := (Nat.div_add_mod v h).symm
   have hr_lt : r < h := Nat.mod_lt _ hh_pos
   have color_at : ∀ q' r', r' < h →

@@ -102,7 +102,6 @@ lemma allA_of_3_1 (A b c : ℕ)
 -- 3 bit vectors to represent the colours, check they're pairwise disjoint (· &&& · = 0)
 -- &&& with each translation of toBitVector
 
-
 -- def ofBitVector (n : ℕ) : List ℕ :=
 --   (List.range 32).filter (fun i ↦ (n &&& (1 <<< i)) ≠ 0)
 

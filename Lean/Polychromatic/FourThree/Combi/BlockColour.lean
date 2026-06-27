@@ -125,10 +125,14 @@ private lemma frobenius_consec {rA m : ℕ} (hrA : 1 < rA) (hm : m ≥ rA * (rA 
     (by rw [(Nat.coprime_self_add_right.mpr (Nat.coprime_one_right _)).gcd_eq_one]; exact one_dvd _)
     (by grind [Nat.pred_eq_sub_one, mul_comm rA (rA - 1)])
   refine ⟨a, b, by grind [mul_comm a rA, mul_comm b (rA + 1)], ?_⟩
-  by_contra hle; push Not at hle
+  by_contra hle
+  push Not at hle
   have ha0 : a = 0 := by omega
   have hb0 : b = 0 := by omega
-  subst ha0; subst hb0; simp only [zero_mul, zero_add] at hab; subst hab
+  subst ha0
+  subst hb0
+  simp only [zero_mul, zero_add] at hab
+  subst hab
   have : 0 < rA * (rA - 1) := Nat.mul_pos (by omega) (by omega)
   omega
 
@@ -178,8 +182,7 @@ private lemma ge_mul_of_mod_add_ge {i s r n : ℕ} (hr : 0 < r) (hn : 0 < n)
     r * n ≤ i + s := by
   have := Nat.mod_add_div i r
   have := Nat.mod_lt i hr
-  have : n - 1 ≤ i / r := by
-    rw [Nat.le_div_iff_mul_le hr]; grind
+  have : n - 1 ≤ i / r := by rw [Nat.le_div_iff_mul_le hr]; grind
   have : n ≤ i / r + 1 := by omega
   grind [Nat.mul_le_mul_left r this]
 
@@ -299,8 +302,7 @@ private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ)
     have his_ge : A.length * h ≤ i + s := ge_mul_of_mod_add_ge hA hh_pos hi_lo hjs_lt
     have hnot_A : ¬(i + s < A.length * h) := by grind
     refine bcv_eq_B A B h _ _ _ _ hnot_A ?_ hjs_B ?_
-    · rw [sub_region_eq hA hi_lo hA_region hjs_lt,
-        Nat.mod_eq_of_lt (by grind)]
+    · rw [sub_region_eq hA hi_lo hA_region hjs_lt, Nat.mod_eq_of_lt (by grind)]
     · grind
 
 /-! ### Case 3: No wrap, BB -/
@@ -482,7 +484,8 @@ theorem blockColor_polychrom
   · push Not at h_wrap
     by_cases hA_region : i < A.length * h
     · have hk0 : k = 0 := by rw [hBlen] at hm; nlinarith [hmaxOff]
-      subst hk0; simp only [mul_zero, add_zero] at hm
+      subst hk0
+      simp only [mul_zero, add_zero] at hm
       exact case_wrap_A A B offsets h m i hA hmaxOff hAA hm hi h_wrap hA_region
     · push Not at hA_region
       have hk_pos : 0 < k := by nlinarith [hm, hA_region, hi]
@@ -539,8 +542,7 @@ private lemma table1_of_blockColor (A B : List (Fin 3)) (offsets : List ℕ)
     hpairs hhk hm_eq' (ZMod.val_lt n) target
   refine ⟨(s : ZMod m), (hS _).mpr ⟨s, hs_mem, rfl⟩, ?_⟩
   have : s < m := lt_of_le_of_lt (le_trans (List.le_max_of_le' 0 hs_mem le_rfl) hmaxOff) hA_lt_m
-  rw [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt this]
-  exact hs_eq
+  rwa [ZMod.val_add, ZMod.val_natCast, Nat.mod_eq_of_lt this]
 
 /-- {0,1,2,3}: blocks [0,1,2] (r=3), [0,0,1,2] (r+1=4). Frobenius bound: m ≥ 6. -/
 lemma table1_0123 (hm : m ≥ 6) : HasPolychromColouring (Fin 3) ({0, 1, 2, 3} : Finset (ZMod m)) :=

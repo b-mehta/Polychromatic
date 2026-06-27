@@ -51,8 +51,7 @@ def polychromNumber (S : Finset G) : ℕ :=
 
 /-- The polychromatic number is invariant under translation. -/
 lemma polychromNumber_vadd [DecidableEq G] {n : G} :
-    polychromNumber (n +ᵥ S) = polychromNumber S := by
-  simp [polychromNumber]
+    polychromNumber (n +ᵥ S) = polychromNumber S := by simp [polychromNumber]
 
 private lemma bddAbove : BddAbove {n | HasPolychromColouring (Fin n) S} :=
   ⟨#S, fun n hn ↦ by simpa using hn.card_le⟩
