@@ -106,12 +106,10 @@ private lemma idx_range_from_endpoints' (m s : ℕ) (a b p : ℕ)
     (hj_lo : equiEndpoint m s j ≤ p)
     (hj_hi : p < equiEndpoint m s (j + 1)) :
     a ≤ j ∧ j < b := by
-  constructor
-  · by_contra! h
-    have : equiEndpoint m s (j + 1) ≤ equiEndpoint m s a := equiEndpoint_monotone (by omega)
+  refine ⟨?_, ?_⟩ <;> by_contra! h
+  · have : equiEndpoint m s (j + 1) ≤ equiEndpoint m s a := equiEndpoint_monotone (by omega)
     omega
-  · by_contra! h
-    have : equiEndpoint m s b ≤ equiEndpoint m s j := equiEndpoint_monotone (by omega)
+  · have : equiEndpoint m s b ≤ equiEndpoint m s j := equiEndpoint_monotone (by omega)
     omega
 
 /-- Gap bound: idx of (v+g)%m differs from idx(v) by 1 or 2 mod s.
