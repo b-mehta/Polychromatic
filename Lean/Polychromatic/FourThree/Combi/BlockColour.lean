@@ -135,15 +135,12 @@ private lemma hasPolychromColouring_of_cyclic {m : ℕ} [NeZero m] [Fact (1 < m)
 
 /-- If `i % r + s < r`, then `(i + s) % r = i % r + s`. -/
 private lemma add_mod_of_lt {i s r : ℕ} (h : i % r + s < r) : (i + s) % r = i % r + s := by
-  have hs : s < r := by omega
-  rw [Nat.add_mod, Nat.mod_eq_of_lt hs]
-  exact Nat.mod_eq_of_lt h
+  rw [Nat.add_mod, Nat.mod_eq_of_lt (by omega : s < r), Nat.mod_eq_of_lt h]
 
 /-- If `r ≤ i % r + s < 2r`, then `(i + s) % r = i % r + s - r`. -/
-private lemma add_mod_sub {i s r : ℕ} (hr : 0 < r) (hge : r ≤ i % r + s) (hlt : i % r + s < 2 * r) :
+private lemma add_mod_sub {i s r : ℕ} (hge : r ≤ i % r + s) (hlt : i % r + s < 2 * r) :
     (i + s) % r = i % r + s - r := by
   have h1 := Nat.mod_add_div i r
-  have h2 := Nat.mod_lt i hr
   have key : i + s = (i % r + s - r) + (i / r + 1) * r := by
     grind [Nat.sub_add_cancel hge, mul_comm r (i / r)]
   conv_lhs => rw [key]
@@ -151,13 +148,11 @@ private lemma add_mod_sub {i s r : ℕ} (hr : 0 < r) (hge : r ≤ i % r + s) (hl
   exact Nat.mod_eq_of_lt (by omega)
 
 /-- If `i < r * n` and `i % r + s < r`, then `i + s < r * n`. -/
-private lemma add_lt_of_mod_add_lt {i s r n : ℕ} (hr : 0 < r)
+private lemma add_lt_of_mod_add_lt {i s r n : ℕ}
     (hi : i < r * n) (h : i % r + s < r) :
     i + s < r * n := by
   have h1 := Nat.mod_add_div i r
-  have h2 := Nat.mod_lt i hr
-  have h3 : i / r < n := Nat.div_lt_of_lt_mul hi
-  have : i / r + 1 ≤ n := by omega
+  have : i / r + 1 ≤ n := Nat.div_lt_of_lt_mul hi
   grind [Nat.mul_le_mul_left r this]
 
 /-- If `M ≤ n` and `n - M < M`, then `n % M = n - M`. -/
@@ -170,7 +165,6 @@ private lemma ge_mul_of_mod_add_ge {i s r n : ℕ} (hr : 0 < r) (hn : 0 < n)
     (hi_lo : r * (n - 1) ≤ i) (hge : r ≤ i % r + s) :
     r * n ≤ i + s := by
   have := Nat.mod_add_div i r
-  have := Nat.mod_lt i hr
   have : n - 1 ≤ i / r := by rw [Nat.le_div_iff_mul_le hr]; grind
   have : n ≤ i / r + 1 := by omega
   grind [Nat.mul_le_mul_left r this]
@@ -248,7 +242,7 @@ private lemma case_no_wrap_AA (A B : List (Fin 3)) (offsets : List ℕ) (h k m i
       (add_mod_of_lt hjs_lt) hjs_lt (List.getElem?_append_left hjs_lt)
   · push Not at hjs_lt
     have hjs_sub : j + s - A.length < A.length := by grind
-    exact bcv_eq_A A B h _ _ _ _ his_A (add_mod_sub hA hjs_lt (by grind)) hjs_sub (by grind)
+    exact bcv_eq_A A B h _ _ _ _ his_A (add_mod_sub hjs_lt (by grind)) hjs_sub (by grind)
 
 /-! ### Case 2: No wrap, AB boundary -/
 private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ) (h k m i : ℕ)
@@ -268,7 +262,7 @@ private lemma case_no_wrap_AB (A B : List (Fin 3)) (offsets : List ℕ) (h k m i
   refine ⟨A ++ B, j, hAB, by grind, fun s hsle => ?_⟩
   rw [Nat.mod_eq_of_lt (by grind)]
   by_cases hjs_lt : j + s < A.length
-  · exact bcv_eq_A A B h _ _ _ _ (add_lt_of_mod_add_lt hA hA_region hjs_lt)
+  · exact bcv_eq_A A B h _ _ _ _ (add_lt_of_mod_add_lt hA_region hjs_lt)
       (add_mod_of_lt hjs_lt) hjs_lt (List.getElem?_append_left hjs_lt)
   · push Not at hjs_lt
     have hjs_B : j + s - A.length < B.length := by grind
@@ -298,7 +292,7 @@ private lemma case_no_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ) (h k m i
   · push Not at hjs_lt
     have hjs_sub : j + s - B.length < B.length := by grind
     exact bcv_eq_B A B h _ _ _ _ (by grind)
-      (by rw [Nat.sub_add_comm hB_region]; exact add_mod_sub (by grind) hjs_lt (by grind))
+      (by rw [Nat.sub_add_comm hB_region]; exact add_mod_sub hjs_lt (by grind))
       hjs_sub (by grind)
 
 /-! ### Case 4: Wrap, A region (k = 0) -/
@@ -319,7 +313,7 @@ private lemma case_wrap_A (A B : List (Fin 3)) (offsets : List ℕ) (h m i : ℕ
   have hAh : A.length ≤ A.length * h := Nat.le_mul_of_pos_right _ hh_pos
   refine ⟨A ++ A, j, hAA, by grind, fun s hsle => ?_⟩
   by_cases hjs_lt : j + s < A.length
-  · have his_lt : i + s < A.length * h := add_lt_of_mod_add_lt hA (by grind) hjs_lt
+  · have his_lt : i + s < A.length * h := add_lt_of_mod_add_lt (by grind) hjs_lt
     rw [Nat.mod_eq_of_lt his_lt]
     exact bcv_eq_A A B h _ _ _ _ his_lt
       (add_mod_of_lt hjs_lt) hjs_lt (List.getElem?_append_left hjs_lt)
@@ -353,17 +347,14 @@ private lemma case_wrap_BA (A B : List (Fin 3)) (offsets : List ℕ) (h k m i : 
   refine ⟨B ++ A, j, hBA, by grind, fun s hsle => ?_⟩
   by_cases hjs_lt : j + s < B.length
   · -- Still in B
-    have his_lt : (i - A.length * h) + s < B.length * k :=
-      add_lt_of_mod_add_lt (by grind) hi_B hjs_lt
+    have his_lt : (i - A.length * h) + s < B.length * k := add_lt_of_mod_add_lt hi_B hjs_lt
     rw [Nat.mod_eq_of_lt (by grind)]
     exact bcv_eq_B A B h _ _ _ _ (by grind)
       (by rw [Nat.sub_add_comm hB_region]; exact add_mod_of_lt hjs_lt)
       hjs_lt (List.getElem?_append_left hjs_lt)
   · -- Wrapped to A region
     push Not at hjs_lt
-    have his_ge : m ≤ i + s := by
-      have := ge_mul_of_mod_add_ge (by grind) hk_pos hk_lo hjs_lt
-      grind
+    have his_ge : m ≤ i + s := by grind [ge_mul_of_mod_add_ge (by grind) hk_pos hk_lo hjs_lt]
     have hmod : (i + s) % m = i + s - m := mod_eq_sub his_ge (by grind)
     have hsub_eq : i + s - m = j + s - B.length := by
       have := sub_region_eq (by grind) hk_lo hi_B hjs_lt
@@ -391,14 +382,12 @@ private lemma case_wrap_BB (A B : List (Fin 3)) (offsets : List ℕ) (k m i : �
   have hk_lo : B.length * (k - 1) ≤ i := by grind [Nat.mul_sub]
   refine ⟨B ++ B, j, hBB, by grind, fun s hsle => ?_⟩
   by_cases hjs_lt : j + s < B.length
-  · have his_lt : i + s < B.length * k := add_lt_of_mod_add_lt (by grind) (by grind) hjs_lt
+  · have his_lt : i + s < B.length * k := add_lt_of_mod_add_lt (by grind) hjs_lt
     rw [Nat.mod_eq_of_lt (by grind)]
     exact bcv_eq_B A B 0 _ _ _ _ (by omega) (by grind [add_mod_of_lt hjs_lt])
       hjs_lt (List.getElem?_append_left hjs_lt)
   · push Not at hjs_lt
-    have his_ge : m ≤ i + s := by
-      have := ge_mul_of_mod_add_ge (by grind) hk_pos hk_lo hjs_lt
-      grind
+    have his_ge : m ≤ i + s := by grind [ge_mul_of_mod_add_ge (by grind) hk_pos hk_lo hjs_lt]
     have hmod : (i + s) % m = i + s - m := mod_eq_sub his_ge (by grind)
     have hsub_eq : i + s - m = j + s - B.length := by
       rw [← hm]
