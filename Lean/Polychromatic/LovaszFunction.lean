@@ -63,8 +63,7 @@ lemma straussFunction_spec {k : ℕ} (hk : k ≠ 0) (S : Finset ℤ)
 /-- Upper bounds on the Strauss function. -/
 lemma straussFunction_le_of_forall {k m : ℕ}
     (h : ∀ S : Finset ℤ, m ≤ #S → HasPolychromColouring (Fin k) S) :
-    straussFunction k ≤ m := by
-  exact Nat.sInf_le h
+    straussFunction k ≤ m := Nat.sInf_le h
 
 lemma straussFunction_le_of_forall_eq {k m : ℕ}
     (h : ∀ S : Finset ℤ, #S = m → HasPolychromColouring (Fin k) S) :
@@ -118,8 +117,7 @@ lemma le_straussFunction_self {k : ℕ} :
   · apply straussFunction_le_of_forall_eq
     intro S hS
     apply hasPolychromColouring_fin_of_le (by simp)
-    rw [polychromNumber_eq_card_of_card_le_two hS.le]
-    rw [hS]
+    rw [polychromNumber_eq_card_of_card_le_two hS.le, hS]
   · exact le_straussFunction_self
 
 lemma four_le_straussFunction_three : 4 ≤ straussFunction 3 := by
@@ -127,7 +125,6 @@ lemma four_le_straussFunction_three : 4 ≤ straussFunction 3 := by
   apply lt_straussFunction_of_polychromNumber (by simp)
   rw [polychromNumber_three_eq_two]
   simp
-
 
 -- ANCHOR: straussFunction_le_of_forall_three_mul_sq
 lemma straussFunction_le_of_forall_three_mul_sq {k : ℕ} :

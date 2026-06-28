@@ -141,8 +141,7 @@ lemma suffices_cases (C : ℕ)
     (h₂ : ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → C ≤ c → Finset.gcd {a, b, c} id = 1 →
       HasPolychromColouring (Fin 3) {0, a, b, c}) :
     ∀ a b c : ℤ, 0 < a → a < b → a + b ≤ c → Finset.gcd {a, b, c} id = 1 →
-      HasPolychromColouring (Fin 3) {0, a, b, c} := by
-  grind
+      HasPolychromColouring (Fin 3) {0, a, b, c} := by grind
 
 /-- A predicate stating that `{0, a, b, c}` has a 3-polychromatic colouring. -/
 def Accept (a b c : ℕ) : Prop :=
@@ -231,8 +230,7 @@ lemma allA_succ_of_gcd (A b c g ga gb gc : ℕ) (hga : A.beq (ga.mul g)) (hgb : 
 
 lemma allA_succ_of_accept (A b c : ℕ)
     (h : Accept A b c) (hA : allA A b c) :
-    allA A.succ b c := by
-  exact allA_succ A b c (Or.inl h) hA
+    allA A.succ b c := allA_succ A b c (Or.inl h) hA
 
 /-- Acceptance for all triples with given residues modulo `q`. -/
 abbrev ModAccept (q aq bq cq : ℕ) : Prop :=
@@ -379,8 +377,7 @@ lemma mainProof {q a b c v v' x y z : ℕ}
   intro aq bq cq haq hbq hcq
   rw [Accept]
   let χ (i : ZMod q) : Fin 3 := if x.testBit i.val then 0 else if y.testBit i.val then 1 else 2
-  have hχx (i : ZMod q) (hi : x.testBit i.val) : χ i = 0 := by
-    simp [χ, hi]
+  have hχx (i : ZMod q) (hi : x.testBit i.val) : χ i = 0 := by simp [χ, hi]
   have hχy (i : ZMod q) (hi : y.testBit i.val) : χ i = 1 := by
     simp only [Fin.isValue, hi, ↓reduceIte, ite_eq_right_iff, zero_ne_one, imp_false,
       Bool.not_eq_true, χ]
