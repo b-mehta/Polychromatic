@@ -14,7 +14,7 @@ weak.linter.mathlibStandardSet = true
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.30.0"
+rev = "v4.31.0"
 
 [[lean_lib]]
 name = "Polychromatic"
@@ -22,4 +22,4 @@ name = "Polychromatic"
 [[require]]
 name = "subverso"
 git = "https://github.com/leanprover/subverso"
-rev = "no-modules/ce893b9042128037e2d3c0158b9567fab9fae268"
+rev = "no-modules/0bd508e8362f56d4a05cbf63614d4c97db954041"
