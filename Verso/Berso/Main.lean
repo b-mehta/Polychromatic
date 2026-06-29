@@ -37,7 +37,7 @@ def writeBlog (theme : Theme) (id : Lean.Name) (txt : Part Page) (posts : Array 
 
   let «meta» ←
     match (← read).xref.blogs.find? id with
-    | none => logError s!"Blog {id} not found in traverse pass!"; pure {}
+    | none => reportError s!"Blog {id} not found in traverse pass!"; pure {}
     | some «meta» => pure «meta»
 
   for (cat, contents) in meta.categories.toArray.qsort (·.1.name < ·.1.name) do
