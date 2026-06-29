@@ -22,7 +22,7 @@ jobs:
           tool-cache: false
 
       - name: Checkout project
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Remove annotations
         run: |
@@ -83,7 +83,7 @@ jobs:
           tool-cache: false
 
       - name: Checkout project
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Build Lean files
         # b-mehta/lean-action@d489e2d = v1.5.0 + cache-key fix (leanprover/lean-action#167);
@@ -126,7 +126,7 @@ jobs:
 
     steps:
       - name: Checkout project
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download Verso site
         uses: actions/download-artifact@v8
