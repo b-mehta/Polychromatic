@@ -220,7 +220,7 @@ lemma allA_succ_of_gcd (A b c g ga gb gc : ℕ) (hga : A.beq (ga.mul g)) (hgb : 
     (hgc : c.beq (gc.mul g)) (hA : allA A b c) :
     allA A.succ b c := by
   simp only [Nat.mul_eq, Nat.beq_eq, Nat.ble_eq] at hga hgb hgc hg
-  substs hga hgb hgc
+  subst hga hgb hgc
   apply allA_succ _ _ _ _ hA
   right
   rw [Nat.gcd_mul_right, Nat.gcd_mul_right]
@@ -302,8 +302,7 @@ lemma testBit_toDoubleBitVector_shiftRight {q a b c i k : ℕ} (hkq : k ≤ q) :
   rintro (h₁ | h₁ | h₁ | h₁ | h₁ | h₁ | h₁ | h₁)
   all_goals
     replace h₁ := congr(($h₁ : ZMod q))
-    simp at h₁
-    grind
+    grind [Nat.cast_add, ZMod.natCast_self]
 
 lemma testBit_shiftRight_toDoubleBitVector {q a b c k z : ℕ} (hkq : k ≤ q) (hz : z < 2 ^ q)
     (h : 0 < (toDoubleBitVector q a b c >>> (q - k)) &&& z) :

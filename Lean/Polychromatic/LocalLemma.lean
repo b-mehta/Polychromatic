@@ -161,8 +161,8 @@ lemma IndividualBound.compl [IsProbabilityMeasure P] (hA : MeasurableSet (A i))
     (h : IndividualBound P A x i S) :
     (1 - x i) * P.real (⋂ j ∈ S, (A j)ᶜ) ≤ P.real ((A i)ᶜ ∩ ⋂ j ∈ S, (A j)ᶜ) := by
   rw [IndividualBound] at h
-  grw [one_sub_mul, ← h, ← Set.diff_eq_compl_inter, Set.inter_comm, sub_le_iff_le_add,
-    ← measureReal_diff_add_inter hA]
+  grw [one_sub_mul, ← h, ← Set.sdiff_eq_compl_inter, Set.inter_comm, sub_le_iff_le_add,
+    ← measureReal_sdiff_add_inter hA]
 
 open Finset
 

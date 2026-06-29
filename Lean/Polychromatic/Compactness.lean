@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Bhavik Mehta
 -/
 
-import Mathlib.Combinatorics.SimpleGraph.Coloring.VertexColoring
+import Mathlib.Combinatorics.SimpleGraph.Coloring.Vertex
 import Mathlib.Topology.Compactness.Compact
 
 /-!
@@ -65,7 +65,7 @@ theorem Finset.rado_selection {α : Type*} {β : α → Type*}
     simp only [Set.mem_iInter, Set.mem_setOf_eq, e]
     intro i hi
     exact ⟨_, Finset.subset_biUnion_of_mem id hi, by simp⟩
-  simpa using CompactSpace.iInter_nonempty he' he''
+  simpa [e] using CompactSpace.iInter_nonempty he' he''
 
 theorem Finset.rado_selection_subtype {α : Type*} {β : α → Type*} [∀ a, Finite (β a)]
     (g : (s : Finset α) → (a : s) → β a) :
@@ -111,7 +111,7 @@ theorem nonempty_hom_of_forall_finite_subgraph_hom {V W : Type*} [Finite W]
   change F.Adj (χ a') (χ b')
   obtain ⟨H, hHfin, hHsub, hHeq⟩ := hχ (G.subgraphOfAdj hab).verts (by simp)
   rw [hHeq, hHeq]
-  simp only [SimpleGraph.subgraphOfAdj_verts, SimpleGraph.Subgraph.induce_verts, g]
+  simp only [g]
   apply (h ((⊤ : G.Subgraph).induce H) hHfin).map_adj
   simp only [SimpleGraph.subgraphOfAdj_verts, Set.insert_subset_iff,
     Set.singleton_subset_iff] at hHsub
