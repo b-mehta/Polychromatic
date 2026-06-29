@@ -622,7 +622,7 @@ lemma hasPolychromColouring_mul_unit (u : (ZMod m)ˣ) (S : Finset (ZMod m)) :
     HasPolychromColouring (Fin 3) (S.image (u.val * ·)) ↔
     HasPolychromColouring (Fin 3) S := by
   have key : polychromNumber (S.image (u.val * ·)) = polychromNumber S :=
-    polychromNumber_iso (AddAut.mulLeft u)
+    polychromNumber_iso (Multiplicative.toAdd (AddAut.mulLeft u))
   exact ⟨fun h => hasPolychromColouring_fin_of_le (by grind) (key ▸ le_polychromNumber h),
     fun h => hasPolychromColouring_fin_of_le (by grind) (key.symm ▸ le_polychromNumber h)⟩
 

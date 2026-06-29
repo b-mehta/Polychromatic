@@ -121,7 +121,7 @@ lemma le_straussFunction_self {k : ℕ} :
   · exact le_straussFunction_self
 
 lemma four_le_straussFunction_three : 4 ≤ straussFunction 3 := by
-  suffices #({0, 1, 3} : Finset ℤ) < straussFunction 3 by simpa using this
+  suffices #({0, 1, 3} : Finset ℤ) < straussFunction 3 by grind
   apply lt_straussFunction_of_polychromNumber (by simp)
   rw [polychromNumber_three_eq_two]
   simp
