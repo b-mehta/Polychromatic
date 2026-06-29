@@ -282,7 +282,8 @@ for all finite $`F` containing any given translate, $`\chi` is $`S`-polychromati
 This kind of compactness argument appears throughout combinatorics (e.g. the de Bruijn–Erdős
 theorem on graph colouring), so isolating it as a standalone lemma is useful.
 
-In Lean, the Rado selection principle is available in Mathlib as `Finset.rado_selection`.
+In Lean, the Rado selection principle was originally formalised for this project, and has since
+been upstreamed to Mathlib, where it is now available as `Finset.rado_selection`.
 
 By applying the Local Lemma to each finite set $`X` to get colourings $`g_X`, and then using Rado
 selection, we obtain a global colouring $`\chi` that is $`S`-polychromatic. In Lean, the
