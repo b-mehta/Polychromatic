@@ -93,7 +93,7 @@ partial def Dir.generate (theme : Theme) (dir : Dir) : GenerateM Unit :=
         IO.FS.removeDirAll dest
       else
         IO.FS.removeFile dest
-    copyRecursively (← currentConfig).logError file dest
+    copyRecursively file dest
 
 def Site.generate (theme : Theme) (site : Site) : GenerateM Unit := do
   match site with
@@ -108,41 +108,35 @@ open Template in
 def blogMain (theme : Theme) (site : Site) (relativizeUrls := true) (linkTargets : Code.LinkTargets TraverseContext := {})
     (options : List String) (components : Components := by exact %registered_components)
     (header : String := Html.doctype) :
-    IO UInt32 := do
-  let hasError ← IO.mkRef false
-  let logError msg := do hasError.set true; IO.eprintln msg
-  let cfg ← opts {logError := logError} options
-  let (site, xref) ← site.traverse cfg components
-  let rw := if relativizeUrls then
-      some <| relativize
-    else none
-  let initGenCtx : Generate.Context := {
-    site := site,
-    theme := theme,
-    ctxt := { path := .root, config := cfg, components },
-    xref := xref,
-    dir := cfg.destination,
-    config := cfg,
-    header := header,
-    rewriteHtml := rw,
-    linkTargets := linkTargets,
-    components := components
-  }
-  let (((), st), _) ← Berso.Site.generate theme site initGenCtx .empty {}
-  IO.FS.writeFile (cfg.destination.join "-verso-docs.json") (toString st.dedup.docJson)
-  for (name, content, sourceMap?) in xref.jsFiles do
-    FS.ensureDir (cfg.destination.join "-verso-js")
-    IO.FS.writeFile (cfg.destination.join "-verso-js" |>.join name) content
-    if let some (name, content) := sourceMap? then
+    IO UInt32 :=
+  withLogger fun logger => do
+    let cfg ← opts {} options
+    let (site, xref) ← site.traverse cfg components |>.run logger
+    let rw := if relativizeUrls then
+        some <| relativize
+      else none
+    let initGenCtx : Generate.Context := {
+      site := site,
+      theme := theme,
+      ctxt := { path := .root, config := cfg, components },
+      xref := xref,
+      dir := cfg.destination,
+      config := cfg,
+      header := header,
+      rewriteHtml := rw,
+      linkTargets := linkTargets,
+      components := components
+    }
+    let (((), st), _) ← Berso.Site.generate theme site initGenCtx .empty {} |>.run logger
+    IO.FS.writeFile (cfg.destination.join "-verso-docs.json") (toString st.dedup.docJson)
+    for (name, content, sourceMap?) in xref.jsFiles do
+      FS.ensureDir (cfg.destination.join "-verso-js")
       IO.FS.writeFile (cfg.destination.join "-verso-js" |>.join name) content
-  for (name, content) in xref.cssFiles do
-    FS.ensureDir (cfg.destination.join "-verso-css")
-    IO.FS.writeFile (cfg.destination.join "-verso-css" |>.join name) content
-  if (← hasError.get) then
-    IO.eprintln "Errors were encountered!"
-    return 1
-  else
-    return 0
+      if let some (name, content) := sourceMap? then
+        IO.FS.writeFile (cfg.destination.join "-verso-js" |>.join name) content
+    for (name, content) in xref.cssFiles do
+      FS.ensureDir (cfg.destination.join "-verso-css")
+      IO.FS.writeFile (cfg.destination.join "-verso-css" |>.join name) content
 where
   opts (cfg : Config)
     | ("--output"::dir::more) => opts {cfg with destination := dir} more
@@ -160,7 +154,7 @@ where
       pure attr
   rwTag (tag : String) (attrs : Array (String × String)) (content : Html) : ReaderT TraverseContext Id (Option Html) := do
     pure <| some <| .tag tag (← attrs.mapM rwAttr) content
-  relativize _err ctxt html :=
+  relativize ctxt html :=
     pure <| html.visitM (m := ReaderT TraverseContext Id) (tag := rwTag) |>.run ctxt
 
 end Berso
