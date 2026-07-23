@@ -36,7 +36,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Lean/Polychromatic
-          git rm --cached -r Verso site
+          git rm --cached -r Verso site .github
           git commit -m "Deploy: Sync clean code from main branch" --allow-empty
           git push -f origin HEAD:refs/heads/release
         if: github.ref == 'refs/heads/main'
