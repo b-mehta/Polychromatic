@@ -57,8 +57,8 @@ The first of these requires results from probability theory and topology, as wel
 The second is more combinatorial, and the informal proof requires a large computer search to verify
 around 4 million cases.
 
-At the moment, we have achieved the first of these goals, and the computational part of the second
-is completed, but not the non-computational aspects of the proof.
+We have achieved both of these goals: the second result is fully formalised, combining the
+computational verification with a complete combinatorial proof of the remaining cases.
 
 # Repository Structure
 
@@ -382,10 +382,10 @@ approach: separate search from verification.
 
 ## Current Status
 
-The computational verification for $`c < 289` is complete in Lean. The remaining theoretical part
-is in progress.
+The computational verification for $`c < 289` is complete in Lean, and so is the remaining
+theoretical part covering $`c \geq 289`.
 
-## The Main Theorem (Partial)
+## The Main Theorem
 
 The main theorem states that every set of 4 integers has a 3-polychromatic colouring:
 
