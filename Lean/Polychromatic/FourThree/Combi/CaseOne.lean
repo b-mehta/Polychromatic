@@ -577,7 +577,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
         have hstrad1 : equiEndpoint m s (j₀ + 1) ≤ v + 1 := endpoint_bridge v hv_lt hj₀_lt h1_step
         exact straddle1_gap2 s g m hs hs3_le hs_le h_lb
           h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_hi hvg_lo hvg_hi hstrad1 hgap
-      have hjg1_eq : (jg + 1) % 3 = j₀ % 3 := by grind [gap_mod_cases_gen]
+      have hjg1_eq : (jg + 1) % 3 = j₀ % 3 := by grind [gap_mod_cases_gen s j₀ jg 2]
       rcases hk1 with hk_eq | hk_eq
       · -- k = j₀%3 = (jg+1)%3: pair 2 must be non-straddle
         rcases eqp_idx_step q r ((v + g) % m) hq_pos with h2_same | h2_step
@@ -599,7 +599,7 @@ lemma case_one_interval (s g : ℕ) (hs : 0 < s) (hs3 : 3 ∣ s)
           endpoint_bridge ((v + g) % m) hvg_lt hjg_lt h2_step
         exact straddle2_gap1 s g m hs3_le hs_le h_lb
           h_ub v j₀ jg hv_lt hj₀_lt hjg_lt hv_lo hv_hi hvg_hi hstrad2 hgap
-      have hj01_eq : (j₀ + 1) % 3 = jg % 3 := by grind [gap_mod_cases_gen]
+      have hj01_eq : (j₀ + 1) % 3 = jg % 3 := by grind [gap_mod_cases_gen s j₀ jg 1]
       rcases hk2 with hk_eq | hk_eq
       · -- k = jg%3 = (j₀+1)%3: pair 1 must be non-straddle
         rcases eqp_idx_step q r v hq_pos with h1_same | h1_step

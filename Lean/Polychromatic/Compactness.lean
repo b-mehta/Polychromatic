@@ -46,7 +46,7 @@ theorem nonempty_hom_of_forall_finite_subgraph_hom {V W : Type*} [Finite W]
   apply (h ((⊤ : G.Subgraph).induce H) hHfin).map_adj
   simp only [SimpleGraph.subgraphOfAdj_verts, Set.insert_subset_iff,
     Set.singleton_subset_iff] at hHsub
-  simp_all [a', b']
+  exact ⟨hHsub.1, hHsub.2, hab⟩
 
 theorem deBruijn_erdos {α β : Type*} (G : SimpleGraph α) [Finite β]
     (h : ∀ G' : G.Subgraph, G'.verts.Finite → G'.coe.Coloring β) : Nonempty (G.Coloring β) :=
