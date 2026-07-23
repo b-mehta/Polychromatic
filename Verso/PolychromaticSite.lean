@@ -215,11 +215,10 @@ G --> H["$$p(S) \geq 3\;\text{ if }\;\#S = 4$$"]
 H --> E
 
 classDef green  fill:#f0fdf4,stroke:#16a34a,stroke-width:1px,color:#14532d,rx:5px,ry:5px;
-classDef blue   fill:#eff6ff,stroke:#2563eb,stroke-width:1px,color:#1e3a8a,rx:5px,ry:5px,stroke-dasharray: 3 3;
 
 class A,C,D,G green;
 class B green;
-class E,H blue
+class E,H green
 ```
 
 # Proving Strauss' conjecture
