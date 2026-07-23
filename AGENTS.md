@@ -66,7 +66,7 @@ cd Lean && lake clean                         # Clean Lean build
 | `Compactness.lean` | Rado selection principle, de Bruijn–Erdős theorem |
 | `Main.lean` | Main theorem assembly: reduction chain → case split → computation |
 | `ForMathlib/Misc.lean` | Lemmas targeted for upstream to mathlib |
-| `FourThree/` | Four-colours-to-three reduction: `Theory.lean` (Accept predicate), `Compute.lean` (verification), `FourThree.lean` (case split), `Combi.lean` (case analysis) |
+| `FourThree/` | Four-colours-to-three reduction: `Theory.lean` (Accept predicate), `Compute.lean` (verification), `FourThree.lean` (case split), `Combi.lean` + `Combi/BlockColour.lean`, `Combi/CaseOne.lean`, `Combi/CaseTwo.lean` (case analysis) |
 
 ### Main Theorem Proof Strategy (`Main.lean`)
 
