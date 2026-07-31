@@ -44,7 +44,7 @@ jobs:
       - name: Build Lean files
         # b-mehta/lean-action@d489e2d = v1.5.0 + cache-key fix (leanprover/lean-action#167);
         # revert to leanprover/lean-action once the fix is released.
-        uses: b-mehta/lean-action@d489e2d808dacf725628cc11e07de9f6a875d7e7
+        uses: b-mehta/lean-action@75ef4e916dfd1f17d0bab51dc7c27d24936a1bf8
         with:
           mk_all-check: true
           lake-package-directory: Lean
@@ -88,7 +88,7 @@ jobs:
       - name: Build Lean files
         # b-mehta/lean-action@d489e2d = v1.5.0 + cache-key fix (leanprover/lean-action#167);
         # revert to leanprover/lean-action once the fix is released.
-        uses: b-mehta/lean-action@d489e2d808dacf725628cc11e07de9f6a875d7e7
+        uses: b-mehta/lean-action@75ef4e916dfd1f17d0bab51dc7c27d24936a1bf8
         with:
           mk_all-check: true
           lake-package-directory: Lean
